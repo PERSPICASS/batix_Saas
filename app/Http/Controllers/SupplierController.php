@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -15,7 +16,15 @@ class SupplierController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Supplier::query();
+        $activeShopId = get_active_shop_id();
+        
+        $query = Supplier::with('shop')
+            ->whereHas('shop', function ($q) use ($activeShopId) {
+                $q->where('user_id', Auth::id());
+                if ($activeShopId) {
+                    $q->where('id', $activeShopId);
+                }
+            });
 
         // Search filter
         if ($request->has('search') && $request->search) {
@@ -46,7 +55,9 @@ class SupplierController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Suppliers/Create');
+        return Inertia::render('Suppliers/Create', [
+            'shops' => Auth::user()->accessibleShops(),
+        ]);
     }
 
     /**
@@ -55,6 +66,7 @@ class SupplierController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'shop_id' => 'required|exists:shops,id',
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -69,6 +81,9 @@ class SupplierController extends Controller
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
+
+        // Vérifier que la boutique appartient à l'utilisateur
+        Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
 
         Supplier::create($validated);
 
@@ -80,8 +95,13 @@ class SupplierController extends Controller
      */
     public function show(Supplier $supplier): Response
     {
-        $supplier->load('products');
+        // Vérifier que le fournisseur appartient à une boutique de l'utilisateur
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $supplier->shop_id)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
 
+        $supplier->load(['shop', 'products']);
+        
         return Inertia::render('Suppliers/Show', [
             'supplier' => $supplier,
         ]);
@@ -92,8 +112,14 @@ class SupplierController extends Controller
      */
     public function edit(Supplier $supplier): Response
     {
+        // Vérifier que le fournisseur appartient à une boutique de l'utilisateur
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $supplier->shop_id)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
         return Inertia::render('Suppliers/Edit', [
             'supplier' => $supplier,
+            'shops' => Auth::user()->accessibleShops(),
         ]);
     }
 
@@ -102,7 +128,13 @@ class SupplierController extends Controller
      */
     public function update(Request $request, Supplier $supplier): RedirectResponse
     {
+        // Vérifier que le fournisseur appartient à une boutique de l'utilisateur
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $supplier->shop_id)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
         $validated = $request->validate([
+            'shop_id' => 'required|exists:shops,id',
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -118,7 +150,8 @@ class SupplierController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $supplier->update($validated);
+        // Vérifier que la nouvelle boutique appartient à l'utilisateur
+        Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);        $supplier->update($validated);
 
         return redirect()->route('suppliers.index')->with('success', 'Fournisseur mis à jour avec succès.');
     }
@@ -128,6 +161,11 @@ class SupplierController extends Controller
      */
     public function destroy(Supplier $supplier): RedirectResponse
     {
+        // Vérifier que le fournisseur appartient à une boutique de l'utilisateur
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $supplier->shop_id)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
         // Check if supplier has products
         if ($supplier->products()->count() > 0) {
             return back()->withErrors(['error' => 'Impossible de supprimer ce fournisseur car il a des produits associés.']);

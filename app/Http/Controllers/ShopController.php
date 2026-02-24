@@ -15,7 +15,7 @@ class ShopController extends Controller
      */
     public function index(): Response
     {
-        $shops = Auth::user()->shops()->latest()->get();
+        $shops = Auth::user()->accessibleShopsQuery()->latest()->get();
         
         return Inertia::render('Shops/Index', [
             'shops' => $shops,
@@ -48,7 +48,7 @@ class ShopController extends Controller
             'currency' => 'nullable|string|max:3',
         ]);
 
-        Auth::user()->shops()->create($validated);
+        Auth::user()->accessibleShopsQuery()->create($validated);
 
         return redirect()->route('shops.index')->with('success', 'Boutique créée avec succès.');
     }

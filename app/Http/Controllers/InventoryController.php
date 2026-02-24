@@ -8,6 +8,7 @@ use App\Models\Shop;
 use App\Models\Product;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +18,15 @@ class InventoryController extends Controller
 {
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
+        
         $query = Inventory::with(['shop', 'user'])
+            ->whereHas('shop', function ($q) use ($activeShopId) {
+                $q->where('user_id', Auth::id());
+                if ($activeShopId) {
+                    $q->where('id', $activeShopId);
+                }
+            })
             ->orderBy('inventory_date', 'desc');
 
         if ($request->filled('status')) {
@@ -34,9 +43,21 @@ class InventoryController extends Controller
 
     public function create(): Response
     {
+        $activeShopId = get_active_shop_id();
+        
+        $products = Product::with('shop')
+            ->where('is_active', true)
+            ->whereHas('shop', function ($q) use ($activeShopId) {
+                $q->where('user_id', Auth::id());
+                if ($activeShopId) {
+                    $q->where('id', $activeShopId);
+                }
+            })
+            ->get();
+
         return Inertia::render('Inventory/Create', [
-            'shops' => Shop::select('id', 'name')->get(),
-            'products' => Product::with('shop')->where('is_active', true)->get(),
+            'shops' => Auth::user()->accessibleShops(),
+            'products' => $products,
         ]);
     }
 

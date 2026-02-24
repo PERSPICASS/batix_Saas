@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 interface Shop {
@@ -21,8 +21,11 @@ interface Props {
 }
 
 export default function StocksCreate({ shops, products }: Props) {
+    const { props } = usePage();
+    const activeShop = props.activeShop as { id: number; name: string } | null;
+    
     const { data, setData, post, processing, errors } = useForm({
-        shop_id: '',
+        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         product_id: '',
         type: 'in',
         quantity: 1,
@@ -52,16 +55,18 @@ export default function StocksCreate({ shops, products }: Props) {
                             <select
                                 id="shop_id"
                                 value={data.shop_id}
-                                onChange={(e) => setData('shop_id', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                disabled
+                                className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
                             >
-                                <option value="">Sélectionner une boutique</option>
                                 {shops.map((shop) => (
                                     <option key={shop.id} value={shop.id}>
                                         {shop.name}
                                     </option>
                                 ))}
                             </select>
+                            <p className="mt-1 text-xs text-slate-400">
+                                Boutique sélectionnée via le switcher
+                            </p>
                             {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
                         </div>
 

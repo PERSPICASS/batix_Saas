@@ -6,6 +6,7 @@ use App\Models\StockMovement;
 use App\Models\Shop;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +15,15 @@ class StockMovementController extends Controller
 {
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
+        
         $query = StockMovement::with(['shop', 'product', 'user'])
+            ->whereHas('shop', function ($q) use ($activeShopId) {
+                $q->where('user_id', Auth::id());
+                if ($activeShopId) {
+                    $q->where('id', $activeShopId);
+                }
+            })
             ->orderBy('movement_date', 'desc')
             ->orderBy('created_at', 'desc');
 
@@ -47,16 +56,23 @@ class StockMovementController extends Controller
 
         return Inertia::render('Stocks/Index', [
             'movements' => $movements,
-            'shops' => Shop::select('id', 'name')->get(),
+            'shops' => Auth::user()->accessibleShops(),
             'filters' => $request->only(['search', 'type', 'shop_id', 'date_from', 'date_to']),
         ]);
     }
 
     public function create(): Response
     {
+        $products = Product::with('shop')
+            ->where('is_active', true)
+            ->whereHas('shop', function ($q) {
+                $q->where('user_id', Auth::id());
+            })
+            ->get();
+
         return Inertia::render('Stocks/Create', [
-            'shops' => Shop::select('id', 'name')->get(),
-            'products' => Product::with('shop')->where('is_active', true)->get(),
+            'shops' => Auth::user()->accessibleShops(),
+            'products' => $products,
         ]);
     }
 

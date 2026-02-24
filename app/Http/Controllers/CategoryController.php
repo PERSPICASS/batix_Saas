@@ -15,13 +15,17 @@ class CategoryController extends Controller
      */
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         
         $query = Category::with('subcategories')
             ->orderBy('order')
             ->orderBy('name');
 
-        if ($shopId) {
+        // Filtrer par boutique active si sélectionnée
+        if ($activeShopId) {
+            $query->where('shop_id', $activeShopId);
+        } elseif ($shopId) {
             $query->where('shop_id', $shopId);
         } else {
             // Si aucune boutique n'est sélectionnée, afficher les catégories de toutes les boutiques de l'utilisateur
@@ -34,7 +38,7 @@ class CategoryController extends Controller
 
         return Inertia::render('Categories/Index', [
             'categories' => $categories,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
         ]);
     }
 
@@ -44,7 +48,7 @@ class CategoryController extends Controller
     public function create(): Response
     {
         return Inertia::render('Categories/Create', [
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
         ]);
     }
 
@@ -63,7 +67,7 @@ class CategoryController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        $shop = Auth::user()->shops()->findOrFail($validated['shop_id']);
+        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
         $shop->categories()->create($validated);
 
@@ -93,7 +97,7 @@ class CategoryController extends Controller
         
         return Inertia::render('Categories/Edit', [
             'category' => $category,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
         ]);
     }
 

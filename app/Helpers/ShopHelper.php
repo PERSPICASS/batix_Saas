@@ -93,3 +93,29 @@ if (!function_exists('get_currency_symbol')) {
         return $symbols[$currencyCode] ?? $currencyCode;
     }
 }
+
+if (!function_exists('get_active_shop')) {
+    /**
+     * Get the currently active shop from session
+     */
+    function get_active_shop(): ?Shop
+    {
+        $shopId = session('active_shop_id');
+        
+        if (!$shopId || !auth()->check()) {
+            return null;
+        }
+        
+        return auth()->user()->accessibleShops()->find($shopId);
+    }
+}
+
+if (!function_exists('get_active_shop_id')) {
+    /**
+     * Get the currently active shop ID from session
+     */
+    function get_active_shop_id(): ?int
+    {
+        return session('active_shop_id');
+    }
+}

@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import {
     PropsWithChildren,
     ReactNode,
@@ -41,6 +41,7 @@ export default function Authenticated({
     const page = usePage();
     const user = page.props.auth?.user;
     const shopsFromProps = page.props.shops as Array<{ id: number; name: string; slug: string; is_active: boolean }> || [];
+    const activeShopFromProps = page.props.activeShop as { id: number; name: string; slug: string } | null;
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
@@ -54,10 +55,20 @@ export default function Authenticated({
         slug: shop.slug,
     }));
     
-    const [currentPath, queryString = ''] = page.url.split('?');
-    const query = new URLSearchParams(queryString);
-    const activeShopId = query.get('shop') ?? (shops.length > 0 ? shops[0].id : '');
-    const activeShop = shops.find((shop) => shop.id === activeShopId) ?? shops[0];
+    // Utiliser la boutique active depuis la session (partagée via Inertia)
+    const activeShop = activeShopFromProps 
+        ? { id: activeShopFromProps.id.toString(), name: activeShopFromProps.name, slug: activeShopFromProps.slug }
+        : (shops.length > 0 ? shops[0] : null);
+
+    const handleShopChange = (shopId: string) => {
+        // Changer la boutique en visitant l'URL actuelle avec le paramètre shop
+        const [currentPath] = page.url.split('?');
+        router.visit(`${currentPath}?shop=${shopId}`, {
+            preserveState: false, // Recharger pour mettre à jour toutes les données
+            preserveScroll: true,
+        });
+        setShopMenuOpen(false);
+    };
 
     useEffect(() => {
         const savedTheme = window.localStorage.getItem('theme');
@@ -351,18 +362,18 @@ export default function Authenticated({
                                 {shopMenuOpen && shops.length > 0 && (
                                     <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {shops.map((shop) => (
-                                            <Link
+                                            <button
                                                 key={shop.id}
-                                                href={`${currentPath}?shop=${shop.id}`}
-                                                className={`block rounded-lg px-3 py-2 text-sm transition ${
+                                                type="button"
+                                                onClick={() => handleShopChange(shop.id)}
+                                                className={`w-full text-left block rounded-lg px-3 py-2 text-sm transition ${
                                                     shop.id === activeShop?.id
                                                         ? 'bg-amber-300 text-slate-950'
                                                         : 'text-slate-800 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10'
                                                 }`}
-                                                onClick={() => setShopMenuOpen(false)}
                                             >
                                                 {shop.name}
-                                            </Link>
+                                            </button>
                                         ))}
                                         <hr className="my-1 border-slate-300 dark:border-white/10" />
                                         <Link

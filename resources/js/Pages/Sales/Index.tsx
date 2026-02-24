@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Eye, Trash2 } from 'lucide-react';
+import Currency from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -92,7 +93,7 @@ export default function SalesIndex({ sales, stats }: Props) {
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <h3 className="text-sm text-slate-400">Chiffre d'affaires total</h3>
                         <p className="mt-2 text-3xl font-bold text-amber-300">
-                            {parseFloat(String(stats.total_revenue)).toFixed(2)} €
+                            <Currency amount={parseFloat(String(stats.total_revenue))} />
                         </p>
                     </div>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -143,7 +144,7 @@ export default function SalesIndex({ sales, stats }: Props) {
                             key: 'total',
                             label: 'Total',
                             align: 'right',
-                            render: (sale) => `${parseFloat(sale.total).toFixed(2)} €`,
+                            render: (sale) => <Currency amount={parseFloat(sale.total)} />,
                         },
                         {
                             key: 'status',

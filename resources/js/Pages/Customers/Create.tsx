@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 interface Shop {
@@ -12,8 +12,11 @@ interface Props {
 }
 
 export default function CustomersCreate({ shops }: Props) {
+    const { props } = usePage();
+    const activeShop = props.activeShop as { id: number; name: string } | null;
+    
     const { data, setData, post, processing, errors } = useForm({
-        shop_id: '',
+        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         name: '',
         email: '',
         phone: '',
@@ -40,16 +43,18 @@ export default function CustomersCreate({ shops }: Props) {
                         <span>Boutique *</span>
                         <select
                             value={data.shop_id}
-                            onChange={(e) => setData('shop_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            disabled
+                            className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
                         >
-                            <option value="">Sélectionner une boutique</option>
                             {shops.map((shop) => (
                                 <option key={shop.id} value={shop.id}>
                                     {shop.name}
                                 </option>
                             ))}
                         </select>
+                        <p className="text-xs text-slate-400">
+                            Boutique sélectionnée via le switcher
+                        </p>
                         {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
                     </label>
 

@@ -17,6 +17,7 @@ class SaleController extends Controller
 {
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         $status = $request->input('status');
         $search = $request->input('search');
@@ -24,7 +25,10 @@ class SaleController extends Controller
         $query = Sale::with(['shop', 'user', 'customer', 'items'])
             ->orderBy('sale_date', 'desc');
 
-        if ($shopId) {
+        // Filtrer par boutique active si sélectionnée
+        if ($activeShopId) {
+            $query->where('shop_id', $activeShopId);
+        } elseif ($shopId) {
             $query->where('shop_id', $shopId);
         } else {
             $query->whereHas('shop', function ($q) {
@@ -42,14 +46,23 @@ class SaleController extends Controller
 
         $sales = $query->paginate(20);
 
+        // Calculer les statistiques en fonction de la boutique active
+        $statsQuery = Sale::where('status', 'completed')
+            ->whereHas('shop', function ($q) use ($activeShopId) {
+                $q->where('user_id', Auth::id());
+                if ($activeShopId) {
+                    $q->where('id', $activeShopId);
+                }
+            });
+
         $stats = [
-            'total_revenue' => Sale::where('status', 'completed')->sum('total'),
-            'total_sales' => Sale::where('status', 'completed')->count(),
+            'total_revenue' => $statsQuery->sum('total'),
+            'total_sales' => $statsQuery->count(),
         ];
 
         return Inertia::render('Sales/Index', [
             'sales' => $sales,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
             'filters' => $request->only(['shop_id', 'status', 'search']),
             'stats' => $stats,
         ]);
@@ -57,8 +70,6 @@ class SaleController extends Controller
 
     public function create(): Response
     {
-        $shops = Auth::user()->shops;
-        
         $customers = Customer::whereHas('shop', function ($q) {
             $q->where('user_id', Auth::id());
         })->get();
@@ -68,7 +79,7 @@ class SaleController extends Controller
         })->where('is_active', true)->get();
 
         return Inertia::render('Sales/Create', [
-            'shops' => $shops,
+            'shops' => Auth::user()->accessibleShops(),
             'customers' => $customers,
             'products' => $products,
         ]);
@@ -88,7 +99,7 @@ class SaleController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $shop = Auth::user()->shops()->findOrFail($validated['shop_id']);
+        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
         DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];

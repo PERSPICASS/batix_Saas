@@ -18,6 +18,7 @@ class InvoiceController extends Controller
      */
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         $status = $request->input('status');
         $search = $request->input('search');
@@ -25,7 +26,10 @@ class InvoiceController extends Controller
         $query = Invoice::with(['shop', 'customer', 'user'])
             ->orderBy('invoice_date', 'desc');
 
-        if ($shopId) {
+        // Filtrer par boutique active si sélectionnée
+        if ($activeShopId) {
+            $query->where('shop_id', $activeShopId);
+        } elseif ($shopId) {
             $query->where('shop_id', $shopId);
         } else {
             // Afficher les factures de toutes les boutiques de l'utilisateur
@@ -51,7 +55,7 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
             'filters' => $request->only(['shop_id', 'status', 'search']),
         ]);
     }
@@ -61,7 +65,7 @@ class InvoiceController extends Controller
      */
     public function create(): Response
     {
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
         
         $customers = Customer::whereHas('shop', function ($q) {
             $q->where('user_id', Auth::id());
@@ -103,7 +107,7 @@ class InvoiceController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        $shop = Auth::user()->shops()->findOrFail($validated['shop_id']);
+        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
         DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];
@@ -146,7 +150,7 @@ class InvoiceController extends Controller
                 ->with('error', 'Impossible de modifier une facture payée.');
         }
         
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
         
         $customers = Customer::whereHas('shop', function ($q) {
             $q->where('user_id', Auth::id());
@@ -197,7 +201,7 @@ class InvoiceController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        Auth::user()->shops()->findOrFail($validated['shop_id']);
+        Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
         DB::transaction(function () use ($validated, $invoice) {
             $items = $validated['items'];

@@ -15,13 +15,17 @@ class CustomerController extends Controller
      */
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         $search = $request->input('search');
         
         $query = Customer::with('shop')
             ->orderBy('name');
 
-        if ($shopId) {
+        // Filtrer par boutique active si sélectionnée
+        if ($activeShopId) {
+            $query->where('shop_id', $activeShopId);
+        } elseif ($shopId) {
             $query->where('shop_id', $shopId);
         } else {
             // Afficher les clients de toutes les boutiques de l'utilisateur
@@ -42,7 +46,7 @@ class CustomerController extends Controller
 
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
             'filters' => $request->only(['shop_id', 'search']),
         ]);
     }
@@ -52,7 +56,7 @@ class CustomerController extends Controller
      */
     public function create(): Response
     {
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
 
         return Inertia::render('Customers/Create', [
             'shops' => $shops,
@@ -79,7 +83,7 @@ class CustomerController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        $shop = Auth::user()->shops()->findOrFail($validated['shop_id']);
+        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
         $shop->customers()->create($validated);
 
@@ -103,7 +107,7 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer): Response
     {
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
         
         return Inertia::render('Customers/Edit', [
             'customer' => $customer,
@@ -131,7 +135,7 @@ class CustomerController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        Auth::user()->shops()->findOrFail($validated['shop_id']);
+        Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
         $customer->update($validated);
 

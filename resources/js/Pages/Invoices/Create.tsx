@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { FormEvent, useMemo, useState } from 'react';
 import { Calculator, FileText, Plus, Trash2 } from 'lucide-react';
+import Currency from '@/Components/Currency';
 
 type InvoiceLine = {
     id: number;
@@ -226,16 +227,16 @@ export default function InvoicesCreate() {
                     <div className="space-y-2 text-sm text-slate-200">
                         <div className="flex justify-between">
                             <span>Sous-total</span>
-                            <span>{subtotal.toFixed(2)} €</span>
+                            <span><Currency amount={subtotal} /></span>
                         </div>
                         <div className="flex justify-between">
                             <span>TVA (20%)</span>
-                            <span>{tax.toFixed(2)} €</span>
+                            <span><Currency amount={tax} /></span>
                         </div>
                         <div className="mt-3 border-t border-white/15 pt-3 text-base font-semibold text-white">
                             <div className="flex justify-between">
                                 <span>Total</span>
-                                <span>{total.toFixed(2)} €</span>
+                                <span><Currency amount={total} /></span>
                             </div>
                         </div>
                     </div>

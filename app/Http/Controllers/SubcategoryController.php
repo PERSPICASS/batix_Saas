@@ -42,7 +42,7 @@ class SubcategoryController extends Controller
         return Inertia::render('Subcategories/Index', [
             'subcategories' => $subcategories,
             'categories' => $categories,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
         ]);
     }
 

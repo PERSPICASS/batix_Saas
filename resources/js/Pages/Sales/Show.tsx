@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Printer } from 'lucide-react';
+import Currency from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -169,10 +170,10 @@ export default function SalesShow({ sale }: Props) {
                                             {item.quantity}
                                         </td>
                                         <td className="py-2 text-right text-slate-300">
-                                            {parseFloat(item.unit_price).toFixed(2)} €
+                                            <Currency amount={parseFloat(item.unit_price)} />
                                         </td>
                                         <td className="py-2 text-right font-semibold text-white">
-                                            {parseFloat(item.total).toFixed(2)} €
+                                            <Currency amount={parseFloat(item.total)} />
                                         </td>
                                     </tr>
                                 ))}
@@ -185,27 +186,27 @@ export default function SalesShow({ sale }: Props) {
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Sous-total:</span>
                             <span className="text-white">
-                                {parseFloat(sale.subtotal).toFixed(2)} €
+                                <Currency amount={parseFloat(sale.subtotal)} />
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">TVA:</span>
                             <span className="text-white">
-                                {parseFloat(sale.tax_amount).toFixed(2)} €
+                                <Currency amount={parseFloat(sale.tax_amount)} />
                             </span>
                         </div>
                         {parseFloat(sale.discount_amount) > 0 && (
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">Remise:</span>
                                 <span className="text-red-400">
-                                    -{parseFloat(sale.discount_amount).toFixed(2)} €
+                                    -<Currency amount={parseFloat(sale.discount_amount)} />
                                 </span>
                             </div>
                         )}
                         <div className="flex justify-between border-t border-white/10 pt-2 text-lg font-bold">
                             <span className="text-white">TOTAL:</span>
                             <span className="text-amber-300">
-                                {parseFloat(sale.total).toFixed(2)} €
+                                <Currency amount={parseFloat(sale.total)} />
                             </span>
                         </div>
                     </div>
@@ -221,14 +222,14 @@ export default function SalesShow({ sale }: Props) {
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Montant payé:</span>
                             <span className="text-white">
-                                {parseFloat(sale.amount_paid).toFixed(2)} €
+                                <Currency amount={parseFloat(sale.amount_paid)} />
                             </span>
                         </div>
                         {parseFloat(sale.change_amount) > 0 && (
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">Monnaie rendue:</span>
                                 <span className="font-semibold text-emerald-400">
-                                    {parseFloat(sale.change_amount).toFixed(2)} €
+                                    <Currency amount={parseFloat(sale.change_amount)} />
                                 </span>
                             </div>
                         )}

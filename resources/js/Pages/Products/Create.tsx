@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 interface Shop {
     id: number;
@@ -28,8 +29,11 @@ interface Props {
 }
 
 export default function ProductsCreate({ shops, categories, subcategories }: Props) {
+    const { props } = usePage();
+    const activeShop = props.activeShop as { id: number; name: string } | null;
+    
     const { data, setData, post, processing, errors } = useForm({
-        shop_id: '',
+        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         category_id: '',
         subcategory_id: '',
         name: '',
@@ -49,6 +53,24 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
     const onSubmit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('products.store'));
+    };
+
+    // Générer un code-barres temporaire (sera régénéré côté serveur)
+    const generateTempBarcode = () => {
+        const prefix = '2';
+        const company = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        const product = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const barcode12 = prefix + company + product;
+        
+        // Calculer le checksum EAN-13
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            const digit = parseInt(barcode12[i]);
+            sum += (i % 2 === 0) ? digit : digit * 3;
+        }
+        const checksum = (10 - (sum % 10)) % 10;
+        
+        setData('barcode', barcode12 + checksum);
     };
 
     // Filtrer les catégories par boutique sélectionnée
@@ -76,16 +98,18 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <span>Boutique *</span>
                         <select
                             value={data.shop_id}
-                            onChange={(e) => setData('shop_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            disabled
+                            className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
                         >
-                            <option value="">Sélectionner une boutique</option>
                             {shops.map((shop) => (
                                 <option key={shop.id} value={shop.id}>
                                     {shop.name}
                                 </option>
                             ))}
                         </select>
+                        <p className="text-xs text-slate-400">
+                            Boutique sélectionnée via le switcher
+                        </p>
                         {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
                     </label>
 
@@ -100,22 +124,41 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>SKU</span>
+                        <span>SKU (généré automatiquement)</span>
                         <input
                             value={data.sku}
                             onChange={(e) => setData('sku', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            placeholder="Sera généré automatiquement"
+                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-400"
                         />
+                        <p className="text-xs text-slate-400">
+                            Laissez vide pour générer automatiquement
+                        </p>
                         {errors.sku && <span className="text-xs text-red-400">{errors.sku}</span>}
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Code-barres</span>
-                        <input
-                            value={data.barcode}
-                            onChange={(e) => setData('barcode', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
+                        <span>Code-barres (généré automatiquement)</span>
+                        <div className="flex gap-2">
+                            <input
+                                value={data.barcode}
+                                onChange={(e) => setData('barcode', e.target.value)}
+                                placeholder="Sera généré automatiquement"
+                                className="flex-1 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-400"
+                            />
+                            <button
+                                type="button"
+                                onClick={generateTempBarcode}
+                                className="flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-amber-300 hover:bg-amber-300/20"
+                                title="Générer un aperçu"
+                            >
+                                <RefreshCw className="size-4" />
+                                Aperçu
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-400">
+                            Le code-barres final sera généré automatiquement lors de la sauvegarde
+                        </p>
                         {errors.barcode && <span className="text-xs text-red-400">{errors.barcode}</span>}
                     </label>
 

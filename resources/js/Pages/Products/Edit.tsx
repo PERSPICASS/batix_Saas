@@ -95,16 +95,18 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                             <select
                                 id="shop_id"
                                 value={data.shop_id}
-                                onChange={(e) => setData('shop_id', Number(e.target.value))}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                disabled
+                                className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
                             >
-                                <option value="">Sélectionner une boutique</option>
                                 {shops.map((shop) => (
                                     <option key={shop.id} value={shop.id}>
                                         {shop.name}
                                     </option>
                                 ))}
                             </select>
+                            <p className="mt-1 text-xs text-slate-400">
+                                La boutique ne peut pas être modifiée
+                            </p>
                             {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
                         </div>
 

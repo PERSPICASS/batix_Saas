@@ -1,9 +1,22 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-export default function SuppliersCreate() {
+interface Shop {
+    id: number;
+    name: string;
+}
+
+interface Props {
+    shops: Shop[];
+}
+
+export default function SuppliersCreate({ shops }: Props) {
+    const { props } = usePage();
+    const activeShop = props.activeShop as { id: number; name: string } | null;
+    
     const { data, setData, post, processing, errors } = useForm({
+        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         name: '',
         company_name: '',
         email: '',
@@ -33,6 +46,27 @@ export default function SuppliersCreate() {
                     {/* Informations générales */}
                     <div className="space-y-6">
                         <h2 className="text-lg font-semibold text-white">Informations générales</h2>
+
+                        {/* Boutique */}
+                        <div>
+                            <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
+                                Boutique *
+                            </label>
+                            <select
+                                id="shop_id"
+                                value={data.shop_id}
+                                disabled
+                                className="mt-1 block w-full cursor-not-allowed rounded-lg border border-white/15 bg-slate-800/50 px-3 py-2 text-slate-400"
+                            >
+                                {shops.map((shop) => (
+                                    <option key={shop.id} value={shop.id}>
+                                        {shop.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="mt-1 text-xs text-slate-400">Boutique sélectionnée via le switcher</p>
+                            {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                        </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>

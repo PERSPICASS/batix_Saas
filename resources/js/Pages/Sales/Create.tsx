@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Plus, Trash2, Scan } from 'lucide-react';
+import Currency from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -38,11 +39,14 @@ interface CartItem {
 }
 
 export default function SalesCreate({ shops, customers, products }: Props) {
+    const { props } = usePage();
+    const activeShop = props.activeShop as { id: number; name: string } | null;
+    
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchProduct, setSearchProduct] = useState('');
 
     const { data, setData, post, processing, errors } = useForm({
-        shop_id: '',
+        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         customer_id: '',
         payment_method: 'cash' as string,
         amount_paid: '',
@@ -180,7 +184,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                         </div>
                                         <div className="text-right">
                                             <p className="font-semibold text-amber-300">
-                                                {parseFloat(product.selling_price).toFixed(2)} €
+                                                <Currency amount={parseFloat(product.selling_price)} />
                                             </p>
                                         </div>
                                     </button>
@@ -208,7 +212,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                                     {item.product_name}
                                                 </p>
                                                 <p className="text-xs text-slate-400">
-                                                    {item.unit_price.toFixed(2)} € × {item.quantity}
+                                                    <Currency amount={item.unit_price} /> × {item.quantity}
                                                 </p>
                                             </div>
                                             <input
@@ -231,7 +235,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                                 <Trash2 className="size-4" />
                                             </button>
                                             <p className="w-20 text-right font-semibold text-white">
-                                                {item.subtotal.toFixed(2)} €
+                                                <Currency amount={item.subtotal} />
                                             </p>
                                         </div>
                                     ))}
@@ -242,25 +246,23 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                 <div className="flex justify-between text-sm text-slate-300">
                                     <span>Sous-total</span>
                                     <span>
-                                        {cart.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2)} €
+                                        <Currency amount={cart.reduce((sum, item) => sum + item.subtotal, 0)} />
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm text-slate-300">
                                     <span>TVA</span>
                                     <span>
-                                        {cart
+                                        <Currency amount={cart
                                             .reduce(
                                                 (sum, item) =>
                                                     sum + (item.subtotal * item.tax_rate) / 100,
                                                 0
-                                            )
-                                            .toFixed(2)}{' '}
-                                        €
+                                            )} />
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-lg font-bold text-amber-300">
                                     <span>Total</span>
-                                    <span>{calculateTotal().toFixed(2)} €</span>
+                                    <span><Currency amount={calculateTotal()} /></span>
                                 </div>
                             </div>
                         </div>
@@ -270,16 +272,18 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                 <span>Boutique *</span>
                                 <select
                                     value={data.shop_id}
-                                    onChange={(e) => setData('shop_id', e.target.value)}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                                    disabled
+                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
                                 >
-                                    <option value="">Sélectionner</option>
                                     {shops.map((shop) => (
                                         <option key={shop.id} value={shop.id}>
                                             {shop.name}
                                         </option>
                                     ))}
                                 </select>
+                                <p className="text-xs text-slate-400">
+                                    Boutique sélectionnée via le switcher
+                                </p>
                                 {errors.shop_id && (
                                     <span className="text-xs text-red-400">{errors.shop_id}</span>
                                 )}
@@ -335,7 +339,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                 <div className="rounded-lg bg-emerald-500/20 p-3 text-center">
                                     <p className="text-sm text-slate-300">Monnaie à rendre</p>
                                     <p className="text-2xl font-bold text-emerald-300">
-                                        {calculateChange().toFixed(2)} €
+                                        <Currency amount={calculateChange()} />
                                     </p>
                                 </div>
                             )}

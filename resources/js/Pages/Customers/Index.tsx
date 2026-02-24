@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
 import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
+import Currency from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -63,7 +64,7 @@ export default function CustomersIndex({ customers }: Props) {
                             key: 'total_purchases',
                             label: 'Total achats',
                             align: 'right',
-                            render: (customer) => `${parseFloat(customer.total_purchases).toFixed(2)} €`,
+                            render: (customer) => <Currency amount={parseFloat(customer.total_purchases)} />,
                         },
                         {
                             key: 'is_active',

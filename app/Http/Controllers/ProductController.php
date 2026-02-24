@@ -18,6 +18,7 @@ class ProductController extends Controller
      */
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         $categoryId = $request->input('category_id');
         $search = $request->input('search');
@@ -25,7 +26,10 @@ class ProductController extends Controller
         $query = Product::with(['shop', 'category', 'subcategory'])
             ->orderBy('name');
 
-        if ($shopId) {
+        // Filtrer par boutique active si sélectionnée
+        if ($activeShopId) {
+            $query->where('shop_id', $activeShopId);
+        } elseif ($shopId) {
             $query->where('shop_id', $shopId);
         } else {
             // Afficher les produits de toutes les boutiques de l'utilisateur
@@ -48,14 +52,17 @@ class ProductController extends Controller
 
         $products = $query->paginate(20);
 
-        $categories = Category::whereHas('shop', function ($q) {
+        $categories = Category::whereHas('shop', function ($q) use ($activeShopId) {
             $q->where('user_id', Auth::id());
+            if ($activeShopId) {
+                $q->where('id', $activeShopId);
+            }
         })->get();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
             'filters' => $request->only(['shop_id', 'category_id', 'search']),
         ]);
     }
@@ -65,7 +72,7 @@ class ProductController extends Controller
      */
     public function create(): Response
     {
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
         $categories = Category::whereHas('shop', function ($q) {
             $q->where('user_id', Auth::id());
         })->with('shop')->get();
@@ -105,7 +112,17 @@ class ProductController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        $shop = Auth::user()->shops()->findOrFail($validated['shop_id']);
+        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+        
+        // Générer automatiquement le code-barres s'il n'est pas fourni
+        if (empty($validated['barcode'])) {
+            $validated['barcode'] = $this->generateUniqueBarcode();
+        }
+        
+        // Générer automatiquement le SKU s'il n'est pas fourni
+        if (empty($validated['sku'])) {
+            $validated['sku'] = 'SKU-' . strtoupper(substr(uniqid(), -8));
+        }
         
         // Gérer l'upload de l'image
         if ($request->hasFile('image')) {
@@ -138,7 +155,7 @@ class ProductController extends Controller
     {
         $this->authorize('update', $product);
         
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
         $categories = Category::whereHas('shop', function ($q) {
             $q->where('user_id', Auth::id());
         })->with('shop')->get();
@@ -209,5 +226,51 @@ class ProductController extends Controller
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Produit supprimé avec succès.');
+    }
+
+    /**
+     * Generate a unique EAN-13 style barcode.
+     * Format: 2 (internal) + 6 (random) + 4 (product number) + 1 (checksum)
+     */
+    private function generateUniqueBarcode(): string
+    {
+        do {
+            // Commencer par '2' pour indiquer un code interne (usage interne)
+            $prefix = '2';
+            
+            // 6 chiffres aléatoires pour l'entreprise
+            $company = str_pad((string)rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            
+            // 4 chiffres pour le numéro de produit
+            $productNum = str_pad((string)rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            
+            // 12 premiers chiffres
+            $barcode12 = $prefix . $company . $productNum;
+            
+            // Calculer le chiffre de contrôle EAN-13
+            $checksum = $this->calculateEAN13Checksum($barcode12);
+            
+            // Code-barres complet
+            $barcode = $barcode12 . $checksum;
+            
+            // Vérifier l'unicité
+        } while (Product::where('barcode', $barcode)->exists());
+        
+        return $barcode;
+    }
+
+    /**
+     * Calculate EAN-13 checksum digit.
+     */
+    private function calculateEAN13Checksum(string $barcode12): int
+    {
+        $sum = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $digit = (int)$barcode12[$i];
+            $sum += ($i % 2 === 0) ? $digit : $digit * 3;
+        }
+        
+        $checksum = (10 - ($sum % 10)) % 10;
+        return $checksum;
     }
 }

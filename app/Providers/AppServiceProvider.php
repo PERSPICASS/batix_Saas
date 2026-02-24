@@ -39,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
                 }
                 return [];
             },
+            'activeShop' => function () {
+                return get_active_shop();
+            },
         ]);
     }
 }

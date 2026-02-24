@@ -2,8 +2,14 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
+interface Shop {
+    id: number;
+    name: string;
+}
+
 interface Supplier {
     id: number;
+    shop_id: number;
     name: string;
     company_name: string | null;
     email: string | null;
@@ -21,10 +27,12 @@ interface Supplier {
 
 interface Props {
     supplier: Supplier;
+    shops: Shop[];
 }
 
-export default function SuppliersEdit({ supplier }: Props) {
+export default function SuppliersEdit({ supplier, shops }: Props) {
     const { data, setData, put, processing, errors } = useForm({
+        shop_id: supplier.shop_id.toString(),
         name: supplier.name,
         company_name: supplier.company_name || '',
         email: supplier.email || '',
@@ -54,6 +62,41 @@ export default function SuppliersEdit({ supplier }: Props) {
                     {/* Informations générales */}
                     <div className="space-y-6">
                         <h2 className="text-lg font-semibold text-white">Informations générales</h2>
+
+                        {/* Boutique */}
+                        <div>
+                            <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
+                                Boutique *
+                            </label>
+                            {shops.length > 1 ? (
+                                <select
+                                    id="shop_id"
+                                    value={data.shop_id}
+                                    onChange={(e) => setData('shop_id', e.target.value)}
+                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                >
+                                    <option value="">Sélectionner une boutique</option>
+                                    {shops.map((shop) => (
+                                        <option key={shop.id} value={shop.id}>
+                                            {shop.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <>
+                                    <select
+                                        id="shop_id"
+                                        value={data.shop_id}
+                                        disabled
+                                        className="mt-1 block w-full cursor-not-allowed rounded-lg border border-white/15 bg-slate-800/50 px-3 py-2 text-slate-400"
+                                    >
+                                        <option>{shops[0]?.name}</option>
+                                    </select>
+                                    <p className="mt-1 text-xs text-slate-400">Boutique sélectionnée automatiquement</p>
+                                </>
+                            )}
+                            {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                        </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>

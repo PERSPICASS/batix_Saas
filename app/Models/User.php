@@ -132,4 +132,33 @@ class User extends Authenticatable
     {
         return $this->hasPermission($module, 'delete');
     }
+
+    /**
+     * Get accessible shops for the user.
+     * Super admin gets all their shops, regular users get only their assigned shop.
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection|\Illuminate\Support\Collection
+     */
+    public function accessibleShops()
+    {
+        if ($this->role === 'super_admin') {
+            return $this->shops;
+        }
+        
+        return $this->shop ? collect([$this->shop]) : collect([]);
+    }
+
+    /**
+     * Get query builder for accessible shops.
+     * Used for finding/validating shop ownership.
+     */
+    public function accessibleShopsQuery()
+    {
+        if ($this->role === 'super_admin') {
+            return $this->shops();
+        }
+        
+        // For non-super-admin, return a query that only matches their shop
+        return Shop::where('id', $this->shop_id);
+    }
 }

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { Building2, Mail, Phone, MapPin, Globe, FileText, Package, ArrowLeft, Pencil } from 'lucide-react';
+import Currency from '@/Components/Currency';
 
 interface Product {
     id: number;
@@ -193,7 +194,7 @@ export default function SuppliersShow({ supplier }: Props) {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-semibold text-amber-300">
-                                                    {product.price.toFixed(2)} DH
+                                                    <Currency amount={product.price} />
                                                 </p>
                                                 <p className="text-sm text-slate-400">Stock: {product.stock}</p>
                                             </div>

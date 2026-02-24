@@ -14,7 +14,7 @@ export default function Create() {
         phone: '',
         email: '',
         tax_id: '',
-        currency: 'MAD',
+        currency: 'USD',
     });
 
     const submit: FormEventHandler = (e) => {
