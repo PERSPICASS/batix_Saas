@@ -40,6 +40,7 @@ export default function Authenticated({
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const page = usePage();
     const user = page.props.auth?.user;
+    const routeParams = page.props.routeParams as { code_user: string | null; shop_slug: string | null };
     const shopsFromProps = page.props.shops as Array<{ id: number; name: string; slug: string; is_active: boolean }> || [];
     const activeShopFromProps = page.props.activeShop as { id: number; name: string; slug: string } | null;
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -48,6 +49,72 @@ export default function Authenticated({
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
+
+    // Fonction pour vérifier si l'utilisateur peut voir un module
+    const canViewModule = (module: string): boolean => {
+        // Super admin peut tout voir
+        if (user?.role === 'super_admin') {
+            return true;
+        }
+
+        // Vérifier les permissions de l'utilisateur
+        const permission = user?.permissions?.find((p: any) => p.module === module);
+        return permission ? permission.can_view : false;
+    };
+
+    // Fonction pour vérifier si l'utilisateur est un caissier
+    const isCashier = (): boolean => {
+        return user?.role === 'cashier' || user?.role === 'caisse';
+    };
+
+    // Fonction pour vérifier si l'utilisateur est admin (super_admin ou manager)
+    const isAdmin = (): boolean => {
+        return user?.role === 'super_admin' || user?.role === 'manager';
+    };
+
+    // Déterminer le code_user du compte (du propriétaire)
+    const getAccountCode = (): string | null => {
+        if (!user) return null;
+        
+        // Si l'utilisateur est super_admin, c'est son propre code
+        if (user.role === 'super_admin') {
+            return user.code_user;
+        }
+        
+        // Pour les autres rôles, extraire le code_user de l'URL ou des routeParams
+        // L'URL devrait être /{code_user}/quelquechose
+        const urlParts = window.location.pathname.split('/').filter(Boolean);
+        const codeFromUrl = urlParts[0] || null;
+        
+        return routeParams.code_user || codeFromUrl;
+    };
+    
+    const accountCode = getAccountCode();
+
+    // Helper pour générer les routes avec le code_user du compte
+    const buildRoute = (name: string, params: Record<string, any> = {}) => {
+        if (!accountCode) {
+            console.warn('Account code not available for route:', name);
+            return '#';
+        }
+        
+        return route(name, {
+            code_user: accountCode,
+            ...params
+        });
+    };
+
+    // Si le code_user n'est pas disponible, afficher un loader
+    if (!accountCode) {
+        return (
+            <div className="flex h-screen items-center justify-center bg-slate-950">
+                <div className="text-center">
+                    <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-amber-300 border-r-transparent"></div>
+                    <p className="text-slate-400">Chargement...</p>
+                </div>
+            </div>
+        );
+    }
 
     const shops = shopsFromProps.filter(shop => shop.is_active).map(shop => ({
         id: shop.id.toString(),
@@ -59,6 +126,7 @@ export default function Authenticated({
     const activeShop = activeShopFromProps 
         ? { id: activeShopFromProps.id.toString(), name: activeShopFromProps.name, slug: activeShopFromProps.slug }
         : (shops.length > 0 ? shops[0] : null);
+
 
     const handleShopChange = (shopId: string) => {
         // Changer la boutique en visitant l'URL actuelle avec le paramètre shop
@@ -109,94 +177,114 @@ export default function Authenticated({
         return () => window.removeEventListener('mousedown', onClickOutside);
     }, []);
 
-    const navItems = [
+    const allNavItems = [
         {
             label: 'Dashboard',
-            href: route('dashboard'),
+            href: buildRoute('dashboard'),
             active: route().current('dashboard'),
             icon: LayoutDashboard,
+            module: 'dashboard', // Restreint aux admins
         },
         {
             label: 'Boutiques',
-            href: route('shops.index'),
+            href: buildRoute('shops.index'),
             active: route().current('shops.*'),
             icon: Store,
+            module: 'shops',
         },
         {
             label: 'Produits',
-            href: route('products.index'),
+            href: buildRoute('products.index'),
             active: route().current('products.*'),
             icon: Box,
+            module: 'products',
         },
         {
             label: 'Categories',
-            href: route('categories.index'),
+            href: buildRoute('categories.index'),
             active: route().current('categories.*'),
             icon: Folder,
+            module: 'categories',
         },
         {
             label: 'Sous categorie',
-            href: route('subcategories.index'),
+            href: buildRoute('subcategories.index'),
             active: route().current('subcategories.*'),
             icon: FolderTree,
+            module: 'categories',
         },
         {
             label: 'Stocks',
-            href: route('stocks.index'),
+            href: buildRoute('stocks.index'),
             active: route().current('stocks.*'),
             icon: Boxes,
+            module: 'stocks',
         },
         {
             label: 'Inventaire',
-            href: route('inventory.index'),
+            href: buildRoute('inventory.index'),
             active: route().current('inventory.*'),
             icon: ClipboardList,
+            module: 'inventory',
         },
         {
             label: 'Ventes',
-            href: route('sales.index'),
+            href: buildRoute('sales.index'),
             active: route().current('sales.*'),
             icon: ShoppingCart,
+            module: 'sales',
         },
         {
             label: 'Fournisseurs',
-            href: route('suppliers.index'),
+            href: buildRoute('suppliers.index'),
             active: route().current('suppliers.*'),
             icon: Truck,
+            module: 'suppliers',
         },
         {
             label: 'Utilisateurs',
-            href: route('users.index'),
+            href: buildRoute('users.index'),
             active: route().current('users.*'),
             icon: Users,
+            module: 'users',
         },
         {
             label: 'Client',
-            href: route('customers.index'),
+            href: buildRoute('customers.index'),
             active: route().current('customers.*'),
             icon: User,
+            module: 'customers',
         },
         {
             label: 'Factures',
-            href: route('invoices.index'),
+            href: buildRoute('invoices.index'),
             active: route().current('invoices.*'),
             icon: FileText,
+            module: 'invoices',
         },
         {
-            label: 'Analitics',
-            href: route('analytics.index'),
+            label: 'Analytics',
+            href: buildRoute('analytics.index'),
             active: route().current('analytics.*'),
             icon: BarChart3,
+            module: 'analytics', // Restreint aux admins
         },
         ...(user
             ? [{
             label: 'Profil',
-            href: route('profile.edit'),
+            href: buildRoute('profile.edit'),
             active: route().current('profile.*'),
             icon: Settings,
+            module: null, // Toujours visible
         }]
             : []),
     ];
+
+    // Filtrer les menus selon les permissions
+    const navItems = allNavItems.filter(item => {
+        if (!item.module) return true; // Toujours afficher si pas de module
+        return canViewModule(item.module);
+    });
 
     return (
         <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -268,6 +356,7 @@ export default function Authenticated({
                     </div>
 
                     <div className="space-y-3 pt-4">
+                        {user?.role === 'super_admin' && (
                         <div className="rounded-xl border border-amber-300/40 bg-gradient-to-br from-amber-200/70 via-orange-200/40 to-transparent p-4 dark:border-amber-200/25 dark:from-amber-300/20 dark:via-orange-300/10">
                             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-100">
                                 <Crown className="size-4" />
@@ -284,12 +373,13 @@ export default function Authenticated({
                                     : 'Connectez-vous pour voir votre plan'}
                             </p>
                             <Link
-                                href={route('subscriptions.index')}
+                                href={buildRoute('subscriptions.index')}
                                 className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
                             >
                                 Upgrade
                             </Link>
                         </div>
+                        )}
 
                         
                     </div>
@@ -377,7 +467,7 @@ export default function Authenticated({
                                         ))}
                                         <hr className="my-1 border-slate-300 dark:border-white/10" />
                                         <Link
-                                            href={route('shops.index')}
+                                            href={buildRoute('shops.index')}
                                             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
                                             onClick={() => setShopMenuOpen(false)}
                                         >
@@ -410,14 +500,14 @@ export default function Authenticated({
                                         {user ? (
                                             <>
                                                 <Link
-                                                    href={route('profile.edit')}
+                                                    href={buildRoute('profile.edit')}
                                                     className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
                                                     Profil
                                                 </Link>
                                                 <Link
-                                                    href={route('settings.index')}
+                                                    href={buildRoute('settings.index')}
                                                     className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >

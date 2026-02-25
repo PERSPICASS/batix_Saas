@@ -50,13 +50,13 @@ class ShopController extends Controller
 
         Auth::user()->accessibleShopsQuery()->create($validated);
 
-        return redirect()->route('shops.index')->with('success', 'Boutique créée avec succès.');
+        return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique créée avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Shop $shop)
+    public function show(string $code_user, Shop $shop)
     {
         $this->authorize('view', $shop);
         
@@ -68,7 +68,7 @@ class ShopController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Shop $shop): Response
+    public function edit(string $code_user, Shop $shop): Response
     {
         $this->authorize('update', $shop);
         
@@ -80,7 +80,7 @@ class ShopController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Shop $shop)
+    public function update(Request $request, string $code_user, Shop $shop)
     {
         $this->authorize('update', $shop);
         
@@ -100,18 +100,18 @@ class ShopController extends Controller
 
         $shop->update($validated);
 
-        return redirect()->route('shops.index')->with('success', 'Boutique mise à jour avec succès.');
+        return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique mise à jour avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Shop $shop)
+    public function destroy(string $code_user, Shop $shop)
     {
         $this->authorize('delete', $shop);
         
         $shop->delete();
 
-        return redirect()->route('shops.index')->with('success', 'Boutique supprimée avec succès.');
+        return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique supprimée avec succès.');
     }
 }

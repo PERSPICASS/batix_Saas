@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState, useEffect } from 'react';
 import { Shield, Check } from 'lucide-react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -41,12 +42,16 @@ interface Props {
 }
 
 const MODULES = [
+    { key: 'shops', label: 'Boutiques' },
     { key: 'products', label: 'Produits' },
-    { key: 'customers', label: 'Clients' },
-    { key: 'invoices', label: 'Factures' },
-    { key: 'sales', label: 'Ventes' },
+    { key: 'categories', label: 'Catégories & Sous-catégories' },
     { key: 'stocks', label: 'Stocks' },
     { key: 'inventory', label: 'Inventaires' },
+    { key: 'sales', label: 'Ventes' },
+    { key: 'suppliers', label: 'Fournisseurs' },
+    { key: 'customers', label: 'Clients' },
+    { key: 'invoices', label: 'Factures' },
+    { key: 'users', label: 'Utilisateurs' },
     { key: 'reports', label: 'Rapports' },
 ];
 
@@ -59,6 +64,8 @@ const ROLES = [
 ];
 
 export default function UsersEdit({ user, shops }: Props) {
+    const route = useRoute();
+
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
@@ -117,7 +124,7 @@ export default function UsersEdit({ user, shops }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('users.update', user.id));
+        put(route('users.update', { user: user.id }));
     };
 
     return (

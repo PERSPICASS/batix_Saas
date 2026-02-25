@@ -3,6 +3,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Eye, Pencil, Trash2, ClipboardCheck } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
 interface Shop {
     id: number;
@@ -42,22 +44,47 @@ interface Props {
 }
 
 export default function InventoryIndex({ inventories, filters }: Props) {
+    const route = useRoute();
+
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; inventory: Inventory | null }>({ show: false, inventory: null });
+    const [completeModal, setCompleteModal] = useState<{ show: boolean; inventory: Inventory | null }>({ show: false, inventory: null });
+    const [processing, setProcessing] = useState(false);
 
     const handleSearch = () => {
         router.get(route('inventory.index'), { status: statusFilter }, { preserveState: true });
     };
 
     const handleDelete = (inventory: Inventory) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer l'inventaire ${inventory.inventory_number} ?`)) {
-            router.delete(route('inventory.destroy', inventory.id));
-        }
+        setDeleteModal({ show: true, inventory });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.inventory) return;
+        setProcessing(true);
+        router.delete(route('inventory.destroy', { inventory: deleteModal.inventory.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, inventory: null });
+                setProcessing(false);
+            },
+            onError: () => setProcessing(false),
+        });
     };
 
     const handleComplete = (inventory: Inventory) => {
-        if (confirm(`Terminer cet inventaire ? Les différences seront appliquées au stock.`)) {
-            router.post(route('inventory.complete', inventory.id));
-        }
+        setCompleteModal({ show: true, inventory });
+    };
+
+    const confirmComplete = () => {
+        if (!completeModal.inventory) return;
+        setProcessing(true);
+        router.post(route('inventory.complete', { inventory: completeModal.inventory.id }), {}, {
+            onSuccess: () => {
+                setCompleteModal({ show: false, inventory: null });
+                setProcessing(false);
+            },
+            onError: () => setProcessing(false),
+        });
     };
 
     const getStatusBadge = (status: string) => {
@@ -132,7 +159,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
             render: (inventory: Inventory) => (
                 <TableActions>
                     <Link
-                        href={route('inventory.show', inventory.id)}
+                        href={route('inventory.show', { inventory: inventory.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
                         <Eye className="size-3.5" /> Voir
@@ -140,7 +167,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                     {inventory.status !== 'completed' && (
                         <>
                             <Link
-                                href={route('inventory.edit', inventory.id)}
+                                href={route('inventory.edit', { inventory: inventory.id })}
                                 className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                             >
                                 <Pencil className="size-3.5" /> Modifier
@@ -212,6 +239,26 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                         ))}
                     </div>
                 )}
+
+                {/* Modal de suppression */}
+                <ConfirmDeleteModal
+                    show={deleteModal.show}
+                    onClose={() => setDeleteModal({ show: false, inventory: null })}
+                    onConfirm={confirmDelete}
+                    message={`Êtes-vous sûr de vouloir supprimer l'inventaire "${deleteModal.inventory?.inventory_number}" ?`}
+                    processing={processing}
+                />
+
+                {/* Modal de confirmation pour terminer l'inventaire */}
+                <ConfirmDeleteModal
+                    show={completeModal.show}
+                    onClose={() => setCompleteModal({ show: false, inventory: null })}
+                    onConfirm={confirmComplete}
+                    title="Terminer l'inventaire"
+                    message={`Terminer l'inventaire "${completeModal.inventory?.inventory_number}" ? Les différences seront appliquées au stock.`}
+                    confirmText="Terminer"
+                    processing={processing}
+                />
             </section>
         </AuthenticatedLayout>
     );

@@ -12,29 +12,16 @@ class CategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 
+     * Les catégories sont globales (prédéfinies par la plateforme)
      */
     public function index(Request $request): Response
     {
-        $activeShopId = get_active_shop_id();
-        $shopId = $request->input('shop_id');
-        
-        $query = Category::with('subcategories')
+        // Les catégories sont globales - pas de filtre par boutique
+        $categories = Category::with('subcategories')
             ->orderBy('order')
-            ->orderBy('name');
-
-        // Filtrer par boutique active si sélectionnée
-        if ($activeShopId) {
-            $query->where('shop_id', $activeShopId);
-        } elseif ($shopId) {
-            $query->where('shop_id', $shopId);
-        } else {
-            // Si aucune boutique n'est sélectionnée, afficher les catégories de toutes les boutiques de l'utilisateur
-            $query->whereHas('shop', function ($q) {
-                $q->where('user_id', Auth::id());
-            });
-        }
-
-        $categories = $query->get();
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('Categories/Index', [
             'categories' => $categories,
@@ -44,6 +31,8 @@ class CategoryController extends Controller
 
     /**
      * Show the form for creating a new resource.
+     * 
+     * Note: La création de catégories pourrait être réservée aux admins
      */
     public function create(): Response
     {
@@ -71,13 +60,13 @@ class CategoryController extends Controller
         
         $shop->categories()->create($validated);
 
-        return redirect()->route('categories.index')->with('success', 'Catégorie créée avec succès.');
+        return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie créée avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Category $category)
+    public function show(string $code_user, Category $category)
     {
         $this->authorize('view', $category);
         
@@ -91,7 +80,7 @@ class CategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Category $category): Response
+    public function edit(string $code_user, Category $category): Response
     {
         $this->authorize('update', $category);
         
@@ -104,7 +93,7 @@ class CategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Category $category)
+    public function update(Request $request, string $code_user, Category $category)
     {
         $this->authorize('update', $category);
         
@@ -119,18 +108,18 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return redirect()->route('categories.index')->with('success', 'Catégorie mise à jour avec succès.');
+        return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie mise à jour avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Category $category)
+    public function destroy(string $code_user, Category $category)
     {
         $this->authorize('delete', $category);
         
         $category->delete();
 
-        return redirect()->route('categories.index')->with('success', 'Catégorie supprimée avec succès.');
+        return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie supprimée avec succès.');
     }
 }

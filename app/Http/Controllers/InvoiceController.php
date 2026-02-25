@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,7 +24,11 @@ class InvoiceController extends Controller
         $status = $request->input('status');
         $search = $request->input('search');
         
+        $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
+        
         $query = Invoice::with(['shop', 'customer', 'user'])
+            ->whereIn('shop_id', $shopIds)
             ->orderBy('invoice_date', 'desc');
 
         // Filtrer par boutique active si sélectionnée
@@ -31,11 +36,6 @@ class InvoiceController extends Controller
             $query->where('shop_id', $activeShopId);
         } elseif ($shopId) {
             $query->where('shop_id', $shopId);
-        } else {
-            // Afficher les factures de toutes les boutiques de l'utilisateur
-            $query->whereHas('shop', function ($q) {
-                $q->where('user_id', Auth::id());
-            });
         }
 
         if ($status) {
@@ -55,7 +55,7 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,
-            'shops' => Auth::user()->accessibleShops(),
+            'shops' => $shops,
             'filters' => $request->only(['shop_id', 'status', 'search']),
         ]);
     }
@@ -66,14 +66,15 @@ class InvoiceController extends Controller
     public function create(): Response
     {
         $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
         
-        $customers = Customer::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
+        $customers = Customer::whereIn('shop_id', $shopIds)
+            ->with('shop')
+            ->get();
         
-        $products = Product::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with(['shop', 'category'])->get();
+        $products = Product::whereIn('shop_id', $shopIds)
+            ->with(['shop', 'category'])
+            ->get();
 
         return Inertia::render('Invoices/Create', [
             'shops' => $shops,
@@ -89,7 +90,12 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where(function ($query) use ($request) {
+                    $query->where('shop_id', $request->input('shop_id'));
+                }),
+            ],
             'invoice_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:invoice_date',
             'status' => 'required|in:draft,sent,paid,cancelled',
@@ -124,13 +130,13 @@ class InvoiceController extends Controller
             // Le calcul des totaux se fait automatiquement via les observers
         });
 
-        return redirect()->route('invoices.index')->with('success', 'Facture créée avec succès.');
+        return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture créée avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Invoice $invoice)
+    public function show(string $code_user, Invoice $invoice)
     {
         $invoice->load(['shop', 'customer', 'user', 'items.product']);
         
@@ -142,7 +148,7 @@ class InvoiceController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Invoice $invoice): Response
+    public function edit(string $code_user, Invoice $invoice): Response
     {
         // Ne pas permettre la modification des factures payées
         if ($invoice->status === 'paid') {
@@ -151,14 +157,15 @@ class InvoiceController extends Controller
         }
         
         $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
         
-        $customers = Customer::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
+        $customers = Customer::whereIn('shop_id', $shopIds)
+            ->with('shop')
+            ->get();
         
-        $products = Product::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with(['shop', 'category'])->get();
+        $products = Product::whereIn('shop_id', $shopIds)
+            ->with(['shop', 'category'])
+            ->get();
         
         $invoice->load('items');
         
@@ -173,7 +180,7 @@ class InvoiceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Invoice $invoice)
+    public function update(Request $request, string $code_user, Invoice $invoice)
     {
         // Ne pas permettre la modification des factures payées
         if ($invoice->status === 'paid') {
@@ -183,7 +190,12 @@ class InvoiceController extends Controller
         
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where(function ($query) use ($request) {
+                    $query->where('shop_id', $request->input('shop_id'));
+                }),
+            ],
             'invoice_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:invoice_date',
             'status' => 'required|in:draft,sent,paid,cancelled',
@@ -219,17 +231,17 @@ class InvoiceController extends Controller
             // Le calcul des totaux se fait automatiquement via les observers
         });
 
-        return redirect()->route('invoices.index')->with('success', 'Facture modifiée avec succès.');
+        return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture modifiée avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Invoice $invoice)
+    public function destroy(string $code_user, Invoice $invoice)
     {
         // Ne pas permettre la suppression des factures payées
         if ($invoice->status === 'paid') {
-            return redirect()->route('invoices.index')
+            return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])
                 ->with('error', 'Impossible de supprimer une facture payée.');
         }
         
@@ -240,6 +252,6 @@ class InvoiceController extends Controller
 
         $invoice->delete();
 
-        return redirect()->route('invoices.index')->with('success', 'Facture supprimée avec succès.');
+        return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture supprimée avec succès.');
     }
 }

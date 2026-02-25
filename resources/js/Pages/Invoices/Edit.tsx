@@ -2,6 +2,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import { Calculator, FilePenLine, Plus, Trash2 } from 'lucide-react';
+import { useRoute } from '@/utils/route';
+import Currency, { useShopSettings } from '@/Components/Currency';
 
 interface Customer {
     id: number;
@@ -38,6 +40,7 @@ interface Invoice {
     due_date: string;
     status: string;
     payment_method: string | null;
+    discount_amount: number | string;
     notes: string | null;
     items: InvoiceItem[];
 }
@@ -50,6 +53,9 @@ interface Props {
 }
 
 export default function InvoicesEdit({ invoice, customers, shops, products }: Props) {
+    const route = useRoute();
+    const { currencySymbol } = useShopSettings();
+
     const [items, setItems] = useState<InvoiceItem[]>(
         invoice.items.map((item) => ({
             id: item.id,
@@ -69,6 +75,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         due_date: invoice.due_date,
         status: invoice.status,
         payment_method: invoice.payment_method || '',
+        discount_amount: invoice.discount_amount || 0,
         notes: invoice.notes || '',
         items: items,
     });
@@ -90,7 +97,8 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         }, 0);
     }, [items]);
 
-    const total = subtotal + totalTax;
+    const discountAmount = Math.max(Number(data.discount_amount) || 0, 0);
+    const total = Math.max(subtotal + totalTax - discountAmount, 0);
 
     const addItem = () => {
         const newItem: InvoiceItem = {
@@ -136,7 +144,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         e.preventDefault();
         // Set items in data before submitting
         data.items = items;
-        put(route('invoices.update', invoice.id));
+        put(route('invoices.update', { invoice: invoice.id }));
     };
 
     return (
@@ -264,6 +272,22 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                 />
                                 {errors.due_date && <p className="mt-1 text-sm text-red-400">{errors.due_date}</p>}
                             </div>
+
+                            <div>
+                                <label htmlFor="discount_amount" className="block text-sm font-medium text-slate-200">
+                                    Remise facture
+                                </label>
+                                <input
+                                    type="number"
+                                    id="discount_amount"
+                                    min="0"
+                                    step="0.01"
+                                    value={data.discount_amount}
+                                    onChange={(e) => setData('discount_amount', Math.max(Number(e.target.value) || 0, 0))}
+                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                />
+                                {errors.discount_amount && <p className="mt-1 text-sm text-red-400">{errors.discount_amount}</p>}
+                            </div>
                         </div>
                     </div>
 
@@ -312,7 +336,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                         </div>
 
                                         <div className="md:col-span-2 space-y-1">
-                                            <label className="text-xs text-slate-300">Prix U. (DH)</label>
+                                            <label className="text-xs text-slate-300">Prix U. ({currencySymbol})</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
@@ -389,32 +413,26 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                         <div className="flex justify-between">
                             <span>Sous-total HT</span>
                             <span>
-                                {subtotal.toLocaleString('fr-FR', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}{' '}
-                                DH
+                                <Currency amount={subtotal} />
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span>TVA</span>
                             <span>
-                                {totalTax.toLocaleString('fr-FR', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}{' '}
-                                DH
+                                <Currency amount={totalTax} />
+                            </span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Remise</span>
+                            <span className="text-red-300">
+                                -<Currency amount={discountAmount} />
                             </span>
                         </div>
                         <div className="mt-3 border-t border-white/15 pt-3 text-base font-semibold text-white">
                             <div className="flex justify-between">
                                 <span>Total TTC</span>
                                 <span className="text-amber-300">
-                                    {total.toLocaleString('fr-FR', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}{' '}
-                                    DH
+                                    <Currency amount={total} />
                                 </span>
                             </div>
                         </div>

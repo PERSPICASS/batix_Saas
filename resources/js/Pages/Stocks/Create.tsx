@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -21,6 +22,8 @@ interface Props {
 }
 
 export default function StocksCreate({ shops, products }: Props) {
+    const route = useRoute();
+
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
     

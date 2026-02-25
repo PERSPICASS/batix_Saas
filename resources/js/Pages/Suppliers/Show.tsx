@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { Building2, Mail, Phone, MapPin, Globe, FileText, Package, ArrowLeft, Pencil } from 'lucide-react';
 import Currency from '@/Components/Currency';
+import { useRoute } from '@/utils/route';
 
 interface Product {
     id: number;
@@ -35,13 +36,15 @@ interface Props {
 }
 
 export default function SuppliersShow({ supplier }: Props) {
+    const route = useRoute();
+
     return (
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
                     <h1 className="text-xl font-semibold text-white">Détails du fournisseur</h1>
                     <Link
-                        href={route('suppliers.edit', supplier.id)}
+                        href={route('suppliers.edit', { supplier: supplier.id })}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                     >
                         <Pencil className="size-4" /> Modifier

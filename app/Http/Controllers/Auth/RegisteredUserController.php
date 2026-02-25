@@ -64,8 +64,8 @@ class RegisteredUserController extends Controller
         // Associer l'utilisateur à la boutique créée
         $user->update(['shop_id' => $shop->id]);
 
-        // Donner toutes les permissions sur tous les modules
-        $modules = ['products', 'customers', 'invoices', 'sales', 'stocks', 'inventory', 'reports'];
+        // Donner toutes les permissions sur tous les modules au super_admin
+        $modules = ['shops', 'products', 'categories', 'stocks', 'inventory', 'sales', 'suppliers', 'customers', 'invoices', 'users', 'reports'];
         foreach ($modules as $module) {
             $user->permissions()->create([
                 'module' => $module,
@@ -80,6 +80,10 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Définir la boutique active en session
+        session(['active_shop_id' => $shop->id]);
+
+        // Rediriger vers /{code_user}/dashboard
+        return redirect()->route('dashboard', ['code_user' => $user->code_user]);
     }
 }

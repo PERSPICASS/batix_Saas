@@ -23,9 +23,13 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'code_user',
         'shop_id',
         'role',
         'is_active',
+        'invitation_token',
+        'invitation_sent_at',
+        'invitation_accepted_at',
     ];
 
     /**
@@ -49,7 +53,53 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'invitation_sent_at' => 'datetime',
+            'invitation_accepted_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($user) {
+            if (empty($user->code_user)) {
+                $user->code_user = self::generateUniqueCode();
+            }
+        });
+    }
+
+    /**
+     * Generate a unique code for the user.
+     */
+    public static function generateUniqueCode(): string
+    {
+        do {
+            // Générer un code de 10 caractères (lettres majuscules et chiffres)
+            $code = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 10));
+        } while (self::where('code_user', $code)->exists());
+
+        return $code;
+    }
+
+    /**
+     * Get the dashboard URL for this user with a shop.
+     */
+    public function getDashboardUrl(?Shop $shop = null): string
+    {
+        $shop = $shop ?? $this->shops()->first();
+        
+        if ($shop) {
+            return route('dashboard.user', [
+                'code_user' => $this->code_user,
+                'shop_slug' => $shop->slug
+            ]);
+        }
+        
+        return route('dashboard');
     }
 
     /**
@@ -151,14 +201,109 @@ class User extends Authenticatable
     /**
      * Get query builder for accessible shops.
      * Used for finding/validating shop ownership.
+     * 
+     * - Super_admin: toutes les boutiques qu'il possède
+     * - Manager/Employee: uniquement sa boutique assignée
      */
     public function accessibleShopsQuery()
     {
         if ($this->role === 'super_admin') {
+            // Super admin voit toutes ses boutiques
             return $this->shops();
         }
         
-        // For non-super-admin, return a query that only matches their shop
-        return Shop::where('id', $this->shop_id);
+        // Pour manager/employee: uniquement sa boutique assignée
+        if ($this->shop_id) {
+            return Shop::where('id', $this->shop_id);
+        }
+        
+        // Fallback: aucune boutique accessible
+        return Shop::where('id', 0);
+    }
+
+    /**
+     * Generate a unique invitation token for the user
+     */
+    public function generateInvitationToken(): string
+    {
+        $this->invitation_token = bin2hex(random_bytes(32));
+        $this->invitation_sent_at = now();
+        $this->save();
+
+        return $this->invitation_token;
+    }
+
+    /**
+     * Get the invitation URL for this user
+     */
+    public function getInvitationUrl(): string
+    {
+        if (!$this->invitation_token) {
+            $this->generateInvitationToken();
+        }
+
+        return url("/invitation/{$this->invitation_token}");
+    }
+
+    /**
+     * Check if the invitation is still valid
+     */
+    public function isInvitationValid(): bool
+    {
+        if (!$this->invitation_token) {
+            return false;
+        }
+
+        // Si déjà acceptée, invalide
+        if ($this->invitation_accepted_at) {
+            return false;
+        }
+
+        // Vérifier si l'invitation n'est pas expirée (30 jours par défaut)
+        $expirationDays = config('auth.invitation_expiration_days', 30);
+        
+        if ($this->invitation_sent_at && $this->invitation_sent_at->addDays($expirationDays)->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Accept the invitation
+     */
+    public function acceptInvitation(): void
+    {
+        $this->invitation_accepted_at = now();
+        $this->save();
+    }
+
+    /**
+     * Regenerate invitation token (useful if expired)
+     */
+    public function regenerateInvitationToken(): string
+    {
+        $this->invitation_accepted_at = null;
+        return $this->generateInvitationToken();
+    }
+
+    /**
+     * Get invitation status
+     */
+    public function getInvitationStatus(): string
+    {
+        if (!$this->invitation_token) {
+            return 'not_sent';
+        }
+
+        if ($this->invitation_accepted_at) {
+            return 'accepted';
+        }
+
+        if (!$this->isInvitationValid()) {
+            return 'expired';
+        }
+
+        return 'pending';
     }
 }

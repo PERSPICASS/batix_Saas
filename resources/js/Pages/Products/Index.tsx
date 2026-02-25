@@ -1,21 +1,37 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Pencil, Plus, Trash2, AlertTriangle, Search, Filter, Upload, Download, FileSpreadsheet, X, Layers } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import Currency from '@/Components/Currency';
+import { useRoute } from '@/utils/route';
+import { useState, useRef, FormEvent } from 'react';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+
+interface Category {
+    id: number;
+    name: string;
+}
+
+interface Shop {
+    id: number;
+    name: string;
+    slug: string;
+}
 
 interface Product {
     id: number;
     name: string;
     sku: string | null;
     barcode: string | null;
+    brand: string | null;
     selling_price: number;
     purchase_price: number;
     stock_quantity: number;
     min_stock_alert: number | null;
     is_active: boolean;
     track_stock: boolean;
+    has_variations: boolean;
     category: {
         id: number;
         name: string;
@@ -38,11 +54,48 @@ interface PaginatedProducts {
     total: number;
 }
 
-export default function ProductsIndex({ products }: PageProps<{ products: PaginatedProducts }>) {
-    const handleDelete = (id: number) => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
-            router.delete(route('products.destroy', id));
-        }
+interface Filters {
+    search?: string;
+    category_id?: string;
+    shop_id?: string;
+    status?: string;
+}
+
+interface Props extends PageProps {
+    products: PaginatedProducts;
+    categories: Category[];
+    shops: Shop[];
+    filters: Filters;
+}
+
+export default function ProductsIndex({ products, categories = [], shops = [], filters = {} }: Props) {
+    const route = useRoute();
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [search, setSearch] = useState(filters.search || '');
+    const [categoryId, setCategoryId] = useState(filters.category_id || '');
+    const [status, setStatus] = useState(filters.status || '');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
+    const [deleting, setDeleting] = useState(false);
+
+    const { data, setData, post, processing, reset, errors } = useForm({
+        file: null as File | null,
+    });
+
+    const handleDelete = (product: Product) => {
+        setDeleteModal({ show: true, product });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.product) return;
+        setDeleting(true);
+        router.delete(route('products.destroy', { product: deleteModal.product.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, product: null });
+                setDeleting(false);
+            },
+            onError: () => setDeleting(false),
+        });
     };
 
     const isLowStock = (product: Product) => {
@@ -50,7 +103,83 @@ export default function ProductsIndex({ products }: PageProps<{ products: Pagina
         return product.stock_quantity <= product.min_stock_alert;
     };
 
+    const applyFilters = () => {
+        router.get(route('products.index'), {
+            search: search || undefined,
+            category_id: categoryId || undefined,
+            status: status || undefined,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setCategoryId('');
+        setStatus('');
+        router.get(route('products.index'), {}, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleSearchSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        applyFilters();
+    };
+
+    const handleImport = (e: FormEvent) => {
+        e.preventDefault();
+        if (!data.file) return;
+
+        post(route('products.import'), {
+            forceFormData: true,
+            onSuccess: () => {
+                setShowImportModal(false);
+                reset();
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                }
+            },
+        });
+    };
+
+    const hasActiveFilters = search || categoryId || status;
+
     const columns = [
+        {
+            key: 'barcode',
+            label: 'Code-barres',
+            render: (product: Product) => (
+                product.barcode ? (
+                    <div className="flex flex-col items-center gap-0.5">
+                        <div className="flex w-full h-6 justify-center">
+                            {product.barcode.split('').map((digit, i) => {
+                                const d = parseInt(digit);
+                                return (
+                                    <div key={i} className="flex h-full">
+                                        <div
+                                            className="h-full bg-slate-700"
+                                            style={{ width: d % 2 === 0 ? '1px' : '2px' }}
+                                        />
+                                        <div
+                                            className="h-full"
+                                            style={{ width: d % 3 === 0 ? '2px' : '1px' }}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <span className="font-mono text-[10px] text-slate-500 tracking-wider">
+                            {product.barcode}
+                        </span>
+                    </div>
+                ) : (
+                    <span className="text-slate-500">-</span>
+                )
+            ),
+        },
         {
             key: 'name',
             label: 'Nom',
@@ -64,11 +193,6 @@ export default function ProductsIndex({ products }: PageProps<{ products: Pagina
                     <span>{product.name}</span>
                 </div>
             ),
-        },
-        {
-            key: 'sku',
-            label: 'SKU',
-            render: (product: Product) => product.sku || '-',
         },
         {
             key: 'category',
@@ -107,14 +231,19 @@ export default function ProductsIndex({ products }: PageProps<{ products: Pagina
             align: 'right' as const,
             render: (product: Product) => (
                 <TableActions>
-                    <Link href={route('products.edit', product.id)}>
+                    <Link href={route('products.variations.index', { product: product.id })}>
+                        <TableActionButton>
+                            <Layers className="size-3.5" /> Déclinaisons
+                        </TableActionButton>
+                    </Link>
+                    <Link href={route('products.edit', { product: product.id })}>
                         <TableActionButton>
                             <Pencil className="size-3.5" /> Modifier
                         </TableActionButton>
                     </Link>
                     <TableActionButton
                         variant="danger"
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => handleDelete(product)}
                     >
                         <Trash2 className="size-3.5" /> Supprimer
                     </TableActionButton>
@@ -130,23 +259,141 @@ export default function ProductsIndex({ products }: PageProps<{ products: Pagina
             <Head title="Produits" />
 
             <section className="space-y-4">
-                <div className="flex items-center justify-between">
+                {/* Barre d'actions */}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-slate-300">
                         Gérez votre catalogue de produits.
                     </p>
-                    <Link
-                        href={route('products.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
-                    >
-                        <Plus className="size-4" />
-                        Nouveau produit
-                    </Link>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* Bouton Import/Export */}
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setShowImportModal(true)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+                            >
+                                <Upload className="size-4" />
+                                Importer
+                            </button>
+                            <a
+                                href={route('products.export')}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+                            >
+                                <Download className="size-4" />
+                                Exporter
+                            </a>
+                        </div>
+                        
+                        {/* Bouton Nouveau */}
+                        <Link
+                            href={route('products.create')}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
+                        >
+                            <Plus className="size-4" />
+                            Nouveau produit
+                        </Link>
+                    </div>
                 </div>
 
+                {/* Barre de recherche et filtres */}
+                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                    <form onSubmit={handleSearchSubmit} className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        {/* Recherche */}
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Rechercher par nom, SKU ou code-barres..."
+                                className="w-full rounded-lg border border-white/15 bg-white/5 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                            />
+                        </div>
+
+                        {/* Filtre catégorie */}
+                        <select
+                            value={categoryId}
+                            onChange={(e) => setCategoryId(e.target.value)}
+                            className="rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-sm text-white focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                        >
+                            <option value="">Toutes les catégories</option>
+                            {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        {/* Filtre statut */}
+                        <select
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                            className="rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-sm text-white focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                        >
+                            <option value="">Tous les statuts</option>
+                            <option value="active">Actifs</option>
+                            <option value="inactive">Inactifs</option>
+                            <option value="low_stock">Stock faible</option>
+                        </select>
+
+                        {/* Boutons */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="submit"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-300/20 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-300/30"
+                            >
+                                <Filter className="size-4" />
+                                Filtrer
+                            </button>
+                            {hasActiveFilters && (
+                                <button
+                                    type="button"
+                                    onClick={clearFilters}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+                                >
+                                    <X className="size-4" />
+                                    Effacer
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                </div>
+
+                {/* Indicateur filtres actifs */}
+                {hasActiveFilters && (
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span className="text-slate-400">Filtres actifs :</span>
+                        {search && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
+                                Recherche: "{search}"
+                                <button onClick={() => { setSearch(''); applyFilters(); }}>
+                                    <X className="size-3" />
+                                </button>
+                            </span>
+                        )}
+                        {categoryId && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
+                                {categories.find(c => c.id.toString() === categoryId)?.name}
+                                <button onClick={() => { setCategoryId(''); applyFilters(); }}>
+                                    <X className="size-3" />
+                                </button>
+                            </span>
+                        )}
+                        {status && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
+                                {status === 'active' ? 'Actifs' : status === 'inactive' ? 'Inactifs' : 'Stock faible'}
+                                <button onClick={() => { setStatus(''); applyFilters(); }}>
+                                    <X className="size-3" />
+                                </button>
+                            </span>
+                        )}
+                    </div>
+                )}
+
+                {/* Table */}
                 <Table
                     columns={columns}
                     data={products.data}
-                    emptyMessage="Aucun produit. Créez-en un pour commencer."
+                    emptyMessage="Aucun produit trouvé. Créez-en un pour commencer."
                 />
 
                 {/* Pagination */}
@@ -158,7 +405,12 @@ export default function ProductsIndex({ products }: PageProps<{ products: Pagina
                         <div className="flex gap-2">
                             {products.current_page > 1 && (
                                 <Link
-                                    href={route('products.index', { page: products.current_page - 1 })}
+                                    href={route('products.index', { 
+                                        page: products.current_page - 1,
+                                        search: search || undefined,
+                                        category_id: categoryId || undefined,
+                                        status: status || undefined,
+                                    })}
                                     className="rounded-lg border border-white/15 px-3 py-1.5 hover:bg-white/10"
                                 >
                                     Précédent
@@ -166,7 +418,12 @@ export default function ProductsIndex({ products }: PageProps<{ products: Pagina
                             )}
                             {products.current_page < products.last_page && (
                                 <Link
-                                    href={route('products.index', { page: products.current_page + 1 })}
+                                    href={route('products.index', { 
+                                        page: products.current_page + 1,
+                                        search: search || undefined,
+                                        category_id: categoryId || undefined,
+                                        status: status || undefined,
+                                    })}
                                     className="rounded-lg border border-white/15 px-3 py-1.5 hover:bg-white/10"
                                 >
                                     Suivant
@@ -176,6 +433,91 @@ export default function ProductsIndex({ products }: PageProps<{ products: Pagina
                     </div>
                 )}
             </section>
+
+            {/* Modal Import */}
+            {showImportModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+                    <div className="w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-6">
+                        <div className="mb-6 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-white">Importer des produits</h2>
+                            <button
+                                onClick={() => setShowImportModal(false)}
+                                className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleImport} className="space-y-6">
+                            {/* Instructions */}
+                            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                                <h3 className="mb-2 flex items-center gap-2 font-medium text-white">
+                                    <FileSpreadsheet className="size-5 text-amber-300" />
+                                    Instructions
+                                </h3>
+                                <ul className="space-y-1 text-sm text-slate-300">
+                                    <li>• Téléchargez d'abord le modèle Excel</li>
+                                    <li>• Remplissez vos produits en suivant le format</li>
+                                    <li>• Les colonnes obligatoires sont : Nom et Prix de vente</li>
+                                    <li>• Les produits existants (même SKU/code-barres) seront mis à jour</li>
+                                </ul>
+                                <a
+                                    href={route('products.template')}
+                                    className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-amber-300 hover:text-amber-200"
+                                >
+                                    <Download className="size-4" />
+                                    Télécharger le modèle Excel
+                                </a>
+                            </div>
+
+                            {/* Upload */}
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-slate-300">
+                                    Fichier Excel (.xlsx, .xls, .csv)
+                                </label>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".xlsx,.xls,.csv"
+                                    onChange={(e) => setData('file', e.target.files?.[0] || null)}
+                                    className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950 hover:file:bg-amber-200"
+                                />
+                                {errors.file && (
+                                    <p className="mt-1 text-sm text-red-400">{errors.file}</p>
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex items-center justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowImportModal(false)}
+                                    className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-300 hover:bg-white/10"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!data.file || processing}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
+                                >
+                                    <Upload className="size-4" />
+                                    {processing ? 'Importation...' : 'Importer'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de suppression */}
+            <ConfirmDeleteModal
+                show={deleteModal.show}
+                onClose={() => setDeleteModal({ show: false, product: null })}
+                onConfirm={confirmDelete}
+                message={`Êtes-vous sûr de vouloir supprimer le produit "${deleteModal.product?.name}" ?`}
+                processing={deleting}
+            />
         </AuthenticatedLayout>
     );
 }

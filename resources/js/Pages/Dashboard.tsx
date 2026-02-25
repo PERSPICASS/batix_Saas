@@ -1,58 +1,130 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
-import { AlertTriangle, ArrowUpRight, Package, Store, Wallet } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Calendar, Package, ShoppingCart, Store, TrendingUp, Wallet } from 'lucide-react';
 
-const kpis = [
-    {
-        label: 'CA du jour',
-        value: '14 280€',
-        trend: '+12.4%',
-        icon: Wallet,
-    },
-    {
-        label: 'Boutiques actives',
-        value: '5 / 5',
-        trend: 'Plan Growth',
-        icon: Store,
-    },
-    {
-        label: 'Produits en stock',
-        value: '8 412',
-        trend: '+231',
-        icon: Package,
-    },
-    {
-        label: 'Alertes critiques',
-        value: '12',
-        trend: 'A traiter',
-        icon: AlertTriangle,
-    },
+interface PerformanceItem {
+    label: string;
+    shortLabel: string;
+    total: number;
+    percentage: number;
+}
+
+interface DashboardProps {
+    stats: {
+        todaySales: number;
+        salesTrend: number;
+        activeShops: number;
+        totalShops: number;
+        productsInStock: number;
+        newProductsThisWeek: number;
+        lowStockAlerts: number;
+    };
+    performanceData: {
+        items: PerformanceItem[];
+        total: number;
+        periodLabel: string;
+    };
+    currentPeriod: string;
+    recentActivities: Array<{
+        type: string;
+        title: string;
+        description: string;
+        shop: string;
+        time: string;
+    }>;
+    currencySymbol: string;
+}
+
+const periods = [
+    { value: 'day', label: 'Jour', shortLabel: '24h' },
+    { value: 'week', label: 'Semaine', shortLabel: '7j' },
+    { value: 'month', label: 'Mois', shortLabel: '4sem' },
+    { value: 'quarter', label: 'Trimestre', shortLabel: '3m' },
+    { value: 'semester', label: 'Semestre', shortLabel: '6m' },
+    { value: 'year', label: 'Année', shortLabel: '12m' },
 ];
 
-const recentEvents = [
-    {
-        title: 'Rupture imminente',
-        description: 'Vis 6x80 - Boutique Batix Central',
-        time: 'Il y a 8 min',
-    },
-    {
-        title: 'Nouvelle vente comptoir',
-        description: 'Ticket #Q-19482 - 325€',
-        time: 'Il y a 14 min',
-    },
-    {
-        title: 'Transfert de stock valide',
-        description: 'Batix Nord vers Batix Central',
-        time: 'Il y a 31 min',
-    },
-    {
-        title: 'Nouvel utilisateur ajoute',
-        description: 'Amina K. - Role: Caissier',
-        time: 'Il y a 55 min',
-    },
-];
+function formatNumber(value: number): string {
+    if (value >= 1000000) {
+        return (value / 1000000).toFixed(1).replace('.', ',') + 'M';
+    }
+    if (value >= 1000) {
+        return (value / 1000).toFixed(0) + 'k';
+    }
+    return value.toLocaleString('fr-FR');
+}
 
-export default function Dashboard() {
+function formatCurrency(value: number, symbol: string): string {
+    return formatNumber(value) + ' ' + symbol;
+}
+
+export default function Dashboard({ stats, performanceData, currentPeriod, recentActivities, currencySymbol }: DashboardProps) {
+    
+    const handlePeriodChange = (period: string) => {
+        router.get(window.location.pathname, { period }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const kpis = [
+        {
+            label: 'CA du jour',
+            value: formatCurrency(stats.todaySales, currencySymbol),
+            trend: stats.salesTrend,
+            trendLabel: stats.salesTrend >= 0 ? `+${stats.salesTrend}%` : `${stats.salesTrend}%`,
+            icon: Wallet,
+            positive: stats.salesTrend >= 0,
+        },
+        {
+            label: 'Boutiques actives',
+            value: `${stats.activeShops} / ${stats.totalShops}`,
+            trend: null,
+            trendLabel: 'En ligne',
+            icon: Store,
+            positive: true,
+        },
+        {
+            label: 'Produits en stock',
+            value: formatNumber(stats.productsInStock),
+            trend: stats.newProductsThisWeek,
+            trendLabel: `+${stats.newProductsThisWeek} cette semaine`,
+            icon: Package,
+            positive: true,
+        },
+        {
+            label: 'Alertes stock',
+            value: stats.lowStockAlerts.toString(),
+            trend: null,
+            trendLabel: stats.lowStockAlerts > 0 ? 'À traiter' : 'RAS',
+            icon: AlertTriangle,
+            positive: stats.lowStockAlerts === 0,
+        },
+    ];
+
+    const getActivityIcon = (type: string) => {
+        switch (type) {
+            case 'sale':
+                return <ShoppingCart className="size-4 text-emerald-400" />;
+            case 'low_stock':
+                return <AlertTriangle className="size-4 text-amber-400" />;
+            case 'stock_movement':
+                return <TrendingUp className="size-4 text-blue-400" />;
+            default:
+                return <Package className="size-4 text-slate-400" />;
+        }
+    };
+
+    // Adapter le nombre de colonnes selon le nombre d'items
+    const getGridCols = () => {
+        const count = performanceData.items.length;
+        if (count <= 4) return 'grid-cols-4';
+        if (count <= 6) return 'grid-cols-6';
+        if (count <= 7) return 'grid-cols-7';
+        if (count <= 12) return 'grid-cols-12';
+        return 'grid-cols-12'; // Pour 24h, on scrolle
+    };
+
     return (
         <AuthenticatedLayout
             header={<h1 className="text-xl font-semibold text-white">Dashboard</h1>}
@@ -68,14 +140,16 @@ export default function Dashboard() {
                         >
                             <div className="flex items-start justify-between">
                                 <p className="text-sm text-slate-300">{kpi.label}</p>
-                                <div className="rounded-lg bg-amber-300/15 p-2 text-amber-200">
+                                <div className={`rounded-lg p-2 ${kpi.positive ? 'bg-amber-300/15 text-amber-200' : 'bg-red-400/15 text-red-300'}`}>
                                     <kpi.icon className="size-4" />
                                 </div>
                             </div>
                             <p className="mt-3 text-3xl font-bold text-white">{kpi.value}</p>
-                            <p className="mt-1 inline-flex items-center gap-1 text-xs text-emerald-300">
-                                <ArrowUpRight className="size-3.5" />
-                                {kpi.trend}
+                            <p className={`mt-1 inline-flex items-center gap-1 text-xs ${kpi.positive ? 'text-emerald-300' : 'text-red-300'}`}>
+                                {kpi.trend !== null && (
+                                    kpi.positive ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />
+                                )}
+                                {kpi.trendLabel}
                             </p>
                         </article>
                     ))}
@@ -83,40 +157,106 @@ export default function Dashboard() {
 
                 <div className="grid gap-4 xl:grid-cols-3">
                     <article className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl xl:col-span-2">
-                        <h2 className="text-lg font-semibold text-white">Performance hebdomadaire</h2>
-                        <p className="mt-1 text-sm text-slate-300">
-                            Suivi des ventes sur les 7 derniers jours.
-                        </p>
-
-                        <div className="mt-6 grid grid-cols-7 gap-2">
-                            {[38, 52, 47, 68, 58, 75, 64].map((height, index) => (
-                                <div key={index} className="flex flex-col items-center gap-2">
-                                    <div className="flex h-40 w-full items-end rounded-lg bg-slate-900/60 p-1">
-                                        <div
-                                            className="w-full rounded-md bg-gradient-to-t from-amber-300 to-orange-300"
-                                            style={{ height: `${height}%` }}
-                                        />
-                                    </div>
-                                    <p className="text-xs text-slate-400">J{index + 1}</p>
-                                </div>
-                            ))}
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h2 className="text-lg font-semibold text-white">Performance</h2>
+                                <p className="mt-1 flex items-center gap-2 text-sm text-slate-300">
+                                    <Calendar className="size-4" />
+                                    {performanceData.periodLabel}
+                                </p>
+                            </div>
+                            
+                            {/* Sélecteur de période */}
+                            <div className="flex flex-wrap gap-1">
+                                {periods.map((period) => (
+                                    <button
+                                        key={period.value}
+                                        onClick={() => handlePeriodChange(period.value)}
+                                        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                                            currentPeriod === period.value
+                                                ? 'bg-amber-300 text-slate-900'
+                                                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <span className="hidden sm:inline">{period.label}</span>
+                                        <span className="sm:hidden">{period.shortLabel}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
+
+                        <div className={`mt-6 ${currentPeriod === 'day' ? 'overflow-x-auto' : ''}`}>
+                            <div className={`grid gap-1 ${currentPeriod === 'day' ? 'min-w-[800px] grid-cols-12' : getGridCols()}`}>
+                                {performanceData.items.map((item, index) => (
+                                    <div key={index} className="flex flex-col items-center gap-2">
+                                        <div className="flex h-32 w-full items-end rounded-lg bg-slate-900/60 p-1">
+                                            <div
+                                                className="w-full rounded-md bg-gradient-to-t from-amber-300 to-orange-300 transition-all duration-300"
+                                                style={{ height: `${Math.max(item.percentage, 5)}%` }}
+                                                title={`${formatCurrency(item.total, currencySymbol)}`}
+                                            />
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[10px] font-medium text-slate-300 truncate max-w-[60px]">
+                                                {item.shortLabel}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Afficher les 12 dernières heures pour "day" */}
+                            {currentPeriod === 'day' && (
+                                <p className="mt-2 text-xs text-slate-500 text-center">
+                                    Faites défiler pour voir les 24 heures
+                                </p>
+                            )}
+                        </div>
+                        
+                        {performanceData.items.length > 0 && (
+                            <div className="mt-4 flex items-center justify-between text-sm border-t border-white/10 pt-4">
+                                <span className="text-slate-400">Total période:</span>
+                                <span className="font-semibold text-white text-lg">
+                                    {formatCurrency(performanceData.total, currencySymbol)}
+                                </span>
+                            </div>
+                        )}
                     </article>
 
                     <article className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="text-lg font-semibold text-white">Activite recente</h2>
-                        <ul className="mt-4 space-y-3">
-                            {recentEvents.map((event) => (
-                                <li
-                                    key={event.title + event.time}
-                                    className="rounded-xl border border-white/10 bg-slate-900/70 p-3"
-                                >
-                                    <p className="text-sm font-medium text-white">{event.title}</p>
-                                    <p className="mt-1 text-xs text-slate-300">{event.description}</p>
-                                    <p className="mt-2 text-[11px] text-slate-400">{event.time}</p>
-                                </li>
-                            ))}
-                        </ul>
+                        <h2 className="text-lg font-semibold text-white">Activité récente</h2>
+                        {recentActivities.length === 0 ? (
+                            <div className="mt-4 flex flex-col items-center justify-center py-8 text-center">
+                                <Package className="size-12 text-slate-600" />
+                                <p className="mt-2 text-sm text-slate-400">Aucune activité récente</p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Les ventes et mouvements de stock apparaîtront ici
+                                </p>
+                            </div>
+                        ) : (
+                            <ul className="mt-4 space-y-3">
+                                {recentActivities.map((event, index) => (
+                                    <li
+                                        key={index}
+                                        className="rounded-xl border border-white/10 bg-slate-900/70 p-3"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5">
+                                                {getActivityIcon(event.type)}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-white">{event.title}</p>
+                                                <p className="mt-1 text-xs text-slate-300 truncate">{event.description}</p>
+                                                {event.shop && (
+                                                    <p className="mt-1 text-[11px] text-slate-500">{event.shop}</p>
+                                                )}
+                                                <p className="mt-1 text-[11px] text-slate-400">{event.time}</p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </article>
                 </div>
             </section>

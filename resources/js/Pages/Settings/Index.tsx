@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { useRoute } from '@/utils/route';
 import { 
     Store, 
     MapPin, 
@@ -47,6 +48,8 @@ interface Props {
 }
 
 export default function Settings({ shop, currencies, countries, error }: Props) {
+    const route = useRoute();
+
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
         name: shop?.name || '',
         description: shop?.description || '',

@@ -14,13 +14,8 @@ if (!function_exists('get_shop_settings')) {
             return null;
         }
 
-        // Pour super_admin, récupérer la première boutique
-        if ($user->role === 'super_admin') {
-            return $user->shops()->first();
-        }
-
-        // Pour les autres utilisateurs, utiliser la boutique associée
-        return $user->shop;
+        // Utiliser accessibleShopsQuery pour tous les rôles
+        return $user->accessibleShopsQuery()->first();
     }
 }
 
@@ -106,7 +101,7 @@ if (!function_exists('get_active_shop')) {
             return null;
         }
         
-        return auth()->user()->accessibleShops()->find($shopId);
+        return auth()->user()->accessibleShopsQuery()->where('id', $shopId)->first();
     }
 }
 

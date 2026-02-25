@@ -2,8 +2,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { Store, MapPin, Phone, Mail, FileText, Globe } from 'lucide-react';
+import { useRoute } from '@/utils/route';
 
 export default function Create() {
+    const route = useRoute();
+
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',

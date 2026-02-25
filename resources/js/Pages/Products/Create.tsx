@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { FormEventHandler, useState, useMemo } from 'react';
+import { RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -11,15 +12,14 @@ interface Shop {
 interface Category {
     id: number;
     name: string;
-    shop_id: number;
-    shop: Shop;
+    color?: string;
+    icon?: string;
 }
 
 interface Subcategory {
     id: number;
     name: string;
     category_id: number;
-    category: Category;
 }
 
 interface Props {
@@ -29,6 +29,8 @@ interface Props {
 }
 
 export default function ProductsCreate({ shops, categories, subcategories }: Props) {
+    const route = useRoute();
+
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
     
@@ -39,6 +41,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
         name: '',
         sku: '',
         barcode: '',
+        brand: '',
         description: '',
         purchase_price: '',
         selling_price: '',
@@ -73,15 +76,40 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
         setData('barcode', barcode12 + checksum);
     };
 
-    // Filtrer les catégories par boutique sélectionnée
-    const filteredCategories = data.shop_id
-        ? categories.filter((cat) => cat.shop_id === Number(data.shop_id))
-        : categories;
+    // Les catégories sont globales (prédéfinies par la plateforme)
+    const filteredCategories = categories;
 
-    // Filtrer les sous-catégories par catégorie sélectionnée
-    const filteredSubcategories = data.category_id
-        ? subcategories.filter((sub) => sub.category_id === Number(data.category_id))
-        : [];
+    // Filtrer les sous-catégories par catégorie sélectionnée (mémorisé)
+    const filteredSubcategories = useMemo(() => {
+        return data.category_id
+            ? subcategories.filter((sub) => sub.category_id === Number(data.category_id))
+            : [];
+    }, [data.category_id, subcategories]);
+
+    // Calcul de la marge bénéficiaire
+    const profitMargin = useMemo(() => {
+        const purchase = parseFloat(data.purchase_price) || 0;
+        const selling = parseFloat(data.selling_price) || 0;
+        if (purchase === 0) return { amount: selling, percentage: 100 };
+        const amount = selling - purchase;
+        const percentage = ((amount / purchase) * 100);
+        return { amount, percentage };
+    }, [data.purchase_price, data.selling_price]);
+
+    // Preview de l'image
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setData('image', file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     return (
         <AuthenticatedLayout
@@ -168,7 +196,6 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             value={data.category_id}
                             onChange={(e) => setData('category_id', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                            disabled={!data.shop_id}
                         >
                             <option value="">Sélectionner une catégorie</option>
                             {filteredCategories.map((category) => (
@@ -199,6 +226,17 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
+                        <span>Marque</span>
+                        <input
+                            value={data.brand}
+                            onChange={(e) => setData('brand', e.target.value)}
+                            placeholder="Ex: Bosch, Stanley, Makita..."
+                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                        />
+                        {errors.brand && <span className="text-xs text-red-400">{errors.brand}</span>}
+                    </label>
+
+                    <label className="space-y-1 text-sm text-slate-200">
                         <span>Unité</span>
                         <select
                             value={data.unit}
@@ -222,6 +260,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <input
                             type="number"
                             step="0.01"
+                            min="0"
                             value={data.purchase_price}
                             onChange={(e) => setData('purchase_price', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
@@ -234,6 +273,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <input
                             type="number"
                             step="0.01"
+                            min="0"
                             value={data.selling_price}
                             onChange={(e) => setData('selling_price', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
@@ -241,11 +281,45 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         {errors.selling_price && <span className="text-xs text-red-400">{errors.selling_price}</span>}
                     </label>
 
+                    {/* Indicateur de marge bénéficiaire */}
+                    <div className="space-y-1 text-sm text-slate-200 md:col-span-2">
+                        <span>Marge bénéficiaire</span>
+                        <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                            profitMargin.percentage >= 20 
+                                ? 'border-green-500/30 bg-green-500/10' 
+                                : profitMargin.percentage >= 10 
+                                    ? 'border-amber-500/30 bg-amber-500/10'
+                                    : 'border-red-500/30 bg-red-500/10'
+                        }`}>
+                            {profitMargin.percentage >= 20 ? (
+                                <TrendingUp className="size-5 text-green-400" />
+                            ) : (
+                                <AlertTriangle className={`size-5 ${profitMargin.percentage >= 10 ? 'text-amber-400' : 'text-red-400'}`} />
+                            )}
+                            <div className="flex-1">
+                                <p className={`font-medium ${
+                                    profitMargin.percentage >= 20 ? 'text-green-400' : profitMargin.percentage >= 10 ? 'text-amber-400' : 'text-red-400'
+                                }`}>
+                                    {profitMargin.amount.toFixed(2)} FCFA ({profitMargin.percentage.toFixed(1)}%)
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                    {profitMargin.percentage >= 20 
+                                        ? 'Bonne marge' 
+                                        : profitMargin.percentage >= 10 
+                                            ? 'Marge moyenne' 
+                                            : 'Marge faible - Vérifiez vos prix'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <label className="space-y-1 text-sm text-slate-200">
                         <span>Taux de TVA (%)</span>
                         <input
                             type="number"
                             step="0.01"
+                            min="0"
+                            max="100"
                             value={data.tax_rate}
                             onChange={(e) => setData('tax_rate', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
@@ -291,9 +365,21 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => setData('image', e.target.files?.[0] || null)}
+                            onChange={handleImageChange}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
+                        {imagePreview && (
+                            <div className="mt-2">
+                                <img 
+                                    src={imagePreview} 
+                                    alt="Aperçu" 
+                                    className="h-32 w-32 rounded-lg object-cover border border-white/15"
+                                />
+                            </div>
+                        )}
+                        <p className="text-xs text-slate-400">
+                            Formats acceptés: JPG, PNG, GIF (max 2 Mo)
+                        </p>
                         {errors.image && <span className="text-xs text-red-400">{errors.image}</span>}
                     </label>
 

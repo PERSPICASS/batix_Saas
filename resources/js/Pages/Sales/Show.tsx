@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import Currency from '@/Components/Currency';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -76,6 +77,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SalesShow({ sale }: Props) {
+    const route = useRoute();
+
     const handlePrint = () => {
         window.print();
     };

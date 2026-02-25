@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Package, Calendar, User, MapPin, FileText } from 'lucide-react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -36,6 +37,8 @@ interface Props {
 }
 
 export default function StocksShow({ movement }: Props) {
+    const route = useRoute();
+
     const getTypeBadge = (type: string) => {
         const types: Record<string, { label: string; bg: string; text: string }> = {
             in: { label: 'Entrée', bg: 'bg-green-500/20', text: 'text-green-300' },

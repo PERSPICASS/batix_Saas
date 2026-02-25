@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
+import { useRoute } from '@/utils/route';
+import { Check } from 'lucide-react';
 
 interface Shop {
     id: number;
@@ -12,11 +14,13 @@ interface Props {
 }
 
 export default function SuppliersCreate({ shops }: Props) {
+    const route = useRoute();
+
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
     
     const { data, setData, post, processing, errors } = useForm({
-        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
+        shop_ids: activeShop ? [activeShop.id] : (shops.length > 0 ? [shops[0].id] : []) as number[],
         name: '',
         company_name: '',
         email: '',
@@ -31,6 +35,18 @@ export default function SuppliersCreate({ shops }: Props) {
         notes: '',
         is_active: true,
     });
+
+    const toggleShop = (shopId: number) => {
+        const currentShops = data.shop_ids;
+        if (currentShops.includes(shopId)) {
+            // Ne pas permettre de désélectionner si c'est la seule boutique
+            if (currentShops.length > 1) {
+                setData('shop_ids', currentShops.filter(id => id !== shopId));
+            }
+        } else {
+            setData('shop_ids', [...currentShops, shopId]);
+        }
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -47,25 +63,38 @@ export default function SuppliersCreate({ shops }: Props) {
                     <div className="space-y-6">
                         <h2 className="text-lg font-semibold text-white">Informations générales</h2>
 
-                        {/* Boutique */}
+                        {/* Boutiques */}
                         <div>
-                            <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
-                                Boutique *
+                            <label className="block text-sm font-medium text-slate-200">
+                                Boutiques *
                             </label>
-                            <select
-                                id="shop_id"
-                                value={data.shop_id}
-                                disabled
-                                className="mt-1 block w-full cursor-not-allowed rounded-lg border border-white/15 bg-slate-800/50 px-3 py-2 text-slate-400"
-                            >
+                            <p className="mt-1 text-xs text-slate-400">Sélectionnez une ou plusieurs boutiques pour ce fournisseur</p>
+                            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 {shops.map((shop) => (
-                                    <option key={shop.id} value={shop.id}>
+                                    <button
+                                        key={shop.id}
+                                        type="button"
+                                        onClick={() => toggleShop(shop.id)}
+                                        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+                                            data.shop_ids.includes(shop.id)
+                                                ? 'border-amber-300 bg-amber-300/20 text-amber-300'
+                                                : 'border-white/15 bg-slate-900/50 text-slate-400 hover:border-white/30'
+                                        }`}
+                                    >
+                                        <div className={`flex h-4 w-4 items-center justify-center rounded border ${
+                                            data.shop_ids.includes(shop.id)
+                                                ? 'border-amber-300 bg-amber-300'
+                                                : 'border-white/30'
+                                        }`}>
+                                            {data.shop_ids.includes(shop.id) && (
+                                                <Check className="h-3 w-3 text-slate-900" />
+                                            )}
+                                        </div>
                                         {shop.name}
-                                    </option>
+                                    </button>
                                 ))}
-                            </select>
-                            <p className="mt-1 text-xs text-slate-400">Boutique sélectionnée via le switcher</p>
-                            {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                            </div>
+                            {errors.shop_ids && <p className="mt-1 text-sm text-red-400">{errors.shop_ids}</p>}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">

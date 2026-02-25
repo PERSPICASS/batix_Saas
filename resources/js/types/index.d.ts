@@ -1,8 +1,26 @@
+export interface Permission {
+    id: number;
+    user_id: number;
+    module: string;
+    can_view: boolean;
+    can_create: boolean;
+    can_edit: boolean;
+    can_delete: boolean;
+}
+
 export interface User {
     id: number;
     name: string;
     email: string;
+    code_user: string;
+    role: 'super_admin' | 'manager' | 'cashier' | 'caisse' | 'employee';
     email_verified_at?: string;
+    permissions?: Permission[];
+    shop?: {
+        id: number;
+        name: string;
+        slug: string;
+    };
 }
 
 export interface ShopSettings {
@@ -17,6 +35,7 @@ export type PageProps<
 > = T & {
     auth: {
         user?: User | null;
+        code_user?: string | null;
     };
     shopSettings?: ShopSettings | null;
 };

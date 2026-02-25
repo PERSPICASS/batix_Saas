@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -12,19 +13,17 @@ interface Props {
 }
 
 export default function CustomersCreate({ shops }: Props) {
+    const route = useRoute();
+
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
-    
+
     const { data, setData, post, processing, errors } = useForm({
         shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         name: '',
         email: '',
         phone: '',
         address: '',
-        city: '',
-        postal_code: '',
-        country: 'France',
-        tax_number: '',
         notes: '',
         is_active: true,
     });
@@ -52,9 +51,7 @@ export default function CustomersCreate({ shops }: Props) {
                                 </option>
                             ))}
                         </select>
-                        <p className="text-xs text-slate-400">
-                            Boutique sélectionnée via le switcher
-                        </p>
+                        <p className="text-xs text-slate-400">Boutique sélectionnée via le switcher</p>
                         {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
                     </label>
 
@@ -89,16 +86,6 @@ export default function CustomersCreate({ shops }: Props) {
                         {errors.phone && <span className="text-xs text-red-400">{errors.phone}</span>}
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Numéro de TVA</span>
-                        <input
-                            value={data.tax_number}
-                            onChange={(e) => setData('tax_number', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.tax_number && <span className="text-xs text-red-400">{errors.tax_number}</span>}
-                    </label>
-
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
                         <span>Adresse</span>
                         <input
@@ -107,36 +94,6 @@ export default function CustomersCreate({ shops }: Props) {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
                         {errors.address && <span className="text-xs text-red-400">{errors.address}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Ville</span>
-                        <input
-                            value={data.city}
-                            onChange={(e) => setData('city', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.city && <span className="text-xs text-red-400">{errors.city}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Code postal</span>
-                        <input
-                            value={data.postal_code}
-                            onChange={(e) => setData('postal_code', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.postal_code && <span className="text-xs text-red-400">{errors.postal_code}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Pays</span>
-                        <input
-                            value={data.country}
-                            onChange={(e) => setData('country', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.country && <span className="text-xs text-red-400">{errors.country}</span>}
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
@@ -155,7 +112,7 @@ export default function CustomersCreate({ shops }: Props) {
                             type="checkbox"
                             checked={data.is_active}
                             onChange={(e) => setData('is_active', e.target.checked)}
-                            className="rounded border-white/15 bg-slate-900/70"
+                            className="rounded border border-white/15 bg-slate-900/70"
                         />
                         <span>Client actif</span>
                     </label>

@@ -29,12 +29,57 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $shop = get_shop_settings();
+        $shop = current_shop();
+        $user = $request->user();
+        
+        // Déterminer le code_user du compte (propriétaire)
+        $accountCode = null;
+        if ($user) {
+            if ($user->role === 'super_admin') {
+                $accountCode = $user->code_user;
+            } else {
+                // Trouver le propriétaire via la boutique
+                $userShop = $user->shop; // Relation belongsTo
+                
+                if (!$userShop && $user->shop_id) {
+                    // Charger explicitement si pas déjà chargé
+                    $userShop = \App\Models\Shop::find($user->shop_id);
+                }
+                
+                if ($userShop) {
+                    $owner = \App\Models\User::find($userShop->user_id);
+                    $accountCode = $owner ? $owner->code_user : null;
+                }
+            }
+        }
         
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? $request->user()->load(['shop', 'permissions']) : null,
+                'user' => $user ? $user->load(['shop', 'permissions']) : null,
+                'code_user' => $user?->code_user,
+            ],
+            'shops' => $user ? $user->accessibleShops()->map(function ($shop) {
+                return [
+                    'id' => $shop->id,
+                    'name' => $shop->name,
+                    'slug' => $shop->slug,
+                    'is_active' => $shop->is_active ?? true,
+                ];
+            })->values()->toArray() : [],
+            'activeShop' => current_shop() ? [
+                'id' => current_shop()->id,
+                'name' => current_shop()->name,
+                'slug' => current_shop()->slug,
+            ] : null,
+            'currentShop' => current_shop() ? [
+                'id' => current_shop()->id,
+                'name' => current_shop()->name,
+                'slug' => current_shop()->slug,
+            ] : null,
+            'routeParams' => [
+                'code_user' => $accountCode, // Code du propriétaire du compte
+                'shop_slug' => shop_slug(),
             ],
             'shopSettings' => $shop ? [
                 'currency' => $shop->currency,

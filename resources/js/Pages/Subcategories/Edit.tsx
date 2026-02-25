@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { useRoute } from '@/utils/route';
 
 interface Category {
     id: number;
@@ -20,6 +21,8 @@ interface Props {
 }
 
 export default function SubcategoriesEdit({ subcategory, categories }: Props) {
+    const route = useRoute();
+
     const { data, setData, put, processing, errors } = useForm({
         category_id: subcategory.category_id,
         name: subcategory.name,
@@ -28,7 +31,7 @@ export default function SubcategoriesEdit({ subcategory, categories }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('subcategories.update', subcategory.id));
+        put(route('subcategories.update', { sous_category: subcategory.id }));
     };
 
     return (

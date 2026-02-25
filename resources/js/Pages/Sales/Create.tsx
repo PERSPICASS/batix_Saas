@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Plus, Trash2, Scan } from 'lucide-react';
 import Currency from '@/Components/Currency';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -39,6 +40,8 @@ interface CartItem {
 }
 
 export default function SalesCreate({ shops, customers, products }: Props) {
+    const route = useRoute();
+
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
     
@@ -137,8 +140,14 @@ export default function SalesCreate({ shops, customers, products }: Props) {
             quantity: item.quantity,
         }));
 
-        setData('items', items);
-        post(route('sales.store'));
+        // Utiliser transform pour ajouter les items au moment de l'envoi
+        post(route('sales.store'), {
+            preserveScroll: true,
+            onBefore: () => {
+                data.items = items;
+                return true;
+            },
+        });
     };
 
     const filteredProducts = products.filter(

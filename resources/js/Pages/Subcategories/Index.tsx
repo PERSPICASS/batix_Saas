@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
+import { useRoute } from '@/utils/route';
 
 interface Subcategory {
     id: number;
@@ -26,9 +27,11 @@ interface Category {
 }
 
 export default function SubcategoriesIndex({ subcategories, categories }: PageProps<{ subcategories: Subcategory[], categories: Category[] }>) {
+    const route = useRoute();
+
     const handleDelete = (id: number) => {
         if (confirm('Êtes-vous sûr de vouloir supprimer cette sous-catégorie ?')) {
-            router.delete(route('subcategories.destroy', id));
+            router.delete(route('subcategories.destroy', { sous_category: id }));
         }
     };
 
@@ -63,7 +66,7 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
             align: 'right' as const,
             render: (subcategory: Subcategory) => (
                 <TableActions>
-                    <Link href={route('subcategories.edit', subcategory.id)}>
+                    <Link href={route('subcategories.edit', { sous_category: subcategory.id })}>
                         <TableActionButton>
                             <Pencil className="size-3.5" /> Modifier
                         </TableActionButton>

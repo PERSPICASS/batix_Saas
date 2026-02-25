@@ -1,8 +1,15 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, Building2, Phone, MapPin, Eye, Search, Filter } from 'lucide-react';
+import { Pencil, Plus, Trash2, Building2, Phone, MapPin, Eye, Search, Filter, Store } from 'lucide-react';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import { useState, FormEventHandler } from 'react';
+import { useRoute } from '@/utils/route';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+
+interface Shop {
+    id: number;
+    name: string;
+}
 
 interface Supplier {
     id: number;
@@ -14,6 +21,7 @@ interface Supplier {
     city: string | null;
     country: string;
     is_active: boolean;
+    shops: Shop[];
 }
 
 interface PaginatedSuppliers {
@@ -34,8 +42,12 @@ interface Props {
 }
 
 export default function SuppliersIndex({ suppliers, filters }: Props) {
+    const route = useRoute();
+
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; supplier: Supplier | null }>({ show: false, supplier: null });
+    const [deleting, setDeleting] = useState(false);
 
     const handleFilter: FormEventHandler = (e) => {
         e.preventDefault();
@@ -47,9 +59,19 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
     };
 
     const handleDelete = (supplier: Supplier) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer le fournisseur ${supplier.name} ?`)) {
-            router.delete(route('suppliers.destroy', supplier.id));
-        }
+        setDeleteModal({ show: true, supplier });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.supplier) return;
+        setDeleting(true);
+        router.delete(route('suppliers.destroy', { supplier: deleteModal.supplier.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, supplier: null });
+                setDeleting(false);
+            },
+            onError: () => setDeleting(false),
+        });
     };
 
     const columns = [
@@ -97,6 +119,23 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
             ),
         },
         {
+            key: 'shops',
+            label: 'Boutiques',
+            render: (supplier: Supplier) => (
+                <div className="flex flex-wrap gap-1">
+                    {supplier.shops?.map((shop) => (
+                        <span
+                            key={shop.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-slate-700/50 px-2 py-0.5 text-xs text-slate-300"
+                        >
+                            <Store className="size-3" />
+                            {shop.name}
+                        </span>
+                    ))}
+                </div>
+            ),
+        },
+        {
             key: 'status',
             label: 'Statut',
             align: 'center' as const,
@@ -113,13 +152,13 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
             render: (supplier: Supplier) => (
                 <TableActions>
                     <Link
-                        href={route('suppliers.show', supplier.id)}
+                        href={route('suppliers.show', { supplier: supplier.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
                         <Eye className="size-3.5" /> Voir
                     </Link>
                     <Link
-                        href={route('suppliers.edit', supplier.id)}
+                        href={route('suppliers.edit', { supplier: supplier.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
                         <Pencil className="size-3.5" /> Modifier
@@ -212,6 +251,15 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                         ))}
                     </div>
                 )}
+
+                {/* Modal de suppression */}
+                <ConfirmDeleteModal
+                    show={deleteModal.show}
+                    onClose={() => setDeleteModal({ show: false, supplier: null })}
+                    onConfirm={confirmDelete}
+                    message={`Êtes-vous sûr de vouloir supprimer le fournisseur "${deleteModal.supplier?.name}" ?`}
+                    processing={deleting}
+                />
             </section>
         </AuthenticatedLayout>
     );

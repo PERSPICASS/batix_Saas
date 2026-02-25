@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Product extends Model
@@ -19,6 +21,7 @@ class Product extends Model
         'sku',
         'barcode',
         'description',
+        'brand',
         'purchase_price',
         'selling_price',
         'tax_rate',
@@ -28,6 +31,8 @@ class Product extends Model
         'image',
         'is_active',
         'track_stock',
+        'has_variations',
+        'parent_id',
     ];
 
     protected $casts = [
@@ -38,6 +43,7 @@ class Product extends Model
         'min_stock_alert' => 'integer',
         'is_active' => 'boolean',
         'track_stock' => 'boolean',
+        'has_variations' => 'boolean',
     ];
 
     protected static function boot()
@@ -70,6 +76,46 @@ class Product extends Model
     public function subcategory(): BelongsTo
     {
         return $this->belongsTo(Subcategory::class);
+    }
+
+    /**
+     * Le produit parent (si c'est une variation).
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'parent_id');
+    }
+
+    /**
+     * Les variations de ce produit.
+     */
+    public function variations(): HasMany
+    {
+        return $this->hasMany(Product::class, 'parent_id');
+    }
+
+    /**
+     * Les valeurs d'attributs de cette variation.
+     */
+    public function attributeValues(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductAttributeValue::class, 'product_variation_attributes', 'product_id', 'attribute_value_id');
+    }
+
+    /**
+     * Vérifie si ce produit est une variation.
+     */
+    public function isVariation(): bool
+    {
+        return $this->parent_id !== null;
+    }
+
+    /**
+     * Vérifie si ce produit a des variations.
+     */
+    public function hasVariations(): bool
+    {
+        return $this->has_variations && $this->variations()->exists();
     }
 
     public function isLowStock(): bool

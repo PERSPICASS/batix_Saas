@@ -74,10 +74,6 @@ class CustomerController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'tax_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -87,13 +83,13 @@ class CustomerController extends Controller
         
         $shop->customers()->create($validated);
 
-        return redirect()->route('customers.index')->with('success', 'Client créé avec succès.');
+        return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client créé avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Customer $customer)
+    public function show(string $code_user, Customer $customer)
     {
         $customer->load(['shop', 'invoices.items']);
         
@@ -105,7 +101,7 @@ class CustomerController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Customer $customer): Response
+    public function edit(string $code_user, Customer $customer): Response
     {
         $shops = Auth::user()->accessibleShops();
         
@@ -118,7 +114,7 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Customer $customer)
+    public function update(Request $request, string $code_user, Customer $customer)
     {
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
@@ -126,10 +122,6 @@ class CustomerController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'tax_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -139,13 +131,13 @@ class CustomerController extends Controller
         
         $customer->update($validated);
 
-        return redirect()->route('customers.index')->with('success', 'Client modifié avec succès.');
+        return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client modifié avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Customer $customer)
+    public function destroy(string $code_user, Customer $customer)
     {
         // Vérifier que la boutique du client appartient à l'utilisateur
         if ($customer->shop->user_id !== Auth::id()) {
@@ -154,6 +146,6 @@ class CustomerController extends Controller
 
         $customer->delete();
 
-        return redirect()->route('customers.index')->with('success', 'Client supprimé avec succès.');
+        return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client supprimé avec succès.');
     }
 }

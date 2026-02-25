@@ -17,13 +17,8 @@ class SettingsController extends Controller
     {
         $user = $request->user();
         
-        // Pour super_admin, récupérer la première boutique qu'il a créée
-        if ($user->role === 'super_admin') {
-            $shop = $user->shops()->first();
-        } else {
-            // Pour les autres utilisateurs, utiliser la boutique associée
-            $shop = $user->shop;
-        }
+        // Utiliser accessibleShopsQuery pour tous les rôles
+        $shop = $user->accessibleShopsQuery()->first();
 
         if (!$shop) {
             return Inertia::render('Settings/Index', [
@@ -46,13 +41,8 @@ class SettingsController extends Controller
     {
         $user = $request->user();
         
-        // Pour super_admin, récupérer la première boutique qu'il a créée
-        if ($user->role === 'super_admin') {
-            $shop = $user->shops()->first();
-        } else {
-            // Pour les autres utilisateurs, utiliser la boutique associée
-            $shop = $user->shop;
-        }
+        // Utiliser accessibleShopsQuery pour tous les rôles
+        $shop = $user->accessibleShopsQuery()->first();
 
         if (!$shop) {
             return Redirect::route('settings.index')

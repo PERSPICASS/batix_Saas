@@ -1,8 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
+import Currency from '@/Components/Currency';
 
 interface Customer {
     id: number;
@@ -15,7 +17,8 @@ interface Invoice {
     invoice_date: string;
     due_date: string;
     status: string;
-    total_amount: string;
+    total: string | number | null;
+    total_amount?: string | number | null;
     customer: Customer;
 }
 
@@ -33,6 +36,8 @@ interface Props {
 }
 
 export default function InvoicesIndex({ invoices }: Props) {
+    const route = useRoute();
+
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
@@ -46,7 +51,7 @@ export default function InvoicesIndex({ invoices }: Props) {
 
     const handleDelete = (invoice: Invoice) => {
         if (confirm(`Êtes-vous sûr de vouloir supprimer la facture ${invoice.invoice_number} ?`)) {
-            router.delete(route('invoices.destroy', invoice.id));
+            router.delete(route('invoices.destroy', { invoice: invoice.id }));
         }
     };
 
@@ -78,6 +83,11 @@ export default function InvoicesIndex({ invoices }: Props) {
         );
     };
 
+    const getInvoiceTotal = (invoice: Invoice): number => {
+        const value = Number(invoice.total ?? invoice.total_amount ?? 0);
+        return Number.isFinite(value) ? value : 0;
+    };
+
     const columns = [
         {
             key: 'invoice_number',
@@ -107,15 +117,11 @@ export default function InvoicesIndex({ invoices }: Props) {
             render: (invoice: Invoice) => getStatusBadge(invoice.status),
         },
         {
-            key: 'total_amount',
+            key: 'total',
             label: 'Montant TTC',
             render: (invoice: Invoice) => (
                 <span className="font-semibold">
-                    {parseFloat(invoice.total_amount).toLocaleString('fr-FR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    })}{' '}
-                    DH
+                    <Currency amount={getInvoiceTotal(invoice)} />
                 </span>
             ),
         },
@@ -126,7 +132,13 @@ export default function InvoicesIndex({ invoices }: Props) {
             render: (invoice: Invoice) => (
                 <TableActions>
                     <Link
-                        href={route('invoices.edit', invoice.id)}
+                        href={route('invoices.show', { invoice: invoice.id })}
+                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                    >
+                        <Eye className="size-3.5" /> Voir
+                    </Link>
+                    <Link
+                        href={route('invoices.edit', { invoice: invoice.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
                         <Pencil className="size-3.5" /> Modifier

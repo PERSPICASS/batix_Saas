@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -14,10 +15,6 @@ interface Customer {
     email: string;
     phone: string;
     address: string;
-    city: string;
-    postal_code: string;
-    country: string;
-    tax_number: string;
     notes: string;
     is_active: boolean;
 }
@@ -28,23 +25,21 @@ interface Props {
 }
 
 export default function CustomersEdit({ customer, shops }: Props) {
+    const route = useRoute();
+
     const { data, setData, put, processing, errors } = useForm({
         shop_id: customer.shop_id.toString(),
         name: customer.name,
         email: customer.email || '',
         phone: customer.phone || '',
         address: customer.address || '',
-        city: customer.city || '',
-        postal_code: customer.postal_code || '',
-        country: customer.country || 'France',
-        tax_number: customer.tax_number || '',
         notes: customer.notes || '',
         is_active: customer.is_active,
     });
 
     const onSubmit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('customers.update', customer.id));
+        put(route('customers.update', { customer: customer.id }));
     };
 
     return (
@@ -102,16 +97,6 @@ export default function CustomersEdit({ customer, shops }: Props) {
                         {errors.phone && <span className="text-xs text-red-400">{errors.phone}</span>}
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Numéro de TVA</span>
-                        <input
-                            value={data.tax_number}
-                            onChange={(e) => setData('tax_number', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.tax_number && <span className="text-xs text-red-400">{errors.tax_number}</span>}
-                    </label>
-
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
                         <span>Adresse</span>
                         <input
@@ -120,36 +105,6 @@ export default function CustomersEdit({ customer, shops }: Props) {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
                         {errors.address && <span className="text-xs text-red-400">{errors.address}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Ville</span>
-                        <input
-                            value={data.city}
-                            onChange={(e) => setData('city', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.city && <span className="text-xs text-red-400">{errors.city}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Code postal</span>
-                        <input
-                            value={data.postal_code}
-                            onChange={(e) => setData('postal_code', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.postal_code && <span className="text-xs text-red-400">{errors.postal_code}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Pays</span>
-                        <input
-                            value={data.country}
-                            onChange={(e) => setData('country', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.country && <span className="text-xs text-red-400">{errors.country}</span>}
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">

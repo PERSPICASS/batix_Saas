@@ -17,23 +17,29 @@ class SaleController extends Controller
 {
     public function index(Request $request): Response
     {
+        $user = Auth::user();
         $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         $status = $request->input('status');
         $search = $request->input('search');
         
+        $shops = $user->accessibleShops();
+        $shopIds = $shops->pluck('id');
+        
         $query = Sale::with(['shop', 'user', 'customer', 'items'])
+            ->whereIn('shop_id', $shopIds)
             ->orderBy('sale_date', 'desc');
+
+        // Les caissiers ne voient que leurs propres ventes
+        if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
+            $query->where('user_id', $user->id);
+        }
 
         // Filtrer par boutique active si sélectionnée
         if ($activeShopId) {
             $query->where('shop_id', $activeShopId);
         } elseif ($shopId) {
             $query->where('shop_id', $shopId);
-        } else {
-            $query->whereHas('shop', function ($q) {
-                $q->where('user_id', Auth::id());
-            });
         }
 
         if ($status) {
@@ -48,12 +54,16 @@ class SaleController extends Controller
 
         // Calculer les statistiques en fonction de la boutique active
         $statsQuery = Sale::where('status', 'completed')
-            ->whereHas('shop', function ($q) use ($activeShopId) {
-                $q->where('user_id', Auth::id());
-                if ($activeShopId) {
-                    $q->where('id', $activeShopId);
-                }
-            });
+            ->whereIn('shop_id', $shopIds);
+        
+        // Les caissiers ne voient que leurs propres stats
+        if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
+            $statsQuery->where('user_id', $user->id);
+        }
+        
+        if ($activeShopId) {
+            $statsQuery->where('shop_id', $activeShopId);
+        }
 
         $stats = [
             'total_revenue' => $statsQuery->sum('total'),
@@ -62,7 +72,7 @@ class SaleController extends Controller
 
         return Inertia::render('Sales/Index', [
             'sales' => $sales,
-            'shops' => Auth::user()->accessibleShops(),
+            'shops' => $shops,
             'filters' => $request->only(['shop_id', 'status', 'search']),
             'stats' => $stats,
         ]);
@@ -70,16 +80,17 @@ class SaleController extends Controller
 
     public function create(): Response
     {
-        $customers = Customer::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->get();
+        $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
         
-        $products = Product::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->where('is_active', true)->get();
+        $customers = Customer::whereIn('shop_id', $shopIds)->get();
+        
+        $products = Product::whereIn('shop_id', $shopIds)
+            ->where('is_active', true)
+            ->get();
 
         return Inertia::render('Sales/Create', [
-            'shops' => Auth::user()->accessibleShops(),
+            'shops' => $shops,
             'customers' => $customers,
             'products' => $products,
         ]);
@@ -125,10 +136,10 @@ class SaleController extends Controller
             }
         });
 
-        return redirect()->route('sales.index')->with('success', 'Vente enregistrée avec succès.');
+        return redirect()->route('sales.index', ['code_user' => request()->route('code_user')])->with('success', 'Vente enregistrée avec succès.');
     }
 
-    public function show(Sale $sale)
+    public function show(string $code_user, Sale $sale)
     {
         $sale->load(['shop', 'user', 'customer', 'items.product', 'returns']);
         
@@ -137,7 +148,7 @@ class SaleController extends Controller
         ]);
     }
 
-    public function destroy(Sale $sale)
+    public function destroy(string $code_user, Sale $sale)
     {
         if ($sale->shop->user_id !== Auth::id()) {
             abort(403);
@@ -157,6 +168,6 @@ class SaleController extends Controller
             $sale->update(['status' => 'cancelled']);
         });
 
-        return redirect()->route('sales.index')->with('success', 'Vente annulée avec succès.');
+        return redirect()->route('sales.index', ['code_user' => request()->route('code_user')])->with('success', 'Vente annulée avec succès.');
     }
 }

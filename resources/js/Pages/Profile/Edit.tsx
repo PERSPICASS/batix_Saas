@@ -38,7 +38,7 @@ export default function Edit({
     status,
 }: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
     const { auth } = usePage().props;
-    const user = auth.user as UserWithDetails;
+    const user = auth.user as unknown as UserWithDetails;
 
     const getRoleBadgeColor = (role: string) => {
         const colors = {

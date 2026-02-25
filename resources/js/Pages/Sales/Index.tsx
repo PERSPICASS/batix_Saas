@@ -3,6 +3,9 @@ import Table, { TableActionButton, TableActions, TableBadge } from '@/Components
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Eye, Trash2 } from 'lucide-react';
 import Currency from '@/Components/Currency';
+import { useRoute } from '@/utils/route';
+import { useState } from 'react';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
 interface Shop {
     id: number;
@@ -64,10 +67,24 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SalesIndex({ sales, stats }: Props) {
+    const route = useRoute();
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; sale: Sale | null }>({ show: false, sale: null });
+    const [deleting, setDeleting] = useState(false);
+
     const handleDelete = (sale: Sale) => {
-        if (confirm(`Êtes-vous sûr de vouloir annuler la vente "${sale.ticket_number}" ?`)) {
-            router.delete(route('sales.destroy', sale.id));
-        }
+        setDeleteModal({ show: true, sale });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.sale) return;
+        setDeleting(true);
+        router.delete(route('sales.destroy', { sale: deleteModal.sale.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, sale: null });
+                setDeleting(false);
+            },
+            onError: () => setDeleting(false),
+        });
     };
 
     const getStatusVariant = (status: string) => {
@@ -168,7 +185,7 @@ export default function SalesIndex({ sales, stats }: Props) {
                             render: (sale) => (
                                 <TableActions>
                                     <Link
-                                        href={route('sales.show', sale.id)}
+                                        href={route('sales.show', { sale: sale.id })}
                                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                                     >
                                         <Eye className="size-3.5" /> Voir
@@ -205,6 +222,17 @@ export default function SalesIndex({ sales, stats }: Props) {
                         ))}
                     </div>
                 )}
+
+                {/* Modal de suppression */}
+                <ConfirmDeleteModal
+                    show={deleteModal.show}
+                    onClose={() => setDeleteModal({ show: false, sale: null })}
+                    onConfirm={confirmDelete}
+                    title="Annuler la vente"
+                    message={`Êtes-vous sûr de vouloir annuler la vente "${deleteModal.sale?.ticket_number}" ?`}
+                    confirmText="Annuler la vente"
+                    processing={deleting}
+                />
             </section>
         </AuthenticatedLayout>
     );

@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, Mail, Shield, Store } from 'lucide-react';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import ConfirmDialog from '@/Components/ConfirmDialog';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -51,6 +52,8 @@ const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'd
 };
 
 export default function UsersIndex({ users }: Props) {
+    const route = useRoute();
+
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -63,7 +66,7 @@ export default function UsersIndex({ users }: Props) {
     const handleConfirmDelete = () => {
         if (userToDelete) {
             setIsDeleting(true);
-            router.delete(route('users.destroy', userToDelete.id), {
+            router.delete(route('users.destroy', { user: userToDelete.id }), {
                 onFinish: () => {
                     setIsDeleting(false);
                     setShowDeleteDialog(false);
@@ -140,7 +143,7 @@ export default function UsersIndex({ users }: Props) {
             render: (user: User) => (
                 <TableActions>
                     <Link
-                        href={route('users.edit', user.id)}
+                        href={route('users.edit', { user: user.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
                         <Pencil className="size-3.5" /> Modifier

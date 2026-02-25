@@ -3,6 +3,9 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge, TableColorIndicator } from '@/Components/Table';
+import { useRoute } from '@/utils/route';
+import { useState } from 'react';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
 interface Category {
     id: number;
@@ -20,10 +23,24 @@ interface Shop {
 }
 
 export default function CategoriesIndex({ categories, shops }: PageProps<{ categories: Category[], shops: Shop[] }>) {
-    const handleDelete = (id: number) => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) {
-            router.delete(route('categories.destroy', id));
-        }
+    const route = useRoute();
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; category: Category | null }>({ show: false, category: null });
+    const [deleting, setDeleting] = useState(false);
+
+    const handleDelete = (category: Category) => {
+        setDeleteModal({ show: true, category });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.category) return;
+        setDeleting(true);
+        router.delete(route('categories.destroy', { category: deleteModal.category.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, category: null });
+                setDeleting(false);
+            },
+            onError: () => setDeleting(false),
+        });
     };
 
     const columns = [
@@ -55,14 +72,14 @@ export default function CategoriesIndex({ categories, shops }: PageProps<{ categ
             align: 'right' as const,
             render: (category: Category) => (
                 <TableActions>
-                    <Link href={route('categories.edit', category.id)}>
+                    <Link href={route('categories.edit', { category: category.id })}>
                         <TableActionButton>
                             <Pencil className="size-3.5" /> Modifier
                         </TableActionButton>
                     </Link>
                     <TableActionButton
                         variant="danger"
-                        onClick={() => handleDelete(category.id)}
+                        onClick={() => handleDelete(category)}
                     >
                         <Trash2 className="size-3.5" /> Supprimer
                     </TableActionButton>
@@ -86,6 +103,15 @@ export default function CategoriesIndex({ categories, shops }: PageProps<{ categ
                     columns={columns}
                     data={categories}
                     emptyMessage="Aucune catégorie. Créez-en une pour commencer."
+                />
+
+                {/* Modal de suppression */}
+                <ConfirmDeleteModal
+                    show={deleteModal.show}
+                    onClose={() => setDeleteModal({ show: false, category: null })}
+                    onConfirm={confirmDelete}
+                    message={`Êtes-vous sûr de vouloir supprimer la catégorie "${deleteModal.category?.name}" ?`}
+                    processing={deleting}
                 />
             </section>
         </AuthenticatedLayout>

@@ -8,13 +8,14 @@ use Illuminate\Http\Request;
 
 class EmailVerificationNotificationController extends Controller
 {
+    use RedirectsUsers;
     /**
      * Send a new email verification notification.
      */
     public function store(Request $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard', absolute: false));
+            return redirect()->intended($this->redirectPath());
         }
 
         $request->user()->sendEmailVerificationNotification();

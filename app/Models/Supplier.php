@@ -4,12 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Supplier extends Model
 {
     protected $fillable = [
-        'shop_id',
         'name',
         'company_name',
         'email',
@@ -30,11 +29,11 @@ class Supplier extends Model
     ];
 
     /**
-     * Get the shop that owns the supplier.
+     * Get the shops associated with the supplier.
      */
-    public function shop(): BelongsTo
+    public function shops(): BelongsToMany
     {
-        return $this->belongsTo(Shop::class);
+        return $this->belongsToMany(Shop::class, 'shop_supplier')->withTimestamps();
     }
 
     /**

@@ -1,0 +1,331 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState } from 'react';
+import { ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
+import { useRoute } from '@/utils/route';
+import Currency from '@/Components/Currency';
+
+interface Shop {
+    id: number;
+    name: string;
+}
+
+interface Product {
+    id: number;
+    name: string;
+    sku: string;
+    stock_quantity: number;
+    purchase_price: number;
+    shop: Shop;
+}
+
+interface InventoryItem {
+    id: number;
+    product_id: number;
+    product: Product;
+    expected_quantity: number;
+    counted_quantity: number | null;
+}
+
+interface Inventory {
+    id: number;
+    shop_id: number;
+    inventory_number: string;
+    inventory_date: string;
+    status: string;
+    notes: string | null;
+    items: InventoryItem[];
+}
+
+interface Props {
+    inventory: Inventory;
+    shops: Shop[];
+    products: Product[];
+}
+
+interface FormItem {
+    product_id: number;
+    counted_quantity: number | null;
+    product_name: string;
+    product_sku: string;
+    expected_quantity: number;
+}
+
+export default function InventoryEdit({ inventory, shops, products }: Props) {
+    const route = useRoute();
+    const [searchProduct, setSearchProduct] = useState('');
+
+    const { data, setData, put, processing, errors } = useForm({
+        shop_id: inventory.shop_id.toString(),
+        inventory_date: inventory.inventory_date.split('T')[0],
+        status: inventory.status,
+        notes: inventory.notes || '',
+        items: inventory.items.map(item => ({
+            product_id: item.product_id,
+            counted_quantity: item.counted_quantity,
+            product_name: item.product.name,
+            product_sku: item.product.sku,
+            expected_quantity: item.expected_quantity,
+        })) as FormItem[],
+    });
+
+    const filteredProducts = products.filter(
+        (product) =>
+            product.shop.id.toString() === data.shop_id &&
+            !data.items.some((item) => item.product_id === product.id) &&
+            (product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                product.sku.toLowerCase().includes(searchProduct.toLowerCase()))
+    );
+
+    const addProduct = (product: Product) => {
+        setData('items', [
+            ...data.items,
+            {
+                product_id: product.id,
+                counted_quantity: null,
+                product_name: product.name,
+                product_sku: product.sku,
+                expected_quantity: product.stock_quantity,
+            },
+        ]);
+        setSearchProduct('');
+    };
+
+    const removeProduct = (productId: number) => {
+        setData('items', data.items.filter((item) => item.product_id !== productId));
+    };
+
+    const updateCountedQuantity = (productId: number, quantity: number | null) => {
+        setData(
+            'items',
+            data.items.map((item) =>
+                item.product_id === productId ? { ...item, counted_quantity: quantity } : item
+            )
+        );
+    };
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        put(route('inventory.update', { inventory: inventory.id }));
+    };
+
+    return (
+        <AuthenticatedLayout
+            header={<h1 className="text-xl font-semibold text-white">Modifier l'inventaire {inventory.inventory_number}</h1>}
+        >
+            <Head title={`Modifier inventaire ${inventory.inventory_number}`} />
+
+            <form onSubmit={submit} className="space-y-6">
+                {/* Informations générales */}
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-white">Informations générales</h2>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200">Boutique</label>
+                            <select
+                                value={data.shop_id}
+                                onChange={(e) => {
+                                    setData('shop_id', e.target.value);
+                                    setData('items', []);
+                                }}
+                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                disabled={inventory.status === 'completed'}
+                            >
+                                {shops.map((shop) => (
+                                    <option key={shop.id} value={shop.id}>
+                                        {shop.name}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200">Date de l'inventaire</label>
+                            <input
+                                type="date"
+                                value={data.inventory_date}
+                                onChange={(e) => setData('inventory_date', e.target.value)}
+                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                disabled={inventory.status === 'completed'}
+                            />
+                            {errors.inventory_date && <p className="mt-1 text-sm text-red-400">{errors.inventory_date}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200">Statut</label>
+                            <select
+                                value={data.status}
+                                onChange={(e) => setData('status', e.target.value)}
+                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                disabled={inventory.status === 'completed'}
+                            >
+                                <option value="draft">Brouillon</option>
+                                <option value="in_progress">En cours</option>
+                                <option value="cancelled">Annulé</option>
+                            </select>
+                            {errors.status && <p className="mt-1 text-sm text-red-400">{errors.status}</p>}
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-slate-200">Notes</label>
+                        <textarea
+                            value={data.notes}
+                            onChange={(e) => setData('notes', e.target.value)}
+                            rows={3}
+                            className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                            placeholder="Notes optionnelles..."
+                        />
+                    </div>
+                </div>
+
+                {/* Ajout de produits */}
+                {inventory.status !== 'completed' && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                        <h2 className="mb-4 text-lg font-semibold text-white">Ajouter des produits</h2>
+
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={searchProduct}
+                                onChange={(e) => setSearchProduct(e.target.value)}
+                                placeholder="Rechercher un produit par nom ou SKU..."
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 py-2 pl-10 pr-4 text-slate-200"
+                            />
+                        </div>
+
+                        {searchProduct && filteredProducts.length > 0 && (
+                            <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-slate-900">
+                                {filteredProducts.slice(0, 10).map((product) => (
+                                    <button
+                                        key={product.id}
+                                        type="button"
+                                        onClick={() => addProduct(product)}
+                                        className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-white/10"
+                                    >
+                                        <div>
+                                            <p className="text-white">{product.name}</p>
+                                            <p className="text-xs text-slate-400">SKU: {product.sku} • Stock: {product.stock_quantity}</p>
+                                        </div>
+                                        <Plus className="size-4 text-amber-300" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Liste des produits à inventorier */}
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <h2 className="mb-4 text-lg font-semibold text-white">
+                        Produits à inventorier ({data.items.length})
+                    </h2>
+
+                    {data.items.length === 0 ? (
+                        <p className="text-center text-slate-400">Aucun produit ajouté</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-white/10 text-left text-sm text-slate-400">
+                                        <th className="pb-3 pr-4">Produit</th>
+                                        <th className="pb-3 pr-4 text-right">Stock théorique</th>
+                                        <th className="pb-3 pr-4 text-right">Stock réel</th>
+                                        <th className="pb-3 pr-4 text-right">Écart</th>
+                                        <th className="pb-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {data.items.map((item) => {
+                                        const difference = (item.counted_quantity ?? 0) - item.expected_quantity;
+                                        return (
+                                            <tr key={item.product_id}>
+                                                <td className="py-3 pr-4">
+                                                    <div>
+                                                        <p className="font-medium text-white">{item.product_name}</p>
+                                                        <p className="text-xs text-slate-400">SKU: {item.product_sku}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 pr-4 text-right text-slate-300">
+                                                    {item.expected_quantity}
+                                                </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={item.counted_quantity ?? ''}
+                                                        onChange={(e) =>
+                                                            updateCountedQuantity(
+                                                                item.product_id,
+                                                                e.target.value ? parseInt(e.target.value) : null
+                                                            )
+                                                        }
+                                                        className="w-24 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-1 text-right text-white"
+                                                        placeholder="-"
+                                                        disabled={inventory.status === 'completed'}
+                                                    />
+                                                </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    {item.counted_quantity !== null && (
+                                                        <span
+                                                            className={`font-medium ${
+                                                                difference === 0
+                                                                    ? 'text-slate-400'
+                                                                    : difference > 0
+                                                                    ? 'text-green-300'
+                                                                    : 'text-red-300'
+                                                            }`}
+                                                        >
+                                                            {difference > 0 ? '+' : ''}
+                                                            {difference}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 text-right">
+                                                    {inventory.status !== 'completed' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeProduct(item.product_id)}
+                                                            className="rounded-lg p-1 text-red-400 hover:bg-red-500/20"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                    {errors.items && <p className="mt-2 text-sm text-red-400">{errors.items}</p>}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-between">
+                    <Link
+                        href={route('inventory.index')}
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                    >
+                        <ArrowLeft className="size-4" />
+                        Annuler
+                    </Link>
+
+                    {inventory.status !== 'completed' && (
+                        <button
+                            type="submit"
+                            disabled={processing || data.items.length === 0}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-6 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
+                        >
+                            {processing ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                        </button>
+                    )}
+                </div>
+            </form>
+        </AuthenticatedLayout>
+    );
+}

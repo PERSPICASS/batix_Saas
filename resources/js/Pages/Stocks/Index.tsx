@@ -3,6 +3,8 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Package, Plus, Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
 interface Shop {
     id: number;
@@ -54,11 +56,15 @@ interface Props {
 }
 
 export default function StocksIndex({ movements, shops, filters }: Props) {
+    const route = useRoute();
+
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [typeFilter, setTypeFilter] = useState(filters.type || '');
     const [shopFilter, setShopFilter] = useState(filters.shop_id || '');
     const [dateFrom, setDateFrom] = useState(filters.date_from || '');
     const [dateTo, setDateTo] = useState(filters.date_to || '');
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; movement: StockMovement | null }>({ show: false, movement: null });
+    const [deleting, setDeleting] = useState(false);
 
     const handleSearch = () => {
         router.get(
@@ -69,9 +75,19 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
     };
 
     const handleDelete = (movement: StockMovement) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer ce mouvement ? Le stock sera ajusté automatiquement.`)) {
-            router.delete(route('stocks.destroy', movement.id));
-        }
+        setDeleteModal({ show: true, movement });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.movement) return;
+        setDeleting(true);
+        router.delete(route('stocks.destroy', { stockMovement: deleteModal.movement.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, movement: null });
+                setDeleting(false);
+            },
+            onError: () => setDeleting(false),
+        });
     };
 
     const getTypeBadge = (type: string) => {
@@ -145,7 +161,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
             render: (movement: StockMovement) => (
                 <TableActions>
                     <Link
-                        href={route('stocks.show', movement.id)}
+                        href={route('stocks.show', { stockMovement: movement.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
                         Voir
@@ -248,6 +264,15 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                         ))}
                     </div>
                 )}
+
+                {/* Modal de suppression */}
+                <ConfirmDeleteModal
+                    show={deleteModal.show}
+                    onClose={() => setDeleteModal({ show: false, movement: null })}
+                    onConfirm={confirmDelete}
+                    message={`Êtes-vous sûr de vouloir supprimer ce mouvement de stock ? Le stock sera ajusté automatiquement.`}
+                    processing={deleting}
+                />
             </section>
         </AuthenticatedLayout>
     );

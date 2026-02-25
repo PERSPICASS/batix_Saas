@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEvent } from 'react';
 import { PageProps } from '@/types';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -9,6 +10,8 @@ interface Shop {
 }
 
 export default function CategoriesCreate({ shops }: PageProps<{ shops: Shop[] }>) {
+    const route = useRoute();
+
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
     

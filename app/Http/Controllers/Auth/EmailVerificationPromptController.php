@@ -10,13 +10,15 @@ use Inertia\Response;
 
 class EmailVerificationPromptController extends Controller
 {
+    use RedirectsUsers;
+    
     /**
      * Display the email verification prompt.
      */
     public function __invoke(Request $request): RedirectResponse|Response
     {
         return $request->user()->hasVerifiedEmail()
-                    ? redirect()->intended(route('dashboard', absolute: false))
+                    ? redirect()->intended($this->redirectPath())
                     : Inertia::render('Auth/VerifyEmail', ['status' => session('status')]);
     }
 }

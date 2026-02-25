@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 import { PageProps } from '@/types';
+import { useRoute } from '@/utils/route';
 
 interface Category {
     id: number;
@@ -13,6 +14,8 @@ interface Category {
 }
 
 export default function SubcategoriesCreate({ categories }: PageProps<{ categories: Category[] }>) {
+    const route = useRoute();
+
     const { data, setData, post, processing, errors } = useForm({
         category_id: categories[0]?.id || '',
         name: '',

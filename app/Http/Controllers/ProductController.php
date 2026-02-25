@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProductsExport;
+use App\Exports\ProductsTemplateExport;
+use App\Imports\ProductsImport;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Subcategory;
@@ -10,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -22,6 +26,7 @@ class ProductController extends Controller
         $shopId = $request->input('shop_id');
         $categoryId = $request->input('category_id');
         $search = $request->input('search');
+        $status = $request->input('status');
         
         $query = Product::with(['shop', 'category', 'subcategory'])
             ->orderBy('name');
@@ -50,20 +55,29 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->paginate(20);
+        // Filtre par statut
+        if ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
+        } elseif ($status === 'low_stock') {
+            $query->where('track_stock', true)
+                  ->whereNotNull('min_stock_alert')
+                  ->whereColumn('stock_quantity', '<=', 'min_stock_alert');
+        }
 
-        $categories = Category::whereHas('shop', function ($q) use ($activeShopId) {
-            $q->where('user_id', Auth::id());
-            if ($activeShopId) {
-                $q->where('id', $activeShopId);
-            }
-        })->get();
+        $products = $query->paginate(20)->withQueryString();
+
+        $shops = Auth::user()->accessibleShops();
+        
+        // Les catégories sont globales (prédéfinies par la plateforme)
+        $categories = Category::orderBy('order')->orderBy('name')->get();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
-            'shops' => Auth::user()->accessibleShops(),
-            'filters' => $request->only(['shop_id', 'category_id', 'search']),
+            'shops' => $shops,
+            'filters' => $request->only(['shop_id', 'category_id', 'search', 'status']),
         ]);
     }
 
@@ -73,13 +87,15 @@ class ProductController extends Controller
     public function create(): Response
     {
         $shops = Auth::user()->accessibleShops();
-        $categories = Category::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
         
-        $subcategories = Subcategory::whereHas('category.shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('category')->get();
+        // Les catégories sont globales (prédéfinies par la plateforme)
+        $categories = Category::orderBy('order')->orderBy('name')->get();
+        
+        // Les sous-catégories sont aussi globales
+        $subcategories = Subcategory::with('category')
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('Products/Create', [
             'shops' => $shops,
@@ -98,6 +114,7 @@ class ProductController extends Controller
             'category_id' => 'nullable|exists:categories,id',
             'subcategory_id' => 'nullable|exists:subcategories,id',
             'name' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
             'sku' => 'nullable|string|max:255',
             'barcode' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -114,30 +131,43 @@ class ProductController extends Controller
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
-        // Générer automatiquement le code-barres s'il n'est pas fourni
-        if (empty($validated['barcode'])) {
-            $validated['barcode'] = $this->generateUniqueBarcode();
+        // Définir les valeurs par défaut pour les champs nullable
+        $validated['tax_rate'] = $validated['tax_rate'] ?? 0;
+        $validated['stock_quantity'] = $validated['stock_quantity'] ?? 0;
+        $validated['min_stock_alert'] = $validated['min_stock_alert'] ?? 0;
+        $validated['unit'] = $validated['unit'] ?? 'piece';
+        $validated['track_stock'] = $validated['track_stock'] ?? true;
+        
+        // Gérer l'upload de l'image
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
         }
         
         // Générer automatiquement le SKU s'il n'est pas fourni
         if (empty($validated['sku'])) {
             $validated['sku'] = 'SKU-' . strtoupper(substr(uniqid(), -8));
         }
+
+        // Créer le produit d'abord (pour avoir l'ID)
+        $product = $shop->products()->create($validated);
         
-        // Gérer l'upload de l'image
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
+        // Générer le code-barres avec catégorie, ID et prix si pas fourni ou invalide
+        if (empty($validated['barcode']) || !preg_match('/^\d{13}$/', $validated['barcode'])) {
+            $product->barcode = $this->generateBarcodeWithPrice(
+                $product->id,
+                $product->category_id,
+                $product->selling_price
+            );
+            $product->save();
         }
 
-        $shop->products()->create($validated);
-
-        return redirect()->route('products.index')->with('success', 'Produit créé avec succès.');
+        return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit créé avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Product $product)
+    public function show(string $code_user, Product $product)
     {
         $this->authorize('view', $product);
         
@@ -151,18 +181,20 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Product $product): Response
+    public function edit(string $code_user, Product $product): Response
     {
         $this->authorize('update', $product);
         
         $shops = Auth::user()->accessibleShops();
-        $categories = Category::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
         
-        $subcategories = Subcategory::whereHas('category.shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('category')->get();
+        // Les catégories sont globales (prédéfinies par la plateforme)
+        $categories = Category::orderBy('order')->orderBy('name')->get();
+        
+        // Les sous-catégories sont aussi globales
+        $subcategories = Subcategory::with('category')
+            ->orderBy('order')
+            ->orderBy('name')
+            ->get();
         
         return Inertia::render('Products/Edit', [
             'product' => $product,
@@ -175,7 +207,7 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Product $product)
+    public function update(Request $request, string $code_user, Product $product)
     {
         $this->authorize('update', $product);
         
@@ -183,6 +215,7 @@ class ProductController extends Controller
             'category_id' => 'nullable|exists:categories,id',
             'subcategory_id' => 'nullable|exists:subcategories,id',
             'name' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
             'sku' => 'nullable|string|max:255',
             'barcode' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -208,13 +241,13 @@ class ProductController extends Controller
 
         $product->update($validated);
 
-        return redirect()->route('products.index')->with('success', 'Produit mis à jour avec succès.');
+        return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit mis à jour avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Product $product)
+    public function destroy(string $code_user, Product $product)
     {
         $this->authorize('delete', $product);
         
@@ -225,12 +258,75 @@ class ProductController extends Controller
         
         $product->delete();
 
-        return redirect()->route('products.index')->with('success', 'Produit supprimé avec succès.');
+        return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit supprimé avec succès.');
     }
 
     /**
-     * Generate a unique EAN-13 style barcode.
-     * Format: 2 (internal) + 6 (random) + 4 (product number) + 1 (checksum)
+     * Generate an EAN-13 barcode with category, product ID and price embedded.
+     * 
+     * Format: 2 | CC | PPPPP | XXXX | C (13 chiffres)
+     * 
+     * Structure:
+     * - Position 1: "2" = préfixe pour codes internes
+     * - Positions 2-3: ID catégorie (2 chiffres, 0-99)
+     * - Positions 4-8: ID produit (5 chiffres, 0-99999)
+     * - Positions 9-12: Prix ÷ 100 (4 chiffres, 0-9999 = 0-999 900 FCFA)
+     * - Position 13: Checksum EAN-13
+     * 
+     * @param int $productId L'ID du produit
+     * @param int|null $categoryId L'ID de la catégorie
+     * @param float $price Le prix de vente en FCFA
+     * @return string Code-barres EAN-13 de 13 chiffres
+     */
+    private function generateBarcodeWithPrice(int $productId, ?int $categoryId, float $price): string
+    {
+        // Préfixe "2" pour usage interne (standard EAN pour codes magasin)
+        $prefix = '2';
+        
+        // ID catégorie sur 2 chiffres (max 99 catégories)
+        $categoryPart = str_pad((string)(($categoryId ?? 0) % 100), 2, '0', STR_PAD_LEFT);
+        
+        // ID produit sur 5 chiffres (max 99999 produits)
+        $productPart = str_pad((string)($productId % 100000), 5, '0', STR_PAD_LEFT);
+        
+        // Prix divisé par 100 sur 4 chiffres (max 999900 FCFA)
+        // Ex: 15000 FCFA → 150, 250000 FCFA → 2500
+        $priceHundreds = (int)min(floor($price / 100), 9999);
+        $pricePart = str_pad((string)$priceHundreds, 4, '0', STR_PAD_LEFT);
+        
+        // 12 premiers chiffres
+        $barcode12 = $prefix . $categoryPart . $productPart . $pricePart;
+        
+        // Calculer le checksum
+        $checksum = $this->calculateEAN13Checksum($barcode12);
+        
+        return $barcode12 . $checksum;
+    }
+
+    /**
+     * Decode category, product ID and price from an internal barcode.
+     * 
+     * @param string $barcode Code-barres EAN-13
+     * @return array|null ['category_id' => int, 'product_id' => int, 'price' => int] ou null si pas un code interne
+     */
+    public static function decodeBarcodeWithPrice(string $barcode): ?array
+    {
+        // Vérifier que c'est un code interne (commence par "2" et a 13 chiffres)
+        if (strlen($barcode) !== 13 || $barcode[0] !== '2' || !ctype_digit($barcode)) {
+            return null;
+        }
+        
+        return [
+            'category_id' => (int)substr($barcode, 1, 2),
+            'product_id' => (int)substr($barcode, 3, 5),
+            'price' => (int)substr($barcode, 8, 4) * 100, // Reconvertir en FCFA
+        ];
+    }
+
+    /**
+     * Generate a unique EAN-13 style barcode (fallback without price).
+     * Format: 2 (internal) + 6 (random) + 5 (product number) + 1 (checksum) = 13 digits
+     * @deprecated Use generateBarcodeWithPrice instead
      */
     private function generateUniqueBarcode(): string
     {
@@ -241,8 +337,8 @@ class ProductController extends Controller
             // 6 chiffres aléatoires pour l'entreprise
             $company = str_pad((string)rand(0, 999999), 6, '0', STR_PAD_LEFT);
             
-            // 4 chiffres pour le numéro de produit
-            $productNum = str_pad((string)rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            // 5 chiffres pour le numéro de produit (1 + 6 + 5 = 12 avant checksum)
+            $productNum = str_pad((string)rand(0, 99999), 5, '0', STR_PAD_LEFT);
             
             // 12 premiers chiffres
             $barcode12 = $prefix . $company . $productNum;
@@ -250,7 +346,7 @@ class ProductController extends Controller
             // Calculer le chiffre de contrôle EAN-13
             $checksum = $this->calculateEAN13Checksum($barcode12);
             
-            // Code-barres complet
+            // Code-barres complet (13 chiffres)
             $barcode = $barcode12 . $checksum;
             
             // Vérifier l'unicité
@@ -264,6 +360,11 @@ class ProductController extends Controller
      */
     private function calculateEAN13Checksum(string $barcode12): int
     {
+        // Vérifier que le code-barres a exactement 12 chiffres
+        if (strlen($barcode12) !== 12 || !ctype_digit($barcode12)) {
+            throw new \InvalidArgumentException('Barcode must be exactly 12 digits');
+        }
+        
         $sum = 0;
         for ($i = 0; $i < 12; $i++) {
             $digit = (int)$barcode12[$i];
@@ -272,5 +373,65 @@ class ProductController extends Controller
         
         $checksum = (10 - ($sum % 10)) % 10;
         return $checksum;
+    }
+
+    /**
+     * Download Excel template for product import.
+     */
+    public function downloadTemplate(string $code_user)
+    {
+        return Excel::download(new ProductsTemplateExport(), 'modele_import_produits.xlsx');
+    }
+
+    /**
+     * Export products to Excel.
+     */
+    public function export(string $code_user)
+    {
+        $shopId = get_active_shop_id();
+        $shop = current_shop();
+        $filename = 'produits_' . ($shop?->slug ?? 'export') . '_' . date('Y-m-d') . '.xlsx';
+        
+        return Excel::download(new ProductsExport($shopId), $filename);
+    }
+
+    /**
+     * Import products from Excel file.
+     */
+    public function import(Request $request, string $code_user)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:10240', // Max 10MB
+        ]);
+
+        $shopId = get_active_shop_id();
+        
+        if (!$shopId) {
+            return back()->with('error', 'Veuillez sélectionner une boutique avant d\'importer.');
+        }
+
+        try {
+            $import = new ProductsImport($shopId);
+            Excel::import($import, $request->file('file'));
+            
+            $count = $import->getImportedCount();
+            $errors = $import->getErrors();
+            
+            $message = "Import terminé : {$count['created']} produit(s) créé(s), {$count['updated']} mis à jour.";
+            
+            if ($count['errors'] > 0) {
+                $message .= " {$count['errors']} erreur(s).";
+            }
+
+            if (!empty($errors)) {
+                return back()
+                    ->with('warning', $message)
+                    ->with('import_errors', $errors);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erreur lors de l\'import : ' . $e->getMessage());
+        }
     }
 }

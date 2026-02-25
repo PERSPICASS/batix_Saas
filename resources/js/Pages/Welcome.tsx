@@ -370,6 +370,16 @@ const stagger = {
 export default function Welcome({ auth }: WelcomeProps) {
     const [locale, setLocale] = useState<Locale>('fr');
 
+    // Helper pour générer l'URL du dashboard
+    const getDashboardUrl = () => {
+        if (!auth.user) {
+            return route('register');
+        }
+        
+        // Si l'utilisateur est connecté, utiliser son code_user
+        return route('dashboard', { code_user: auth.code_user });
+    };
+
     useEffect(() => {
         const saved = window.localStorage.getItem('landing_locale');
         if (saved === 'fr' || saved === 'en') {
@@ -441,7 +451,7 @@ export default function Welcome({ auth }: WelcomeProps) {
                             </div>
 
                             {auth.user ? (
-                                <Link href={route('dashboard')} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+                                <Link href={getDashboardUrl()} className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
                                     {t.auth.dashboard}
                                 </Link>
                             ) : (
@@ -468,7 +478,7 @@ export default function Welcome({ auth }: WelcomeProps) {
                                 <motion.p className="mt-6 max-w-xl text-lg text-slate-300">{t.hero.description}</motion.p>
 
                                 <div className="mt-8 flex flex-wrap items-center gap-3">
-                                    <Link href={auth.user ? route('dashboard') : route('register')} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 font-semibold text-slate-950 transition hover:bg-amber-200">
+                                    <Link href={getDashboardUrl()} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 font-semibold text-slate-950 transition hover:bg-amber-200">
                                         {t.hero.primary}
                                         <ArrowRight className="size-4" />
                                     </Link>
@@ -578,7 +588,7 @@ export default function Welcome({ auth }: WelcomeProps) {
                                                 <li key={point} className="flex items-center gap-2"><Check className="size-4 text-emerald-300" />{point}</li>
                                             ))}
                                         </ul>
-                                        <Link href={auth.user ? route('dashboard') : route('register')} className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200">
+                                        <Link href={getDashboardUrl()} className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200">
                                             {t.planCta}
                                             <ArrowRight className="size-4" />
                                         </Link>
@@ -606,7 +616,7 @@ export default function Welcome({ auth }: WelcomeProps) {
                             <Store className="mx-auto size-7 text-amber-200" />
                             <h2 className="mt-4 text-3xl font-bold text-white">{t.contact.title}</h2>
                             <p className="mx-auto mt-3 max-w-2xl text-slate-200">{t.contact.description}</p>
-                            <Link href={auth.user ? route('dashboard') : route('register')} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200">
+                            <Link href={getDashboardUrl()} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200">
                                 {t.contact.cta}
                                 <ArrowRight className="size-4" />
                             </Link>

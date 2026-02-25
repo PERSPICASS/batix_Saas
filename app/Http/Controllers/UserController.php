@@ -16,7 +16,26 @@ class UserController extends Controller
 {
     public function index(): Response
     {
+        $currentUser = auth()->user();
+        
         $users = User::with('shop')
+            ->where(function ($query) use ($currentUser) {
+                // Si l'utilisateur est super_admin, afficher tous les utilisateurs de ses boutiques
+                if ($currentUser->role === 'super_admin') {
+                    // Récupérer les IDs de toutes les boutiques du super admin
+                    $shopIds = $currentUser->shops()->pluck('id');
+                    $query->whereIn('shop_id', $shopIds);
+                } else {
+                    // Pour les autres rôles, afficher uniquement les utilisateurs de la boutique active
+                    $activeShopId = get_active_shop_id();
+                    if ($activeShopId) {
+                        $query->where('shop_id', $activeShopId);
+                    } else {
+                        // Si pas de boutique active, ne rien afficher
+                        $query->whereRaw('1 = 0');
+                    }
+                }
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(15);
         
@@ -69,10 +88,10 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('users.index')->with('success', 'Utilisateur créé avec succès.');
+        return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur créé avec succès.');
     }
 
-    public function edit(User $user): Response
+    public function edit(string $code_user, User $user): Response
     {
         $shops = Shop::select('id', 'name')->orderBy('name')->get();
         $user->load('permissions');
@@ -83,7 +102,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    public function update(Request $request, string $code_user, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -124,19 +143,19 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('users.index')->with('success', 'Utilisateur mis à jour avec succès.');
+        return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur mis à jour avec succès.');
     }
 
-    public function destroy(User $user): RedirectResponse
+    public function destroy(string $code_user, User $user): RedirectResponse
     {
         if ($user->id === auth()->id()) {
-            return redirect()->route('users.index')->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+            return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
 
         $userName = $user->name;
         $user->permissions()->delete();
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', "L'utilisateur {$userName} a été supprimé avec succès.");
+        return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', "L'utilisateur {$userName} a été supprimé avec succès.");
     }
 }

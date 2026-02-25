@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { Store, MapPin, Phone, Mail, FileText } from 'lucide-react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -23,6 +24,8 @@ interface Props {
 }
 
 export default function Edit({ shop }: Props) {
+    const route = useRoute();
+
     const { data, setData, put, processing, errors } = useForm({
         name: shop.name,
         description: shop.description || '',
@@ -39,7 +42,7 @@ export default function Edit({ shop }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('shops.update', shop.id));
+        put(route('shops.update', { shop: shop.id }));
     };
 
     return (

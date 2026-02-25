@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -27,6 +28,8 @@ interface Props {
 }
 
 export default function InventoryCreate({ shops, products }: Props) {
+    const route = useRoute();
+
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
     

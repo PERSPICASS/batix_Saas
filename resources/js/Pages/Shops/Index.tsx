@@ -2,6 +2,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Store, MapPin, Phone, Mail, Pencil, Eye, Trash2, Plus, Building2 } from 'lucide-react';
+import { useRoute } from '@/utils/route';
+import { useState } from 'react';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
 interface Shop {
     id: number;
@@ -21,10 +24,24 @@ interface Shop {
 }
 
 export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
+    const route = useRoute();
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; shop: Shop | null }>({ show: false, shop: null });
+    const [deleting, setDeleting] = useState(false);
+    
     const handleDelete = (shop: Shop) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer la boutique "${shop.name}" ?`)) {
-            router.delete(route('shops.destroy', shop.id));
-        }
+        setDeleteModal({ show: true, shop });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.shop) return;
+        setDeleting(true);
+        router.delete(route('shops.destroy', { shop: deleteModal.shop.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, shop: null });
+                setDeleting(false);
+            },
+            onError: () => setDeleting(false),
+        });
     };
 
     return (
@@ -149,13 +166,13 @@ export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
                                     {/* Actions */}
                                     <div className="mt-4 flex items-center gap-2 border-t border-white/10 pt-4">
                                         <Link
-                                            href={route('shops.show', shop.id)}
+                                            href={route('shops.show', { shop: shop.id })}
                                             className="flex-1 rounded-lg border border-white/15 py-2 text-center text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
                                         >
                                             <Eye className="mx-auto size-4" />
                                         </Link>
                                         <Link
-                                            href={route('shops.edit', shop.id)}
+                                            href={route('shops.edit', { shop: shop.id })}
                                             className="flex-1 rounded-lg border border-white/15 py-2 text-center text-xs font-medium text-slate-200 transition-colors hover:bg-white/10"
                                         >
                                             <Pencil className="mx-auto size-4" />
@@ -172,6 +189,15 @@ export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
                         ))}
                     </div>
                 )}
+
+                {/* Modal de suppression */}
+                <ConfirmDeleteModal
+                    show={deleteModal.show}
+                    onClose={() => setDeleteModal({ show: false, shop: null })}
+                    onConfirm={confirmDelete}
+                    message={`Êtes-vous sûr de vouloir supprimer la boutique "${deleteModal.shop?.name}" ?`}
+                    processing={deleting}
+                />
             </section>
         </AuthenticatedLayout>
     );

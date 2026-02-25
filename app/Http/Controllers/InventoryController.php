@@ -101,10 +101,10 @@ class InventoryController extends Controller
             $inventory->save();
         });
 
-        return redirect()->route('inventory.index')->with('success', 'Inventaire créé avec succès.');
+        return redirect()->route('inventory.index', ['code_user' => request()->route('code_user')])->with('success', 'Inventaire créé avec succès.');
     }
 
-    public function show(Inventory $inventory): Response
+    public function show(string $code_user, Inventory $inventory): Response
     {
         $inventory->load(['shop', 'user', 'items.product']);
 
@@ -113,7 +113,7 @@ class InventoryController extends Controller
         ]);
     }
 
-    public function edit(Inventory $inventory): Response
+    public function edit(string $code_user, Inventory $inventory): Response
     {
         $inventory->load(['items.product']);
 
@@ -124,7 +124,7 @@ class InventoryController extends Controller
         ]);
     }
 
-    public function update(Request $request, Inventory $inventory): RedirectResponse
+    public function update(Request $request, string $code_user, Inventory $inventory): RedirectResponse
     {
         if ($inventory->status === 'completed') {
             return back()->withErrors(['error' => 'Impossible de modifier un inventaire terminé.']);
@@ -172,7 +172,7 @@ class InventoryController extends Controller
             $inventory->save();
         });
 
-        return redirect()->route('inventory.index')->with('success', 'Inventaire mis à jour avec succès.');
+        return redirect()->route('inventory.index', ['code_user' => request()->route('code_user')])->with('success', 'Inventaire mis à jour avec succès.');
     }
 
     public function complete(Inventory $inventory): RedirectResponse
@@ -212,7 +212,7 @@ class InventoryController extends Controller
         return redirect()->route('inventory.show', $inventory)->with('success', 'Inventaire terminé et stocks ajustés.');
     }
 
-    public function destroy(Inventory $inventory): RedirectResponse
+    public function destroy(string $code_user, Inventory $inventory): RedirectResponse
     {
         if ($inventory->status === 'completed') {
             return back()->withErrors(['error' => 'Impossible de supprimer un inventaire terminé.']);
@@ -220,7 +220,7 @@ class InventoryController extends Controller
 
         $inventory->delete();
 
-        return redirect()->route('inventory.index')->with('success', 'Inventaire supprimé avec succès.');
+        return redirect()->route('inventory.index', ['code_user' => request()->route('code_user')])->with('success', 'Inventaire supprimé avec succès.');
     }
 }
 

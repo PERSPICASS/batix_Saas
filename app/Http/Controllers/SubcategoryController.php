@@ -13,31 +13,25 @@ class SubcategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * 
+     * Les catégories et sous-catégories sont globales (prédéfinies par la plateforme)
      */
     public function index(Request $request): Response
     {
-        $shopId = $request->input('shop_id');
         $categoryId = $request->input('category_id');
         
-        $query = Subcategory::with('category.shop')
+        $query = Subcategory::with('category')
             ->orderBy('order')
             ->orderBy('name');
 
         if ($categoryId) {
             $query->where('category_id', $categoryId);
-        } else {
-            // Afficher les sous-catégories des boutiques de l'utilisateur
-            $query->whereHas('category.shop', function ($q) {
-                $q->where('user_id', Auth::id());
-            });
         }
 
         $subcategories = $query->get();
 
-        // Récupérer les catégories pour le filtre
-        $categories = Category::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->get();
+        // Récupérer les catégories globales pour le filtre
+        $categories = Category::orderBy('order')->orderBy('name')->get();
 
         return Inertia::render('Subcategories/Index', [
             'subcategories' => $subcategories,
@@ -51,9 +45,8 @@ class SubcategoryController extends Controller
      */
     public function create(): Response
     {
-        $categories = Category::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
+        // Les catégories sont globales
+        $categories = Category::orderBy('order')->orderBy('name')->get();
 
         return Inertia::render('Subcategories/Create', [
             'categories' => $categories,
@@ -72,20 +65,18 @@ class SubcategoryController extends Controller
             'order' => 'nullable|integer',
         ]);
 
-        // Vérifier que la catégorie appartient à une boutique de l'utilisateur
-        $category = Category::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->findOrFail($validated['category_id']);
+        // Les catégories sont globales, pas besoin de vérifier le propriétaire
+        $category = Category::findOrFail($validated['category_id']);
         
         $category->subcategories()->create($validated);
 
-        return redirect()->route('subcategories.index')->with('success', 'Sous-catégorie créée avec succès.');
+        return redirect()->route('subcategories.index', ['code_user' => request()->route('code_user')])->with('success', 'Sous-catégorie créée avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Subcategory $subcategory)
+    public function show(string $code_user, Subcategory $subcategory)
     {
         $this->authorize('view', $subcategory);
         
@@ -99,13 +90,12 @@ class SubcategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Subcategory $subcategory): Response
+    public function edit(string $code_user, Subcategory $subcategory): Response
     {
         $this->authorize('update', $subcategory);
         
-        $categories = Category::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
+        // Les catégories sont globales
+        $categories = Category::orderBy('order')->orderBy('name')->get();
         
         return Inertia::render('Subcategories/Edit', [
             'subcategory' => $subcategory,
@@ -116,7 +106,7 @@ class SubcategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Subcategory $subcategory)
+    public function update(Request $request, string $code_user, Subcategory $subcategory)
     {
         $this->authorize('update', $subcategory);
         
@@ -130,18 +120,18 @@ class SubcategoryController extends Controller
 
         $subcategory->update($validated);
 
-        return redirect()->route('subcategories.index')->with('success', 'Sous-catégorie mise à jour avec succès.');
+        return redirect()->route('subcategories.index', ['code_user' => request()->route('code_user')])->with('success', 'Sous-catégorie mise à jour avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Subcategory $subcategory)
+    public function destroy(string $code_user, Subcategory $subcategory)
     {
         $this->authorize('delete', $subcategory);
         
         $subcategory->delete();
 
-        return redirect()->route('subcategories.index')->with('success', 'Sous-catégorie supprimée avec succès.');
+        return redirect()->route('subcategories.index', ['code_user' => request()->route('code_user')])->with('success', 'Sous-catégorie supprimée avec succès.');
     }
 }

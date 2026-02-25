@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Shield, Check } from 'lucide-react';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -21,12 +22,16 @@ interface Props {
 }
 
 const MODULES = [
+    { key: 'shops', label: 'Boutiques' },
     { key: 'products', label: 'Produits' },
-    { key: 'customers', label: 'Clients' },
-    { key: 'invoices', label: 'Factures' },
-    { key: 'sales', label: 'Ventes' },
+    { key: 'categories', label: 'Catégories & Sous-catégories' },
     { key: 'stocks', label: 'Stocks' },
     { key: 'inventory', label: 'Inventaires' },
+    { key: 'sales', label: 'Ventes' },
+    { key: 'suppliers', label: 'Fournisseurs' },
+    { key: 'customers', label: 'Clients' },
+    { key: 'invoices', label: 'Factures' },
+    { key: 'users', label: 'Utilisateurs' },
     { key: 'reports', label: 'Rapports' },
 ];
 
@@ -39,6 +44,8 @@ const ROLES = [
 ];
 
 export default function UsersCreate({ shops }: Props) {
+    const route = useRoute();
+
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',

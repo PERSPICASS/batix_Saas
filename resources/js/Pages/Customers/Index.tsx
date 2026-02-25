@@ -3,6 +3,7 @@ import Table, { TableActionButton, TableActions, TableBadge } from '@/Components
 import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import Currency from '@/Components/Currency';
+import { useRoute } from '@/utils/route';
 
 interface Shop {
     id: number;
@@ -14,7 +15,6 @@ interface Customer {
     name: string;
     email: string | null;
     phone: string | null;
-    city: string | null;
     total_purchases: string;
     is_active: boolean;
     shop: Shop;
@@ -31,9 +31,11 @@ interface Props {
 }
 
 export default function CustomersIndex({ customers }: Props) {
+    const route = useRoute();
+
     const handleDelete = (customer: Customer) => {
         if (confirm(`Êtes-vous sûr de vouloir supprimer le client "${customer.name}" ?`)) {
-            router.delete(route('customers.destroy', customer.id));
+            router.delete(route('customers.destroy', { customer: customer.id }));
         }
     };
 
@@ -59,7 +61,6 @@ export default function CustomersIndex({ customers }: Props) {
                         { key: 'name', label: 'Nom' },
                         { key: 'email', label: 'Email' },
                         { key: 'phone', label: 'Téléphone' },
-                        { key: 'city', label: 'Ville' },
                         {
                             key: 'total_purchases',
                             label: 'Total achats',
@@ -88,7 +89,7 @@ export default function CustomersIndex({ customers }: Props) {
                             render: (customer) => (
                                 <TableActions>
                                     <Link
-                                        href={route('customers.edit', customer.id)}
+                                        href={route('customers.edit', { customer: customer.id })}
                                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                                     >
                                         <Pencil className="size-3.5" /> Modifier
