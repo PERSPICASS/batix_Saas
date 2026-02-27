@@ -22,7 +22,8 @@ jobs:
             git pull origin dev
 
             docker compose pull
-            docker compose up -d --build
+            rm -rf public/build
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm node
 
             docker compose exec -T app php artisan migrate --force
             docker compose exec -T app php artisan config:clear
