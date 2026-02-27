@@ -46,7 +46,8 @@ export default function Authenticated({
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
-    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+    // Force dark mode
+    const [theme, setTheme] = useState<'dark'>('dark');
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
 
@@ -138,24 +139,11 @@ export default function Authenticated({
         setShopMenuOpen(false);
     };
 
+    // Always set dark mode
     useEffect(() => {
-        const savedTheme = window.localStorage.getItem('theme');
-        if (savedTheme === 'light' || savedTheme === 'dark') {
-            setTheme(savedTheme);
-            return;
-        }
-
-        setTheme(
-            window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light',
-        );
+        document.documentElement.classList.add('dark');
+        window.localStorage.setItem('theme', 'dark');
     }, []);
-
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        window.localStorage.setItem('theme', theme);
-    }, [theme]);
 
     useEffect(() => {
         const onClickOutside = (event: MouseEvent) => {
@@ -407,27 +395,7 @@ export default function Authenticated({
                         </div>
 
                         <div className="flex items-center gap-2">
-                            {/* <button
-                                type="button"
-                                onClick={() =>
-                                    setTheme((prev) =>
-                                        prev === 'dark' ? 'light' : 'dark',
-                                    )
-                                }
-                                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                            >
-                                {theme === 'dark' ? (
-                                    <>
-                                        <Sun className="size-4" />
-                                        Light
-                                    </>
-                                ) : (
-                                    <>
-                                        <Moon className="size-4" />
-                                        Night
-                                    </>
-                                )}
-                            </button> */}
+                            {/* Dark mode is always enabled */}
                             <div className="relative" ref={shopMenuRef}>
                                 <button
                                     type="button"
