@@ -20,7 +20,27 @@ import {
     Zap,
 } from 'lucide-react';
 
-type WelcomeProps = PageProps;
+interface SubscriptionPlan {
+    id: number;
+    name: string;
+    slug: string;
+    description: string;
+    price: number;
+    formatted_price: string;
+    price_eur: string;
+    price_fcfa: string;
+    max_shops: number;
+    max_users: number;
+    features: string[];
+    shop_limit_text: string;
+    has_unlimited_shops: boolean;
+    has_unlimited_users: boolean;
+}
+
+interface WelcomeProps extends PageProps {
+    subscriptionPlans: SubscriptionPlan[];
+}
+
 type Locale = 'fr' | 'en';
 
 type FeatureItem = {
@@ -258,7 +278,8 @@ const featuresByLocale: Record<Locale, FeatureItem[]> = {
     ],
 };
 
-const plansByLocale: Record<Locale, PlanItem[]> = {
+// Plans statiques commentés - maintenant chargés depuis la base de données
+/* const plansByLocale: Record<Locale, PlanItem[]> = {
     fr: [
         {
             name: 'Starter',
@@ -307,7 +328,8 @@ const plansByLocale: Record<Locale, PlanItem[]> = {
             points: ['Unlimited', 'Priority onboarding', 'Premium support'],
         },
     ],
-};
+}; */
+
 
 const faqsByLocale = {
     fr: [
@@ -367,7 +389,7 @@ const stagger = {
     },
 };
 
-export default function Welcome({ auth }: WelcomeProps) {
+export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
     const [locale, setLocale] = useState<Locale>('fr');
 
     // Helper pour générer l'URL du dashboard
@@ -393,9 +415,37 @@ export default function Welcome({ auth }: WelcomeProps) {
 
     const t = copy[locale];
     const features = useMemo(() => featuresByLocale[locale], [locale]);
-    const plans = useMemo(() => plansByLocale[locale], [locale]);
     const faqs = useMemo(() => faqsByLocale[locale], [locale]);
     const trustMarks = useMemo(() => trustMarksByLocale[locale], [locale]);
+
+    // Transformer les plans de la base de données en format adapté à l'affichage
+    const plans = useMemo(() => {
+        return subscriptionPlans.map((plan, index) => {
+            // Déterminer le badge selon la langue
+            const badge = locale === 'fr' 
+                ? plan.shop_limit_text 
+                : (plan.has_unlimited_shops ? 'Unlimited stores' : `Up to ${plan.max_shops} store${plan.max_shops > 1 ? 's' : ''}`);
+            
+            // Déterminer le sous-titre
+            const subtitle = locale === 'fr' ? 'par mois' : 'per month';
+            
+            // Points à afficher (features du plan)
+            const points = plan.features || [];
+            
+            // Le plan du milieu est mis en avant
+            const highlighted = index === 1 && subscriptionPlans.length === 3;
+
+            return {
+                name: plan.name,
+                price_eur: plan.price_eur,
+                price_fcfa: plan.price_fcfa,
+                subtitle: subtitle,
+                badge: badge,
+                points: points,
+                highlighted: highlighted,
+            };
+        });
+    }, [subscriptionPlans, locale]);
 
     return (
         <>
@@ -582,7 +632,11 @@ export default function Welcome({ auth }: WelcomeProps) {
                                     <motion.article key={plan.name} className={`rounded-2xl border p-6 ${plan.highlighted ? 'border-amber-300 bg-amber-300/10' : 'border-white/10 bg-white/5'}`} variants={fadeUp} whileHover={{ y: -5 }}>
                                         <p className="text-sm font-semibold text-amber-200">{plan.badge}</p>
                                         <h3 className="mt-2 text-2xl font-bold text-white">{plan.name}</h3>
-                                        <p className="mt-3 text-4xl font-bold text-white">{plan.price}<span className="ml-1 text-sm font-medium text-slate-300">{plan.subtitle}</span></p>
+                                        <div className="mt-3 space-y-1">
+                                            <p className="text-3xl font-bold text-white">{plan.price_eur}</p>
+                                            <p className="text-2xl font-semibold text-amber-200">{plan.price_fcfa}</p>
+                                        </div>
+                                        <p className="mt-2 text-xs text-slate-400">{plan.subtitle}</p>
                                         <ul className="mt-5 space-y-3 text-sm text-slate-200">
                                             {plan.points.map((point) => (
                                                 <li key={point} className="flex items-center gap-2"><Check className="size-4 text-emerald-300" />{point}</li>

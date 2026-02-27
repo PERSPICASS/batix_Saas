@@ -28,6 +28,7 @@
     },
     "dependencies": {
         "framer-motion": "^12.34.2",
-        "lucide-react": "^0.574.0"
+        "lucide-react": "^0.574.0",
+        "recharts": "^3.7.0"
     }
 }

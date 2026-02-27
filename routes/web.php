@@ -6,6 +6,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\PlatformAdminController;
 use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariationController;
@@ -18,22 +19,45 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SubscriptionPlanController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [WelcomeController::class, 'index']);
 
 // Routes publiques pour les invitations (avant auth)
 Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
 Route::post('/invitation/{token}/accept', [InvitationController::class, 'accept'])->name('invitation.accept');
+
+// Routes admin plateforme (accès réservé aux admin_platforme)
+Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
+    Route::get('/dashboard', [PlatformAdminController::class, 'index'])->name('platform.dashboard');
+    Route::get('/accounts', [PlatformAdminController::class, 'accounts'])->name('platform.accounts');
+    Route::post('/accounts/{user}/toggle', [PlatformAdminController::class, 'toggleAccountStatus'])->name('platform.accounts.toggle');
+    Route::get('/shops', [PlatformAdminController::class, 'shops'])->name('platform.shops');
+    Route::post('/shops/{shop}/toggle', [PlatformAdminController::class, 'toggleShopStatus'])->name('platform.shops.toggle');
+    
+    // Subscription Plans Management
+    Route::resource('subscriptions', SubscriptionPlanController::class)->parameters([
+        'subscriptions' => 'plan'
+    ])->names([
+        'index' => 'platform.subscriptions.index',
+        'create' => 'platform.subscriptions.create',
+        'store' => 'platform.subscriptions.store',
+        'edit' => 'platform.subscriptions.edit',
+        'update' => 'platform.subscriptions.update',
+        'destroy' => 'platform.subscriptions.destroy',
+    ]);
+    Route::post('/subscriptions/{plan}/toggle', [SubscriptionPlanController::class, 'toggleStatus'])->name('platform.subscriptions.toggle');
+    
+    // Active Subscriptions Management
+    Route::get('/active-subscriptions', [PlatformAdminController::class, 'subscriptions'])->name('platform.active-subscriptions');
+    Route::post('/active-subscriptions/{subscription}/cancel', [PlatformAdminController::class, 'cancelSubscription'])->name('platform.active-subscriptions.cancel');
+    Route::post('/active-subscriptions/{subscription}/renew', [PlatformAdminController::class, 'renewSubscription'])->name('platform.active-subscriptions.renew');
+    Route::post('/active-subscriptions/{subscription}/update-dates', [PlatformAdminController::class, 'updateSubscriptionDates'])->name('platform.active-subscriptions.update-dates');
+});
 
 // Routes avec préfixe code_user (pour tout le compte)
 Route::prefix('{code_user}')
@@ -43,8 +67,17 @@ Route::prefix('{code_user}')
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Routes pour les boutiques
-    Route::resource('boutiques', ShopController::class)->names('shops')->parameters(['boutiques' => 'shop']);
+    // Routes pour les boutiques (avec vérification des limites d'abonnement)
+    Route::post('boutiques', [ShopController::class, 'store'])
+        ->name('shops.store')
+        ->middleware('subscription.limits:shop');
+    Route::get('boutiques', [ShopController::class, 'index'])->name('shops.index');
+    Route::get('boutiques/create', [ShopController::class, 'create'])->name('shops.create');
+    Route::get('boutiques/{shop}', [ShopController::class, 'show'])->name('shops.show');
+    Route::get('boutiques/{shop}/edit', [ShopController::class, 'edit'])->name('shops.edit');
+    Route::put('boutiques/{shop}', [ShopController::class, 'update'])->name('shops.update');
+    Route::patch('boutiques/{shop}', [ShopController::class, 'update']);
+    Route::delete('boutiques/{shop}', [ShopController::class, 'destroy'])->name('shops.destroy');
 
     // Routes pour les produits
     Route::resource('produits', ProductController::class)->names('products')->parameters(['produits' => 'product']);
@@ -89,8 +122,17 @@ Route::prefix('{code_user}')
     Route::resource('inventory', InventoryController::class);
     Route::post('inventory/{inventory}/complete', [InventoryController::class, 'complete'])->name('inventory.complete');
 
-    // Utilisateurs
-    Route::resource('users', UserController::class)->parameters(['users' => 'user']);
+    // Utilisateurs (avec vérification des limites d'abonnement)
+    Route::post('users', [UserController::class, 'store'])
+        ->name('users.store')
+        ->middleware('subscription.limits:user');
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+    Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::patch('users/{user}', [UserController::class, 'update']);
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
     // Fournisseurs
     Route::resource('suppliers', SupplierController::class)->parameters([

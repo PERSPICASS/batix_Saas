@@ -5,6 +5,7 @@ import Table, { TableActions, TableActionButton, TableBadge } from '@/Components
 import ConfirmDialog from '@/Components/ConfirmDialog';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
+import SubscriptionBanner, { useSubscriptionLimits } from '@/Components/SubscriptionBanner';
 
 interface Shop {
     id: number;
@@ -37,6 +38,7 @@ interface Props {
 
 const roleLabels: Record<string, string> = {
     super_admin: 'Super Admin',
+    admin_platforme: 'Admin Plateforme',
     admin: 'Administrateur',
     manager: 'Gestionnaire',
     cashier: 'Caissier',
@@ -45,6 +47,7 @@ const roleLabels: Record<string, string> = {
 
 const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'danger'> = {
     super_admin: 'danger',
+    admin_platforme: 'danger',
     admin: 'info',
     manager: 'info',
     cashier: 'warning',
@@ -53,6 +56,7 @@ const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'd
 
 export default function UsersIndex({ users }: Props) {
     const route = useRoute();
+    const subscription = useSubscriptionLimits();
 
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -161,13 +165,25 @@ export default function UsersIndex({ users }: Props) {
             <Head title="Utilisateurs" />
 
             <section className="space-y-6">
+                {/* Bannière d'abonnement */}
+                {subscription && <SubscriptionBanner type="users" />}
+
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-slate-300">
                         Gérez les comptes utilisateurs et leurs permissions
                     </p>
                     <Link
                         href={route('users.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${
+                            subscription?.can_create_user
+                                ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
+                                : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                        }`}
+                        onClick={(e) => {
+                            if (!subscription?.can_create_user) {
+                                e.preventDefault();
+                            }
+                        }}
                     >
                         <Plus className="size-4" /> Nouvel utilisateur
                     </Link>

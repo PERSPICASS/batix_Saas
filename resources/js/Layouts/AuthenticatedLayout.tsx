@@ -11,6 +11,7 @@ import {
     Building2,
     Boxes,
     Box,
+    Calendar,
     ChevronDown,
     ChevronRight,
     ClipboardList,
@@ -77,6 +78,11 @@ export default function Authenticated({
     const getAccountCode = (): string | null => {
         if (!user) return null;
         
+        // Si l'utilisateur est admin_platforme, pas besoin de code_user
+        if (user.role === 'admin_platforme') {
+            return null;
+        }
+        
         // Si l'utilisateur est super_admin, c'est son propre code
         if (user.role === 'super_admin') {
             return user.code_user;
@@ -94,6 +100,11 @@ export default function Authenticated({
 
     // Helper pour générer les routes avec le code_user du compte
     const buildRoute = (name: string, params: Record<string, any> = {}) => {
+        // Pour admin_platforme, utiliser les routes sans code_user
+        if (user?.role === 'admin_platforme') {
+            return route(name, params);
+        }
+        
         if (!accountCode) {
             console.warn('Account code not available for route:', name);
             return '#';
@@ -105,8 +116,8 @@ export default function Authenticated({
         });
     };
 
-    // Si le code_user n'est pas disponible, afficher un loader
-    if (!accountCode) {
+    // Si le code_user n'est pas disponible et que ce n'est pas un admin_platforme, afficher un loader
+    if (!accountCode && user?.role !== 'admin_platforme') {
         return (
             <div className="flex h-screen items-center justify-center bg-slate-950">
                 <div className="text-center">
@@ -117,11 +128,14 @@ export default function Authenticated({
         );
     }
 
-    const shops = shopsFromProps.filter(shop => shop.is_active).map(shop => ({
-        id: shop.id.toString(),
-        name: shop.name,
-        slug: shop.slug,
-    }));
+    // Pour admin_platforme, pas de shops dans le contexte
+    const shops = Array.isArray(shopsFromProps) 
+        ? shopsFromProps.filter(shop => shop.is_active).map(shop => ({
+            id: shop.id.toString(),
+            name: shop.name,
+            slug: shop.slug,
+        }))
+        : [];
     
     // Utiliser la boutique active depuis la session (partagée via Inertia)
     const activeShop = activeShopFromProps 
@@ -166,106 +180,146 @@ export default function Authenticated({
     }, []);
 
     const allNavItems = [
-        {
-            label: 'Dashboard',
-            href: buildRoute('dashboard'),
-            active: route().current('dashboard'),
-            icon: LayoutDashboard,
-            module: 'dashboard', // Restreint aux admins
-        },
-        {
-            label: 'Boutiques',
-            href: buildRoute('shops.index'),
-            active: route().current('shops.*'),
-            icon: Store,
-            module: 'shops',
-        },
-        {
-            label: 'Produits',
-            href: buildRoute('products.index'),
-            active: route().current('products.*'),
-            icon: Box,
-            module: 'products',
-        },
-        {
-            label: 'Categories',
-            href: buildRoute('categories.index'),
-            active: route().current('categories.*'),
-            icon: Folder,
-            module: 'categories',
-        },
-        {
-            label: 'Sous categorie',
-            href: buildRoute('subcategories.index'),
-            active: route().current('subcategories.*'),
-            icon: FolderTree,
-            module: 'categories',
-        },
-        {
-            label: 'Stocks',
-            href: buildRoute('stocks.index'),
-            active: route().current('stocks.*'),
-            icon: Boxes,
-            module: 'stocks',
-        },
-        {
-            label: 'Inventaire',
-            href: buildRoute('inventory.index'),
-            active: route().current('inventory.*'),
-            icon: ClipboardList,
-            module: 'inventory',
-        },
-        {
-            label: 'Ventes',
-            href: buildRoute('sales.index'),
-            active: route().current('sales.*'),
-            icon: ShoppingCart,
-            module: 'sales',
-        },
-        {
-            label: 'Fournisseurs',
-            href: buildRoute('suppliers.index'),
-            active: route().current('suppliers.*'),
-            icon: Truck,
-            module: 'suppliers',
-        },
-        {
-            label: 'Utilisateurs',
-            href: buildRoute('users.index'),
-            active: route().current('users.*'),
-            icon: Users,
-            module: 'users',
-        },
-        {
-            label: 'Client',
-            href: buildRoute('customers.index'),
-            active: route().current('customers.*'),
-            icon: User,
-            module: 'customers',
-        },
-        {
-            label: 'Factures',
-            href: buildRoute('invoices.index'),
-            active: route().current('invoices.*'),
-            icon: FileText,
-            module: 'invoices',
-        },
-        {
-            label: 'Analytics',
-            href: buildRoute('analytics.index'),
-            active: route().current('analytics.*'),
-            icon: BarChart3,
-            module: 'analytics', // Restreint aux admins
-        },
-        ...(user
-            ? [{
-            label: 'Profil',
-            href: buildRoute('profile.edit'),
-            active: route().current('profile.*'),
-            icon: Settings,
-            module: null, // Toujours visible
-        }]
-            : []),
+        // Admin plateforme (uniquement pour admin_platforme)
+        ...(user?.role === 'admin_platforme' ? [
+            {
+                label: 'Dashboard Plateforme',
+                href: route('platform.dashboard'),
+                active: route().current('platform.dashboard'),
+                icon: Crown,
+                module: null,
+            },
+            {
+                label: 'Comptes',
+                href: route('platform.accounts'),
+                active: route().current('platform.accounts'),
+                icon: Users,
+                module: null,
+            },
+            {
+                label: 'Boutiques',
+                href: route('platform.shops'),
+                active: route().current('platform.shops'),
+                icon: Store,
+                module: null,
+            },
+            {
+                label: 'Plans',
+                href: route('platform.subscriptions.index'),
+                active: route().current('platform.subscriptions.*'),
+                icon: Crown,
+                module: null,
+            },
+            {
+                label: 'Abonnements',
+                href: route('platform.active-subscriptions'),
+                active: route().current('platform.active-subscriptions*'),
+                icon: Calendar,
+                module: null,
+            },
+        ] : [
+            // Menus normaux pour les autres utilisateurs
+            {
+                label: 'Dashboard',
+                href: buildRoute('dashboard'),
+                active: route().current('dashboard'),
+                icon: LayoutDashboard,
+                module: 'dashboard', // Restreint aux admins
+            },
+            {
+                label: 'Boutiques',
+                href: buildRoute('shops.index'),
+                active: route().current('shops.*'),
+                icon: Store,
+                module: 'shops',
+            },
+            {
+                label: 'Produits',
+                href: buildRoute('products.index'),
+                active: route().current('products.*'),
+                icon: Box,
+                module: 'products',
+            },
+            {
+                label: 'Categories',
+                href: buildRoute('categories.index'),
+                active: route().current('categories.*'),
+                icon: Folder,
+                module: 'categories',
+            },
+            {
+                label: 'Sous categorie',
+                href: buildRoute('subcategories.index'),
+                active: route().current('subcategories.*'),
+                icon: FolderTree,
+                module: 'categories',
+            },
+            {
+                label: 'Stocks',
+                href: buildRoute('stocks.index'),
+                active: route().current('stocks.*'),
+                icon: Boxes,
+                module: 'stocks',
+            },
+            {
+                label: 'Inventaire',
+                href: buildRoute('inventory.index'),
+                active: route().current('inventory.*'),
+                icon: ClipboardList,
+                module: 'inventory',
+            },
+            {
+                label: 'Ventes',
+                href: buildRoute('sales.index'),
+                active: route().current('sales.*'),
+                icon: ShoppingCart,
+                module: 'sales',
+            },
+            {
+                label: 'Fournisseurs',
+                href: buildRoute('suppliers.index'),
+                active: route().current('suppliers.*'),
+                icon: Truck,
+                module: 'suppliers',
+            },
+            {
+                label: 'Utilisateurs',
+                href: buildRoute('users.index'),
+                active: route().current('users.*'),
+                icon: Users,
+                module: 'users',
+            },
+            {
+                label: 'Client',
+                href: buildRoute('customers.index'),
+                active: route().current('customers.*'),
+                icon: User,
+                module: 'customers',
+            },
+            {
+                label: 'Factures',
+                href: buildRoute('invoices.index'),
+                active: route().current('invoices.*'),
+                icon: FileText,
+                module: 'invoices',
+            },
+            {
+                label: 'Analytics',
+                href: buildRoute('analytics.index'),
+                active: route().current('analytics.*'),
+                icon: BarChart3,
+                module: 'analytics', // Restreint aux admins
+            },
+            ...(user && (user as any).role !== 'admin_platforme'
+                ? [{
+                label: 'Profil',
+                href: buildRoute('profile.edit'),
+                active: route().current('profile.*'),
+                icon: Settings,
+                module: null, // Toujours visible
+            }]
+                : []),
+        ]),
     ];
 
     // Filtrer les menus selon les permissions
@@ -396,6 +450,9 @@ export default function Authenticated({
 
                         <div className="flex items-center gap-2">
                             {/* Dark mode is always enabled */}
+                            
+                            {/* Sélecteur de boutique - masqué pour admin_platforme */}
+                            {user?.role !== 'admin_platforme' && (
                             <div className="relative" ref={shopMenuRef}>
                                 <button
                                     type="button"
@@ -445,6 +502,7 @@ export default function Authenticated({
                                     </div>
                                 )}
                             </div>
+                            )}
 
                             <div className="relative" ref={userMenuRef}>
                                 <button
@@ -467,20 +525,24 @@ export default function Authenticated({
                                     <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {user ? (
                                             <>
-                                                <Link
-                                                    href={buildRoute('profile.edit')}
-                                                    className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
-                                                    onClick={() => setUserMenuOpen(false)}
-                                                >
-                                                    Profil
-                                                </Link>
-                                                <Link
-                                                    href={buildRoute('settings.index')}
-                                                    className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
-                                                    onClick={() => setUserMenuOpen(false)}
-                                                >
-                                                    Parametres
-                                                </Link>
+                                                {user.role !== 'admin_platforme' && (
+                                                    <>
+                                                        <Link
+                                                            href={buildRoute('profile.edit')}
+                                                            className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                            onClick={() => setUserMenuOpen(false)}
+                                                        >
+                                                            Profil
+                                                        </Link>
+                                                        <Link
+                                                            href={buildRoute('settings.index')}
+                                                            className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                            onClick={() => setUserMenuOpen(false)}
+                                                        >
+                                                            Parametres
+                                                        </Link>
+                                                    </>
+                                                )}
                                                 <Link
                                                     href={route('logout')}
                                                     method="post"

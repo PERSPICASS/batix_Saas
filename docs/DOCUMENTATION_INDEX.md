@@ -1,8 +1,115 @@
 # 📚 Documentation du Projet - Index
 
-## Date: 24 février 2026
+## Date: 27 février 2026
 
 Ce document liste tous les guides et documentations créés pour le projet Batix SaaS.
+
+---
+
+## 💳 Abonnements et Plans
+
+### [SUBSCRIPTION_RESTRICTIONS.md](./SUBSCRIPTION_RESTRICTIONS.md)
+**Type**: Documentation technique complète  
+**Date**: 27 février 2026  
+**Statut**: ✅ 100% Implémenté
+
+**Contenu**:
+- Système de restrictions par abonnement
+- Middleware CheckSubscriptionLimits
+- Méthodes du modèle User (canCreateShop, canCreateUser, etc.)
+- Protection des routes (boutiques et utilisateurs)
+- Composant React SubscriptionBanner
+- Guide d'utilisation complet avec exemples
+- Scénarios de test détaillés
+- Guide de troubleshooting
+
+**Fonctionnalités**:
+- ✅ Limitation du nombre de boutiques par plan
+- ✅ Limitation du nombre d'utilisateurs par plan
+- ✅ Blocage automatique côté serveur (middleware)
+- ✅ Affichage temps réel des limites (UI)
+- ✅ Messages d'erreur contextuels
+- ✅ Support plans illimités (max = -1)
+
+### [SUBSCRIPTION_RESTRICTIONS_RESUME.md](./SUBSCRIPTION_RESTRICTIONS_RESUME.md)
+**Type**: Résumé exécutif  
+**Date**: 27 février 2026  
+**Statut**: ✅ Complet
+
+**Contenu**:
+- Vue d'ensemble du système de restrictions
+- Workflow de vérification illustré
+- Exemples concrets par plan
+- États visuels de la bannière
+- Checklist de mise en œuvre
+- Prochaines étapes recommandées
+
+**Points clés**:
+- 🔒 Sécurité multi-couches (UI + Middleware + Contrôleur)
+- 📊 9 nouvelles méthodes dans le modèle User
+- 🎨 Composant React avec indicateurs visuels
+- ✅ Impossible de contourner (validation serveur)
+
+### [SUBSCRIPTION_UI_INTEGRATION.md](./SUBSCRIPTION_UI_INTEGRATION.md)
+**Type**: Documentation d'intégration frontend  
+**Date**: 27 février 2026  
+**Statut**: ✅ Implémenté et compilé
+
+**Contenu**:
+- Intégration de SubscriptionBanner dans les pages
+- Hook useSubscriptionLimits() pour accès aux données
+- Boutons dynamiques selon les limites
+- Classes CSS conditionnelles
+- Comportement responsive
+- Design system (couleurs, typographie)
+- Tests UI recommandés
+- Améliorations futures
+
+**Pages modifiées**:
+- ✅ `resources/js/Pages/Shops/Index.tsx` - Bannière + bouton dynamique
+- ✅ `resources/js/Pages/Users/Index.tsx` - Bannière + bouton dynamique
+
+**Comportement**:
+- 🟢 Bouton actif (vert) : Création autorisée
+- ⚪ Bouton désactivé (gris) : Limite atteinte, clic bloqué
+- 📊 Bannière visible avec compteurs temps réel
+- 🎨 Couleurs adaptées (vert/jaune/rouge) selon utilisation
+
+### [DASHBOARD_ADMIN_GRAPHIQUES.md](./DASHBOARD_ADMIN_GRAPHIQUES.md)
+**Type**: Documentation fonctionnelle  
+**Date**: 26 février 2026  
+**Statut**: ✅ Implémenté
+
+**Contenu**:
+- Dashboard admin_platforme avec 4 graphiques interactifs
+- Recharts pour les visualisations
+- Données sur 6 mois (comptes, boutiques, revenus)
+- Statistiques d'abonnements en temps réel
+- Design responsive et moderne
+
+**Graphiques**:
+- 📈 Évolution des comptes (AreaChart)
+- 🏪 Évolution des boutiques (AreaChart)
+- 🥧 Distribution par plan (PieChart)
+- 💰 Revenus mensuels (BarChart)
+
+### [LANDING_PAGE_PLANS_DYNAMIQUES.md](./LANDING_PAGE_PLANS_DYNAMIQUES.md)
+**Type**: Documentation fonctionnelle  
+**Date**: 26 février 2026  
+**Statut**: ✅ Implémenté
+
+**Contenu**:
+- Landing page avec plans dynamiques depuis la base de données
+- WelcomeController créé
+- Format de prix EUR + FCFA (affichage vertical)
+- Taux de change fixe : 1 EUR = 655.957 FCFA
+- Prix sans décimales
+
+**Fonctionnalités**:
+- ✅ Plans récupérés depuis SubscriptionPlan
+- ✅ Prix formatés automatiquement
+- ✅ Affichage dual EUR/FCFA empilé verticalement
+- ✅ Limites et features affichés
 
 ---
 
@@ -274,6 +381,112 @@ if (!Auth::user()->accessibleShopsQuery()->where('id', $resource->shop_id)->exis
 
 ---
 
-**Dernière mise à jour**: 24 février 2026  
-**Version**: 1.0.0  
+**Dernière mise à jour**: 27 février 2026  
+**Version**: 2.0.0  
+**Mainteneur**: Équipe Batix SaaS
+
+---
+
+## 📝 Résumé des Fonctionnalités Récentes (27 février 2026)
+
+### ✅ Système d'Abonnements Complet
+
+**Backend implémenté** :
+- Middleware `CheckSubscriptionLimits` (shop et user)
+- Méthodes User : `canCreateShop()`, `canCreateUser()`, `getSubscriptionLimits()`
+- Routes protégées : POST /boutiques, POST /users
+- Données partagées via Inertia pour tous les composants
+- Validation multi-couches (impossible à contourner)
+
+**Frontend implémenté** :
+- Composant `SubscriptionBanner` avec indicateurs visuels
+- Hook `useSubscriptionLimits()` pour accès facile
+- Intégration dans pages Shops et Users
+- Boutons dynamiques (actifs/désactivés selon limites)
+- Design responsive avec couleurs adaptées
+
+**UX améliorée** :
+- 🟢 Affichage temps réel des limites
+- 🟡 Avertissements visuels avant blocage
+- 🔴 Messages d'erreur contextuels
+- ⚪ Boutons désactivés avec curseur "not-allowed"
+- 📊 Bannière informative avec compteurs
+
+**Plans supportés** :
+- Starter : 1 boutique, 3 utilisateurs - 15 000 FCFA/mois
+- Growth : 3 boutiques, 10 utilisateurs - 35 000 FCFA/mois
+- Scale : Illimité - 75 000 FCFA/mois
+- (Support des valeurs -1 pour illimité)
+
+**Documentation créée** :
+- 3 documents complets (~1000 lignes)
+- Guides techniques et d'intégration
+- Scénarios de test détaillés
+- Améliorations futures planifiées
+
+### ✅ Dashboard et Visualisations
+
+**Graphiques admin_platforme** :
+- 4 charts interactifs (Recharts)
+- Tendances sur 6 mois
+- Statistiques temps réel
+- Design moderne et responsive
+
+**Landing page dynamique** :
+- Plans depuis base de données
+- Affichage dual EUR/FCFA
+- Prix sans décimales
+- Conversion automatique (655.957)
+
+---
+
+## 🎯 Prochaines Actions Recommandées
+
+### Tests Manuels (PRIORITAIRE)
+1. **Test Plan Starter (1 boutique, 3 users)**
+   ```
+   - Créer 1 boutique → Bouton se désactive
+   - Tenter de créer 2ème boutique → Bloqué
+   - Créer 3 utilisateurs → Bouton se désactive
+   - Tenter de créer 4ème user → Bloqué
+   ```
+
+2. **Test Plan Scale (illimité)**
+   ```
+   - Créer 10 boutiques → Aucune limite
+   - Créer 20 utilisateurs → Aucune limite
+   - Bannière affiche "illimité"
+   ```
+
+3. **Test Sans Abonnement**
+   ```
+   - Tous les boutons désactivés
+   - Message "Aucun abonnement actif"
+   ```
+
+### Tests Automatisés (MOYEN TERME)
+4. **Feature Tests**
+   ```php
+   // tests/Feature/SubscriptionLimitsTest.php
+   - testCannotCreateShopWhenLimitReached()
+   - testCannotCreateUserWhenLimitReached()
+   - testUnlimitedPlanHasNoLimits()
+   - testMiddlewareBlocksCreation()
+   ```
+
+### Améliorations UX (COURT TERME)
+5. **Page d'Upgrade**
+   - Comparaison des plans
+   - Bouton "Mettre à niveau" dans bannière
+   - Modal de sélection de plan
+
+6. **Notifications**
+   - Email à 80% de limite
+   - Toast quand limite approchée
+   - Alerte avant expiration
+
+---
+
+**Dernière mise à jour**: 27 février 2026  
+**Version**: 2.0.0  
 **Mainteneur**: Équipe Batix SaaS

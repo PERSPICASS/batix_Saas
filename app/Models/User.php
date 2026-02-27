@@ -15,9 +15,10 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+    * The attributes that are mass assignable.
+    *
+    * @var list<string>
+    * Possible roles: super_admin, admin_platforme, admin, manager, cashier, staff, caisse, employee
      */
     protected $fillable = [
         'name',
@@ -119,6 +120,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the subscriptions for this user.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
      * Get the permissions for the user.
      */
     public function permissions(): HasMany
@@ -131,8 +140,8 @@ class User extends Authenticatable
      */
     public function hasPermission(string $module, string $action): bool
     {
-        // Super admin has all permissions
-        if ($this->role === 'super_admin') {
+        // Super admin and platform admin have all permissions
+        if ($this->role === 'super_admin' || $this->role === 'admin_platforme') {
             return true;
         }
 
@@ -191,7 +200,7 @@ class User extends Authenticatable
      */
     public function accessibleShops()
     {
-        if ($this->role === 'super_admin') {
+        if ($this->role === 'super_admin' || $this->role === 'admin_platforme') {
             return $this->shops;
         }
         
@@ -203,10 +212,16 @@ class User extends Authenticatable
      * Used for finding/validating shop ownership.
      * 
      * - Super_admin: toutes les boutiques qu'il possède
+     * - Admin_platforme: toutes les boutiques de tous les comptes
      * - Manager/Employee: uniquement sa boutique assignée
      */
     public function accessibleShopsQuery()
     {
+        if ($this->role === 'admin_platforme') {
+            // Platform admin voit TOUTES les boutiques
+            return Shop::query();
+        }
+        
         if ($this->role === 'super_admin') {
             // Super admin voit toutes ses boutiques
             return $this->shops();
@@ -305,5 +320,178 @@ class User extends Authenticatable
         }
 
         return 'pending';
+    }
+
+    /**
+     * Get the active subscription for this user.
+     */
+    public function activeSubscription()
+    {
+        return $this->subscriptions()
+            ->whereIn('status', ['active', 'trial'])
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->latest('started_at')
+            ->first();
+    }
+
+    /**
+     * Check if user can create more shops based on their subscription plan.
+     */
+    public function canCreateShop(): bool
+    {
+        // Admin platforme can't create shops
+        if ($this->role === 'admin_platforme') {
+            return false;
+        }
+
+        // Get active subscription
+        $subscription = $this->activeSubscription();
+        
+        if (!$subscription) {
+            return false; // No active subscription
+        }
+
+        $plan = $subscription->plan;
+        
+        // Check if plan allows unlimited shops
+        if ($plan->hasUnlimitedShops()) {
+            return true;
+        }
+
+        // Check current shop count
+        $currentShopCount = $this->shops()->count();
+        
+        return $currentShopCount < $plan->max_shops;
+    }
+
+    /**
+     * Check if user can create more users based on their subscription plan.
+     */
+    public function canCreateUser(): bool
+    {
+        // Admin platforme can't create users
+        if ($this->role === 'admin_platforme') {
+            return false;
+        }
+
+        // Get active subscription
+        $subscription = $this->activeSubscription();
+        
+        if (!$subscription) {
+            return false; // No active subscription
+        }
+
+        $plan = $subscription->plan;
+        
+        // Check if plan allows unlimited users
+        if ($plan->hasUnlimitedUsers()) {
+            return true;
+        }
+
+        // Count all users belonging to this super_admin's shops
+        $currentUserCount = User::whereHas('shop', function ($query) {
+            $query->where('user_id', $this->id);
+        })->count();
+        
+        // Also count the super_admin themselves
+        $currentUserCount += 1;
+        
+        return $currentUserCount < $plan->max_users;
+    }
+
+    /**
+     * Get remaining shop slots.
+     */
+    public function remainingShopSlots(): int
+    {
+        $subscription = $this->activeSubscription();
+        
+        if (!$subscription) {
+            return 0;
+        }
+
+        $plan = $subscription->plan;
+        
+        if ($plan->hasUnlimitedShops()) {
+            return -1; // Unlimited
+        }
+
+        $currentShopCount = $this->shops()->count();
+        
+        return max(0, $plan->max_shops - $currentShopCount);
+    }
+
+    /**
+     * Get remaining user slots.
+     */
+    public function remainingUserSlots(): int
+    {
+        $subscription = $this->activeSubscription();
+        
+        if (!$subscription) {
+            return 0;
+        }
+
+        $plan = $subscription->plan;
+        
+        if ($plan->hasUnlimitedUsers()) {
+            return -1; // Unlimited
+        }
+
+        $currentUserCount = User::whereHas('shop', function ($query) {
+            $query->where('user_id', $this->id);
+        })->count() + 1; // +1 for super_admin
+        
+        return max(0, $plan->max_users - $currentUserCount);
+    }
+
+    /**
+     * Get subscription limits info.
+     */
+    public function getSubscriptionLimits(): array
+    {
+        $subscription = $this->activeSubscription();
+        
+        if (!$subscription) {
+            return [
+                'has_subscription' => false,
+                'plan_name' => null,
+                'max_shops' => 0,
+                'max_users' => 0,
+                'current_shops' => $this->shops()->count(),
+                'current_users' => 1,
+                'can_create_shop' => false,
+                'can_create_user' => false,
+                'remaining_shops' => 0,
+                'remaining_users' => 0,
+            ];
+        }
+
+        $plan = $subscription->plan;
+        $currentShops = $this->shops()->count();
+        $currentUsers = User::whereHas('shop', function ($query) {
+            $query->where('user_id', $this->id);
+        })->count() + 1;
+
+        return [
+            'has_subscription' => true,
+            'plan_name' => $plan->name,
+            'plan_slug' => $plan->slug,
+            'max_shops' => $plan->max_shops,
+            'max_users' => $plan->max_users,
+            'unlimited_shops' => $plan->hasUnlimitedShops(),
+            'unlimited_users' => $plan->hasUnlimitedUsers(),
+            'current_shops' => $currentShops,
+            'current_users' => $currentUsers,
+            'can_create_shop' => $this->canCreateShop(),
+            'can_create_user' => $this->canCreateUser(),
+            'remaining_shops' => $this->remainingShopSlots(),
+            'remaining_users' => $this->remainingUserSlots(),
+            'expires_at' => $subscription->expires_at,
+            'status' => $subscription->status,
+        ];
     }
 }

@@ -16,6 +16,11 @@ trait RedirectsUsers
             return route('login');
         }
         
+        // Si c'est un admin plateforme, rediriger vers le dashboard plateforme
+        if ($user->role === 'admin_platforme') {
+            return route('platform.dashboard');
+        }
+        
         // Récupérer la boutique accessible de l'utilisateur
         $shop = $user->accessibleShopsQuery()->first();
         

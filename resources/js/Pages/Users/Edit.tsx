@@ -61,6 +61,7 @@ const ROLES = [
     { value: 'manager', label: 'Gestionnaire' },
     { value: 'admin', label: 'Administrateur' },
     { value: 'super_admin', label: 'Super Admin' },
+    { value: 'admin_platforme', label: 'Admin Plateforme' },
 ];
 
 export default function UsersEdit({ user, shops }: Props) {

@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetActiveShop::class,
         ]);
 
+        $middleware->alias([
+            'subscription.limits' => \App\Http\Middleware\CheckSubscriptionLimits::class,
+        ]);
+
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {

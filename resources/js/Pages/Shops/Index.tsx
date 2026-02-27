@@ -5,6 +5,7 @@ import { Store, MapPin, Phone, Mail, Pencil, Eye, Trash2, Plus, Building2 } from
 import { useRoute } from '@/utils/route';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import SubscriptionBanner, { useSubscriptionLimits } from '@/Components/SubscriptionBanner';
 
 interface Shop {
     id: number;
@@ -25,6 +26,7 @@ interface Shop {
 
 export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
     const route = useRoute();
+    const subscription = useSubscriptionLimits();
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; shop: Shop | null }>({ show: false, shop: null });
     const [deleting, setDeleting] = useState(false);
     
@@ -49,11 +51,23 @@ export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
             <Head title="Mes Boutiques" />
 
             <section className="space-y-6">
+                {/* Bannière d'abonnement */}
+                {subscription && <SubscriptionBanner type="shops" />}
+
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-slate-300">Gérez vos boutiques et points de vente</p>
                     <Link
                         href={route('shops.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${
+                            subscription?.can_create_shop
+                                ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
+                                : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                        }`}
+                        onClick={(e) => {
+                            if (!subscription?.can_create_shop) {
+                                e.preventDefault();
+                            }
+                        }}
                     >
                         <Plus className="size-4" /> Nouvelle boutique
                     </Link>
@@ -70,7 +84,16 @@ export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
                         </p>
                         <Link
                             href={route('shops.create')}
-                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                            className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold ${
+                                subscription?.can_create_shop
+                                    ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
+                                    : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                            }`}
+                            onClick={(e) => {
+                                if (!subscription?.can_create_shop) {
+                                    e.preventDefault();
+                                }
+                            }}
                         >
                             <Plus className="size-4" /> Créer ma première boutique
                         </Link>

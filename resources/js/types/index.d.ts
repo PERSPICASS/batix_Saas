@@ -13,7 +13,7 @@ export interface User {
     name: string;
     email: string;
     code_user: string;
-    role: 'super_admin' | 'manager' | 'cashier' | 'caisse' | 'employee';
+    role: 'super_admin' | 'admin_platforme' | 'manager' | 'cashier' | 'caisse' | 'employee';
     email_verified_at?: string;
     permissions?: Permission[];
     shop?: {

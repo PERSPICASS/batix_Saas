@@ -59,14 +59,19 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? $user->load(['shop', 'permissions']) : null,
                 'code_user' => $user?->code_user,
             ],
-            'shops' => $user ? $user->accessibleShops()->map(function ($shop) {
-                return [
-                    'id' => $shop->id,
-                    'name' => $shop->name,
-                    'slug' => $shop->slug,
-                    'is_active' => $shop->is_active ?? true,
-                ];
-            })->values()->toArray() : [],
+            'subscription' => $user && $user->role === 'super_admin' 
+                ? $user->getSubscriptionLimits()
+                : null,
+            'shops' => $user && $user->role !== 'admin_platforme' 
+                ? $user->accessibleShops()->map(function ($shop) {
+                    return [
+                        'id' => $shop->id,
+                        'name' => $shop->name,
+                        'slug' => $shop->slug,
+                        'is_active' => $shop->is_active ?? true,
+                    ];
+                })->values()->toArray() 
+                : [],
             'activeShop' => current_shop() ? [
                 'id' => current_shop()->id,
                 'name' => current_shop()->name,
