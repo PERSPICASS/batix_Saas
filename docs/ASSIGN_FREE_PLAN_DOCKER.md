@@ -2,24 +2,17 @@
 
 ## 📋 Guide d'Utilisation
 
-### Méthode 1 : Via le Script PHP (Recommandé)
+### ⭐ Méthode Recommandée : Commande Artisan
 
-#### 1. Modifier l'email dans le script
+#### 1. Se connecter au serveur de production
 ```bash
-# Éditer le fichier assign_free_plan.php
-# Ligne 9 : $email = 'azeezsemiu07@gmail.com';
+ssh root@srv1329410.hstgr.io
+cd /opt/batix/apps/dev/batix_Saas
 ```
 
-#### 2. Exécuter avec Docker
+#### 2. Exécuter la commande
 ```bash
-# Depuis votre serveur de production
-docker exec -i <nom_du_container_laravel> php artisan tinker < assign_free_plan.php
-```
-
-#### Exemple concret :
-```bash
-# Si votre container s'appelle "batix_app"
-docker exec -i batix_app php artisan tinker < assign_free_plan.php
+docker compose exec app php artisan subscription:assign-free azeezsemiu07@gmail.com
 ```
 
 #### Sortie Attendue :
@@ -38,31 +31,47 @@ Email: azeezsemiu07@gmail.com
 
 ✓ Plan FREE trouvé:
   ID: 4
-  Nom: Free
-  Prix: 0 EUR
-  Max boutiques: 1
-  Max utilisateurs: 2
+  Nom: FREE
+  Durée: 30 jours
 
-✅ Plan FREE attribué avec succès!
-
-Détails de l'abonnement:
-  Subscription ID: 5
-  Plan: Free
+✅ Abonnement FREE créé avec succès !
+  ID: 5
   Status: trial
-  Montant: 0 EUR
   Début: 2026-02-28 16:00:00
-  Expire le: 2026-03-30 16:00:00
+  Expiration: 2026-03-30 16:00:00
   Jours restants: 30
 
-✓ L'utilisateur peut maintenant:
-  - Créer 1 boutique(s)
-  - Ajouter 2 utilisateur(s)
-  - Utiliser toutes les fonctionnalités pendant 30 jours
+🎉 L'utilisateur peut maintenant se connecter et profiter de son essai gratuit !
+```
+
+#### Avantages :
+- ✅ Plus simple et fiable
+- ✅ Gestion automatique des erreurs
+- ✅ Confirmation interactive si abonnement existant
+- ✅ Pas besoin de modifier un fichier script
+- ✅ Fonctionne même si le container s'appelle différemment
+
+---
+
+### Méthode Alternative 1 : Via le Script PHP
+
+> ⚠️ **Note** : Cette méthode peut avoir des problèmes avec les balises PHP dans Tinker. Préférer la commande Artisan ci-dessus.
+
+#### 1. Modifier l'email dans le script
+```bash
+# Éditer le fichier assign_free_plan.php
+# Ligne 9 : $email = 'azeezsemiu07@gmail.com';
+```
+
+#### 2. Exécuter avec Docker
+```bash
+# Depuis votre serveur de production
+docker exec -i <nom_du_container_laravel> php artisan tinker < assign_free_plan.php
 ```
 
 ---
 
-### Méthode 2 : Commande Tinker Directe
+### Méthode Alternative 2 : Commande Tinker Directe
 
 #### 1. Entrer dans le container
 ```bash
