@@ -113,7 +113,7 @@ class CategoryController extends Controller
         $category->update($validated);
 
         // Log activity
-        ActivityLogger::updated($category, "Catégorie mise à jour: {$category->name}");
+        ActivityLogger::updated($category, [], "Catégorie mise à jour: {$category->name}");
 
         return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie mise à jour avec succès.');
     }

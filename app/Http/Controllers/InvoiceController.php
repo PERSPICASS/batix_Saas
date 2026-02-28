@@ -238,7 +238,7 @@ class InvoiceController extends Controller
         });
 
         // Log activity
-        ActivityLogger::updated($invoice, "Facture mise à jour: {$invoice->invoice_number}");
+        ActivityLogger::updated($invoice, [], "Facture mise à jour: {$invoice->invoice_number}");
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture modifiée avec succès.');
     }

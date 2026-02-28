@@ -189,7 +189,7 @@ class SupplierController extends Controller
         $supplier->shops()->sync($shopIds);
 
         // Log activity
-        ActivityLogger::updated($supplier, "Fournisseur mis à jour: {$supplier->name}");
+        ActivityLogger::updated($supplier, [], "Fournisseur mis à jour: {$supplier->name}");
 
         return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur mis à jour avec succès.');
     }

@@ -136,7 +136,7 @@ class CustomerController extends Controller
         $customer->update($validated);
 
         // Log activity
-        ActivityLogger::updated($customer, "Client mis à jour: {$customer->name}");
+        ActivityLogger::updated($customer, [], "Client mis à jour: {$customer->name}");
 
         return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client modifié avec succès.');
     }

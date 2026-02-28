@@ -11,25 +11,23 @@ use Inertia\Response;
 class ActivityLogController extends Controller
 {
     /**
-     * Display activity logs for current shop
+     * Display activity logs for current account and its users
      */
     public function index(Request $request): Response
     {
         $user = auth()->user();
-        $shop = current_shop();
 
         $query = ActivityLog::query()
             ->with(['user', 'shop'])
+            ->where('user_role', '!=', 'admin_platforme') // Exclure TOUJOURS admin_platforme
             ->latest();
 
-        // Filter by shop for non-super_admin users
+        // Filter by account (code_user) for non-super_admin users
         if ($user->role !== 'super_admin') {
-            $query->where('shop_id', $shop->id);
-        } else {
-            // Super admin can see all activities in their shops
-            $userShopIds = $user->shops->pluck('id');
-            $query->whereIn('shop_id', $userShopIds);
+            // Filter by current account code
+            $query->where('account_code', $user->code_user);
         }
+        // Super admin sees all activities from all accounts (except admin_platforme)
 
         // Filter by user
         if ($request->filled('user_id')) {
@@ -94,25 +92,35 @@ class ActivityLogController extends Controller
             'created_at_human' => $activity->created_at->diffForHumans(),
         ]);
 
-        // Get filter options
-        $users = User::whereIn('id', function($query) use ($userShopIds) {
-            $query->select('user_id')
-                ->from('activity_logs')
-                ->whereIn('shop_id', $userShopIds)
-                ->whereNotNull('user_id');
-        })->get(['id', 'name', 'email']);
+        // Get filter options - filter by account
+        $accountCode = $user->role === 'super_admin' ? null : $user->code_user;
+        
+        $usersQuery = User::query();
+        if ($accountCode) {
+            // Exclude admin_platforme from user filters
+            $usersQuery->where('code_user', $accountCode)
+                       ->where('role', '!=', 'admin_platforme');
+        }
+        $users = $usersQuery->get(['id', 'name', 'email']);
 
-        $actions = ActivityLog::whereIn('shop_id', $userShopIds)
-            ->distinct()
+        $actionsQuery = ActivityLog::query();
+        if ($accountCode) {
+            $actionsQuery->where('account_code', $accountCode)
+                         ->where('user_role', '!=', 'admin_platforme');
+        }
+        $actions = $actionsQuery->distinct()
             ->pluck('action')
             ->map(fn($action) => [
                 'value' => $action,
                 'label' => ucfirst($action)
             ]);
 
-        $subjectTypes = ActivityLog::whereIn('shop_id', $userShopIds)
-            ->whereNotNull('subject_type')
-            ->distinct()
+        $subjectTypesQuery = ActivityLog::whereNotNull('subject_type');
+        if ($accountCode) {
+            $subjectTypesQuery->where('account_code', $accountCode)
+                              ->where('user_role', '!=', 'admin_platforme');
+        }
+        $subjectTypes = $subjectTypesQuery->distinct()
             ->pluck('subject_type')
             ->map(fn($type) => [
                 'value' => $type,
@@ -137,16 +145,10 @@ class ActivityLogController extends Controller
     {
         $user = auth()->user();
 
-        // Check permission
+        // Check permission - only super_admin or users from same account can view
         if ($user->role !== 'super_admin') {
-            $shop = current_shop();
-            if ($activityLog->shop_id !== $shop->id) {
-                abort(403);
-            }
-        } else {
-            // Super admin can only see activities in their shops
-            if (!$user->shops->pluck('id')->contains($activityLog->shop_id)) {
-                abort(403);
+            if ($activityLog->account_code !== $user->code_user) {
+                abort(403, 'Vous n\'avez pas accès à cet historique.');
             }
         }
 

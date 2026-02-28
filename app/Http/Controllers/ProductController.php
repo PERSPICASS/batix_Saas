@@ -246,7 +246,7 @@ class ProductController extends Controller
         $product->update($validated);
 
         // Log activity
-        ActivityLogger::updated($product, "Produit mis à jour: {$product->name}");
+        ActivityLogger::updated($product, [], "Produit mis à jour: {$product->name}");
 
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit mis à jour avec succès.');
     }

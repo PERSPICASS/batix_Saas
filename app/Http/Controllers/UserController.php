@@ -148,7 +148,7 @@ class UserController extends Controller
         }
 
         // Log activity
-        ActivityLogger::updated($user, "Utilisateur mis à jour: {$user->name} ({$user->email})");
+        ActivityLogger::updated($user, [], "Utilisateur mis à jour: {$user->name} ({$user->email})");
 
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur mis à jour avec succès.');
     }

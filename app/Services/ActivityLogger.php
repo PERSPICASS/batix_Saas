@@ -19,8 +19,14 @@ class ActivityLogger
         ?string $description = null,
         ?Model $subject = null,
         ?array $properties = null
-    ): ActivityLog {
+    ): ?ActivityLog {
         $user = Auth::user();
+        
+        // Ne JAMAIS logger les actions de l'admin plateforme
+        if ($user && $user->role === 'admin_platforme') {
+            return null;
+        }
+        
         $shop = current_shop();
 
         $data = [
@@ -67,7 +73,7 @@ class ActivityLogger
     /**
      * Log a creation action
      */
-    public static function created(Model $model, ?string $description = null): ActivityLog
+    public static function created(Model $model, ?string $description = null): ?ActivityLog
     {
         return self::log(
             'create',
@@ -80,7 +86,7 @@ class ActivityLogger
     /**
      * Log an update action
      */
-    public static function updated(Model $model, array $changes, ?string $description = null): ActivityLog
+    public static function updated(Model $model, array $changes = [], ?string $description = null): ?ActivityLog
     {
         return self::log(
             'update',
@@ -93,7 +99,7 @@ class ActivityLogger
     /**
      * Log a deletion action
      */
-    public static function deleted(Model $model, ?string $description = null): ActivityLog
+    public static function deleted(Model $model, ?string $description = null): ?ActivityLog
     {
         return self::log(
             'delete',
@@ -106,7 +112,7 @@ class ActivityLogger
     /**
      * Log a view action
      */
-    public static function viewed(Model $model, ?string $description = null): ActivityLog
+    public static function viewed(Model $model, ?string $description = null): ?ActivityLog
     {
         return self::log(
             'view',
@@ -118,7 +124,7 @@ class ActivityLogger
     /**
      * Log an export action
      */
-    public static function exported(string $type, int $count, ?string $description = null): ActivityLog
+    public static function exported(string $type, int $count, ?string $description = null): ?ActivityLog
     {
         return self::log(
             'export',
@@ -131,7 +137,7 @@ class ActivityLogger
     /**
      * Log an import action
      */
-    public static function imported(string $type, int $count, ?string $description = null): ActivityLog
+    public static function imported(string $type, int $count, ?string $description = null): ?ActivityLog
     {
         return self::log(
             'import',
@@ -144,7 +150,7 @@ class ActivityLogger
     /**
      * Log a login action
      */
-    public static function login(?string $description = null): ActivityLog
+    public static function login(?string $description = null): ?ActivityLog
     {
         return self::log(
             'login',
@@ -155,7 +161,7 @@ class ActivityLogger
     /**
      * Log a logout action
      */
-    public static function logout(?string $description = null): ActivityLog
+    public static function logout(?string $description = null): ?ActivityLog
     {
         return self::log(
             'logout',
@@ -166,7 +172,7 @@ class ActivityLogger
     /**
      * Log a lock screen action
      */
-    public static function lockScreen(?string $description = null): ActivityLog
+    public static function lockScreen(?string $description = null): ?ActivityLog
     {
         return self::log(
             'lock',
@@ -177,7 +183,7 @@ class ActivityLogger
     /**
      * Log an unlock screen action
      */
-    public static function unlockScreen(?string $description = null): ActivityLog
+    public static function unlockScreen(?string $description = null): ?ActivityLog
     {
         return self::log(
             'unlock',

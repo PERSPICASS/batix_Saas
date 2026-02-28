@@ -105,7 +105,7 @@ class ShopController extends Controller
         $shop->update($validated);
 
         // Log activity
-        ActivityLogger::updated($shop, "Boutique mise à jour: {$shop->name}");
+        ActivityLogger::updated($shop, [], "Boutique mise à jour: {$shop->name}");
 
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique mise à jour avec succès.');
     }
