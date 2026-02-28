@@ -36,6 +36,8 @@ class SettingsController extends Controller
 
     /**
      * Update shop settings.
+     * For super_admin: updates all shops
+     * For other roles: updates only their assigned shop
      */
     public function update(Request $request): RedirectResponse
     {
@@ -45,7 +47,7 @@ class SettingsController extends Controller
         $shop = $user->accessibleShopsQuery()->first();
 
         if (!$shop) {
-            return Redirect::route('settings.index')
+            return Redirect::route('settings.index', ['code_user' => $user->code_user])
                 ->with('error', 'Aucune boutique n\'est associée à votre compte.');
         }
 
@@ -66,9 +68,22 @@ class SettingsController extends Controller
             'invoice_footer' => 'nullable|string',
         ]);
 
+        // Si super_admin : mettre à jour TOUTES ses boutiques
+        if ($user->role === 'super_admin') {
+            $shopsUpdated = $user->shops()->update($validated);
+            
+            $message = $shopsUpdated > 0 
+                ? "Paramètres mis à jour avec succès pour {$shopsUpdated} boutique(s)."
+                : 'Paramètres mis à jour avec succès.';
+                
+            return Redirect::route('settings.index', ['code_user' => $user->code_user])
+                ->with('success', $message);
+        }
+        
+        // Pour les autres rôles : mettre à jour uniquement leur boutique assignée
         $shop->update($validated);
 
-        return Redirect::route('settings.index')
+        return Redirect::route('settings.index', ['code_user' => $user->code_user])
             ->with('success', 'Paramètres mis à jour avec succès.');
     }
 

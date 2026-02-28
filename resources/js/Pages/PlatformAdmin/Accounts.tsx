@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Users, Store, Power } from 'lucide-react';
+import { Search, Users, Store, Power, Package } from 'lucide-react';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
@@ -12,6 +12,7 @@ interface Account {
     code_user: string;
     is_active: boolean;
     shops_count: number;
+    products_count: number;
     created_at: string;
 }
 
@@ -83,6 +84,16 @@ export default function PlatformAdminAccounts({ accounts, filters }: Props) {
                 <div className="flex items-center gap-2 text-amber-300">
                     <Store className="size-4" />
                     <span className="font-semibold">{account.shops_count}</span>
+                </div>
+            ),
+        },
+        {
+            key: 'products_count',
+            label: 'Produits',
+            render: (account: Account) => (
+                <div className="flex items-center gap-2 text-blue-300">
+                    <Package className="size-4" />
+                    <span className="font-semibold">{account.products_count}</span>
                 </div>
             ),
         },

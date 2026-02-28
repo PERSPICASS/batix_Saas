@@ -160,6 +160,12 @@ class PlatformAdminController extends Controller
         }
 
         $query = User::where('role', 'super_admin')
+            ->withCount([
+                'shops',
+                'shops as total_products_count' => function($query) {
+                    $query->join('products', 'shops.id', '=', 'products.shop_id');
+                }
+            ])
             ->with('shops');
 
         // Recherche
@@ -183,7 +189,8 @@ class PlatformAdminController extends Controller
             'email' => $user->email,
             'code_user' => $user->code_user,
             'is_active' => $user->is_active,
-            'shops_count' => $user->shops->count(),
+            'shops_count' => $user->shops_count ?? 0,
+            'products_count' => $user->total_products_count ?? 0,
             'created_at' => $user->created_at->format('Y-m-d H:i:s'),
         ]);
 

@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
+import { PageProps } from '@/types';
 import { 
     Store, 
     MapPin, 
@@ -13,7 +14,8 @@ import {
     Percent,
     Hash,
     Save,
-    AlertCircle
+    AlertCircle,
+    Info
 } from 'lucide-react';
 
 interface Currency {
@@ -49,6 +51,8 @@ interface Props {
 
 export default function Settings({ shop, currencies, countries, error }: Props) {
     const route = useRoute();
+    const { auth } = usePage<PageProps>().props;
+    const isSuperAdmin = auth.user?.role === 'super_admin';
 
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
         name: shop?.name || '',
@@ -93,6 +97,27 @@ export default function Settings({ shop, currencies, countries, error }: Props) 
             <Head title="Paramètres" />
 
             <div className="mx-auto max-w-4xl">
+                {/* Bannière d'information pour super_admin */}
+                {isSuperAdmin && (
+                    <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
+                        <div className="flex items-start gap-3">
+                            <div className="rounded-lg bg-blue-500/20 p-2">
+                                <Info className="size-5 text-blue-300" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-blue-200">
+                                    Configuration globale du compte
+                                </h3>
+                                <p className="mt-1 text-sm text-blue-300">
+                                    En tant que super administrateur, les modifications que vous apportez ici 
+                                    seront appliquées à <strong>toutes vos boutiques</strong>. 
+                                    Cela inclut la devise, les taux de taxe, les préfixes de facture, etc.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <form onSubmit={submit} className="space-y-6">
                     {/* Informations générales */}
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
