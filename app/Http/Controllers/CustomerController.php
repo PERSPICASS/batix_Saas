@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -81,7 +82,10 @@ class CustomerController extends Controller
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
-        $shop->customers()->create($validated);
+        $customer = $shop->customers()->create($validated);
+
+        // Log activity
+        ActivityLogger::created($customer, "Client créé: {$customer->name}");
 
         return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client créé avec succès.');
     }
@@ -131,6 +135,9 @@ class CustomerController extends Controller
         
         $customer->update($validated);
 
+        // Log activity
+        ActivityLogger::updated($customer, "Client mis à jour: {$customer->name}");
+
         return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client modifié avec succès.');
     }
 
@@ -144,7 +151,13 @@ class CustomerController extends Controller
             abort(403);
         }
 
+        // Sauvegarder le nom avant suppression
+        $customerName = $customer->name;
+        
         $customer->delete();
+
+        // Log activity
+        ActivityLogger::deleted($customer, "Client supprimé: {$customerName}");
 
         return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client supprimé avec succès.');
     }

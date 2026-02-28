@@ -91,6 +91,11 @@ class User extends Authenticatable
      */
     public function getDashboardUrl(?Shop $shop = null): string
     {
+        // Admin plateforme a son propre dashboard
+        if ($this->role === 'admin_platforme') {
+            return route('platform.dashboard');
+        }
+        
         $shop = $shop ?? $this->shops()->first();
         
         if ($shop) {
@@ -100,7 +105,13 @@ class User extends Authenticatable
             ]);
         }
         
-        return route('dashboard');
+        // Si pas de shop et pas admin plateforme, rediriger vers le dashboard avec code_user
+        if ($this->code_user) {
+            return route('dashboard', ['code_user' => $this->code_user]);
+        }
+        
+        // Fallback vers login si rien ne fonctionne
+        return route('login');
     }
 
     /**
@@ -200,7 +211,12 @@ class User extends Authenticatable
      */
     public function accessibleShops()
     {
-        if ($this->role === 'super_admin' || $this->role === 'admin_platforme') {
+        if ($this->role === 'admin_platforme') {
+            // Admin plateforme n'a pas de boutiques personnelles
+            return collect([]);
+        }
+        
+        if ($this->role === 'super_admin') {
             return $this->shops;
         }
         

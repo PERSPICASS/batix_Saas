@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Shop;
 use App\Models\User;
 use App\Models\UserPermission;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -88,6 +89,9 @@ class UserController extends Controller
             ]);
         }
 
+        // Log activity
+        ActivityLogger::created($user, "Utilisateur créé: {$user->name} ({$user->email})");
+
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur créé avec succès.');
     }
 
@@ -143,6 +147,9 @@ class UserController extends Controller
             ]);
         }
 
+        // Log activity
+        ActivityLogger::updated($user, "Utilisateur mis à jour: {$user->name} ({$user->email})");
+
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur mis à jour avec succès.');
     }
 
@@ -153,8 +160,13 @@ class UserController extends Controller
         }
 
         $userName = $user->name;
+        $userEmail = $user->email;
+        
         $user->permissions()->delete();
         $user->delete();
+
+        // Log activity
+        ActivityLogger::deleted($user, "Utilisateur supprimé: {$userName} ({$userEmail})");
 
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', "L'utilisateur {$userName} a été supprimé avec succès.");
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -115,7 +116,7 @@ class InvoiceController extends Controller
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
-        DB::transaction(function () use ($validated, $shop) {
+        $invoice = DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];
             unset($validated['items']);
             
@@ -128,7 +129,12 @@ class InvoiceController extends Controller
             }
             
             // Le calcul des totaux se fait automatiquement via les observers
+            
+            return $invoice;
         });
+
+        // Log activity
+        ActivityLogger::created($invoice, "Facture créée: {$invoice->invoice_number}");
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture créée avec succès.');
     }
@@ -231,6 +237,9 @@ class InvoiceController extends Controller
             // Le calcul des totaux se fait automatiquement via les observers
         });
 
+        // Log activity
+        ActivityLogger::updated($invoice, "Facture mise à jour: {$invoice->invoice_number}");
+
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture modifiée avec succès.');
     }
 
@@ -250,7 +259,13 @@ class InvoiceController extends Controller
             abort(403);
         }
 
+        // Sauvegarder le numéro avant suppression
+        $invoiceNumber = $invoice->invoice_number;
+        
         $invoice->delete();
+
+        // Log activity
+        ActivityLogger::deleted($invoice, "Facture supprimée: {$invoiceNumber}");
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture supprimée avec succès.');
     }

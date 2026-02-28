@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shop;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -48,7 +49,10 @@ class ShopController extends Controller
             'currency' => 'nullable|string|max:3',
         ]);
 
-        Auth::user()->accessibleShopsQuery()->create($validated);
+        $shop = Auth::user()->accessibleShopsQuery()->create($validated);
+
+        // Log activity
+        ActivityLogger::created($shop, "Boutique créée: {$shop->name}");
 
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique créée avec succès.');
     }
@@ -100,6 +104,9 @@ class ShopController extends Controller
 
         $shop->update($validated);
 
+        // Log activity
+        ActivityLogger::updated($shop, "Boutique mise à jour: {$shop->name}");
+
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique mise à jour avec succès.');
     }
 
@@ -110,7 +117,13 @@ class ShopController extends Controller
     {
         $this->authorize('delete', $shop);
         
+        // Sauvegarder le nom avant suppression
+        $shopName = $shop->name;
+        
         $shop->delete();
+
+        // Log activity
+        ActivityLogger::deleted($shop, "Boutique supprimée: {$shopName}");
 
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique supprimée avec succès.');
     }

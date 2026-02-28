@@ -20,7 +20,9 @@ import {
     Folder,
     FolderTree,
     HardHat,
+    History,
     LayoutDashboard,
+    Lock,
     LogOut,
     Menu,
     Moon,
@@ -310,6 +312,14 @@ export default function Authenticated({
                 icon: BarChart3,
                 module: 'analytics', // Restreint aux admins
             },
+            // Logs d'activité pour super_admin uniquement
+            ...((user as any)?.role === 'super_admin' ? [{
+                label: 'Historique',
+                href: buildRoute('activity-logs.index'),
+                active: route().current('activity-logs.*'),
+                icon: History,
+                module: null, // Visible seulement pour super_admin
+            }] : []),
             ...(user && (user as any).role !== 'admin_platforme'
                 ? [{
                 label: 'Profil',
@@ -529,28 +539,42 @@ export default function Authenticated({
                                                     <>
                                                         <Link
                                                             href={buildRoute('profile.edit')}
-                                                            className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
                                                             onClick={() => setUserMenuOpen(false)}
                                                         >
-                                                            Profil
+                                                            <User className="size-4" />
+                                                            <span>Profil</span>
                                                         </Link>
                                                         <Link
                                                             href={buildRoute('settings.index')}
-                                                            className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
                                                             onClick={() => setUserMenuOpen(false)}
                                                         >
-                                                            Parametres
+                                                            <Settings className="size-4" />
+                                                            <span>Parametres</span>
                                                         </Link>
+                                                        <div className="my-1 border-t border-slate-300 dark:border-white/10"></div>
                                                     </>
                                                 )}
+                                                <Link
+                                                    href={route('lock-screen.lock')}
+                                                    method="post"
+                                                    as="button"
+                                                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-amber-300 transition hover:bg-amber-300/10"
+                                                    onClick={() => setUserMenuOpen(false)}
+                                                >
+                                                    <Lock className="size-4" />
+                                                    <span>Verrouiller</span>
+                                                </Link>
                                                 <Link
                                                     href={route('logout')}
                                                     method="post"
                                                     as="button"
-                                                    className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-200 transition hover:bg-rose-300/10"
+                                                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-200 transition hover:bg-rose-300/10"
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
-                                                    Deconnexion
+                                                    <LogOut className="size-4" />
+                                                    <span>Deconnexion</span>
                                                 </Link>
                                             </>
                                         ) : (

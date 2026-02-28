@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -150,6 +151,9 @@ Route::prefix('{code_user}')
     })->name('subscriptions.index');
 
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // Logs d'activité (super_admin uniquement)
+    Route::get('/historique', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
     // Paramètres de la boutique
     Route::get('/parametres', [SettingsController::class, 'index'])->name('settings.index');

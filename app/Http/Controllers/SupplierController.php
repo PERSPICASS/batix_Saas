@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -98,6 +99,9 @@ class SupplierController extends Controller
         $supplier = Supplier::create($validated);
         $supplier->shops()->attach($shopIds);
 
+        // Log activity
+        ActivityLogger::created($supplier, "Fournisseur créé: {$supplier->name}");
+
         return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur créé avec succès.');
     }
 
@@ -184,6 +188,9 @@ class SupplierController extends Controller
         $supplier->update($validated);
         $supplier->shops()->sync($shopIds);
 
+        // Log activity
+        ActivityLogger::updated($supplier, "Fournisseur mis à jour: {$supplier->name}");
+
         return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur mis à jour avec succès.');
     }
 
@@ -204,8 +211,14 @@ class SupplierController extends Controller
             return back()->withErrors(['error' => 'Impossible de supprimer ce fournisseur car il a des produits associés.']);
         }
 
+        // Sauvegarder le nom avant suppression
+        $supplierName = $supplier->name;
+        
         $supplier->shops()->detach();
         $supplier->delete();
+
+        // Log activity
+        ActivityLogger::deleted($supplier, "Fournisseur supprimé: {$supplierName}");
 
         return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur supprimé avec succès.');
     }

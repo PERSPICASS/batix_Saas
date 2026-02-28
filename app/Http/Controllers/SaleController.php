@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -112,7 +113,7 @@ class SaleController extends Controller
 
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
-        DB::transaction(function () use ($validated, $shop) {
+        $sale = DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];
             unset($validated['items']);
             
@@ -134,7 +135,12 @@ class SaleController extends Controller
                     'discount_amount' => 0,
                 ]);
             }
+            
+            return $sale;
         });
+
+        // Log activity
+        ActivityLogger::created($sale, "Vente enregistrée: {$sale->ticket_number}");
 
         return redirect()->route('sales.index', ['code_user' => request()->route('code_user')])->with('success', 'Vente enregistrée avec succès.');
     }

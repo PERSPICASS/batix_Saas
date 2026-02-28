@@ -82,3 +82,25 @@ if (!function_exists('shop_slug')) {
         return current_shop()?->slug;
     }
 }
+
+if (!function_exists('should_log_activity')) {
+    /**
+     * Determine if activities should be logged
+     *
+     * @return bool
+     */
+    function should_log_activity(): bool
+    {
+        // Don't log during console commands (migrations, seeders, etc.)
+        if (app()->runningInConsole() && !app()->runningUnitTests()) {
+            return false;
+        }
+
+        // Don't log if user is not authenticated
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return true;
+    }
+}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -58,7 +59,10 @@ class CategoryController extends Controller
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
-        $shop->categories()->create($validated);
+        $category = $shop->categories()->create($validated);
+
+        // Log activity
+        ActivityLogger::created($category, "Catégorie créée: {$category->name}");
 
         return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie créée avec succès.');
     }
@@ -108,6 +112,9 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
+        // Log activity
+        ActivityLogger::updated($category, "Catégorie mise à jour: {$category->name}");
+
         return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie mise à jour avec succès.');
     }
 
@@ -118,7 +125,13 @@ class CategoryController extends Controller
     {
         $this->authorize('delete', $category);
         
+        // Sauvegarder le nom avant suppression
+        $categoryName = $category->name;
+        
         $category->delete();
+
+        // Log activity
+        ActivityLogger::deleted($category, "Catégorie supprimée: {$categoryName}");
 
         return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie supprimée avec succès.');
     }

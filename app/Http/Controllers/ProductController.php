@@ -8,6 +8,7 @@ use App\Imports\ProductsImport;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Subcategory;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -161,6 +162,9 @@ class ProductController extends Controller
             $product->save();
         }
 
+        // Log activity
+        ActivityLogger::created($product, "Produit créé: {$product->name}");
+
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit créé avec succès.');
     }
 
@@ -241,6 +245,9 @@ class ProductController extends Controller
 
         $product->update($validated);
 
+        // Log activity
+        ActivityLogger::updated($product, "Produit mis à jour: {$product->name}");
+
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit mis à jour avec succès.');
     }
 
@@ -251,12 +258,18 @@ class ProductController extends Controller
     {
         $this->authorize('delete', $product);
         
+        // Sauvegarder le nom avant suppression
+        $productName = $product->name;
+        
         // Supprimer l'image si elle existe
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }
         
         $product->delete();
+
+        // Log activity
+        ActivityLogger::deleted($product, "Produit supprimé: {$productName}");
 
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit supprimé avec succès.');
     }
