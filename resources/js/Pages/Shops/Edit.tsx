@@ -11,11 +11,9 @@ interface Shop {
     address: string | null;
     city: string | null;
     postal_code: string | null;
-    country: string;
     phone: string | null;
     email: string | null;
     tax_id: string | null;
-    currency: string;
     is_active: boolean;
 }
 
@@ -32,11 +30,9 @@ export default function Edit({ shop }: Props) {
         address: shop.address || '',
         city: shop.city || '',
         postal_code: shop.postal_code || '',
-        country: shop.country,
         phone: shop.phone || '',
         email: shop.email || '',
         tax_id: shop.tax_id || '',
-        currency: shop.currency,
         is_active: shop.is_active,
     });
 
@@ -153,7 +149,7 @@ export default function Edit({ shop }: Props) {
                                 {errors.address && <p className="mt-1 text-sm text-red-400">{errors.address}</p>}
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label htmlFor="city" className="block text-sm font-medium text-slate-200">
                                         Ville
@@ -183,20 +179,6 @@ export default function Edit({ shop }: Props) {
                                         <p className="mt-1 text-sm text-red-400">{errors.postal_code}</p>
                                     )}
                                 </div>
-
-                                <div>
-                                    <label htmlFor="country" className="block text-sm font-medium text-slate-200">
-                                        Pays
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="country"
-                                        value={data.country}
-                                        onChange={(e) => setData('country', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    />
-                                    {errors.country && <p className="mt-1 text-sm text-red-400">{errors.country}</p>}
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -208,7 +190,7 @@ export default function Edit({ shop }: Props) {
                             <h2 className="text-lg font-semibold text-white">Informations complémentaires</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4">
                             <div>
                                 <label htmlFor="tax_id" className="block text-sm font-medium text-slate-200">
                                     ICE / N° Fiscal
@@ -221,24 +203,6 @@ export default function Edit({ shop }: Props) {
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
                                 {errors.tax_id && <p className="mt-1 text-sm text-red-400">{errors.tax_id}</p>}
-                            </div>
-
-                            <div>
-                                <label htmlFor="currency" className="block text-sm font-medium text-slate-200">
-                                    Devise
-                                </label>
-                                <select
-                                    id="currency"
-                                    value={data.currency}
-                                    onChange={(e) => setData('currency', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                >
-                                    <option value="MAD">Dirham Marocain (MAD)</option>
-                                    <option value="EUR">Euro (EUR)</option>
-                                    <option value="USD">Dollar US (USD)</option>
-                                    <option value="GBP">Livre Sterling (GBP)</option>
-                                </select>
-                                {errors.currency && <p className="mt-1 text-sm text-red-400">{errors.currency}</p>}
                             </div>
                         </div>
 

@@ -42,11 +42,9 @@ class ShopController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'tax_id' => 'nullable|string|max:50',
-            'currency' => 'nullable|string|max:3',
         ]);
 
         $shop = Auth::user()->accessibleShopsQuery()->create($validated);
@@ -94,11 +92,9 @@ class ShopController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'tax_id' => 'nullable|string|max:50',
-            'currency' => 'nullable|string|max:3',
             'is_active' => 'boolean',
         ]);
 

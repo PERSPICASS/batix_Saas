@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 import { useRoute } from '@/utils/route';
 import { PageProps } from '@/types';
 import { 
@@ -15,7 +15,10 @@ import {
     Hash,
     Save,
     AlertCircle,
-    Info
+    Info,
+    Image as ImageIcon,
+    Upload,
+    X
 } from 'lucide-react';
 
 interface Currency {
@@ -31,10 +34,10 @@ interface Shop {
     address?: string;
     city?: string;
     postal_code?: string;
-    country?: string;
     phone?: string;
     email?: string;
     website?: string;
+    logo?: string;
     tax_id?: string;
     currency: string;
     default_tax_rate?: number;
@@ -45,35 +48,57 @@ interface Shop {
 interface Props {
     shop: Shop | null;
     currencies: Currency[];
-    countries: string[];
     error?: string;
 }
 
-export default function Settings({ shop, currencies, countries, error }: Props) {
+export default function Settings({ shop, currencies, error }: Props) {
     const route = useRoute();
     const { auth } = usePage<PageProps>().props;
     const isSuperAdmin = auth.user?.role === 'super_admin';
+    const [logoPreview, setLogoPreview] = useState<string | null>(
+        shop?.logo ? `/storage/${shop.logo}` : null
+    );
 
-    const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
+    const { data, setData, post, processing, errors, recentlySuccessful } = useForm({
         name: shop?.name || '',
         description: shop?.description || '',
         address: shop?.address || '',
         city: shop?.city || '',
         postal_code: shop?.postal_code || '',
-        country: shop?.country || 'Maroc',
         phone: shop?.phone || '',
         email: shop?.email || '',
         website: shop?.website || '',
+        logo: null as File | null,
         tax_id: shop?.tax_id || '',
         currency: shop?.currency || 'USD',
         default_tax_rate: shop?.default_tax_rate || '',
         invoice_prefix: shop?.invoice_prefix || '',
         invoice_footer: shop?.invoice_footer || '',
+        _method: 'PATCH',
     });
+
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setData('logo', file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeLogo = () => {
+        setData('logo', null);
+        setLogoPreview(null);
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        patch(route('settings.update'));
+        post(route('settings.update'), {
+            forceFormData: true,
+        });
     };
 
     if (error || !shop) {
@@ -155,6 +180,58 @@ export default function Settings({ shop, currencies, countries, error }: Props) 
                                 />
                                 {errors.description && <p className="mt-1 text-sm text-red-400">{errors.description}</p>}
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <ImageIcon className="size-4" />
+                                        Logo (pour factures et tickets)
+                                    </div>
+                                </label>
+                                
+                                {logoPreview ? (
+                                    <div className="relative inline-block">
+                                        <img
+                                            src={logoPreview}
+                                            alt="Logo preview"
+                                            className="h-32 w-auto rounded-lg border-2 border-white/15 bg-white p-2"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={removeLogo}
+                                            className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center w-full">
+                                        <label
+                                            htmlFor="logo-upload"
+                                            className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-white/15 rounded-lg cursor-pointer bg-slate-900/50 hover:bg-slate-900/70"
+                                        >
+                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <Upload className="w-8 h-8 mb-2 text-slate-400" />
+                                                <p className="mb-1 text-sm text-slate-300">
+                                                    <span className="font-semibold">Cliquez pour uploader</span>
+                                                </p>
+                                                <p className="text-xs text-slate-400">PNG, JPG, GIF ou SVG (max. 2MB)</p>
+                                            </div>
+                                            <input
+                                                id="logo-upload"
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={handleLogoChange}
+                                            />
+                                        </label>
+                                    </div>
+                                )}
+                                {errors.logo && <p className="mt-1 text-sm text-red-400">{errors.logo}</p>}
+                                <p className="mt-1 text-xs text-slate-400">
+                                    Le logo sera affiché sur vos factures et tickets de vente
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -233,7 +310,7 @@ export default function Settings({ shop, currencies, countries, error }: Props) 
                                 {errors.address && <p className="mt-1 text-sm text-red-400">{errors.address}</p>}
                             </div>
 
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label htmlFor="city" className="block text-sm font-medium text-slate-200">
                                         Ville
@@ -260,25 +337,6 @@ export default function Settings({ shop, currencies, countries, error }: Props) 
                                         className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
                                     {errors.postal_code && <p className="mt-1 text-sm text-red-400">{errors.postal_code}</p>}
-                                </div>
-
-                                <div>
-                                    <label htmlFor="country" className="block text-sm font-medium text-slate-200">
-                                        Pays
-                                    </label>
-                                    <select
-                                        id="country"
-                                        value={data.country}
-                                        onChange={(e) => setData('country', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    >
-                                        {countries.map((country) => (
-                                            <option key={country} value={country}>
-                                                {country}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {errors.country && <p className="mt-1 text-sm text-red-400">{errors.country}</p>}
                                 </div>
                             </div>
                         </div>

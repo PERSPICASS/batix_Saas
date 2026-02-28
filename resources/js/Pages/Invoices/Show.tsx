@@ -12,6 +12,7 @@ interface Customer {
 interface Shop {
     id: number;
     name: string;
+    logo?: string;
 }
 
 interface User {
@@ -112,9 +113,18 @@ export default function InvoicesShow({ invoice }: Props) {
                 <div className="invoice-print rounded-2xl border border-white/10 bg-white/5 p-6 print:rounded-none print:border-0 print:bg-white print:px-2 print:py-0">
                     <div className="mb-6 rounded-xl border border-white/10 bg-gradient-to-r from-slate-900/70 to-slate-800/40 p-5 print:border print:bg-transparent">
                         <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <p className="text-xs uppercase tracking-[0.2em] text-amber-300">Facture</p>
-                                <h2 className="mt-1 text-2xl font-bold text-white">{invoice.invoice_number}</h2>
+                            <div className="flex items-center gap-4">
+                                {invoice.shop.logo && (
+                                    <img 
+                                        src={`/storage/${invoice.shop.logo}`} 
+                                        alt={invoice.shop.name}
+                                        className="h-16 w-auto object-contain print:h-12"
+                                    />
+                                )}
+                                <div>
+                                    <p className="text-xs uppercase tracking-[0.2em] text-amber-300">Facture</p>
+                                    <h2 className="mt-1 text-2xl font-bold text-white">{invoice.invoice_number}</h2>
+                                </div>
                             </div>
                             <div className="text-right">
                                 <p className="text-xs text-slate-400">Émise par</p>

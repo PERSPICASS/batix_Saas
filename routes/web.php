@@ -24,9 +24,22 @@ use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 
 Route::get('/', [WelcomeController::class, 'index']);
+
+// Route pour servir les fichiers uploadés (logos, images, etc.)
+Route::get('/storage/{path}', function ($path) {
+    $file = Storage::disk('public')->path($path);
+    
+    if (!file_exists($file)) {
+        abort(404);
+    }
+    
+    return Response::file($file);
+})->where('path', '.*')->name('storage.file');
 
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');

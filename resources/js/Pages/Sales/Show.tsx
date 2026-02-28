@@ -9,6 +9,7 @@ interface Shop {
     name: string;
     address: string;
     phone: string;
+    logo?: string;
 }
 
 interface User {
@@ -110,6 +111,15 @@ export default function SalesShow({ sale }: Props) {
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
                     {/* En-tête du ticket */}
                     <div className="mb-8 text-center">
+                        {sale.shop.logo && (
+                            <div className="mb-4 flex justify-center">
+                                <img 
+                                    src={`/storage/${sale.shop.logo}`} 
+                                    alt={sale.shop.name}
+                                    className="h-20 w-auto object-contain print:h-16"
+                                />
+                            </div>
+                        )}
                         <h2 className="text-2xl font-bold text-white">{sale.shop.name}</h2>
                         <p className="text-sm text-slate-400">{sale.shop.address}</p>
                         <p className="text-sm text-slate-400">{sale.shop.phone}</p>

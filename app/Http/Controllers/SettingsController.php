@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -30,7 +31,6 @@ class SettingsController extends Controller
         return Inertia::render('Settings/Index', [
             'shop' => $shop->load('user'),
             'currencies' => $this->getCurrencies(),
-            'countries' => $this->getCountries(),
         ]);
     }
 
@@ -57,16 +57,38 @@ class SettingsController extends Controller
             'address' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'website' => 'nullable|url|max:255',
+            'logo' => 'nullable|image|max:2048|mimes:jpeg,jpg,png,gif,svg',
             'tax_id' => 'nullable|string|max:50',
             'currency' => 'required|string|max:3',
             'default_tax_rate' => 'nullable|numeric|min:0|max:100',
             'invoice_prefix' => 'nullable|string|max:10',
             'invoice_footer' => 'nullable|string',
         ]);
+
+        // Gérer l'upload du logo
+        if ($request->hasFile('logo')) {
+            // Sauvegarder le chemin de l'ancien logo pour suppression éventuelle
+            $oldLogo = $shop->logo;
+            
+            // Upload du nouveau logo
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
+            
+            // Supprimer l'ancien logo SEULEMENT s'il n'est plus utilisé par d'autres boutiques
+            if ($oldLogo) {
+                $otherShopsUsingLogo = $user->shops()
+                    ->where('id', '!=', $shop->id)
+                    ->where('logo', $oldLogo)
+                    ->count();
+                
+                // Si aucune autre boutique n'utilise ce logo, on peut le supprimer
+                if ($otherShopsUsingLogo === 0) {
+                    Storage::disk('public')->delete($oldLogo);
+                }
+            }
+        }
 
         // Si super_admin : mettre à jour TOUTES ses boutiques
         if ($user->role === 'super_admin') {
@@ -96,35 +118,6 @@ class SettingsController extends Controller
             ['code' => 'USD', 'name' => 'Dollar Américain', 'symbol' => '$'],
             ['code' => 'EUR', 'name' => 'Euro', 'symbol' => '€'],
             ['code' => 'XOF', 'name' => 'Franc CFA', 'symbol' => 'CFA'],
-        ];
-    }
-
-    /**
-     * Get available countries.
-     */
-    private function getCountries(): array
-    {
-        return [
-            'Maroc',
-            'France',
-            'Algérie',
-            'Tunisie',
-            'Sénégal',
-            'Côte d\'Ivoire',
-            'Cameroun',
-            'Mali',
-            'Burkina Faso',
-            'Niger',
-            'Bénin',
-            'Togo',
-            'Guinée',
-            'Congo',
-            'Gabon',
-            'Madagascar',
-            'Égypte',
-            'Belgique',
-            'Suisse',
-            'Canada',
         ];
     }
 }

@@ -23,6 +23,7 @@ class Shop extends Model
         'phone',
         'email',
         'website',
+        'logo',
         'tax_id',
         'currency',
         'default_tax_rate',
