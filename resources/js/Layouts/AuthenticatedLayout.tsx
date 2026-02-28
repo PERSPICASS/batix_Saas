@@ -415,7 +415,7 @@ export default function Authenticated({
                                     : 'Connectez-vous pour voir votre plan'}
                             </p>
                             <Link
-                                href={buildRoute('subscriptions.index')}
+                                href="/plans"
                                 className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
                             >
                                 Upgrade

@@ -27,6 +27,9 @@ use Inertia\Inertia;
 
 Route::get('/', [WelcomeController::class, 'index']);
 
+// Route publique pour voir les plans
+Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');
+
 // Routes publiques pour les invitations (avant auth)
 Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
 Route::post('/invitation/{token}/accept', [InvitationController::class, 'accept'])->name('invitation.accept');

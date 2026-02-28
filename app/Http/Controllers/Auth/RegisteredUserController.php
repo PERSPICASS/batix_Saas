@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\SubscriptionPlan;
+use App\Models\Subscription;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -73,6 +75,20 @@ class RegisteredUserController extends Controller
                 'can_create' => true,
                 'can_edit' => true,
                 'can_delete' => true,
+            ]);
+        }
+
+        // ✨ Attribuer automatiquement le plan FREE (30 jours)
+        $freePlan = SubscriptionPlan::where('slug', 'free')->first();
+        
+        if ($freePlan) {
+            Subscription::create([
+                'user_id' => $user->id,
+                'subscription_plan_id' => $freePlan->id,
+                'status' => 'trial',
+                'amount' => 0, // Plan gratuit
+                'started_at' => now(),
+                'expires_at' => now()->addDays(30), // 30 jours d'essai gratuit
             ]);
         }
 

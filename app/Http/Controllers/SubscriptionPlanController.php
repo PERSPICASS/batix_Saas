@@ -136,4 +136,18 @@ class SubscriptionPlanController extends Controller
 
         return back()->with('success', "Plan {$status} avec succès.");
     }
+
+    /**
+     * Display plans for users to choose (public page).
+     */
+    public function publicIndex(): Response
+    {
+        $plans = SubscriptionPlan::where('is_active', true)
+            ->orderBy('price')
+            ->get();
+
+        return Inertia::render('Plans/Index', [
+            'plans' => $plans,
+        ]);
+    }
 }

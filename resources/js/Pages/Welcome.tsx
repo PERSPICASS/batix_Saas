@@ -627,7 +627,7 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
 
                         <motion.section id="pricing" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.15 }} variants={stagger}>
                             <h2 className="mb-8 text-2xl font-semibold text-white sm:text-3xl">{t.pricingTitle}</h2>
-                            <div className="grid gap-4 lg:grid-cols-3">
+                            <div className="grid gap-4 lg:grid-cols-4">
                                 {plans.map((plan) => (
                                     <motion.article key={plan.name} className={`rounded-2xl border p-6 ${plan.highlighted ? 'border-amber-300 bg-amber-300/10' : 'border-white/10 bg-white/5'}`} variants={fadeUp} whileHover={{ y: -5 }}>
                                         <p className="text-sm font-semibold text-amber-200">{plan.badge}</p>

@@ -5,9 +5,12 @@ import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
     const [step, setStep] = useState<1 | 2>(1);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
     
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -120,16 +123,29 @@ export default function Register() {
                                 className="text-slate-200"
                             />
 
-                            <TextInput
-                                id="password"
-                                type="password"
-                                name="password"
-                                value={data.password}
-                                className="mt-1 block w-full border-white/15 bg-slate-900/70 text-white placeholder:text-slate-400 focus:border-amber-300 focus:ring-amber-300"
-                                autoComplete="new-password"
-                                onChange={(e) => setData('password', e.target.value)}
-                                required
-                            />
+                            <div className="relative">
+                                <TextInput
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    value={data.password}
+                                    className="mt-1 block w-full border-white/15 bg-slate-900/70 text-white placeholder:text-slate-400 focus:border-amber-300 focus:ring-amber-300 pr-10"
+                                    autoComplete="new-password"
+                                    onChange={(e) => setData('password', e.target.value)}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" />
+                                    )}
+                                </button>
+                            </div>
 
                             <InputError message={errors.password} className="mt-2" />
                         </div>
@@ -141,18 +157,31 @@ export default function Register() {
                                 className="text-slate-200"
                             />
 
-                            <TextInput
-                                id="password_confirmation"
-                                type="password"
-                                name="password_confirmation"
-                                value={data.password_confirmation}
-                                className="mt-1 block w-full border-white/15 bg-slate-900/70 text-white placeholder:text-slate-400 focus:border-amber-300 focus:ring-amber-300"
-                                autoComplete="new-password"
-                                onChange={(e) =>
-                                    setData('password_confirmation', e.target.value)
-                                }
-                                required
-                            />
+                            <div className="relative">
+                                <TextInput
+                                    id="password_confirmation"
+                                    type={showPasswordConfirmation ? 'text' : 'password'}
+                                    name="password_confirmation"
+                                    value={data.password_confirmation}
+                                    className="mt-1 block w-full border-white/15 bg-slate-900/70 text-white placeholder:text-slate-400 focus:border-amber-300 focus:ring-amber-300 pr-10"
+                                    autoComplete="new-password"
+                                    onChange={(e) =>
+                                        setData('password_confirmation', e.target.value)
+                                    }
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
+                                >
+                                    {showPasswordConfirmation ? (
+                                        <EyeOff className="h-5 w-5" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" />
+                                    )}
+                                </button>
+                            </div>
 
                             <InputError
                                 message={errors.password_confirmation}
