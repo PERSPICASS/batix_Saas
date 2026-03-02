@@ -390,4 +390,87 @@ class PlatformAdminController extends Controller
 
         return back()->with('success', 'Les dates de l\'abonnement ont été mises à jour avec succès.');
     }
+
+    /**
+     * Display products of a specific shop for platform admin.
+     */
+    public function shopProducts(Request $request, Shop $shop): Response
+    {
+        if (auth()->user()->role !== 'admin_platforme') {
+            abort(403);
+        }
+
+        $query = \App\Models\Product::with(['category', 'subcategory'])
+            ->where('shop_id', $shop->id)
+            ->orderBy('created_at', 'desc');
+
+        // Recherche
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%")
+                    ->orWhere('barcode', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtre par catégorie
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filtre par statut
+        if ($request->filled('status')) {
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            } elseif ($request->status === 'low_stock') {
+                $query->where('track_stock', true)
+                      ->whereNotNull('min_stock_alert')
+                      ->whereColumn('stock_quantity', '<=', 'min_stock_alert');
+            }
+        }
+
+        $products = $query->paginate(20)->through(fn($product) => [
+            'id' => $product->id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'barcode' => $product->barcode,
+            'price' => $product->price,
+            'cost_price' => $product->cost_price,
+            'stock_quantity' => $product->stock_quantity,
+            'min_stock_alert' => $product->min_stock_alert,
+            'track_stock' => $product->track_stock,
+            'is_active' => $product->is_active,
+            'category' => $product->category ? [
+                'id' => $product->category->id,
+                'name' => $product->category->name,
+            ] : null,
+            'subcategory' => $product->subcategory ? [
+                'id' => $product->subcategory->id,
+                'name' => $product->subcategory->name,
+            ] : null,
+            'created_at' => $product->created_at->format('Y-m-d H:i:s'),
+        ]);
+
+        $categories = \App\Models\Category::orderBy('order')->orderBy('name')->get();
+
+        return Inertia::render('PlatformAdmin/ShopProducts', [
+            'shop' => [
+                'id' => $shop->id,
+                'name' => $shop->name,
+                'slug' => $shop->slug,
+                'owner' => [
+                    'id' => $shop->user->id,
+                    'name' => $shop->user->name,
+                    'email' => $shop->user->email,
+                    'code_user' => $shop->user->code_user,
+                ],
+            ],
+            'products' => $products,
+            'categories' => $categories,
+            'filters' => $request->only(['search', 'category_id', 'status']),
+        ]);
+    }
 }

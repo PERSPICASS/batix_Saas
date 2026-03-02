@@ -55,6 +55,7 @@ Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
     Route::post('/accounts/{user}/toggle', [PlatformAdminController::class, 'toggleAccountStatus'])->name('platform.accounts.toggle');
     Route::get('/shops', [PlatformAdminController::class, 'shops'])->name('platform.shops');
     Route::post('/shops/{shop}/toggle', [PlatformAdminController::class, 'toggleShopStatus'])->name('platform.shops.toggle');
+    Route::get('/shops/{shop}/products', [PlatformAdminController::class, 'shopProducts'])->name('platform.shops.products');
     
     // Subscription Plans Management
     Route::resource('subscriptions', SubscriptionPlanController::class)->parameters([

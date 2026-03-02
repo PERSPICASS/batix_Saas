@@ -18,6 +18,11 @@ trait RedirectsUsers
         
         // Si c'est un admin plateforme, rediriger vers le dashboard plateforme
         if ($user->role === 'admin_platforme') {
+            // Nettoyer l'URL intended si elle contient une route qui nécessite code_user
+            $intended = session('url.intended');
+            if ($intended && (str_contains($intended, '/dashboard') || str_contains($intended, '{code_user}'))) {
+                session()->forget('url.intended');
+            }
             return route('platform.dashboard');
         }
         

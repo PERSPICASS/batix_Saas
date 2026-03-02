@@ -18,6 +18,15 @@ class CheckScreenLock
     {
         // Si l'utilisateur est authentifié et l'écran est verrouillé
         if (Auth::check() && session('screen_locked')) {
+            $user = Auth::user();
+            
+            // Vérifier que l'utilisateur a un code_user
+            if (!$user || !$user->code_user) {
+                // Si pas de code_user, nettoyer la session et continuer
+                session()->forget(['screen_locked', 'lock_screen_return_url', 'locked_at']);
+                return $next($request);
+            }
+            
             // Ne pas rediriger si on est déjà sur la page de verrouillage ou logout
             $currentRoute = $request->route()?->getName();
             

@@ -52,6 +52,9 @@ class AuthenticatedSessionController extends Controller
         // Log the logout activity before destroying the session
         ActivityLogger::logout();
 
+        // Clean lock screen session data before logout
+        $request->session()->forget(['screen_locked', 'lock_screen_return_url', 'locked_at']);
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

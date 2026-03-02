@@ -398,8 +398,18 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
             return route('register');
         }
         
-        // Si l'utilisateur est connecté, utiliser son code_user
-        return route('dashboard', { code_user: auth.code_user });
+        // Si l'utilisateur est admin_platforme, rediriger vers le dashboard plateforme
+        if (auth.user.role === 'admin_platforme') {
+            return route('platform.dashboard');
+        }
+        
+        // Sinon, utiliser le code_user pour les autres rôles
+        if (auth.code_user) {
+            return route('dashboard', { code_user: auth.code_user });
+        }
+        
+        // Fallback vers register si pas de code_user
+        return route('register');
     };
 
     useEffect(() => {

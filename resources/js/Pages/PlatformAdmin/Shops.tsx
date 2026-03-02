@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Store, Power, User } from 'lucide-react';
+import { Search, Store, Power, User, Package } from 'lucide-react';
 import Table, { TableActions, TableBadge } from '@/Components/Table';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
@@ -120,6 +120,13 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
             label: 'Actions',
             render: (shop: Shop) => (
                 <TableActions>
+                    <Link
+                        href={route('platform.shops.products', shop.id)}
+                        className="rounded-lg p-2 text-blue-300 transition hover:bg-blue-500/10"
+                        title="Voir les produits"
+                    >
+                        <Package className="size-4" />
+                    </Link>
                     <button
                         type="button"
                         onClick={() => setConfirmToggle(shop.id)}
