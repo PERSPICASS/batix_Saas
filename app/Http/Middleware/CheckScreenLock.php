@@ -20,7 +20,20 @@ class CheckScreenLock
         if (Auth::check() && session('screen_locked')) {
             // Ne pas rediriger si on est déjà sur la page de verrouillage ou logout
             $currentRoute = $request->route()?->getName();
-            if (!in_array($currentRoute, ['lock-screen.show', 'lock-screen.unlock', 'logout'])) {
+            
+            // Exclure également les routes de login/register pour éviter les conflits
+            $excludedRoutes = [
+                'lock-screen.show', 
+                'lock-screen.unlock', 
+                'logout',
+                'login',
+                'register',
+                'verification.code.show',
+                'verification.code.verify',
+                'verification.code.resend'
+            ];
+            
+            if (!in_array($currentRoute, $excludedRoutes)) {
                 return redirect()->route('lock-screen.show');
             }
         }

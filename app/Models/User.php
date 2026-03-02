@@ -31,6 +31,8 @@ class User extends Authenticatable
         'invitation_token',
         'invitation_sent_at',
         'invitation_accepted_at',
+        'email_verification_code',
+        'email_verification_code_expires_at',
     ];
 
     /**
@@ -56,6 +58,7 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'invitation_sent_at' => 'datetime',
             'invitation_accepted_at' => 'datetime',
+            'email_verification_code_expires_at' => 'datetime',
         ];
     }
 

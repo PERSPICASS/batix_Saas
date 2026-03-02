@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
+use App\Mail\EmailVerificationCode;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -43,6 +45,9 @@ class RegisteredUserController extends Controller
             'shop_phone' => 'nullable|string|max:20',
         ]);
 
+        // Générer un code de vérification à 6 chiffres
+        $verificationCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
         // Créer l'utilisateur avec le rôle super_admin
         $user = User::create([
             'name' => $request->name,
@@ -50,6 +55,8 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'role' => 'super_admin',
             'is_active' => true,
+            'email_verification_code' => $verificationCode,
+            'email_verification_code_expires_at' => now()->addMinutes(15),
         ]);
 
         // Créer la première boutique de l'utilisateur
@@ -92,6 +99,9 @@ class RegisteredUserController extends Controller
             ]);
         }
 
+        // Envoyer l'email de vérification avec le code OTP
+        Mail::to($user->email)->send(new EmailVerificationCode($verificationCode, $user->name));
+
         event(new Registered($user));
 
         Auth::login($user);
@@ -99,7 +109,7 @@ class RegisteredUserController extends Controller
         // Définir la boutique active en session
         session(['active_shop_id' => $shop->id]);
 
-        // Rediriger vers /{code_user}/dashboard
-        return redirect()->route('dashboard', ['code_user' => $user->code_user]);
+        // Rediriger vers la page de vérification email
+        return redirect()->route('verification.code.show');
     }
 }

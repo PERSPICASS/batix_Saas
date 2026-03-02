@@ -194,12 +194,13 @@ Les paramètres de devise et pays sont gérés dans :
 
 ## Conclusion
 
-Cette modification améliore l'expérience utilisateur en éliminant la redondance et en centralisant la gestion des paramètres de devise et pays dans un seul endroit : **les Paramètres du compte**.
+Cette modification améliore l'expérience utilisateur en éliminant la redondance et en centralisant la gestion des paramètres de devise dans un seul endroit : **les Paramètres du compte**. Le champ pays a été complètement retiré car il n'était pas utilisé fonctionnellement.
 
-Les utilisateurs ont maintenant une interface plus claire et cohérente, sans confusion sur l'endroit où modifier ces paramètres globaux.
+Les utilisateurs ont maintenant une interface plus claire et cohérente, sans confusion sur l'endroit où modifier la devise.
 
 ---
 
 **Documentation connexe:**
 - [CURRENCY_SYSTEM_GUIDE.md](./CURRENCY_SYSTEM_GUIDE.md) - Guide complet du système de devises
 - [SHOP_FORM_FIELDS_FIX.md](./SHOP_FORM_FIELDS_FIX.md) - Corrections précédentes des formulaires de boutique
+- [EMAIL_VERIFICATION_OTP_SYSTEM.md](./EMAIL_VERIFICATION_OTP_SYSTEM.md) - Système de vérification email par code OTP

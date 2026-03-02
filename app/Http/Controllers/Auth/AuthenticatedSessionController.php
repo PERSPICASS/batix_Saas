@@ -35,6 +35,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Nettoyer la session de verrouillage d'écran lors d'une nouvelle connexion
+        $request->session()->forget(['screen_locked', 'lock_screen_return_url', 'locked_at']);
+
         // Log the login activity
         ActivityLogger::login();
 
