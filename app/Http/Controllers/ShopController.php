@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shop;
+use App\Models\SubscriptionPlan;
+use App\Models\Subscription;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
 
 class ShopController extends Controller
 {
@@ -122,5 +125,102 @@ class ShopController extends Controller
         ActivityLogger::deleted($shop, "Boutique supprimée: {$shopName}");
 
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique supprimée avec succès.');
+    }
+
+    /**
+     * Afficher le formulaire de création de la première boutique (Étape 3 de l'inscription)
+     */
+    public function createInitial(): Response
+    {
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur n'a pas déjà de boutique
+        if ($user->shops()->exists()) {
+            return redirect()->route('dashboard', ['code_user' => $user->code_user]);
+        }
+
+        // Vérifier que l'email est vérifié
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.code.show');
+        }
+
+        return Inertia::render('Auth/CreateShop');
+    }
+
+    /**
+     * Créer la première boutique après inscription (Étape 3 de l'inscription)
+     */
+    public function storeInitial(Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+
+        // Vérifier que l'utilisateur n'a pas déjà de boutique
+        if ($user->shops()->exists()) {
+            return redirect()->route('dashboard', ['code_user' => $user->code_user]);
+        }
+
+        // Vérifier que l'email est vérifié
+        if (!$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.code.show');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        // Créer la première boutique de l'utilisateur
+        $shop = $user->shops()->create([
+            'name' => $validated['name'],
+            'address' => $validated['address'] ?? null,
+            'city' => $validated['city'] ?? null,
+            'postal_code' => $validated['postal_code'] ?? null,
+            'phone' => $validated['phone'] ?? null,
+            'currency' => 'USD',
+            'country' => 'Maroc',
+        ]);
+
+        // Associer l'utilisateur à la boutique créée
+        $user->update(['shop_id' => $shop->id]);
+
+        // Donner toutes les permissions sur tous les modules au super_admin
+        $modules = ['shops', 'products', 'categories', 'stocks', 'inventory', 'sales', 'suppliers', 'customers', 'invoices', 'users', 'reports'];
+        foreach ($modules as $module) {
+            $user->permissions()->create([
+                'module' => $module,
+                'can_view' => true,
+                'can_create' => true,
+                'can_edit' => true,
+                'can_delete' => true,
+            ]);
+        }
+
+        // ✨ Attribuer automatiquement le plan FREE (30 jours)
+        $freePlan = SubscriptionPlan::where('slug', 'free')->first();
+        
+        if ($freePlan) {
+            Subscription::create([
+                'user_id' => $user->id,
+                'subscription_plan_id' => $freePlan->id,
+                'status' => 'trial',
+                'amount' => 0, // Plan gratuit
+                'started_at' => now(),
+                'expires_at' => now()->addDays(30), // 30 jours d'essai gratuit
+            ]);
+        }
+
+        // Définir la boutique active en session
+        session(['active_shop_id' => $shop->id]);
+
+        // Log activity
+        ActivityLogger::created($shop, "Première boutique créée: {$shop->name}");
+
+        // Rediriger vers le dashboard avec message de bienvenue
+        return redirect()
+            ->route('dashboard', ['code_user' => $user->code_user])
+            ->with('success', 'Bienvenue ! Votre boutique a été créée avec succès. Vous disposez de 30 jours d\'essai gratuit.');
     }
 }

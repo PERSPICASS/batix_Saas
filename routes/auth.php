@@ -50,6 +50,13 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:3,1')
         ->name('verification.code.resend');
 
+    // Création de la première boutique (Étape 3 de l'inscription)
+    Route::get('create-shop', [\App\Http\Controllers\ShopController::class, 'createInitial'])
+        ->name('shop.create.initial');
+    
+    Route::post('create-shop', [\App\Http\Controllers\ShopController::class, 'storeInitial'])
+        ->name('shop.store.initial');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

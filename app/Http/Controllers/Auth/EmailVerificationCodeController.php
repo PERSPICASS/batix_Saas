@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\SubscriptionPlan;
+use App\Models\Subscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,8 +22,8 @@ class EmailVerificationCodeController extends Controller
     {
         $user = Auth::user();
 
-        // Si l'email est déjà vérifié, rediriger vers le dashboard
-        if ($user->hasVerifiedEmail()) {
+        // Si l'email est déjà vérifié et l'utilisateur a une boutique, rediriger vers le dashboard
+        if ($user->hasVerifiedEmail() && $user->code_user) {
             return redirect()->route('dashboard', ['code_user' => $user->code_user]);
         }
 
@@ -68,9 +70,19 @@ class EmailVerificationCodeController extends Controller
             'email_verification_code_expires_at' => null,
         ]);
 
+        // Vérifier si l'utilisateur a déjà une boutique
+        if ($user->shops()->exists()) {
+            // L'utilisateur a déjà une boutique, rediriger vers le dashboard
+            return response()->json([
+                'message' => 'Votre email a été vérifié avec succès !',
+                'redirect' => route('dashboard', ['code_user' => $user->code_user])
+            ]);
+        }
+
+        // Nouvel utilisateur sans boutique, rediriger vers le formulaire de création de boutique (Étape 3)
         return response()->json([
-            'message' => 'Votre email a été vérifié avec succès !',
-            'redirect' => route('dashboard', ['code_user' => $user->code_user])
+            'message' => 'Votre email a été vérifié avec succès ! Créez maintenant votre première boutique.',
+            'redirect' => route('shop.create.initial')
         ]);
     }
 
