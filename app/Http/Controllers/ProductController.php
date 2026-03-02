@@ -30,7 +30,7 @@ class ProductController extends Controller
         $status = $request->input('status');
         
         $query = Product::with(['shop', 'category', 'subcategory'])
-            ->orderBy('name');
+            ->orderBy('created_at', 'desc'); // Du plus récent au plus ancien
 
         // Filtrer par boutique active si sélectionnée
         if ($activeShopId) {
