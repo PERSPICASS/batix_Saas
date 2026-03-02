@@ -12,6 +12,7 @@ use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\InventoryController;
@@ -156,6 +157,14 @@ Route::prefix('{code_user}')
     Route::resource('suppliers', SupplierController::class)->parameters([
         'suppliers' => 'supplier'
     ]);
+
+    // Module d'achats (Bons de commande fournisseurs)
+    Route::resource('purchases', PurchaseController::class)->parameters([
+        'purchases' => 'purchase'
+    ]);
+    Route::post('purchases/{purchase}/confirm', [PurchaseController::class, 'confirm'])->name('purchases.confirm');
+    Route::post('purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
+    Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel');
 
     Route::get('/abonnements', function () {
         return Inertia::render('Management/Placeholder', [

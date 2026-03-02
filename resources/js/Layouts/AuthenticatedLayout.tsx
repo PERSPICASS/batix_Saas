@@ -271,6 +271,13 @@ export default function Authenticated({
                 module: 'inventory',
             },
             {
+                label: 'Achats',
+                href: buildRoute('purchases.index'),
+                active: route().current('purchases.*'),
+                icon: ShoppingCart,
+                module: 'purchases',
+            },
+            {
                 label: 'Ventes',
                 href: buildRoute('sales.index'),
                 active: route().current('sales.*'),
