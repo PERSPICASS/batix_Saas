@@ -111,6 +111,20 @@ export default function SalesCreate({ shops, customers, products }: Props) {
         );
     };
 
+    const updateUnitPrice = (productId: number, newPrice: number) => {
+        setCart(
+            cart.map((item) =>
+                item.product_id === productId
+                    ? {
+                          ...item,
+                          unit_price: newPrice,
+                          subtotal: item.quantity * newPrice,
+                      }
+                    : item
+            )
+        );
+    };
+
     const calculateTotal = () => {
         const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
         const taxAmount = cart.reduce(
@@ -138,6 +152,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
         const items = cart.map((item) => ({
             product_id: item.product_id,
             quantity: item.quantity,
+            unit_price: item.unit_price, // Envoyer le prix négocié
         }));
 
         // Utiliser transform pour ajouter les items au moment de l'envoi
@@ -214,38 +229,62 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                     {cart.map((item) => (
                                         <div
                                             key={item.product_id}
-                                            className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900/50 p-2"
+                                            className="rounded-lg border border-white/10 bg-slate-900/50 p-3"
                                         >
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-white">
-                                                    {item.product_name}
-                                                </p>
-                                                <p className="text-xs text-slate-400">
-                                                    <Currency amount={item.unit_price} /> × {item.quantity}
-                                                </p>
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-white">
+                                                        {item.product_name}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeFromCart(item.product_id)}
+                                                    className="rounded p-1 text-rose-300 hover:bg-rose-300/10 transition"
+                                                >
+                                                    <Trash2 className="size-4" />
+                                                </button>
                                             </div>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={item.quantity}
-                                                onChange={(e) =>
-                                                    updateQuantity(
-                                                        item.product_id,
-                                                        parseInt(e.target.value) || 0
-                                                    )
-                                                }
-                                                className="w-16 rounded border border-white/15 bg-slate-900/70 px-2 py-1 text-center text-sm text-white"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFromCart(item.product_id)}
-                                                className="rounded p-1 text-rose-300 hover:bg-rose-300/10"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                            <p className="w-20 text-right font-semibold text-white">
-                                                <Currency amount={item.subtotal} />
-                                            </p>
+                                            
+                                            <div className="grid grid-cols-3 gap-2 items-center">
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1">Prix unitaire</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={item.unit_price}
+                                                        onChange={(e) =>
+                                                            updateUnitPrice(
+                                                                item.product_id,
+                                                                parseFloat(e.target.value) || 0
+                                                            )
+                                                        }
+                                                        className="w-full rounded border border-white/15 bg-slate-900/70 px-2 py-1.5 text-sm text-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1">Quantité</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={item.quantity}
+                                                        onChange={(e) =>
+                                                            updateQuantity(
+                                                                item.product_id,
+                                                                parseInt(e.target.value) || 0
+                                                            )
+                                                        }
+                                                        className="w-full rounded border border-white/15 bg-slate-900/70 px-2 py-1.5 text-center text-sm text-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1">Total</label>
+                                                    <p className="text-sm font-semibold text-amber-300 py-1.5">
+                                                        <Currency amount={item.subtotal} />
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

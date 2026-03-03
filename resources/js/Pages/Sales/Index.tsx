@@ -6,6 +6,7 @@ import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { PageProps } from '@/types';
 
 interface Shop {
     id: number;
@@ -45,7 +46,7 @@ interface Stats {
     total_sales: number;
 }
 
-interface Props {
+interface Props extends PageProps {
     sales: PaginatedData;
     stats: Stats;
 }
@@ -66,10 +67,13 @@ const statusLabels: Record<string, string> = {
     returned: 'Retournée',
 };
 
-export default function SalesIndex({ sales, stats }: Props) {
+export default function SalesIndex({ sales, stats, auth }: Props) {
     const route = useRoute();
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; sale: Sale | null }>({ show: false, sale: null });
     const [deleting, setDeleting] = useState(false);
+    
+    // Les caissiers ne peuvent pas annuler des ventes
+    const canCancelSale = auth.user?.role !== 'cashier' && auth.user?.role !== 'caisse';
 
     const handleDelete = (sale: Sale) => {
         setDeleteModal({ show: true, sale });
@@ -190,7 +194,7 @@ export default function SalesIndex({ sales, stats }: Props) {
                                     >
                                         <Eye className="size-3.5" /> Voir
                                     </Link>
-                                    {sale.status === 'completed' && (
+                                    {sale.status === 'completed' && canCancelSale && (
                                         <TableActionButton
                                             variant="danger"
                                             onClick={() => handleDelete(sale)}

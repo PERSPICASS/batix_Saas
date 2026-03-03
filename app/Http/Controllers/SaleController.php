@@ -109,6 +109,7 @@ class SaleController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0', // Prix négocié
         ]);
 
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
@@ -125,12 +126,15 @@ class SaleController extends Controller
             foreach ($items as $itemData) {
                 $product = Product::find($itemData['product_id']);
                 
+                // Utiliser le prix négocié envoyé par le frontend
+                $unitPrice = $itemData['unit_price'];
+                
                 $sale->items()->create([
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'sku' => $product->sku,
                     'quantity' => $itemData['quantity'],
-                    'unit_price' => $product->selling_price,
+                    'unit_price' => $unitPrice, // Prix négocié
                     'tax_rate' => $product->tax_rate ?? 0,
                     'discount_amount' => 0,
                 ]);
@@ -158,6 +162,12 @@ class SaleController extends Controller
     {
         if ($sale->shop->user_id !== Auth::id()) {
             abort(403);
+        }
+        
+        // Les caissiers ne peuvent pas annuler de ventes
+        $user = Auth::user();
+        if (in_array($user->role, ['cashier', 'caisse'])) {
+            return back()->with('error', 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');
         }
 
         if (!$sale->sale_date->isToday()) {
