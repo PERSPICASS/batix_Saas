@@ -16,6 +16,7 @@ export default function Login({
     canResetPassword: boolean;
 }) {
     const [showPassword, setShowPassword] = useState(false);
+    const [isRefreshingToken, setIsRefreshingToken] = useState(false);
     
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
@@ -23,9 +24,32 @@ export default function Login({
         remember: false as boolean,
     });
 
-    const submit: FormEventHandler = (e) => {
+    const submit: FormEventHandler = async (e) => {
         e.preventDefault();
 
+        // Rafraîchir le token CSRF avant de soumettre pour éviter l'erreur 419
+        try {
+            setIsRefreshingToken(true);
+            await fetch('/sanctum/csrf-cookie', {
+                credentials: 'same-origin'
+            });
+            
+            // Mettre à jour le token dans axios
+            const newToken = document.head.querySelector('meta[name="csrf-token"]');
+            if (newToken && window.axios) {
+                const tokenValue = newToken.getAttribute('content');
+                if (tokenValue) {
+                    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = tokenValue;
+                }
+            }
+            
+            setIsRefreshingToken(false);
+        } catch (error) {
+            console.error('Erreur lors du rafraîchissement du token CSRF:', error);
+            setIsRefreshingToken(false);
+        }
+
+        // Soumettre le formulaire avec le token frais
         post(route('login'), {
             onFinish: () => reset('password'),
         });
@@ -140,9 +164,9 @@ export default function Login({
 
                     <PrimaryButton
                         className="ms-4 border-0 bg-amber-300 text-slate-950 hover:bg-amber-200 focus:bg-amber-200 focus:ring-amber-300 focus:ring-offset-slate-950 active:bg-amber-300"
-                        disabled={processing}
+                        disabled={processing || isRefreshingToken}
                     >
-                        Se connecter
+                        {isRefreshingToken ? 'Préparation...' : 'Se connecter'}
                     </PrimaryButton>
                 </div>
             </form>

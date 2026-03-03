@@ -26,12 +26,19 @@ window.axios.interceptors.response.use(
             const isAuthPage = window.location.pathname.includes('/login') || 
                              window.location.pathname.includes('/register') ||
                              window.location.pathname.includes('/forgot-password') ||
+                             window.location.pathname.includes('/reset-password') ||
+                             window.location.pathname.includes('/verify-email') ||
                              window.location.pathname.includes('/platform-admin/login');
             
-            // Sur les pages d'auth, ne pas tenter de retry, juste recharger
+            // Sur les pages d'auth, afficher un message et recharger
             if (isAuthPage) {
-                console.log('CSRF token expired on auth page, reloading...');
-                window.location.reload();
+                console.log('CSRF token expired on auth page');
+                // Ne pas afficher d'alerte car le refresh du token est géré par le formulaire lui-même
+                // Si on arrive ici, c'est qu'il y a un problème plus grave
+                if (!originalRequest.url?.includes('/sanctum/csrf-cookie')) {
+                    alert('Votre session a expiré. Veuillez recharger la page et réessayer.');
+                    window.location.reload();
+                }
                 return Promise.reject(error);
             }
             

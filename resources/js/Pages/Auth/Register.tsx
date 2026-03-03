@@ -10,6 +10,7 @@ import { Eye, EyeOff, User } from 'lucide-react';
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+    const [isRefreshingToken, setIsRefreshingToken] = useState(false);
     
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -18,8 +19,30 @@ export default function Register() {
         password_confirmation: '',
     });
 
-    const submit: FormEventHandler = (e) => {
+    const submit: FormEventHandler = async (e) => {
         e.preventDefault();
+
+        // Rafraîchir le token CSRF avant de soumettre pour éviter l'erreur 419
+        try {
+            setIsRefreshingToken(true);
+            await fetch('/sanctum/csrf-cookie', {
+                credentials: 'same-origin'
+            });
+            
+            // Mettre à jour le token dans axios
+            const newToken = document.head.querySelector('meta[name="csrf-token"]');
+            if (newToken && window.axios) {
+                const tokenValue = newToken.getAttribute('content');
+                if (tokenValue) {
+                    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = tokenValue;
+                }
+            }
+            
+            setIsRefreshingToken(false);
+        } catch (error) {
+            console.error('Erreur lors du rafraîchissement du token CSRF:', error);
+            setIsRefreshingToken(false);
+        }
 
         post(route('register'), {
             onFinish: () => reset('password', 'password_confirmation'),
@@ -174,8 +197,11 @@ export default function Register() {
                 </div>
 
                 <div className="space-y-3 pt-1">
-                    <PrimaryButton className="w-full justify-center" disabled={processing}>
-                        {processing ? 'Création en cours...' : 'Continuer →'}
+                    <PrimaryButton 
+                        className="w-full justify-center" 
+                        disabled={processing || isRefreshingToken}
+                    >
+                        {isRefreshingToken ? 'Préparation...' : processing ? 'Création en cours...' : 'Continuer →'}
                     </PrimaryButton>
 
                     <div className="text-center">
