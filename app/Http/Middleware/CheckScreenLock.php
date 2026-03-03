@@ -20,6 +20,13 @@ class CheckScreenLock
         if (Auth::check() && session('screen_locked')) {
             $user = Auth::user();
             
+            // Si c'est un admin plateforme, ne pas appliquer le verrouillage d'écran
+            // (les admins plateforme ont leur propre système de sécurité)
+            if ($user->role === 'admin_platforme') {
+                session()->forget(['screen_locked', 'lock_screen_return_url', 'locked_at']);
+                return $next($request);
+            }
+            
             // Vérifier que l'utilisateur a un code_user
             if (!$user || !$user->code_user) {
                 // Si pas de code_user, nettoyer la session et continuer

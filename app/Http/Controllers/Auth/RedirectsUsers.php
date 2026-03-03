@@ -18,11 +18,9 @@ trait RedirectsUsers
         
         // Si c'est un admin plateforme, rediriger vers le dashboard plateforme
         if ($user->role === 'admin_platforme') {
-            // Nettoyer l'URL intended si elle contient une route qui nécessite code_user
-            $intended = session('url.intended');
-            if ($intended && (str_contains($intended, '/dashboard') || str_contains($intended, '{code_user}'))) {
-                session()->forget('url.intended');
-            }
+            // Nettoyer complètement l'URL intended pour éviter les conflits
+            // car les routes admin plateforme n'utilisent pas code_user
+            session()->forget('url.intended');
             return route('platform.dashboard');
         }
         
@@ -30,7 +28,9 @@ trait RedirectsUsers
         $shop = $user->accessibleShopsQuery()->first();
         
         if (!$shop) {
-            return route('login')->with('error', 'Aucune boutique associée à votre compte');
+            // Nettoyer la session et rediriger vers login avec erreur
+            session()->forget('url.intended');
+            return route('login');
         }
         
         // Définir la boutique active en session
@@ -44,6 +44,15 @@ trait RedirectsUsers
             // C'est un employé, trouver le propriétaire via la boutique
             $accountOwner = \App\Models\User::find($shop->user_id);
             $accountCode = $accountOwner ? $accountOwner->code_user : $user->code_user;
+        }
+        
+        // Vérifier si l'URL intended est compatible avec le code_user
+        $intended = session('url.intended');
+        if ($intended) {
+            // Si l'URL intended ne contient pas le bon code_user, la nettoyer
+            if (!str_contains($intended, "/{$accountCode}/")) {
+                session()->forget('url.intended');
+            }
         }
         
         // Rediriger vers /{code_user}/dashboard

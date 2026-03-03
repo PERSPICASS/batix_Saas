@@ -9,6 +9,9 @@ if (token) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');
 }
 
+// Variable pour éviter les boucles infinies
+let isRefreshingCSRF = false;
+
 // Intercepteur pour gérer les erreurs 419 (CSRF token mismatch)
 window.axios.interceptors.response.use(
     (response) => response,
@@ -16,8 +19,23 @@ window.axios.interceptors.response.use(
         const originalRequest = error.config;
         
         // Si erreur 419 (CSRF token expiré) et pas déjà en train de réessayer
-        if (error.response?.status === 419 && !originalRequest._retry) {
+        if (error.response?.status === 419 && !originalRequest._retry && !isRefreshingCSRF) {
             originalRequest._retry = true;
+            
+            // Vérifier si on est sur une page d'authentification
+            const isAuthPage = window.location.pathname.includes('/login') || 
+                             window.location.pathname.includes('/register') ||
+                             window.location.pathname.includes('/forgot-password') ||
+                             window.location.pathname.includes('/platform-admin/login');
+            
+            // Sur les pages d'auth, ne pas tenter de retry, juste recharger
+            if (isAuthPage) {
+                console.log('CSRF token expired on auth page, reloading...');
+                window.location.reload();
+                return Promise.reject(error);
+            }
+            
+            isRefreshingCSRF = true;
             
             try {
                 // Essayer de rafraîchir le token CSRF sans recharger la page
@@ -34,28 +52,22 @@ window.axios.interceptors.response.use(
                         originalRequest.headers['X-CSRF-TOKEN'] = tokenValue;
                     }
                     
+                    isRefreshingCSRF = false;
+                    
                     // Réessayer la requête originale avec le nouveau token
                     return window.axios(originalRequest);
                 }
             } catch (refreshError) {
-                // Si le rafraîchissement échoue, la session est vraiment expirée
+                isRefreshingCSRF = false;
                 console.error('Session expirée, rechargement nécessaire');
             }
             
-            // Si nous sommes ici, c'est que la session est expirée
-            // Ne recharger que si ce n'est pas une page de login/register
-            const isAuthPage = window.location.pathname.includes('/login') || 
-                             window.location.pathname.includes('/register') ||
-                             window.location.pathname.includes('/forgot-password');
+            isRefreshingCSRF = false;
             
-            if (!isAuthPage) {
-                // Afficher un message avant de rediriger
-                alert('Votre session a expiré. Vous allez être redirigé vers la page de connexion.');
-                window.location.href = '/login';
-            } else {
-                // Sur les pages d'authentification, juste recharger pour obtenir un nouveau token
-                window.location.reload();
-            }
+            // Si nous sommes ici, c'est que la session est expirée
+            // Afficher un message avant de rediriger
+            alert('Votre session a expiré. Vous allez être redirigé vers la page de connexion.');
+            window.location.href = '/login';
         }
         
         return Promise.reject(error);

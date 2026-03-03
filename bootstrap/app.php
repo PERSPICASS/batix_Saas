@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\CheckScreenLock::class,
         ]);
 
+        $middleware->trustProxies(at: [
+            '*',
+        ]);
+
         $middleware->alias([
             'subscription.limits' => \App\Http\Middleware\CheckSubscriptionLimits::class,
         ]);
