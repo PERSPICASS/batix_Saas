@@ -27,6 +27,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@swc/helpers": "^0.5.19",
         "framer-motion": "^12.34.2",
         "lucide-react": "^0.574.0",
         "recharts": "^3.7.0"
