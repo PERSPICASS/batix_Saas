@@ -2,18 +2,23 @@ import axios from 'axios';
 window.axios = axios;
 
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+window.axios.defaults.withCredentials = true;
+window.axios.defaults.withXSRFToken = true;
 
 // Ajouter le token CSRF automatiquement à toutes les requêtes
-const token = document.head.querySelector('meta[name="csrf-token"]');
+/* const token = document.head.querySelector('meta[name="csrf-token"]');
+console.log('CSRF token found:', token ? token.getAttribute('content') : 'No token');
 if (token) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.getAttribute('content');
-}
+}else{
+    console.error('CSRF token not found');
+} */
 
 // Variable pour éviter les boucles infinies
 let isRefreshingCSRF = false;
 
 // Intercepteur pour gérer les erreurs 419 (CSRF token mismatch)
-window.axios.interceptors.response.use(
+/* window.axios.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
@@ -79,4 +84,4 @@ window.axios.interceptors.response.use(
         
         return Promise.reject(error);
     }
-);
+); */

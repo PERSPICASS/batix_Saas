@@ -81,12 +81,18 @@ class SaleController extends Controller
 
     public function create(): Response
     {
+        $activeShopId = get_active_shop_id();
+        
+        if (!$activeShopId) {
+            return redirect()->route('shops.index')
+                ->with('error', 'Veuillez sélectionner une boutique active.');
+        }
+        
         $shops = Auth::user()->accessibleShops();
-        $shopIds = $shops->pluck('id');
         
-        $customers = Customer::whereIn('shop_id', $shopIds)->get();
+        $customers = Customer::where('shop_id', $activeShopId)->get();
         
-        $products = Product::whereIn('shop_id', $shopIds)
+        $products = Product::where('shop_id', $activeShopId)
             ->where('is_active', true)
             ->get();
 
