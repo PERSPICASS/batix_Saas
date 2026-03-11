@@ -22,12 +22,12 @@ class ActivityLogController extends Controller
             ->where('user_role', '!=', 'admin_platforme') // Exclure TOUJOURS admin_platforme
             ->latest();
 
-        // Filter by account (code_user) for non-super_admin users
-        if ($user->role !== 'super_admin') {
-            // Filter by current account code
+        // Filter by account (code_user) - TOUS les utilisateurs sauf admin_platforme
+        // voient uniquement les logs de leur compte
+        if ($user->role !== 'admin_platforme') {
             $query->where('account_code', $user->code_user);
         }
-        // Super admin sees all activities from all accounts (except admin_platforme)
+        // admin_platforme peut voir tous les logs de tous les comptes
 
         // Filter by user
         if ($request->filled('user_id')) {
@@ -93,20 +93,23 @@ class ActivityLogController extends Controller
         ]);
 
         // Get filter options - filter by account
-        $accountCode = $user->role === 'super_admin' ? null : $user->code_user;
+        $accountCode = $user->role === 'admin_platforme' ? null : $user->code_user;
         
         $usersQuery = User::query();
         if ($accountCode) {
             // Exclude admin_platforme from user filters
             $usersQuery->where('code_user', $accountCode)
                        ->where('role', '!=', 'admin_platforme');
+        } else {
+            // admin_platforme sees all users except other admin_platforme
+            $usersQuery->where('role', '!=', 'admin_platforme');
         }
         $users = $usersQuery->get(['id', 'name', 'email']);
 
-        $actionsQuery = ActivityLog::query();
+        $actionsQuery = ActivityLog::query()
+            ->where('user_role', '!=', 'admin_platforme');
         if ($accountCode) {
-            $actionsQuery->where('account_code', $accountCode)
-                         ->where('user_role', '!=', 'admin_platforme');
+            $actionsQuery->where('account_code', $accountCode);
         }
         $actions = $actionsQuery->distinct()
             ->pluck('action')
@@ -115,10 +118,10 @@ class ActivityLogController extends Controller
                 'label' => ucfirst($action)
             ]);
 
-        $subjectTypesQuery = ActivityLog::whereNotNull('subject_type');
+        $subjectTypesQuery = ActivityLog::whereNotNull('subject_type')
+            ->where('user_role', '!=', 'admin_platforme');
         if ($accountCode) {
-            $subjectTypesQuery->where('account_code', $accountCode)
-                              ->where('user_role', '!=', 'admin_platforme');
+            $subjectTypesQuery->where('account_code', $accountCode);
         }
         $subjectTypes = $subjectTypesQuery->distinct()
             ->pluck('subject_type')
@@ -145,12 +148,14 @@ class ActivityLogController extends Controller
     {
         $user = auth()->user();
 
-        // Check permission - only super_admin or users from same account can view
-        if ($user->role !== 'super_admin') {
+        // Check permission
+        if ($user->role !== 'admin_platforme') {
+            // Non admin_platforme users can only view logs from their account
             if ($activityLog->account_code !== $user->code_user) {
                 abort(403, 'Vous n\'avez pas accès à cet historique.');
             }
         }
+        // admin_platforme can view all logs
 
         return Inertia::render('ActivityLogs/Show', [
             'activity' => [
