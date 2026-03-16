@@ -22,18 +22,22 @@ jobs:
 
             cd /opt/batix/apps/dev/batix_Saas
           
-            # Toujours propre côté git
             git fetch origin dev
             git reset --hard origin/dev
           
-            # Démarre/maj les services (important pour exec)
             docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
           
-            # Build front DANS le container node (commande explicite)
             rm -rf public/build
-            docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm node sh -lc "npm ci && npm run build"
           
-            # Laravel
-            docker compose exec -T app php artisan migrate --force
-            docker compose exec -T app php artisan config:clear
-            docker compose exec -T app php artisan cache:clear
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T node sh -lc "
+              node -v
+              npm -v
+              echo NODE_ENV=\$NODE_ENV
+              npm ci
+              ls -la node_modules/.bin | grep tsc || true
+              npm run build
+            "
+          
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan migrate --force
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan config:clear
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan cache:clear
