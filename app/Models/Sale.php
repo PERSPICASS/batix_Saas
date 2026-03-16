@@ -25,17 +25,21 @@ class Sale extends Model
         'total',
         'amount_paid',
         'change_amount',
+        'remaining_amount',
+        'credit_due_date',
         'notes',
     ];
 
     protected $casts = [
         'sale_date' => 'datetime',
+        'credit_due_date' => 'date',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'change_amount' => 'decimal:2',
+        'remaining_amount' => 'decimal:2',
     ];
 
     protected static function boot()
@@ -109,6 +113,18 @@ class Sale extends Model
     public function isCompleted(): bool
     {
         return $this->status === 'completed';
+    }
+
+    public function isCredit(): bool
+    {
+        return $this->remaining_amount > 0;
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->isCredit()
+            && $this->credit_due_date
+            && $this->credit_due_date->isPast();
     }
 
     public function isReturned(): bool

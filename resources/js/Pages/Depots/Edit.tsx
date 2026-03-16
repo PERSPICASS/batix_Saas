@@ -1,0 +1,146 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, useForm } from '@inertiajs/react';
+import { useRoute } from '@/utils/route';
+import InputLabel from '@/Components/InputLabel';
+import TextInput from '@/Components/TextInput';
+import InputError from '@/Components/InputError';
+import { Warehouse } from 'lucide-react';
+
+interface Depot {
+    id: number;
+    name: string;
+    address: string | null;
+    city: string | null;
+    phone: string | null;
+    description: string | null;
+    is_active: boolean;
+}
+
+interface Props {
+    depot: Depot;
+}
+
+export default function Edit({ depot }: Props) {
+    const buildRoute = useRoute();
+
+    const { data, setData, patch, processing, errors } = useForm({
+        name: depot.name,
+        address: depot.address || '',
+        city: depot.city || '',
+        phone: depot.phone || '',
+        description: depot.description || '',
+        is_active: depot.is_active,
+    });
+
+    const submit = (e: React.FormEvent) => {
+        e.preventDefault();
+        patch(buildRoute('depots.update', { depot: depot.id }));
+    };
+
+    return (
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Modifier le dépôt</h2>}>
+            <Head title="Modifier le dépôt" />
+
+            <div className="mx-auto max-w-2xl">
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-slate-900">
+                    <div className="mb-6 flex items-center gap-3">
+                        <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-300/10">
+                            <Warehouse className="size-5 text-amber-600 dark:text-amber-300" />
+                        </div>
+                        <div>
+                            <h2 className="font-semibold text-slate-900 dark:text-white">{depot.name}</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Modifier les informations du dépôt</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={submit} className="space-y-4">
+                        <div>
+                            <InputLabel htmlFor="name" value="Nom du dépôt *" />
+                            <TextInput
+                                id="name"
+                                value={data.name}
+                                onChange={e => setData('name', e.target.value)}
+                                className="mt-1 block w-full"
+                                required
+                            />
+                            <InputError message={errors.name} className="mt-1" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <InputLabel htmlFor="city" value="Ville" />
+                                <TextInput
+                                    id="city"
+                                    value={data.city}
+                                    onChange={e => setData('city', e.target.value)}
+                                    className="mt-1 block w-full"
+                                />
+                                <InputError message={errors.city} className="mt-1" />
+                            </div>
+                            <div>
+                                <InputLabel htmlFor="phone" value="Téléphone" />
+                                <TextInput
+                                    id="phone"
+                                    value={data.phone}
+                                    onChange={e => setData('phone', e.target.value)}
+                                    className="mt-1 block w-full"
+                                />
+                                <InputError message={errors.phone} className="mt-1" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="address" value="Adresse" />
+                            <TextInput
+                                id="address"
+                                value={data.address}
+                                onChange={e => setData('address', e.target.value)}
+                                className="mt-1 block w-full"
+                            />
+                            <InputError message={errors.address} className="mt-1" />
+                        </div>
+
+                        <div>
+                            <InputLabel htmlFor="description" value="Description" />
+                            <textarea
+                                id="description"
+                                value={data.description}
+                                onChange={e => setData('description', e.target.value)}
+                                rows={3}
+                                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900 dark:text-white"
+                            />
+                            <InputError message={errors.description} className="mt-1" />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="is_active"
+                                checked={data.is_active}
+                                onChange={e => setData('is_active', e.target.checked)}
+                                className="size-4 rounded border-slate-300 text-amber-300 focus:ring-amber-300"
+                            />
+                            <InputLabel htmlFor="is_active" value="Dépôt actif" className="!mb-0 cursor-pointer" />
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
+                            >
+                                {processing ? 'Enregistrement...' : 'Enregistrer'}
+                            </button>
+                            <a
+                                href={buildRoute('depots.show', { depot: depot.id })}
+                                className="rounded-xl border border-slate-300 px-6 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
+                            >
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
+}

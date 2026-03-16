@@ -1,8 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowLeft, Printer, CreditCard, CheckCircle } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
+import { useState } from 'react';
 
 interface Shop {
     id: number;
@@ -50,6 +51,8 @@ interface Sale {
     total: string;
     amount_paid: string;
     change_amount: string;
+    remaining_amount: string;
+    credit_due_date: string | null;
     notes: string | null;
     shop: Shop;
     user: User;
@@ -68,6 +71,7 @@ const paymentMethodLabels: Record<string, string> = {
     check: 'Chèque',
     mobile: 'Mobile',
     multiple: 'Multiple',
+    credit: 'Crédit',
 };
 
 const statusLabels: Record<string, string> = {
@@ -79,9 +83,23 @@ const statusLabels: Record<string, string> = {
 
 export default function SalesShow({ sale }: Props) {
     const route = useRoute();
+    const [showCreditModal, setShowCreditModal] = useState(false);
+
+    const creditForm = useForm({
+        payment_amount: sale.remaining_amount,
+        payment_method: 'cash',
+        notes: '',
+    });
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const handlePayCredit = (e: React.FormEvent) => {
+        e.preventDefault();
+        creditForm.post(route('sales.pay-credit', { sale: sale.id }), {
+            onSuccess: () => setShowCreditModal(false),
+        });
     };
 
     return (
@@ -246,7 +264,47 @@ export default function SalesShow({ sale }: Props) {
                                 </span>
                             </div>
                         )}
+                        {parseFloat(sale.remaining_amount) > 0 && (
+                            <div className="flex justify-between text-sm font-semibold border-t border-white/10 pt-2">
+                                <span className="text-rose-400">Reste à payer:</span>
+                                <span className="text-rose-400">
+                                    <Currency amount={parseFloat(sale.remaining_amount)} />
+                                </span>
+                            </div>
+                        )}
+                        {sale.credit_due_date && parseFloat(sale.remaining_amount) > 0 && (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Échéance:</span>
+                                <span className="text-amber-300">
+                                    {new Date(sale.credit_due_date).toLocaleDateString('fr-FR')}
+                                </span>
+                            </div>
+                        )}
                     </div>
+
+                    {/* Bouton Encaisser le reste */}
+                    {parseFloat(sale.remaining_amount) > 0 && (
+                        <div className="mt-6 rounded-xl border border-rose-400/30 bg-rose-500/10 p-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <CreditCard className="size-5 text-rose-400" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-rose-300">Vente à crédit</p>
+                                        <p className="text-xs text-slate-400">
+                                            Reste : <Currency amount={parseFloat(sale.remaining_amount)} />
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setShowCreditModal(true)}
+                                    className="inline-flex items-center gap-2 rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
+                                >
+                                    <CheckCircle className="size-4" />
+                                    Encaisser le reste
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {sale.notes && (
                         <div className="mt-6 rounded-lg bg-slate-900/50 p-4">
@@ -261,6 +319,72 @@ export default function SalesShow({ sale }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Modal: Encaisser le reste */}
+            {showCreditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
+                        <div className="mb-4 flex items-center gap-3">
+                            <CreditCard className="size-5 text-rose-400" />
+                            <h3 className="text-lg font-semibold text-white">Encaisser le reste</h3>
+                        </div>
+                        <div className="mb-4 rounded-lg bg-white/5 p-3 text-center">
+                            <p className="text-xs text-slate-400">Reste à payer</p>
+                            <p className="text-2xl font-bold text-rose-400">
+                                <Currency amount={parseFloat(sale.remaining_amount)} />
+                            </p>
+                        </div>
+                        <form onSubmit={handlePayCredit} className="space-y-4">
+                            <div>
+                                <label className="mb-1 block text-sm text-slate-300">Montant encaissé *</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    max={sale.remaining_amount}
+                                    value={creditForm.data.payment_amount}
+                                    onChange={e => creditForm.setData('payment_amount', e.target.value)}
+                                    className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white focus:border-amber-300 focus:outline-none"
+                                    required
+                                />
+                                {creditForm.errors.payment_amount && (
+                                    <p className="mt-1 text-xs text-red-400">{creditForm.errors.payment_amount}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-sm text-slate-300">Mode de paiement *</label>
+                                <select
+                                    value={creditForm.data.payment_method}
+                                    onChange={e => creditForm.setData('payment_method', e.target.value)}
+                                    className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white focus:border-amber-300 focus:outline-none"
+                                >
+                                    <option value="cash">Espèces</option>
+                                    <option value="card">Carte</option>
+                                    <option value="transfer">Virement</option>
+                                    <option value="check">Chèque</option>
+                                    <option value="mobile">Mobile</option>
+                                </select>
+                            </div>
+                            <div className="flex gap-3 pt-1">
+                                <button
+                                    type="submit"
+                                    disabled={creditForm.processing}
+                                    className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white hover:bg-rose-400 disabled:opacity-50"
+                                >
+                                    {creditForm.processing ? 'Traitement...' : 'Confirmer'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreditModal(false)}
+                                    className="flex-1 rounded-xl border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+                                >
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

@@ -22,6 +22,7 @@ use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SubscriptionPlanController;
+use App\Http\Controllers\DepotController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -133,6 +134,7 @@ Route::prefix('{code_user}')
 
     // Routes pour les ventes
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale']);
+    Route::post('ventes/{sale}/pay-credit', [SaleController::class, 'payCredit'])->name('sales.pay-credit');
 
     // Stocks (mouvements de stock)
     Route::resource('stocks', StockMovementController::class)->except(['edit', 'update'])->parameters(['stocks' => 'stockMovement']);
@@ -165,6 +167,16 @@ Route::prefix('{code_user}')
     Route::post('purchases/{purchase}/confirm', [PurchaseController::class, 'confirm'])->name('purchases.confirm');
     Route::post('purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive');
     Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel');
+
+    // Module Dépôts
+    Route::resource('depots', DepotController::class)->parameters(['depots' => 'depot']);
+    Route::post('depots/{depot}/stock/add', [DepotController::class, 'addStock'])->name('depots.stock.add');
+    Route::patch('depots/{depot}/stock/{depotProduct}', [DepotController::class, 'updateStock'])->name('depots.stock.update');
+    Route::delete('depots/{depot}/stock/{depotProduct}', [DepotController::class, 'removeStock'])->name('depots.stock.remove');
+    Route::post('depots/{depot}/transfer', [DepotController::class, 'transferStock'])->name('depots.transfer');
+    Route::get('depots/{depot}/transfers', [DepotController::class, 'transfers'])->name('depots.transfers');
+    Route::post('depots/{depot}/stock/import', [DepotController::class, 'importStock'])->name('depots.stock.import');
+    Route::get('depots/{depot}/stock/template', [DepotController::class, 'stockTemplate'])->name('depots.stock.template');
 
     Route::get('/abonnements', function () {
         return Inertia::render('Management/Placeholder', [

@@ -33,6 +33,7 @@ import {
     User,
     Users,
     Sun,
+    Warehouse,
     X,
 } from 'lucide-react';
 import ToastContainer from '@/Components/ToastContainer';
@@ -468,6 +469,17 @@ export default function Authenticated({
                         <div className="flex items-center gap-2">
                             {/* Dark mode is always enabled */}
                             
+                            {/* Bouton Dépôt - masqué pour admin_platforme */}
+                            {user?.role !== 'admin_platforme' && (
+                            <Link
+                                href={buildRoute('depots.index')}
+                                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                            >
+                                <Warehouse className="size-4 text-amber-400" />
+                                <span className="hidden sm:inline">Dépôt</span>
+                            </Link>
+                            )}
+
                             {/* Sélecteur de boutique - masqué pour admin_platforme */}
                             {user?.role !== 'admin_platforme' && (
                             <div className="relative" ref={shopMenuRef}>

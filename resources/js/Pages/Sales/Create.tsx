@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import { Plus, Minus, Trash2, Scan } from 'lucide-react';
+import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 
@@ -54,6 +54,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
         payment_method: 'cash' as string,
         amount_paid: '',
         discount_amount: '0',
+        credit_due_date: '',
         notes: '',
         items: [] as any[],
     });
@@ -135,7 +136,16 @@ export default function SalesCreate({ shops, customers, products }: Props) {
         return subtotal + taxAmount - discount;
     };
 
+    const isCredit = () => data.payment_method === 'credit';
+
+    const calculateRemaining = () => {
+        const total = calculateTotal();
+        const amountPaid = parseFloat(data.amount_paid || '0');
+        return Math.max(0, total - amountPaid);
+    };
+
     const calculateChange = () => {
+        if (isCredit()) return 0;
         const amountPaid = parseFloat(data.amount_paid || '0');
         const total = calculateTotal();
         return Math.max(0, amountPaid - total);
@@ -393,14 +403,17 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                     <option value="check">Chèque</option>
                                     <option value="mobile">Mobile</option>
                                     <option value="multiple">Multiple</option>
+                                    <option value="credit">Crédit (avec acompte)</option>
                                 </select>
                             </label>
 
                             <label className="block space-y-1 text-sm text-slate-200">
-                                <span>Montant payé *</span>
+                                <span>{isCredit() ? 'Acompte versé *' : 'Montant payé *'}</span>
                                 <input
                                     type="number"
                                     step="0.01"
+                                    min="0"
+                                    max={isCredit() ? calculateTotal() : undefined}
                                     value={data.amount_paid}
                                     onChange={(e) => setData('amount_paid', e.target.value)}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
@@ -410,7 +423,46 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                 )}
                             </label>
 
-                            {data.amount_paid && (
+                            {/* Reste à payer — vente à crédit */}
+                            {isCredit() && data.amount_paid !== '' && (
+                                <div className="rounded-lg bg-amber-500/15 border border-amber-400/30 p-3 space-y-1">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-300">Acompte</span>
+                                        <span className="font-semibold text-amber-300">
+                                            <Currency amount={parseFloat(data.amount_paid || '0')} />
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-rose-300 font-medium">Reste à payer</span>
+                                        <span className="font-bold text-rose-300">
+                                            <Currency amount={calculateRemaining()} />
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Échéance crédit */}
+                            {isCredit() && (
+                                <label className="block space-y-1 text-sm text-slate-200">
+                                    <span className="flex items-center gap-1.5">
+                                        <CreditCard className="size-3.5" />
+                                        Date d'échéance (optionnel)
+                                    </span>
+                                    <input
+                                        type="date"
+                                        value={data.credit_due_date}
+                                        min={new Date().toISOString().split('T')[0]}
+                                        onChange={(e) => setData('credit_due_date', e.target.value)}
+                                        className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                                    />
+                                    {errors.credit_due_date && (
+                                        <span className="text-xs text-red-400">{errors.credit_due_date}</span>
+                                    )}
+                                </label>
+                            )}
+
+                            {/* Monnaie rendue — vente comptant */}
+                            {!isCredit() && data.amount_paid && (
                                 <div className="rounded-lg bg-emerald-500/20 p-3 text-center">
                                     <p className="text-sm text-slate-300">Monnaie à rendre</p>
                                     <p className="text-2xl font-bold text-emerald-300">

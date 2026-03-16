@@ -1,10 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Eye, Trash2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Search, X, SlidersHorizontal } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { PageProps } from '@/types';
 
@@ -30,6 +30,9 @@ interface Sale {
     payment_method: string;
     status: string;
     total: string;
+    amount_paid: string;
+    remaining_amount: string;
+    credit_due_date: string | null;
     shop: Shop;
     user: User;
     customer: Customer | null;
@@ -44,11 +47,23 @@ interface PaginatedData {
 interface Stats {
     total_revenue: number;
     total_sales: number;
+    total_credit_remaining: number;
+    total_credit_sales: number;
 }
 
 interface Props extends PageProps {
     sales: PaginatedData;
     stats: Stats;
+    shops: Shop[];
+    filters: {
+        search?: string;
+        status?: string;
+        shop_id?: string;
+        payment_method?: string;
+        date_from?: string;
+        date_to?: string;
+        credit_only?: string;
+    };
 }
 
 const paymentMethodLabels: Record<string, string> = {
@@ -58,6 +73,7 @@ const paymentMethodLabels: Record<string, string> = {
     check: 'Chèque',
     mobile: 'Mobile',
     multiple: 'Multiple',
+    credit: 'Crédit',
 };
 
 const statusLabels: Record<string, string> = {
@@ -67,41 +83,79 @@ const statusLabels: Record<string, string> = {
     returned: 'Retournée',
 };
 
-export default function SalesIndex({ sales, stats, auth }: Props) {
+export default function SalesIndex({ sales, stats, shops, filters, auth }: Props) {
     const route = useRoute();
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; sale: Sale | null }>({ show: false, sale: null });
     const [deleting, setDeleting] = useState(false);
-    
-    // Les caissiers ne peuvent pas annuler des ventes
+    const [showFilters, setShowFilters] = useState(false);
+
+    // État local des filtres
+    const [search, setSearch]               = useState(filters.search ?? '');
+    const [status, setStatus]               = useState(filters.status ?? '');
+    const [paymentMethod, setPaymentMethod] = useState(filters.payment_method ?? '');
+    const [dateFrom, setDateFrom]           = useState(filters.date_from ?? '');
+    const [dateTo, setDateTo]               = useState(filters.date_to ?? '');
+    const [creditOnly, setCreditOnly]       = useState(filters.credit_only === '1' || filters.credit_only === 'true');
+
     const canCancelSale = auth.user?.role !== 'cashier' && auth.user?.role !== 'caisse';
 
-    const handleDelete = (sale: Sale) => {
-        setDeleteModal({ show: true, sale });
+    // Nombre de filtres actifs (hors recherche)
+    const activeFilterCount = [status, paymentMethod, dateFrom, dateTo, creditOnly ? '1' : ''].filter(Boolean).length;
+
+    const applyFilters = () => {
+        router.get(route('sales.index'), {
+            ...(search        ? { search }          : {}),
+            ...(status        ? { status }          : {}),
+            ...(paymentMethod ? { payment_method: paymentMethod } : {}),
+            ...(dateFrom      ? { date_from: dateFrom } : {}),
+            ...(dateTo        ? { date_to: dateTo }   : {}),
+            ...(creditOnly    ? { credit_only: '1' }  : {}),
+        }, { preserveState: true, replace: true });
     };
+
+    const resetFilters = () => {
+        setSearch('');
+        setStatus('');
+        setPaymentMethod('');
+        setDateFrom('');
+        setDateTo('');
+        setCreditOnly(false);
+        router.get(route('sales.index'), {}, { preserveState: false, replace: true });
+    };
+
+    // Recherche avec debounce sur le champ texte
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            router.get(route('sales.index'), {
+                ...(search        ? { search }          : {}),
+                ...(status        ? { status }          : {}),
+                ...(paymentMethod ? { payment_method: paymentMethod } : {}),
+                ...(dateFrom      ? { date_from: dateFrom } : {}),
+                ...(dateTo        ? { date_to: dateTo }   : {}),
+                ...(creditOnly    ? { credit_only: '1' }  : {}),
+            }, { preserveState: true, replace: true });
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const handleDelete = (sale: Sale) => setDeleteModal({ show: true, sale });
 
     const confirmDelete = () => {
         if (!deleteModal.sale) return;
         setDeleting(true);
         router.delete(route('sales.destroy', { sale: deleteModal.sale.id }), {
-            onSuccess: () => {
-                setDeleteModal({ show: false, sale: null });
-                setDeleting(false);
-            },
+            onSuccess: () => { setDeleteModal({ show: false, sale: null }); setDeleting(false); },
             onError: () => setDeleting(false),
         });
     };
 
     const getStatusVariant = (status: string) => {
         switch (status) {
-            case 'completed':
-                return 'success';
-            case 'pending':
-                return 'warning';
+            case 'completed': return 'success';
+            case 'pending':   return 'warning';
             case 'cancelled':
-            case 'returned':
-                return 'danger';
-            default:
-                return 'default';
+            case 'returned':  return 'danger';
+            default:          return 'default';
         }
     };
 
@@ -110,7 +164,7 @@ export default function SalesIndex({ sales, stats, auth }: Props) {
             <Head title="Ventes" />
             <section className="space-y-4">
                 {/* Statistiques */}
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-4">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <h3 className="text-sm text-slate-400">Chiffre d'affaires total</h3>
                         <p className="mt-2 text-3xl font-bold text-amber-300">
@@ -121,19 +175,157 @@ export default function SalesIndex({ sales, stats, auth }: Props) {
                         <h3 className="text-sm text-slate-400">Nombre de ventes</h3>
                         <p className="mt-2 text-3xl font-bold text-white">{stats.total_sales}</p>
                     </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                        <h3 className="text-sm text-slate-400">Total créances</h3>
+                        <p className="mt-2 text-3xl font-bold text-rose-400">
+                            <Currency amount={parseFloat(String(stats.total_credit_remaining))} />
+                        </p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                        <h3 className="text-sm text-slate-400">Ventes à crédit</h3>
+                        <p className="mt-2 text-3xl font-bold text-amber-300">{stats.total_credit_sales}</p>
+                    </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">
-                        {sales.data.length} vente{sales.data.length > 1 ? 's' : ''}
-                    </p>
-                    <Link
-                        href={route('sales.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
-                    >
-                        <Plus className="size-4" /> Nouvelle vente
-                    </Link>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    {/* Recherche */}
+                    <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="N° ticket, client..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 pl-9 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none"
+                        />
+                        {search && (
+                            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                <X className="size-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {/* Bouton filtres */}
+                        <button
+                            onClick={() => setShowFilters(v => !v)}
+                            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${showFilters || activeFilterCount > 0 ? 'border-amber-300/50 bg-amber-300/10 text-amber-300' : 'border-white/15 text-slate-300 hover:bg-white/5'}`}
+                        >
+                            <SlidersHorizontal className="size-4" />
+                            Filtres
+                            {activeFilterCount > 0 && (
+                                <span className="flex size-5 items-center justify-center rounded-full bg-amber-300 text-xs font-bold text-slate-950">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Reset */}
+                        {(search || activeFilterCount > 0) && (
+                            <button onClick={resetFilters} className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-400 hover:text-white">
+                                <X className="size-4" /> Réinitialiser
+                            </button>
+                        )}
+
+                        <Link
+                            href={route('sales.create')}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                        >
+                            <Plus className="size-4" /> Nouvelle vente
+                        </Link>
+                    </div>
                 </div>
+
+                {/* Panneau de filtres avancés */}
+                {showFilters && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                            {/* Statut */}
+                            <div>
+                                <label className="mb-1 block text-xs text-slate-400">Statut</label>
+                                <select
+                                    value={status}
+                                    onChange={e => setStatus(e.target.value)}
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                >
+                                    <option value="">Tous les statuts</option>
+                                    <option value="completed">Terminée</option>
+                                    <option value="pending">En attente / Crédit</option>
+                                    <option value="cancelled">Annulée</option>
+                                    <option value="returned">Retournée</option>
+                                </select>
+                            </div>
+
+                            {/* Mode paiement */}
+                            <div>
+                                <label className="mb-1 block text-xs text-slate-400">Mode de paiement</label>
+                                <select
+                                    value={paymentMethod}
+                                    onChange={e => setPaymentMethod(e.target.value)}
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                >
+                                    <option value="">Tous les modes</option>
+                                    <option value="cash">Espèces</option>
+                                    <option value="card">Carte</option>
+                                    <option value="transfer">Virement</option>
+                                    <option value="check">Chèque</option>
+                                    <option value="mobile">Mobile</option>
+                                    <option value="multiple">Multiple</option>
+                                    <option value="credit">Crédit</option>
+                                </select>
+                            </div>
+
+                            {/* Date de */}
+                            <div>
+                                <label className="mb-1 block text-xs text-slate-400">Du</label>
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={e => setDateFrom(e.target.value)}
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Date au */}
+                            <div>
+                                <label className="mb-1 block text-xs text-slate-400">Au</label>
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    onChange={e => setDateTo(e.target.value)}
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Crédit uniquement */}
+                        <div className="mt-3 flex items-center gap-3">
+                            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+                                <input
+                                    type="checkbox"
+                                    checked={creditOnly}
+                                    onChange={e => setCreditOnly(e.target.checked)}
+                                    className="size-4 rounded border-white/20 bg-slate-800 accent-amber-300"
+                                />
+                                Afficher uniquement les ventes à crédit non soldées
+                            </label>
+                        </div>
+
+                        <div className="mt-4 flex justify-end">
+                            <button
+                                onClick={applyFilters}
+                                className="rounded-lg bg-amber-300 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                            >
+                                Appliquer les filtres
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                <p className="text-sm text-slate-400">
+                    {sales.meta?.total ?? sales.data.length} vente{(sales.meta?.total ?? sales.data.length) > 1 ? 's' : ''}
+                    {(search || activeFilterCount > 0) && ' · filtré(es)'}
+                </p>
 
                 <Table
                     data={sales.data}
@@ -166,6 +358,18 @@ export default function SalesIndex({ sales, stats, auth }: Props) {
                             label: 'Total',
                             align: 'right',
                             render: (sale) => <Currency amount={parseFloat(sale.total)} />,
+                        },
+                        {
+                            key: 'remaining_amount',
+                            label: 'Reste',
+                            align: 'right',
+                            render: (sale) => parseFloat(sale.remaining_amount) > 0 ? (
+                                <span className="font-semibold text-rose-400">
+                                    <Currency amount={parseFloat(sale.remaining_amount)} />
+                                </span>
+                            ) : (
+                                <span className="text-slate-500">—</span>
+                            ),
                         },
                         {
                             key: 'status',

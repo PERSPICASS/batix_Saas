@@ -20,14 +20,18 @@ class SaleController extends Controller
     {
         $user = Auth::user();
         $activeShopId = get_active_shop_id();
-        $shopId = $request->input('shop_id');
-        $status = $request->input('status');
-        $search = $request->input('search');
-        
-        $shops = $user->accessibleShops();
+        $shopId        = $request->input('shop_id');
+        $status        = $request->input('status');
+        $search        = $request->input('search');
+        $paymentMethod = $request->input('payment_method');
+        $dateFrom      = $request->input('date_from');
+        $dateTo        = $request->input('date_to');
+        $creditOnly    = $request->boolean('credit_only');
+
+        $shops   = $user->accessibleShops();
         $shopIds = $shops->pluck('id');
-        
-        $query = Sale::with(['shop', 'user', 'customer', 'items'])
+
+        $query = Sale::with(['shop', 'user', 'customer'])
             ->whereIn('shop_id', $shopIds)
             ->orderBy('sale_date', 'desc');
 
@@ -47,35 +51,63 @@ class SaleController extends Controller
             $query->where('status', $status);
         }
 
-        if ($search) {
-            $query->where('ticket_number', 'like', "%{$search}%");
+        if ($paymentMethod) {
+            $query->where('payment_method', $paymentMethod);
         }
 
-        $sales = $query->paginate(20);
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('ticket_number', 'like', "%{$search}%")
+                  ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('sale_date', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->whereDate('sale_date', '<=', $dateTo);
+        }
+
+        if ($creditOnly) {
+            $query->where('remaining_amount', '>', 0);
+        }
+
+        $sales = $query->paginate(20)->withQueryString();
 
         // Calculer les statistiques en fonction de la boutique active
         $statsQuery = Sale::where('status', 'completed')
             ->whereIn('shop_id', $shopIds);
-        
+
+        // Requête séparée pour les créances (pending avec remaining_amount > 0)
+        $creditQuery = Sale::whereIn('status', ['pending', 'completed'])
+            ->where('remaining_amount', '>', 0)
+            ->whereIn('shop_id', $shopIds);
+
         // Les caissiers ne voient que leurs propres stats
         if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
             $statsQuery->where('user_id', $user->id);
+            $creditQuery->where('user_id', $user->id);
         }
-        
+
         if ($activeShopId) {
             $statsQuery->where('shop_id', $activeShopId);
+            $creditQuery->where('shop_id', $activeShopId);
         }
 
         $stats = [
-            'total_revenue' => $statsQuery->sum('total'),
-            'total_sales' => $statsQuery->count(),
+            'total_revenue'          => $statsQuery->sum('total'),
+            'total_sales'            => $statsQuery->count(),
+            'total_credit_remaining' => $creditQuery->sum('remaining_amount'),
+            'total_credit_sales'     => $creditQuery->count(),
         ];
 
         return Inertia::render('Sales/Index', [
-            'sales' => $sales,
-            'shops' => $shops,
-            'filters' => $request->only(['shop_id', 'status', 'search']),
-            'stats' => $stats,
+            'sales'   => $sales,
+            'shops'   => $shops,
+            'filters' => $request->only(['search', 'status', 'shop_id', 'payment_method', 'date_from', 'date_to', 'credit_only']),
+            'stats'   => $stats,
         ]);
     }
 
@@ -106,53 +138,123 @@ class SaleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'shop_id' => 'required|exists:shops,id',
-            'customer_id' => 'nullable|exists:customers,id',
-            'payment_method' => 'required|in:cash,card,transfer,check,mobile,multiple',
-            'amount_paid' => 'required|numeric|min:0',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
+            'shop_id'            => 'required|exists:shops,id',
+            'customer_id'        => 'nullable|exists:customers,id',
+            'payment_method'     => 'required|in:cash,card,transfer,check,mobile,multiple,credit',
+            'amount_paid'        => 'required|numeric|min:0',
+            'discount_amount'    => 'nullable|numeric|min:0',
+            'credit_due_date'    => 'nullable|date|after_or_equal:today',
+            'notes'              => 'nullable|string',
+            'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0', // Prix négocié
+            'items.*.quantity'   => 'required|integer|min:1',
+            'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
-        
+
         $sale = DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];
             unset($validated['items']);
-            
+
             $validated['user_id'] = Auth::id();
-            $validated['status'] = 'completed';
-            
-            $sale = $shop->sales()->create($validated);
-            
+
+            // Calculer les montants pour déterminer le reste à payer
+            $subtotal = 0;
+            $taxAmount = 0;
+            $productItems = [];
+
             foreach ($items as $itemData) {
-                $product = Product::find($itemData['product_id']);
-                
-                // Utiliser le prix négocié envoyé par le frontend
-                $unitPrice = $itemData['unit_price'];
-                
+                $product = Product::findOrFail($itemData['product_id']);
+                $lineTotal = $itemData['unit_price'] * $itemData['quantity'];
+                $lineTax   = $lineTotal * ($product->tax_rate ?? 0) / 100;
+                $subtotal  += $lineTotal;
+                $taxAmount += $lineTax;
+                $productItems[] = array_merge($itemData, ['product' => $product, 'line_total' => $lineTotal, 'line_tax' => $lineTax]);
+            }
+
+            $discount  = (float) ($validated['discount_amount'] ?? 0);
+            $total     = $subtotal + $taxAmount - $discount;
+            $amountPaid = (float) $validated['amount_paid'];
+            $remaining = max(0, $total - $amountPaid);
+            $change    = max(0, $amountPaid - $total);
+
+            // Vente à crédit si reste > 0
+            $validated['status']           = $remaining > 0 ? 'pending' : 'completed';
+            $validated['subtotal']         = $subtotal;
+            $validated['tax_amount']       = $taxAmount;
+            $validated['discount_amount']  = $discount;
+            $validated['total']            = $total;
+            $validated['change_amount']    = $change;
+            $validated['remaining_amount'] = $remaining;
+
+            // credit_due_date seulement si vente à crédit
+            if ($remaining <= 0) {
+                $validated['credit_due_date'] = null;
+            }
+
+            $sale = $shop->sales()->create($validated);
+
+            foreach ($productItems as $itemData) {
+                $product = $itemData['product'];
                 $sale->items()->create([
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'sku' => $product->sku,
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $unitPrice, // Prix négocié
-                    'tax_rate' => $product->tax_rate ?? 0,
+                    'product_id'      => $product->id,
+                    'product_name'    => $product->name,
+                    'sku'             => $product->sku,
+                    'quantity'        => $itemData['quantity'],
+                    'unit_price'      => $itemData['unit_price'],
+                    'tax_rate'        => $product->tax_rate ?? 0,
                     'discount_amount' => 0,
                 ]);
             }
-            
+
             return $sale;
         });
 
-        // Log activity
         ActivityLogger::created($sale, "Vente enregistrée: {$sale->ticket_number}");
 
-        return redirect()->route('sales.index', ['code_user' => request()->route('code_user')])->with('success', 'Vente enregistrée avec succès.');
+        $msg = $sale->remaining_amount > 0
+            ? "Vente à crédit enregistrée. Reste à payer : " . number_format($sale->remaining_amount, 0, ',', ' ') . " FCFA"
+            : 'Vente enregistrée avec succès.';
+
+        return redirect()->route('sales.index', ['code_user' => request()->route('code_user')])->with('success', $msg);
+    }
+
+    /**
+     * Encaisser tout ou partie du reste dû sur une vente à crédit.
+     */
+    public function payCredit(Request $request, string $code_user, Sale $sale)
+    {
+        if ($sale->shop->user_id !== Auth::id() && !Auth::user()->accessibleShopsQuery()->where('id', $sale->shop_id)->exists()) {
+            abort(403);
+        }
+
+        if ($sale->remaining_amount <= 0) {
+            return back()->with('error', 'Cette vente n\'a pas de reste à payer.');
+        }
+
+        $validated = $request->validate([
+            'payment_amount'  => "required|numeric|min:0.01|max:{$sale->remaining_amount}",
+            'payment_method'  => 'required|in:cash,card,transfer,check,mobile',
+            'notes'           => 'nullable|string',
+        ]);
+
+        $newRemaining = round($sale->remaining_amount - $validated['payment_amount'], 2);
+
+        $sale->update([
+            'amount_paid'      => $sale->amount_paid + $validated['payment_amount'],
+            'remaining_amount' => $newRemaining,
+            'status'           => $newRemaining <= 0 ? 'completed' : 'pending',
+            'notes'            => $sale->notes
+                ? $sale->notes . "\n[Paiement crédit " . now()->format('d/m/Y') . ": " . number_format($validated['payment_amount'], 0, ',', ' ') . " via " . $validated['payment_method'] . "]"
+                : "[Paiement crédit " . now()->format('d/m/Y') . ": " . number_format($validated['payment_amount'], 0, ',', ' ') . " via " . $validated['payment_method'] . "]",
+        ]);
+
+        $msg = $newRemaining <= 0
+            ? 'Vente soldée. Paiement complet enregistré.'
+            : 'Paiement partiel enregistré. Reste à payer : ' . number_format($newRemaining, 0, ',', ' ') . ' FCFA';
+
+        return back()->with('success', $msg);
     }
 
     public function show(string $code_user, Sale $sale)
