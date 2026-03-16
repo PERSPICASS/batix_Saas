@@ -62,9 +62,13 @@ class ProductController extends Controller
         } elseif ($status === 'inactive') {
             $query->where('is_active', false);
         } elseif ($status === 'low_stock') {
-            $query->where('track_stock', true)
+            $query->where('is_active', true)
+                  ->where('track_stock', true)
                   ->whereNotNull('min_stock_alert')
                   ->whereColumn('stock_quantity', '<=', 'min_stock_alert');
+        } else {
+            // Par défaut : masquer les produits retirés (inactifs)
+            $query->where('is_active', true);
         }
 
         $products = $query->paginate(20)->withQueryString();
@@ -254,12 +258,64 @@ class ProductController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $code_user, Product $product)
+    /**
+     * Retirer un produit de la boutique (désactivation sans suppression).
+     * Le produit reste dans le dépôt mais n'est plus visible/vendable en boutique.
+     */
+    public function removeFromShop(string $code_user, Product $product)
     {
+        $this->authorize('update', $product);
+
+        $depotCount = \App\Models\DepotProduct::where('product_id', $product->id)
+            ->where('quantity', '>', 0)
+            ->count();
+
+        $product->update([
+            'is_active'      => false,
+            'stock_quantity' => 0,
+        ]);
+
+        ActivityLogger::updated($product, [], "Produit retiré de la boutique: {$product->name}");
+
+        $message = "Produit \"{$product->name}\" retiré de la boutique.";
+        if ($depotCount > 0) {
+            $message .= " Il reste présent dans {$depotCount} dépôt(s).";
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Remettre un produit en boutique (réactivation).
+     */
+    public function restoreToShop(string $code_user, Product $product)
+    {
+        $this->authorize('update', $product);
+
+        $product->update(['is_active' => true]);
+
+        ActivityLogger::updated($product, [], "Produit remis en boutique: {$product->name}");
+
+        return back()->with('success', "Produit \"{$product->name}\" remis en vente dans la boutique.");
+    }
+
+    public function destroy(string $code_user, Product $product)    {
         $this->authorize('delete', $product);
         
         // Sauvegarder le nom avant suppression
         $productName = $product->name;
+
+        // Vérifier si le produit est encore dans un dépôt
+        $depotCount = \App\Models\DepotProduct::where('product_id', $product->id)
+            ->where('quantity', '>', 0)
+            ->count();
+
+        if ($depotCount > 0) {
+            return back()->with('error', "Impossible de supprimer \"{$productName}\" : ce produit est encore présent dans {$depotCount} dépôt(s). Retirez-le d'abord du dépôt.");
+        }
+
+        // Supprimer les entrées dépôt sans stock (quantity = 0) avant de supprimer le produit
+        \App\Models\DepotProduct::where('product_id', $product->id)->delete();
         
         // Supprimer l'image si elle existe
         if ($product->image) {

@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, AlertTriangle, Search, Filter, Upload, Download, FileSpreadsheet, X, Layers } from 'lucide-react';
+import { Pencil, Plus, Trash2, AlertTriangle, Search, Filter, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import Currency from '@/Components/Currency';
@@ -76,6 +76,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     const [status, setStatus] = useState(filters.status || '');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
+    const [removeModal, setRemoveModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
     const [deleting, setDeleting] = useState(false);
 
     const { data, setData, post, processing, reset, errors } = useForm({
@@ -84,6 +85,17 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
 
     const handleDelete = (product: Product) => {
         setDeleteModal({ show: true, product });
+    };
+
+    const handleRemoveFromShop = (product: Product) => {
+        setRemoveModal({ show: true, product });
+    };
+
+    const confirmRemoveFromShop = () => {
+        if (!removeModal.product) return;
+        router.patch(route('products.remove-from-shop', { product: removeModal.product.id }), {}, {
+            onSuccess: () => setRemoveModal({ show: false, product: null }),
+        });
     };
 
     const confirmDelete = () => {
@@ -241,6 +253,21 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             <Pencil className="size-3.5" /> Modifier
                         </TableActionButton>
                     </Link>
+                    {product.is_active && (
+                        <TableActionButton
+                            onClick={() => handleRemoveFromShop(product)}
+                        >
+                            <LogOut className="size-3.5" /> Retirer boutique
+                        </TableActionButton>
+                    )}
+                    {!product.is_active && (
+                        <TableActionButton
+                            variant="success"
+                            onClick={() => router.patch(route('products.restore-to-shop', { product: product.id }))}
+                        >
+                            <RotateCcw className="size-3.5" /> Remettre en boutique
+                        </TableActionButton>
+                    )}
                     <TableActionButton
                         variant="danger"
                         onClick={() => handleDelete(product)}
@@ -329,9 +356,9 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             onChange={(e) => setStatus(e.target.value)}
                             className="rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-sm text-white focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
                         >
-                            <option value="">Tous les statuts</option>
+                            <option value="">Tous les actifs</option>
                             <option value="active">Actifs</option>
-                            <option value="inactive">Inactifs</option>
+                            <option value="inactive">Retirés de la boutique</option>
                             <option value="low_stock">Stock faible</option>
                         </select>
 
@@ -518,6 +545,40 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                 message={`Êtes-vous sûr de vouloir supprimer le produit "${deleteModal.product?.name}" ?`}
                 processing={deleting}
             />
+
+            {/* Modal retirer de la boutique */}
+            {removeModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-400/10">
+                                <LogOut className="size-5 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-slate-900 dark:text-white">Retirer de la boutique</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{removeModal.product?.name}</p>
+                            </div>
+                        </div>
+                        <p className="mb-6 text-sm text-slate-600 dark:text-slate-300">
+                            Ce produit sera <strong>désactivé</strong> dans la boutique (stock remis à 0) mais restera disponible dans les dépôts. Il pourra être réactivé depuis la fiche produit.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={confirmRemoveFromShop}
+                                className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                            >
+                                Confirmer
+                            </button>
+                            <button
+                                onClick={() => setRemoveModal({ show: false, product: null })}
+                                className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300"
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

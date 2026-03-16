@@ -132,6 +132,12 @@ class DepotController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Autres dépôts du même compte (pour transfert dépôt → dépôt)
+        $otherDepots = Depot::where('code_user', $user->code_user)
+            ->where('id', '!=', $depot->id)
+            ->where('is_active', true)
+            ->get(['id', 'name']);
+
         return Inertia::render('Depots/Show', [
             'depot' => [
                 'id' => $depot->id,
@@ -145,12 +151,14 @@ class DepotController extends Controller
             'products' => $products,
             'recentTransfers' => $recentTransfers,
             'stats' => [
-                'total_products' => $depot->depotProducts->count(),
-                'total_stock' => $depot->depotProducts->sum('quantity'),
-                'low_stock_count' => $depot->depotProducts->filter(fn($dp) => $dp->isLowStock())->count(),
+                'total_products'   => $depot->depotProducts->count(),
+                'total_stock'      => $depot->depotProducts->sum('quantity'),
+                'low_stock_count'  => $depot->depotProducts->filter(fn($dp) => $dp->isLowStock())->count(),
+                'total_value'      => $depot->depotProducts->sum(fn($dp) => $dp->quantity * $dp->purchase_price),
             ],
             'shops' => $shops,
             'allProducts' => $allProducts,
+            'otherDepots' => $otherDepots,
         ]);
     }
 
@@ -364,9 +372,18 @@ class DepotController extends Controller
                 $depotProduct->decrement('quantity', $item['quantity']);
 
                 // Incrémenter le stock du produit dans la boutique
-                Product::where('id', $item['product_id'])
+                $shopProduct = Product::where('id', $item['product_id'])
                     ->where('shop_id', $validated['shop_id'])
-                    ->increment('stock_quantity', $item['quantity']);
+                    ->first();
+
+                if ($shopProduct) {
+                    $shopProduct->increment('stock_quantity', $item['quantity']);
+
+                    // Propager le prix d'achat du dépôt vers le produit de la boutique
+                    if ($depotProduct->purchase_price > 0) {
+                        $shopProduct->update(['purchase_price' => $depotProduct->purchase_price]);
+                    }
+                }
 
                 // Enregistrer le transfert
                 DepotTransfer::create([
@@ -383,6 +400,78 @@ class DepotController extends Controller
 
         $count = count($validated['items']);
         return back()->with('success', $count === 1 ? 'Transfert effectué avec succès.' : "{$count} produits transférés avec succès.");
+    }
+
+    // --- Transfert dépôt → dépôt ---
+
+    public function transferToDepot(Request $request, string $codeUser, Depot $depot)
+    {
+        $user = Auth::user();
+
+        if ($depot->code_user !== $user->code_user) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'target_depot_id'    => 'required|exists:depots,id|different:depot',
+            'notes'              => 'nullable|string',
+            'items'              => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity'   => 'required|integer|min:1',
+        ]);
+
+        $targetDepot = Depot::findOrFail($validated['target_depot_id']);
+
+        if ($targetDepot->code_user !== $user->code_user) {
+            abort(403);
+        }
+
+        // Vérifier le stock disponible
+        $errors = [];
+        $depotProducts = [];
+
+        foreach ($validated['items'] as $index => $item) {
+            $depotProduct = DepotProduct::where('depot_id', $depot->id)
+                ->where('product_id', $item['product_id'])
+                ->first();
+
+            if (!$depotProduct || $depotProduct->quantity < $item['quantity']) {
+                $productName = Product::find($item['product_id'])?->name ?? "Produit #{$item['product_id']}";
+                $errors["items.{$index}.quantity"] = "Stock insuffisant pour « {$productName} » (disponible : " . ($depotProduct?->quantity ?? 0) . ").";
+            } else {
+                $depotProducts[$index] = $depotProduct;
+            }
+        }
+
+        if (!empty($errors)) {
+            return back()->withErrors($errors);
+        }
+
+        DB::transaction(function () use ($depot, $targetDepot, $depotProducts, $validated, $user) {
+            foreach ($validated['items'] as $index => $item) {
+                $srcProduct = $depotProducts[$index];
+
+                // Décrémenter le stock du dépôt source
+                $srcProduct->decrement('quantity', $item['quantity']);
+
+                // Incrémenter (ou créer) dans le dépôt cible
+                $dstProduct = DepotProduct::firstOrCreate(
+                    ['depot_id' => $targetDepot->id, 'product_id' => $item['product_id']],
+                    ['quantity' => 0, 'min_stock_alert' => $srcProduct->min_stock_alert, 'purchase_price' => $srcProduct->purchase_price]
+                );
+                $dstProduct->increment('quantity', $item['quantity']);
+
+                // Propager le prix d'achat si non défini dans la cible
+                if ($dstProduct->purchase_price == 0 && $srcProduct->purchase_price > 0) {
+                    $dstProduct->update(['purchase_price' => $srcProduct->purchase_price]);
+                }
+            }
+        });
+
+        $count = count($validated['items']);
+        return back()->with('success', $count === 1
+            ? "Transfert vers « {$targetDepot->name} » effectué."
+            : "{$count} produits transférés vers « {$targetDepot->name} ».");
     }
 
     // --- Page transferts ---

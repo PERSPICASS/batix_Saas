@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useRoute } from '@/utils/route';
 import { usePage } from '@inertiajs/react';
-import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface DepotProductItem {
@@ -32,6 +32,7 @@ interface Stats {
     total_products: number;
     total_stock: number;
     low_stock_count: number;
+    total_value: number;
 }
 
 interface DepotInfo {
@@ -49,6 +50,7 @@ interface Props {
     products: DepotProductItem[];
     recentTransfers: RecentTransfer[];
     stats: Stats;
+    otherDepots: Array<{ id: number; name: string }>;
 }
 
 interface AddStockForm {
@@ -70,7 +72,7 @@ interface TransferForm {
     items: TransferItem[];
 }
 
-export default function Show({ depot, products, recentTransfers, stats }: Props) {
+export default function Show({ depot, products, recentTransfers, stats, otherDepots }: Props) {
     const buildRoute = useRoute();
     const page = usePage<any>();
     const shops = page.props.shops as Array<{ id: number; name: string; slug: string }> || [];
@@ -78,6 +80,7 @@ export default function Show({ depot, products, recentTransfers, stats }: Props)
 
     const [showAddStock, setShowAddStock] = useState(false);
     const [showTransfer, setShowTransfer] = useState(false);
+    const [showTransferDepot, setShowTransferDepot] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -98,6 +101,12 @@ export default function Show({ depot, products, recentTransfers, stats }: Props)
         shop_id: '',
         notes: '',
         items: [{ product_id: '', quantity: '1' }],
+    });
+
+    const transferDepotForm = useForm({
+        target_depot_id: '',
+        notes: '',
+        items: [{ product_id: '', quantity: '1' }] as TransferItem[],
     });
 
     const editForm = useForm({
@@ -122,6 +131,16 @@ export default function Show({ depot, products, recentTransfers, stats }: Props)
             onSuccess: () => {
                 setShowTransfer(false);
                 transferForm.reset();
+            },
+        });
+    };
+
+    const handleTransferDepot = (e: React.FormEvent) => {
+        e.preventDefault();
+        transferDepotForm.post(buildRoute('depots.transfer-depot', { depot: depot.id }), {
+            onSuccess: () => {
+                setShowTransferDepot(false);
+                transferDepotForm.reset();
             },
         });
     };
@@ -229,7 +248,7 @@ export default function Show({ depot, products, recentTransfers, stats }: Props)
                 </div>
 
                 {/* Stats */}
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
                         <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                             <Package className="size-4" />
@@ -251,6 +270,15 @@ export default function Show({ depot, products, recentTransfers, stats }: Props)
                         </div>
                         <p className={`mt-2 text-3xl font-bold ${stats.low_stock_count > 0 ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>{stats.low_stock_count}</p>
                     </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+                        <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                            <TrendingUp className="size-4" />
+                            Valeur du stock
+                        </div>
+                        <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                            {Number(stats.total_value).toLocaleString('fr-FR')} <span className="text-lg">FCFA</span>
+                        </p>
+                    </div>
                 </div>
 
                 {/* Actions rapides */}
@@ -269,6 +297,15 @@ export default function Show({ depot, products, recentTransfers, stats }: Props)
                         <ArrowUpRight className="size-4" />
                         Transférer vers une boutique
                     </button>
+                    {otherDepots.length > 0 && (
+                        <button
+                            onClick={() => setShowTransferDepot(true)}
+                            className="inline-flex items-center gap-2 rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-400/20 dark:bg-indigo-400/10 dark:text-indigo-300 dark:hover:bg-indigo-400/20"
+                        >
+                            <Warehouse className="size-4" />
+                            Transférer vers un dépôt
+                        </button>
+                    )}
                     <button
                         onClick={() => setShowImport(true)}
                         className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
@@ -708,6 +745,137 @@ export default function Show({ depot, products, recentTransfers, stats }: Props)
                     </div>
                 </div>
             )}
+            {/* Modal: Transférer vers un autre dépôt */}
+            {showTransferDepot && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Transférer vers un autre dépôt</h3>
+                            <button onClick={() => setShowTransferDepot(false)} className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                <X className="size-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleTransferDepot} className="space-y-4">
+                            {/* Dépôt destination */}
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Dépôt destination *</label>
+                                <select
+                                    value={transferDepotForm.data.target_depot_id}
+                                    onChange={e => transferDepotForm.setData('target_depot_id', e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                    required
+                                >
+                                    <option value="">-- Sélectionner un dépôt --</option>
+                                    {otherDepots.map(d => (
+                                        <option key={d.id} value={d.id}>{d.name}</option>
+                                    ))}
+                                </select>
+                                {transferDepotForm.errors.target_depot_id && <p className="mt-1 text-xs text-rose-500">{transferDepotForm.errors.target_depot_id}</p>}
+                            </div>
+
+                            {/* Lignes produits */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Produits *</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => transferDepotForm.setData('items', [...transferDepotForm.data.items, { product_id: '', quantity: '1' }])}
+                                        className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
+                                    >
+                                        <Plus className="size-3.5" />
+                                        Ajouter un produit
+                                    </button>
+                                </div>
+
+                                {transferDepotForm.data.items.map((item, index) => {
+                                    const depotProd = products.find(p => String(p.product_id) === item.product_id);
+                                    return (
+                                        <div key={index} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
+                                            <div className="flex-1 space-y-2">
+                                                <select
+                                                    value={item.product_id}
+                                                    onChange={e => {
+                                                        const newItems = [...transferDepotForm.data.items];
+                                                        newItems[index] = { ...newItems[index], product_id: e.target.value };
+                                                        transferDepotForm.setData('items', newItems);
+                                                    }}
+                                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                                    required
+                                                >
+                                                    <option value="">-- Produit --</option>
+                                                    {products.map(p => (
+                                                        <option key={p.product_id} value={p.product_id} disabled={p.quantity <= 0}>
+                                                            {p.product_name} (stock: {p.quantity})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max={depotProd?.quantity ?? undefined}
+                                                        value={item.quantity}
+                                                        onChange={e => {
+                                                            const newItems = [...transferDepotForm.data.items];
+                                                            newItems[index] = { ...newItems[index], quantity: e.target.value };
+                                                            transferDepotForm.setData('items', newItems);
+                                                        }}
+                                                        className="w-24 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                                        placeholder="Qté"
+                                                        required
+                                                    />
+                                                    {depotProd && (
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                            / {depotProd.quantity} disponible{depotProd.quantity > 1 ? 's' : ''}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {(transferDepotForm.errors as any)[`items.${index}.quantity`] && (
+                                                    <p className="text-xs text-rose-500">{(transferDepotForm.errors as any)[`items.${index}.quantity`]}</p>
+                                                )}
+                                            </div>
+                                            {transferDepotForm.data.items.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newItems = transferDepotForm.data.items.filter((_, i) => i !== index);
+                                                        transferDepotForm.setData('items', newItems);
+                                                    }}
+                                                    className="mt-1 rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-400/10"
+                                                >
+                                                    <X className="size-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Notes</label>
+                                <textarea
+                                    value={transferDepotForm.data.notes}
+                                    onChange={e => transferDepotForm.setData('notes', e.target.value)}
+                                    rows={2}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                    placeholder="Optionnel..."
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button type="submit" disabled={transferDepotForm.processing} className="flex-1 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50">
+                                    {transferDepotForm.processing ? 'Transfert...' : `Transférer${transferDepotForm.data.items.length > 1 ? ` (${transferDepotForm.data.items.length} produits)` : ''}`}
+                                </button>
+                                <button type="button" onClick={() => setShowTransferDepot(false)} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-medium text-slate-700 dark:border-white/10 dark:text-slate-300">
+                                    Annuler
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </AuthenticatedLayout>
     );
 }

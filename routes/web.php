@@ -104,6 +104,8 @@ Route::prefix('{code_user}')
     Route::get('produits-template', [ProductController::class, 'downloadTemplate'])->name('products.template');
     Route::get('produits-export', [ProductController::class, 'export'])->name('products.export');
     Route::post('produits-import', [ProductController::class, 'import'])->name('products.import');
+    Route::patch('produits/{product}/retirer-boutique', [ProductController::class, 'removeFromShop'])->name('products.remove-from-shop');
+    Route::patch('produits/{product}/remettre-boutique', [ProductController::class, 'restoreToShop'])->name('products.restore-to-shop');
     
     // Routes pour les variations de produits
     Route::get('produits/{product}/variations', [ProductVariationController::class, 'index'])->name('products.variations.index');
@@ -174,6 +176,7 @@ Route::prefix('{code_user}')
     Route::patch('depots/{depot}/stock/{depotProduct}', [DepotController::class, 'updateStock'])->name('depots.stock.update');
     Route::delete('depots/{depot}/stock/{depotProduct}', [DepotController::class, 'removeStock'])->name('depots.stock.remove');
     Route::post('depots/{depot}/transfer', [DepotController::class, 'transferStock'])->name('depots.transfer');
+    Route::post('depots/{depot}/transfer-depot', [DepotController::class, 'transferToDepot'])->name('depots.transfer-depot');
     Route::get('depots/{depot}/transfers', [DepotController::class, 'transfers'])->name('depots.transfers');
     Route::post('depots/{depot}/stock/import', [DepotController::class, 'importStock'])->name('depots.stock.import');
     Route::get('depots/{depot}/stock/template', [DepotController::class, 'stockTemplate'])->name('depots.stock.template');
