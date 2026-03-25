@@ -2,7 +2,8 @@ name: Deploy DEV
 
 on:
   push:
-    branches: [dev]
+    branches:
+      - dev
 
 jobs:
   deploy:
@@ -21,23 +22,33 @@ jobs:
             set -e
 
             cd /opt/batix/apps/dev/batix_Saas
-          
+
+            echo "=== 1. Mise à jour du code ==="
             git fetch origin dev
             git reset --hard origin/dev
-          
+
+            echo "=== 2. Démarrage / mise à jour des conteneurs ==="
             docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
-          
+
+            echo "=== 3. Suppression de l'ancien build frontend ==="
             rm -rf public/build
-          
-            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T node sh -lc "
+
+            echo "=== 4. Build frontend ==="
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm node sh -lc "
               node -v
               npm -v
               echo NODE_ENV=\$NODE_ENV
               npm ci
-              ls -la node_modules/.bin | grep tsc || true
               npm run build
             "
-          
+
+            echo "=== 5. Migrations Laravel ==="
             docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan migrate --force
+
+            echo "=== 6. Nettoyage des caches Laravel ==="
             docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan config:clear
             docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan cache:clear
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan route:clear
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan view:clear
+
+            echo "=== 7. Déploiement terminé avec succès ==="
