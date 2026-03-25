@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useRoute } from '@/utils/route';
 import { usePage } from '@inertiajs/react';
-import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 interface DepotProductItem {
@@ -83,6 +83,16 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [showTransferDepot, setShowTransferDepot] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
+    const [search, setSearch] = useState('');
+
+    const filteredProducts = search.trim() === ''
+        ? products
+        : products.filter(p => {
+            const q = search.toLowerCase();
+            return p.product_name.toLowerCase().includes(q)
+                || (p.product_sku ?? '').toLowerCase().includes(q)
+                || (p.product_category ?? '').toLowerCase().includes(q);
+        });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Flash messages from page props
@@ -324,8 +334,35 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
 
                 {/* Liste des produits */}
                 <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900">
-                    <div className="border-b border-slate-200 px-6 py-4 dark:border-white/10">
-                        <h3 className="font-semibold text-slate-900 dark:text-white">Stock du dépôt</h3>
+                    <div className="flex flex-col gap-3 border-b border-slate-200 px-6 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-slate-900 dark:text-white">Stock du dépôt</h3>
+                            {search.trim() !== '' && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-400">
+                                    {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''}
+                                </span>
+                            )}
+                        </div>
+                        {products.length > 0 && (
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Nom, SKU, catégorie..."
+                                    className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                />
+                                {search && (
+                                    <button
+                                        onClick={() => setSearch('')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                    >
+                                        <X className="size-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {products.length === 0 ? (
@@ -340,9 +377,17 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 Ajouter des produits
                             </button>
                         </div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="flex flex-col items-center py-12">
+                            <Search className="size-10 text-slate-300 dark:text-slate-600" />
+                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Aucun produit ne correspond à "<strong>{search}</strong>"</p>
+                            <button onClick={() => setSearch('')} className="mt-2 text-sm text-amber-500 hover:text-amber-400">
+                                Effacer la recherche
+                            </button>
+                        </div>
                     ) : (
                         <div className="divide-y divide-slate-100 dark:divide-white/5">
-                            {products.map(product => (
+                            {filteredProducts.map(product => (
                                 <div key={product.id} className="flex items-center justify-between px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <div className="flex size-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
