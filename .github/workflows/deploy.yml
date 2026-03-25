@@ -23,32 +23,32 @@ jobs:
 
             cd /opt/batix/apps/dev/batix_Saas
 
-            echo "=== 1. Mise à jour du code ==="
+            echo "=== 1. Git update ==="
             git fetch origin dev
             git reset --hard origin/dev
 
-            echo "=== 2. Démarrage / mise à jour des conteneurs ==="
+            echo "=== 2. Start containers ==="
             docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans
 
-            echo "=== 3. Suppression de l'ancien build frontend ==="
+            echo "=== 3. Clean old build ==="
             rm -rf public/build
 
-            echo "=== 4. Build frontend ==="
+            echo "=== 4. Build frontend CLEAN ==="
             docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm node sh -lc "
               node -v
               npm -v
-              echo NODE_ENV=\$NODE_ENV
-              npm ci
+
+              rm -rf node_modules package-lock.json
+
+              npm install
+
               npm run build
             "
 
-            echo "=== 5. Migrations Laravel ==="
+            echo "=== 5. Laravel migrate ==="
             docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan migrate --force
 
-            echo "=== 6. Nettoyage des caches Laravel ==="
-            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan config:clear
-            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan cache:clear
-            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan route:clear
-            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan view:clear
+            echo "=== 6. Clear cache ==="
+            docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T app php artisan optimize:clear
 
-            echo "=== 7. Déploiement terminé avec succès ==="
+            echo "=== Deploy SUCCESS ==="
