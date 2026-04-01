@@ -33,6 +33,7 @@ import {
     User,
     Users,
     Sun,
+    TrendingUp,
     Warehouse,
     X,
 } from 'lucide-react';
@@ -225,6 +226,13 @@ export default function Authenticated({
                 href: route('platform.settings'),
                 active: route().current('platform.settings*'),
                 icon: Settings,
+                module: null,
+            },
+            {
+                label: 'MRR & Revenus',
+                href: route('platform.mrr'),
+                active: route().current('platform.mrr*'),
+                icon: TrendingUp,
                 module: null,
             },
         ] : [

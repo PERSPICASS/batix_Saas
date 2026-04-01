@@ -472,7 +472,7 @@ class User extends Authenticatable
     /**
      * Check if user can create more products based on their subscription plan.
      */
-    public function canCreateProduct(): bool
+    public function canCreateProduct(?int $shopId = null): bool
     {
         if ($this->role === 'admin_platforme') {
             return false;
@@ -490,10 +490,18 @@ class User extends Authenticatable
             return true;
         }
 
-        // Count all active products across all accessible shops
-        $currentCount = Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))
-            ->where('is_active', true)
-            ->count();
+        // Compter par boutique si un shop_id est fourni, sinon par boutique active
+        $query = Product::where('is_active', true);
+        if ($shopId) {
+            $query->where('shop_id', $shopId);
+        } else {
+            // Fallback : prendre la première boutique accessible
+            $firstShopId = $this->accessibleShopsQuery()->value('id');
+            if (!$firstShopId) return false;
+            $query->where('shop_id', $firstShopId);
+        }
+
+        $currentCount = $query->count();
 
         return $currentCount < $plan->max_products;
     }
@@ -533,7 +541,7 @@ class User extends Authenticatable
     /**
      * Get remaining product slots.
      */
-    public function remainingProductSlots(): int
+    public function remainingProductSlots(?int $shopId = null): int
     {
         $subscription = $this->activeSubscription();
 
@@ -547,9 +555,16 @@ class User extends Authenticatable
             return -1; // Unlimited
         }
 
-        $currentCount = Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))
-            ->where('is_active', true)
-            ->count();
+        $query = Product::where('is_active', true);
+        if ($shopId) {
+            $query->where('shop_id', $shopId);
+        } else {
+            $firstShopId = $this->accessibleShopsQuery()->value('id');
+            if (!$firstShopId) return 0;
+            $query->where('shop_id', $firstShopId);
+        }
+
+        $currentCount = $query->count();
 
         return max(0, $plan->max_products - $currentCount);
     }
@@ -581,13 +596,14 @@ class User extends Authenticatable
     /**
      * Get subscription limits info.
      */
-    public function getSubscriptionLimits(): array
+    public function getSubscriptionLimits(?int $shopId = null): array
     {
         $subscription = $this->activeSubscription();
 
         if (!$subscription) {
-            $currentProducts = Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))
-                ->where('is_active', true)->count();
+            $currentProducts = $shopId
+                ? Product::where('shop_id', $shopId)->where('is_active', true)->count()
+                : 0;
             $currentDepots = Depot::where('code_user', $this->code_user)->where('is_active', true)->count();
 
             return [
@@ -617,8 +633,9 @@ class User extends Authenticatable
         $currentUsers = User::whereHas('shop', function ($query) {
             $query->where('user_id', $this->id);
         })->count() + 1;
-        $currentProducts = Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))
-            ->where('is_active', true)->count();
+        $currentProducts = $shopId
+            ? Product::where('shop_id', $shopId)->where('is_active', true)->count()
+            : Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))->where('is_active', true)->count();
         $currentDepots = Depot::where('code_user', $this->code_user)->where('is_active', true)->count();
 
         return [
@@ -639,11 +656,11 @@ class User extends Authenticatable
             'current_depots' => $currentDepots,
             'can_create_shop' => $this->canCreateShop(),
             'can_create_user' => $this->canCreateUser(),
-            'can_create_product' => $this->canCreateProduct(),
+            'can_create_product' => $this->canCreateProduct($shopId),
             'can_create_depot' => $this->canCreateDepot(),
             'remaining_shops' => $this->remainingShopSlots(),
             'remaining_users' => $this->remainingUserSlots(),
-            'remaining_products' => $this->remainingProductSlots(),
+            'remaining_products' => $this->remainingProductSlots($shopId),
             'remaining_depots' => $this->remainingDepotSlots(),
             'expires_at' => $subscription->expires_at,
             'status' => $subscription->status,

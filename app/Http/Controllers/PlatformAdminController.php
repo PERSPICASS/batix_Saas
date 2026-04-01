@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Shop;
 use App\Models\Subscription;
+use App\Models\SubscriptionInvoice;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
+use Carbon\Carbon;
 
 class PlatformAdminController extends Controller
 {
@@ -147,6 +149,264 @@ class PlatformAdminController extends Controller
             ],
             'recent_accounts' => $recentAccounts,
             'recent_shops' => $recentShops,
+        ]);
+    }
+
+    /**
+     * MRR Dashboard complet : MRR, ARR, Churn, New MRR, Expansion, NRR
+     */
+    public function mrrDashboard(): Response
+    {
+        if (auth()->user()->role !== 'admin_platforme') {
+            abort(403);
+        }
+
+        $now = Carbon::now();
+        $lastMonth = $now->copy()->subMonth();
+
+        // ── MRR courant ────────────────────────────────────────────────────
+        // MRR = somme des montants normalisés en mensuel des abonnements actifs
+        $activeSubs = Subscription::with('plan')
+            ->where('status', 'active')
+            ->get();
+
+        $currentMrr = $activeSubs->sum(function ($sub) {
+            return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
+        });
+
+        // MRR mois précédent
+        $lastMonthSubs = Subscription::with('plan')
+            ->where('status', 'active')
+            ->where('started_at', '<=', $lastMonth->endOfMonth())
+            ->where(function ($q) use ($lastMonth) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', $lastMonth->startOfMonth());
+            })
+            ->get();
+
+        $lastMrr = $lastMonthSubs->sum(function ($sub) {
+            return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
+        });
+
+        $mrrGrowth = $lastMrr > 0 ? round((($currentMrr - $lastMrr) / $lastMrr) * 100, 1) : 0;
+
+        // ── ARR ────────────────────────────────────────────────────────────
+        $arr = $currentMrr * 12;
+
+        // ── ARPU (Average Revenue Per User) ────────────────────────────────
+        $activeCount = $activeSubs->count();
+        $arpu = $activeCount > 0 ? round($currentMrr / $activeCount) : 0;
+
+        // ── Churn Rate ─────────────────────────────────────────────────────
+        // Churned = annulés ou expirés ce mois-ci
+        $churnedThisMonth = Subscription::where(function ($q) use ($now) {
+            $q->where('status', 'cancelled')
+              ->whereMonth('cancelled_at', $now->month)
+              ->whereYear('cancelled_at', $now->year);
+        })->orWhere(function ($q) use ($now) {
+            $q->where('status', 'expired')
+              ->whereMonth('expires_at', $now->month)
+              ->whereYear('expires_at', $now->year);
+        })->count();
+
+        $startOfMonthActive = $lastMonthSubs->count();
+        $churnRate = $startOfMonthActive > 0
+            ? round(($churnedThisMonth / $startOfMonthActive) * 100, 2)
+            : 0;
+
+        // ── MRR Churned (valeur perdue) ─────────────────────────────────────
+        $churnedMrr = Subscription::where(function ($q) use ($now) {
+            $q->where('status', 'cancelled')
+              ->whereMonth('cancelled_at', $now->month)
+              ->whereYear('cancelled_at', $now->year);
+        })->orWhere(function ($q) use ($now) {
+            $q->where('status', 'expired')
+              ->whereMonth('expires_at', $now->month)
+              ->whereYear('expires_at', $now->year);
+        })->get()->sum(function ($sub) {
+            return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
+        });
+
+        // ── New MRR (nouveaux abonnements ce mois) ─────────────────────────
+        $newMrr = Subscription::where('status', 'active')
+            ->whereMonth('started_at', $now->month)
+            ->whereYear('started_at', $now->year)
+            ->get()
+            ->sum(function ($sub) {
+                return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
+            });
+
+        // ── Net Revenue Retention (NRR) ─────────────────────────────────────
+        // NRR = (MRR fin de période - Churn MRR) / MRR début de période × 100
+        $nrr = $lastMrr > 0
+            ? round((($currentMrr - $churnedMrr) / $lastMrr) * 100, 1)
+            : 100;
+
+        // ── LTV estimée ─────────────────────────────────────────────────────
+        // LTV = ARPU / Churn Rate (mensuel)
+        $monthlyChurnRate = $churnRate / 100;
+        $ltv = $monthlyChurnRate > 0 ? round($arpu / $monthlyChurnRate) : 0;
+
+        // ── Évolution MRR sur 12 mois ────────────────────────────────────────
+        $mrrHistory = collect(range(11, 0))->map(function ($monthsAgo) {
+            $date = Carbon::now()->subMonths($monthsAgo);
+
+            $subs = Subscription::where('status', 'active')
+                ->where('started_at', '<=', $date->copy()->endOfMonth())
+                ->where(function ($q) use ($date) {
+                    $q->whereNull('expires_at')
+                      ->orWhere('expires_at', '>', $date->copy()->startOfMonth());
+                })
+                ->get();
+
+            $mrr = $subs->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
+
+            $newSubs = Subscription::where('status', 'active')
+                ->whereYear('started_at', $date->year)
+                ->whereMonth('started_at', $date->month)
+                ->get();
+            $newMrrMonth = $newSubs->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
+
+            $churned = Subscription::where(function ($q) use ($date) {
+                $q->where('status', 'cancelled')
+                  ->whereYear('cancelled_at', $date->year)
+                  ->whereMonth('cancelled_at', $date->month);
+            })->orWhere(function ($q) use ($date) {
+                $q->where('status', 'expired')
+                  ->whereYear('expires_at', $date->year)
+                  ->whereMonth('expires_at', $date->month);
+            })->get();
+
+            $churnedMrrMonth = $churned->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
+
+            return [
+                'month'      => $date->format('M Y'),
+                'mrr'        => round($mrr),
+                'new_mrr'    => round($newMrrMonth),
+                'churned_mrr'=> round($churnedMrrMonth),
+                'count'      => $subs->count(),
+            ];
+        });
+
+        // ── Churn par mois (12 mois) ─────────────────────────────────────────
+        $churnHistory = collect(range(11, 0))->map(function ($monthsAgo) {
+            $date = Carbon::now()->subMonths($monthsAgo);
+
+            $startSubs = Subscription::where('status', 'active')
+                ->where('started_at', '<', $date->copy()->startOfMonth())
+                ->where(function ($q) use ($date) {
+                    $q->whereNull('expires_at')
+                      ->orWhere('expires_at', '>=', $date->copy()->startOfMonth());
+                })
+                ->count();
+
+            $churned = Subscription::where(function ($q) use ($date) {
+                $q->where('status', 'cancelled')
+                  ->whereYear('cancelled_at', $date->year)
+                  ->whereMonth('cancelled_at', $date->month);
+            })->orWhere(function ($q) use ($date) {
+                $q->where('status', 'expired')
+                  ->whereYear('expires_at', $date->year)
+                  ->whereMonth('expires_at', $date->month);
+            })->count();
+
+            $rate = $startSubs > 0 ? round(($churned / $startSubs) * 100, 2) : 0;
+
+            return [
+                'month'        => $date->format('M Y'),
+                'churned'      => $churned,
+                'churn_rate'   => $rate,
+            ];
+        });
+
+        // ── Revenue réel (factures payées) sur 12 mois ──────────────────────
+        $revenueHistory = collect(range(11, 0))->map(function ($monthsAgo) {
+            $date = Carbon::now()->subMonths($monthsAgo);
+            $revenue = SubscriptionInvoice::where('status', 'paid')
+                ->whereYear('paid_at', $date->year)
+                ->whereMonth('paid_at', $date->month)
+                ->sum('total');
+
+            return [
+                'month'   => $date->format('M Y'),
+                'revenue' => round($revenue),
+            ];
+        });
+
+        // ── Répartition MRR par plan ──────────────────────────────────────────
+        $mrrByPlan = Subscription::with('plan')
+            ->where('status', 'active')
+            ->get()
+            ->groupBy('plan_id')
+            ->map(function ($subs) {
+                $plan = $subs->first()->plan;
+                $mrr = $subs->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
+                return [
+                    'name'  => $plan->name,
+                    'mrr'   => round($mrr),
+                    'count' => $subs->count(),
+                    'color' => '#f59e0b',
+                ];
+            })
+            ->values();
+
+        // ── Top churners récents (30 derniers jours) ─────────────────────────
+        $recentChurns = Subscription::with(['user', 'plan'])
+            ->where(function ($q) {
+                $q->where('status', 'cancelled')
+                  ->where('cancelled_at', '>=', Carbon::now()->subDays(30));
+            })->orWhere(function ($q) {
+                $q->where('status', 'expired')
+                  ->where('expires_at', '>=', Carbon::now()->subDays(30))
+                  ->where('expires_at', '<=', Carbon::now());
+            })
+            ->latest('cancelled_at')
+            ->take(10)
+            ->get()
+            ->map(fn($s) => [
+                'user'          => $s->user->name ?? 'N/A',
+                'email'         => $s->user->email ?? '',
+                'plan'          => $s->plan->name ?? 'N/A',
+                'amount'        => $s->billing_cycle === 'yearly' ? round($s->amount / 12) : $s->amount,
+                'churned_at'    => $s->cancelled_at ?? $s->expires_at,
+                'reason'        => $s->status,
+            ]);
+
+        // ── Abonnements à risque (expirent dans 30 jours) ────────────────────
+        $atRisk = Subscription::with(['user', 'plan'])
+            ->where('status', 'active')
+            ->whereBetween('expires_at', [Carbon::now(), Carbon::now()->addDays(30)])
+            ->orderBy('expires_at')
+            ->take(10)
+            ->get()
+            ->map(fn($s) => [
+                'user'       => $s->user->name ?? 'N/A',
+                'email'      => $s->user->email ?? '',
+                'plan'       => $s->plan->name ?? 'N/A',
+                'expires_at' => $s->expires_at,
+                'days_left'  => Carbon::now()->diffInDays($s->expires_at),
+                'amount'     => $s->billing_cycle === 'yearly' ? round($s->amount / 12) : $s->amount,
+            ]);
+
+        return Inertia::render('PlatformAdmin/MRR', [
+            'kpis' => [
+                'mrr'          => round($currentMrr),
+                'arr'          => round($arr),
+                'arpu'         => $arpu,
+                'mrr_growth'   => $mrrGrowth,
+                'churn_rate'   => $churnRate,
+                'churned_mrr'  => round($churnedMrr),
+                'new_mrr'      => round($newMrr),
+                'nrr'          => $nrr,
+                'ltv'          => $ltv,
+                'active_count' => $activeCount,
+            ],
+            'mrr_history'    => $mrrHistory,
+            'churn_history'  => $churnHistory,
+            'revenue_history'=> $revenueHistory,
+            'mrr_by_plan'    => $mrrByPlan,
+            'recent_churns'  => $recentChurns,
+            'at_risk'        => $atRisk,
         ]);
     }
 

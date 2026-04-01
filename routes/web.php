@@ -91,6 +91,9 @@ Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
     // Paramètres plateforme
     Route::get('/settings', [PlatformSettingsController::class, 'index'])->name('platform.settings');
     Route::patch('/settings', [PlatformSettingsController::class, 'update'])->name('platform.settings.update');
+
+    // MRR Dashboard
+    Route::get('/mrr', [PlatformAdminController::class, 'mrrDashboard'])->name('platform.mrr');
 });
 
 // Routes avec préfixe code_user (pour tout le compte)

@@ -12,24 +12,26 @@ class SubscriptionInvoice extends Model
 
     protected $fillable = [
         'subscription_id',
+        'user_id',
         'invoice_number',
         'amount',
-        'tax_amount',
-        'total_amount',
+        'tax',
+        'total',
         'status',
         'paid_at',
-        'due_date',
+        'due_at',
         'payment_method',
-        'transaction_id',
-        'notes',
+        'metadata',
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
-        'due_date' => 'datetime',
+        'due_at' => 'datetime',
+        'issued_at' => 'datetime',
         'amount' => 'decimal:2',
-        'tax_amount' => 'decimal:2',
-        'total_amount' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'total' => 'decimal:2',
+        'metadata' => 'array',
     ];
 
     /**
@@ -62,8 +64,8 @@ class SubscriptionInvoice extends Model
     public function isOverdue(): bool
     {
         return $this->status === 'pending' && 
-               $this->due_date && 
-               $this->due_date->isPast();
+               $this->due_at && 
+               $this->due_at->isPast();
     }
 
     /**
@@ -74,7 +76,6 @@ class SubscriptionInvoice extends Model
         $this->update([
             'status' => 'paid',
             'paid_at' => now(),
-            'transaction_id' => $transactionId,
             'payment_method' => $paymentMethod ?? $this->payment_method,
         ]);
     }
@@ -86,7 +87,6 @@ class SubscriptionInvoice extends Model
     {
         $this->update([
             'status' => 'failed',
-            'notes' => $reason,
         ]);
     }
 
@@ -129,6 +129,6 @@ class SubscriptionInvoice extends Model
     public function scopeOverdue($query)
     {
         return $query->where('status', 'pending')
-                     ->where('due_date', '<', now());
+                     ->where('due_at', '<', now());
     }
 }

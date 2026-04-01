@@ -109,7 +109,7 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
         },
         {
             label: 'Revenus mensuels',
-            value: `${stats.monthly_revenue.toLocaleString()} XAF`,
+            value: `${stats.monthly_revenue.toLocaleString()} FCFA`,
             icon: DollarSign,
             color: 'text-purple-300',
             bgColor: 'bg-purple-500/10',
@@ -317,7 +317,7 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                                         <span className="text-slate-300">{plan.name}</span>
                                     </div>
                                     <span className="font-semibold text-white">
-                                        {plan.revenue.toLocaleString()} XAF
+                                        {plan.revenue.toLocaleString()} FCFA
                                     </span>
                                 </div>
                             ))}
@@ -344,7 +344,7 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                                     dataKey="revenue" 
                                     fill={COLORS.purple}
                                     radius={[8, 8, 0, 0]}
-                                    name="Revenus (XAF)"
+                                    name="Revenus (FCFA)"
                                 />
                             </BarChart>
                         </ResponsiveContainer>

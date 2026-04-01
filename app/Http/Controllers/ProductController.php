@@ -78,13 +78,16 @@ class ProductController extends Controller
         // Les catégories sont globales (prédéfinies par la plateforme)
         $categories = Category::orderBy('order')->orderBy('name')->get();
 
+        // Quota par boutique active
+        $activeShopId = get_active_shop_id() ?? $request->input('shop_id');
+
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
             'shops' => $shops,
             'filters' => $request->only(['shop_id', 'category_id', 'search', 'status']),
-            'canCreateProduct' => Auth::user()->canCreateProduct(),
-            'remainingProducts' => Auth::user()->remainingProductSlots(),
+            'canCreateProduct' => Auth::user()->canCreateProduct($activeShopId),
+            'remainingProducts' => Auth::user()->remainingProductSlots($activeShopId),
         ]);
     }
 
@@ -118,13 +121,6 @@ class ProductController extends Controller
     {
         $user = Auth::user();
 
-        // Vérifier le quota de produits
-        if (!$user->canCreateProduct()) {
-            $limits = $user->getSubscriptionLimits();
-            $max = $limits['max_products'];
-            return back()->with('error', "Vous avez atteint la limite de {$max} produit(s) de votre offre. Passez à un plan supérieur pour en ajouter davantage.");
-        }
-
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -143,6 +139,14 @@ class ProductController extends Controller
             'image' => 'nullable|image|max:2048',
             'track_stock' => 'boolean',
         ]);
+
+        // Vérifier le quota de produits par boutique (après validation pour avoir le shop_id)
+        $shopId = (int) $validated['shop_id'];
+        if (!$user->canCreateProduct($shopId)) {
+            $limits = $user->getSubscriptionLimits($shopId);
+            $max = $limits['max_products'];
+            return back()->with('error', "Vous avez atteint la limite de {$max} produit(s) par boutique de votre offre. Passez à un plan supérieur pour en ajouter davantage.");
+        }
 
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = $user->accessibleShopsQuery()->findOrFail($validated['shop_id']);
