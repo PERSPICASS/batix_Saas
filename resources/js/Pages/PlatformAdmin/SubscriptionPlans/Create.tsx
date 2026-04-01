@@ -11,6 +11,8 @@ export default function Create() {
         price: '',
         max_shops: '',
         max_users: '',
+        max_products: '',
+        max_depots: '',
         features: [] as string[],
         is_active: true,
     });
@@ -121,7 +123,7 @@ export default function Create() {
                 {/* Limites */}
                 <div className="grid gap-4 md:grid-cols-2">
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Nombre maximum de boutiques *</span>
+                        <span>Max boutiques *</span>
                         <input
                             type="number"
                             value={data.max_shops}
@@ -134,7 +136,7 @@ export default function Create() {
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Nombre maximum d'utilisateurs *</span>
+                        <span>Max utilisateurs *</span>
                         <input
                             type="number"
                             value={data.max_users}
@@ -144,6 +146,32 @@ export default function Create() {
                         />
                         <p className="text-xs text-slate-400">-1 pour illimité</p>
                         {errors.max_users && <span className="text-xs text-red-400">{errors.max_users}</span>}
+                    </label>
+
+                    <label className="block space-y-1 text-sm text-slate-200">
+                        <span>Max produits *</span>
+                        <input
+                            type="number"
+                            value={data.max_products}
+                            onChange={(e) => setData('max_products', e.target.value)}
+                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            required
+                        />
+                        <p className="text-xs text-slate-400">-1 pour illimité</p>
+                        {errors.max_products && <span className="text-xs text-red-400">{errors.max_products}</span>}
+                    </label>
+
+                    <label className="block space-y-1 text-sm text-slate-200">
+                        <span>Max dépôts *</span>
+                        <input
+                            type="number"
+                            value={data.max_depots}
+                            onChange={(e) => setData('max_depots', e.target.value)}
+                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            required
+                        />
+                        <p className="text-xs text-slate-400">-1 pour illimité, 0 pour aucun</p>
+                        {errors.max_depots && <span className="text-xs text-red-400">{errors.max_depots}</span>}
                     </label>
                 </div>
 

@@ -11,11 +11,17 @@ interface SubscriptionPlan {
     price: number;
     max_shops: number;
     max_users: number;
+    max_products: number;
+    max_depots: number;
     features: string[] | null;
     is_active: boolean;
     price_eur: string;
     price_fcfa: string;
     formatted_price: string;
+    has_unlimited_shops: boolean;
+    has_unlimited_users: boolean;
+    has_unlimited_products: boolean;
+    has_unlimited_depots: boolean;
 }
 
 interface PlansProps extends PageProps {
@@ -36,43 +42,36 @@ export default function Index({ plans, auth }: PlansProps) {
     };
 
     const getPlanFeatures = (plan: SubscriptionPlan): string[] => {
-        if (plan.features && Array.isArray(plan.features)) {
-            return plan.features;
-        }
+        const ul = 'Illimité';
 
-        // Fonctionnalités par défaut selon le plan
-        const baseFeatures = [
-            `${plan.max_shops === -1 ? 'Boutiques illimitées' : `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`}`,
-            `${plan.max_users === -1 ? 'Utilisateurs illimités' : `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}`}`,
+        const shopsLabel = plan.has_unlimited_shops
+            ? `${ul} boutiques`
+            : `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`;
+
+        const usersLabel = plan.has_unlimited_users
+            ? `${ul} utilisateurs`
+            : `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}`;
+
+        const productsLabel = plan.has_unlimited_products
+            ? `${ul} produits`
+            : `${plan.max_products} produit${plan.max_products > 1 ? 's' : ''}`;
+
+        const depotsLabel = plan.max_depots === 0
+            ? 'Sans dépôt'
+            : plan.has_unlimited_depots
+                ? `${ul} dépôts`
+                : `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}`;
+
+        return [
+            shopsLabel,
+            usersLabel,
+            productsLabel,
+            depotsLabel,
+            'Ventes & caisse',
+            'Gestion des achats',
+            'Rapports & statistiques',
+            'Application mobile',
         ];
-
-        const additionalFeatures: Record<string, string[]> = {
-            free: [
-                'Gestion des stocks',
-                'Facturation basique',
-                'Support par email',
-            ],
-            starter: [
-                'Gestion des stocks avancée',
-                'Facturation complète',
-                'Rapports mensuels',
-                'Support prioritaire',
-            ],
-            growth: [
-                'Multi-devises',
-                'Codes-barres personnalisés',
-                'Rapports détaillés',
-                'Support 24/7',
-            ],
-            scale: [
-                'API accès complet',
-                'Intégrations avancées',
-                'Manager dédié',
-                'Formation personnalisée',
-            ],
-        };
-
-        return [...baseFeatures, ...(additionalFeatures[plan.slug] || [])];
     };
 
     const isCurrentPlan = (planSlug: string) => {
@@ -160,12 +159,13 @@ export default function Index({ plans, auth }: PlansProps) {
                                             Plan actuel
                                         </button>
                                     ) : (
-                                        <button
+                                        <a
+                                            href={`/plans/${plan.id}/checkout`}
                                             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
                                         >
                                             {plan.slug === 'free' ? 'Commencer' : 'Choisir ce plan'}
                                             <ArrowRight className="size-4" />
-                                        </button>
+                                        </a>
                                     )}
                                 </div>
                             </article>

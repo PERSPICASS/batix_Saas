@@ -22,9 +22,11 @@ interface Depot {
 interface Props {
     depots: Depot[];
     filters: { search?: string };
+    canCreateDepot: boolean;
+    remainingDepots: number;
 }
 
-export default function Index({ depots, filters }: Props) {
+export default function Index({ depots, filters, canCreateDepot = true, remainingDepots = -1 }: Props) {
     const buildRoute = useRoute();
     const [search, setSearch] = useState(filters.search || '');
     const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -54,13 +56,30 @@ export default function Index({ depots, filters }: Props) {
                             Gérez vos dépôts et approvisionnez vos boutiques
                         </p>
                     </div>
-                    <Link
-                        href={buildRoute('depots.create')}
-                        className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
-                    >
-                        <Plus className="size-4" />
-                        Nouveau dépôt
-                    </Link>
+                    {canCreateDepot ? (
+                        <Link
+                            href={buildRoute('depots.create')}
+                            className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
+                        >
+                            <Plus className="size-4" />
+                            Nouveau dépôt
+                        </Link>
+                    ) : (
+                        <div className="group relative">
+                            <button
+                                disabled
+                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-400 opacity-60 dark:bg-slate-700 dark:text-slate-500"
+                            >
+                                <Plus className="size-4" />
+                                Nouveau dépôt
+                            </button>
+                            <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                                {remainingDepots === 0
+                                    ? "Votre offre ne permet pas de créer des dépôts."
+                                    : "Limite de dépôts atteinte. Passez à un plan supérieur."}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Search */}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
-import { Calendar, XCircle, RotateCw, Search, Filter, Edit } from 'lucide-react';
+import { Calendar, XCircle, RotateCw, Search, Filter, Edit, CheckCircle } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
@@ -56,6 +56,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showRenewModal, setShowRenewModal] = useState(false);
     const [showEditDatesModal, setShowEditDatesModal] = useState(false);
+    const [showActivateModal, setShowActivateModal] = useState(false);
     const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
     const [renewMonths, setRenewMonths] = useState(1);
     const [editDates, setEditDates] = useState({
@@ -156,11 +157,33 @@ export default function Index({ subscriptions, plans, filters }: Props) {
         }
     };
 
+    const confirmActivate = (subscription: Subscription) => {
+        setSelectedSubscription(subscription);
+        setShowActivateModal(true);
+    };
+
+    const handleActivate = () => {
+        if (selectedSubscription) {
+            router.post(
+                route('platform.active-subscriptions.activate', selectedSubscription.id),
+                {},
+                {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        setShowActivateModal(false);
+                        setSelectedSubscription(null);
+                    },
+                }
+            );
+        }
+    };
+
     const getStatusVariant = (status: string): 'success' | 'warning' | 'danger' | 'default' => {
         switch (status) {
             case 'active':
                 return 'success';
             case 'trial':
+            case 'pending':
                 return 'warning';
             case 'cancelled':
             case 'expired':
@@ -174,6 +197,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
         const labels: Record<string, string> = {
             active: 'Actif',
             trial: 'Essai',
+            pending: 'En attente',
             cancelled: 'Annulé',
             expired: 'Expiré',
         };
@@ -224,6 +248,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                             <option value="">Tous les statuts</option>
                             <option value="active">Actif</option>
                             <option value="trial">Essai</option>
+                            <option value="pending">En attente</option>
                             <option value="cancelled">Annulé</option>
                             <option value="expired">Expiré</option>
                         </select>
@@ -329,6 +354,14 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                     >
                                         <Edit className="size-3.5" /> Dates
                                     </button>
+                                    {subscription.status === 'pending' && (
+                                        <TableActionButton
+                                            variant="success"
+                                            onClick={() => confirmActivate(subscription)}
+                                        >
+                                            <CheckCircle className="size-3.5" /> Activer
+                                        </TableActionButton>
+                                    )}
                                     {subscription.status === 'active' && (
                                         <>
                                             <button
@@ -388,6 +421,18 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                 onConfirm={handleCancel}
                 onClose={() => {
                     setShowCancelModal(false);
+                    setSelectedSubscription(null);
+                }}
+            />
+
+            {/* Modal Activation */}
+            <ConfirmDeleteModal
+                show={showActivateModal}
+                title="Activer l'abonnement"
+                message={`Confirmer l'activation de l'abonnement de "${selectedSubscription?.user.name}" au plan "${selectedSubscription?.plan.name}" ?`}
+                onConfirm={handleActivate}
+                onClose={() => {
+                    setShowActivateModal(false);
                     setSelectedSubscription(null);
                 }}
             />

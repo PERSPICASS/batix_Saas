@@ -50,6 +50,8 @@ class DepotController extends Controller
         return Inertia::render('Depots/Index', [
             'depots' => $depots,
             'filters' => $request->only(['search']),
+            'canCreateDepot' => $user->canCreateDepot(),
+            'remainingDepots' => $user->remainingDepotSlots(),
         ]);
     }
 
@@ -61,6 +63,16 @@ class DepotController extends Controller
     public function store(Request $request, string $codeUser)
     {
         $user = Auth::user();
+
+        // Vérifier le quota de dépôts
+        if (!$user->canCreateDepot()) {
+            $limits = $user->getSubscriptionLimits();
+            $max = $limits['max_depots'];
+            if ($max === 0) {
+                return back()->with('error', "Votre offre actuelle ne permet pas de créer des dépôts. Passez à un plan supérieur.");
+            }
+            return back()->with('error', "Vous avez atteint la limite de {$max} dépôt(s) de votre offre. Passez à un plan supérieur pour en ajouter davantage.");
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

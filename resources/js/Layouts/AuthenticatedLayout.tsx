@@ -220,6 +220,13 @@ export default function Authenticated({
                 icon: Calendar,
                 module: null,
             },
+            {
+                label: 'Paramètres',
+                href: route('platform.settings'),
+                active: route().current('platform.settings*'),
+                icon: Settings,
+                module: null,
+            },
         ] : [
             // Menus normaux pour les autres utilisateurs
             {
@@ -326,7 +333,15 @@ export default function Authenticated({
                 href: buildRoute('activity-logs.index'),
                 active: route().current('activity-logs.*'),
                 icon: History,
-                module: null, // Visible seulement pour super_admin
+                module: null,
+            }] : []),
+            // Paramètres pour tous sauf admin_platforme
+            ...(user && (user as any).role !== 'admin_platforme' ? [{
+                label: 'Paramètres',
+                href: buildRoute('settings.index'),
+                active: route().current('settings.*'),
+                icon: Settings,
+                module: null,
             }] : []),
             ...(user && (user as any).role !== 'admin_platforme'
                 ? [{

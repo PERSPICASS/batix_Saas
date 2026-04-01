@@ -14,24 +14,17 @@ class FreePlanSeeder extends Seeder
     {
         // Plan FREE - 30 jours d'essai gratuit
         $freePlan = [
-            'name' => 'Free',
-            'slug' => 'free',
-            'description' => 'Plan gratuit pour découvrir Batix - Valide 30 jours',
-            'price' => 0.00, // Gratuit
-            'max_shops' => 1,
-            'max_users' => 2, // Propriétaire + 1 employé
-            'features' => [
-                '1 boutique',
-                '2 utilisateurs (vous + 1 employé)',
-                'Gestion des produits',
-                'Gestion des ventes',
-                'Gestion des clients',
-                'Gestion du stock',
-                'Rapports de base',
-                '✨ Valide 30 jours',
-                'Support par email'
-            ],
-            'is_active' => true,
+            'name'         => 'Free',
+            'slug'         => 'free',
+            'description'  => 'Plan gratuit pour découvrir Batix — Valide 30 jours',
+            'price'        => 0.00,
+            'max_shops'    => 1,
+            'max_users'    => 2,
+            'max_products' => 50,
+            'max_depots'   => 0,
+            'features'     => [],
+            'is_active'    => true,
+            'sort_order'   => 0,
         ];
 
         // Créer ou mettre à jour le plan FREE

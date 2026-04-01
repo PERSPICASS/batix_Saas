@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Printer, CreditCard, CheckCircle } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2 } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState } from 'react';
+import { PageProps } from '@/types';
 
 interface Shop {
     id: number;
@@ -60,7 +61,7 @@ interface Sale {
     items: SaleItem[];
 }
 
-interface Props {
+interface Props extends PageProps {
     sale: Sale;
 }
 
@@ -81,9 +82,25 @@ const statusLabels: Record<string, string> = {
     returned: 'Retournée',
 };
 
-export default function SalesShow({ sale }: Props) {
+export default function SalesShow({ sale, auth }: Props) {
     const route = useRoute();
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [cancelling, setCancelling] = useState(false);
+
+    const isAdmin = auth.user?.role === 'super_admin' || auth.user?.role === 'manager';
+    const canCancel = sale.status !== 'cancelled'
+        && auth.user?.role !== 'cashier'
+        && auth.user?.role !== 'caisse'
+        && (isAdmin || sale.status === 'completed');
+
+    const handleCancelSale = () => {
+        setCancelling(true);
+        router.delete(route('sales.destroy', { sale: sale.id }), {
+            onSuccess: () => { setShowCancelModal(false); setCancelling(false); },
+            onError: () => setCancelling(false),
+        });
+    };
 
     const creditForm = useForm({
         payment_amount: sale.remaining_amount,
@@ -107,12 +124,22 @@ export default function SalesShow({ sale }: Props) {
             header={
                 <div className="flex items-center justify-between">
                     <h1 className="text-xl font-semibold text-white">Ticket {sale.ticket_number}</h1>
-                    <button
-                        onClick={handlePrint}
-                        className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
-                    >
-                        <Printer className="size-4" /> Imprimer
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {canCancel && (
+                            <button
+                                onClick={() => setShowCancelModal(true)}
+                                className="inline-flex items-center gap-2 rounded-lg border border-rose-400/40 bg-rose-400/10 px-4 py-2 text-sm font-medium text-rose-300 hover:bg-rose-400/20"
+                            >
+                                <Trash2 className="size-4" /> Annuler la vente
+                            </button>
+                        )}
+                        <button
+                            onClick={handlePrint}
+                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                        >
+                            <Printer className="size-4" /> Imprimer
+                        </button>
+                    </div>
                 </div>
             }
         >
@@ -382,6 +409,41 @@ export default function SalesShow({ sale }: Props) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Confirmer annulation */}
+            {showCancelModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-slate-900 p-6 shadow-xl border border-white/10">
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-rose-400/10">
+                                <Trash2 className="size-5 text-rose-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-white">Annuler la vente</h3>
+                        </div>
+                        <p className="mb-2 text-sm text-slate-300">
+                            Voulez-vous vraiment annuler la vente <strong className="text-white">{sale.ticket_number}</strong> ?
+                        </p>
+                        <p className="mb-6 text-xs text-slate-400">
+                            Le stock des produits tracés sera automatiquement remis à jour. Cette action est irréversible.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleCancelSale}
+                                disabled={cancelling}
+                                className="flex-1 rounded-xl bg-rose-500 py-2.5 text-sm font-semibold text-white hover:bg-rose-400 disabled:opacity-50"
+                            >
+                                {cancelling ? 'Annulation...' : 'Confirmer'}
+                            </button>
+                            <button
+                                onClick={() => setShowCancelModal(false)}
+                                className="flex-1 rounded-xl border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+                            >
+                                Fermer
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

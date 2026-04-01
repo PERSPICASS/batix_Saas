@@ -17,6 +17,8 @@ class SubscriptionPlan extends Model
         'price',
         'max_shops',
         'max_users',
+        'max_products',
+        'max_depots',
         'features',
         'is_active',
         'sort_order',
@@ -65,6 +67,16 @@ class SubscriptionPlan extends Model
     public function hasUnlimitedUsers(): bool
     {
         return $this->max_users === -1;
+    }
+
+    public function hasUnlimitedProducts(): bool
+    {
+        return $this->max_products === -1;
+    }
+
+    public function hasUnlimitedDepots(): bool
+    {
+        return $this->max_depots === -1;
     }
 
     /**

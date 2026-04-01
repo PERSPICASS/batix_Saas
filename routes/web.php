@@ -23,6 +23,8 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\DepotController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -45,6 +47,13 @@ Route::get('/storage/{path}', function ($path) {
 
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');
+
+// Routes paiement (auth requise)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/plans/{plan}/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
+    Route::post('/plans/{plan}/process', [PaymentController::class, 'process'])->name('payment.process');
+    Route::get('/payment/confirmation/{planSlug}', [PaymentController::class, 'confirmation'])->name('payment.confirmation');
+});
 
 // Routes publiques pour les invitations (avant auth)
 Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
@@ -77,6 +86,11 @@ Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
     Route::post('/active-subscriptions/{subscription}/cancel', [PlatformAdminController::class, 'cancelSubscription'])->name('platform.active-subscriptions.cancel');
     Route::post('/active-subscriptions/{subscription}/renew', [PlatformAdminController::class, 'renewSubscription'])->name('platform.active-subscriptions.renew');
     Route::post('/active-subscriptions/{subscription}/update-dates', [PlatformAdminController::class, 'updateSubscriptionDates'])->name('platform.active-subscriptions.update-dates');
+    Route::post('/active-subscriptions/{subscription}/activate', [PlatformAdminController::class, 'activateSubscription'])->name('platform.active-subscriptions.activate');
+
+    // Paramètres plateforme
+    Route::get('/settings', [PlatformSettingsController::class, 'index'])->name('platform.settings');
+    Route::patch('/settings', [PlatformSettingsController::class, 'update'])->name('platform.settings.update');
 });
 
 // Routes avec préfixe code_user (pour tout le compte)
@@ -137,6 +151,7 @@ Route::prefix('{code_user}')
     // Routes pour les ventes
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale']);
     Route::post('ventes/{sale}/pay-credit', [SaleController::class, 'payCredit'])->name('sales.pay-credit');
+    Route::patch('ventes/{sale}/reactiver', [SaleController::class, 'restore'])->name('sales.restore');
 
     // Stocks (mouvements de stock)
     Route::resource('stocks', StockMovementController::class)->except(['edit', 'update'])->parameters(['stocks' => 'stockMovement']);

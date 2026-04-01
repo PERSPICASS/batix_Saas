@@ -49,6 +49,9 @@ class SaleController extends Controller
 
         if ($status) {
             $query->where('status', $status);
+        } else {
+            // Par défaut : masquer les ventes annulées
+            $query->where('status', '!=', 'cancelled');
         }
 
         if ($paymentMethod) {
@@ -268,30 +271,79 @@ class SaleController extends Controller
 
     public function destroy(string $code_user, Sale $sale)
     {
-        if ($sale->shop->user_id !== Auth::id()) {
+        $user = Auth::user();
+        $isAdmin = in_array($user->role, ['super_admin', 'manager']);
+
+        // Vérifier que la boutique de la vente est accessible par cet utilisateur
+        $accessibleShopIds = $user->accessibleShopsQuery()->pluck('id');
+        if (!$accessibleShopIds->contains($sale->shop_id)) {
             abort(403);
         }
-        
+
         // Les caissiers ne peuvent pas annuler de ventes
-        $user = Auth::user();
         if (in_array($user->role, ['cashier', 'caisse'])) {
             return back()->with('error', 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');
         }
 
-        if (!$sale->sale_date->isToday()) {
-            return back()->with('error', 'Vous ne pouvez annuler que les ventes du jour.');
+        // Les non-admins ne peuvent annuler que les ventes du jour
+        if (!$isAdmin && !$sale->sale_date->isToday()) {
+            return back()->with('error', 'Vous ne pouvez annuler que les ventes du jour. Contactez un administrateur pour les ventes plus anciennes.');
+        }
+
+        // Impossible d'annuler une vente déjà annulée
+        if ($sale->status === 'cancelled') {
+            return back()->with('error', 'Cette vente est déjà annulée.');
         }
 
         DB::transaction(function () use ($sale) {
-            foreach ($sale->items as $item) {
-                if ($item->product && $item->product->track_stock) {
-                    $item->product->increment('stock_quantity', $item->quantity);
+            // Remettre le stock uniquement si la vente n'était pas déjà retournée
+            if ($sale->status !== 'returned') {
+                foreach ($sale->items as $item) {
+                    if ($item->product && $item->product->track_stock) {
+                        $item->product->increment('stock_quantity', $item->quantity);
+                    }
                 }
             }
-            
+
             $sale->update(['status' => 'cancelled']);
         });
 
-        return redirect()->route('sales.index', ['code_user' => request()->route('code_user')])->with('success', 'Vente annulée avec succès.');
+        return redirect()->route('sales.index', ['code_user' => $code_user])
+            ->with('success', 'Vente ' . $sale->ticket_number . ' annulée avec succès.');
+    }
+
+    public function restore(string $code_user, Sale $sale)
+    {
+        $user = Auth::user();
+
+        // Seuls les admins peuvent réactiver une vente
+        if (!in_array($user->role, ['super_admin', 'manager'])) {
+            return back()->with('error', 'Seul un administrateur peut réactiver une vente.');
+        }
+
+        // Vérifier que la boutique est accessible
+        $accessibleShopIds = $user->accessibleShopsQuery()->pluck('id');
+        if (!$accessibleShopIds->contains($sale->shop_id)) {
+            abort(403);
+        }
+
+        // Seules les ventes annulées peuvent être réactivées
+        if ($sale->status !== 'cancelled') {
+            return back()->with('error', 'Seules les ventes annulées peuvent être réactivées.');
+        }
+
+        DB::transaction(function () use ($sale) {
+            // Redéduire le stock (l'annulation l'avait remis)
+            foreach ($sale->items as $item) {
+                if ($item->product && $item->product->track_stock) {
+                    $item->product->decrement('stock_quantity', $item->quantity);
+                }
+            }
+
+            $sale->update(['status' => 'completed']);
+        });
+
+        return redirect()->route('sales.index', ['code_user' => $code_user])
+            ->with('success', 'Vente ' . $sale->ticket_number . ' réactivée avec succès.');
     }
 }

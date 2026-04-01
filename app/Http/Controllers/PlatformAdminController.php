@@ -360,6 +360,29 @@ class PlatformAdminController extends Controller
     }
 
     /**
+     * Activate a pending subscription.
+     */
+    public function activateSubscription(Subscription $subscription): RedirectResponse
+    {
+        if (auth()->user()->role !== 'admin_platforme') {
+            abort(403);
+        }
+
+        $subscription->update([
+            'status' => 'active',
+            'started_at' => $subscription->started_at ?? now(),
+        ]);
+
+        // Mark related pending invoices as paid
+        $subscription->invoices()->where('status', 'pending')->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        return back()->with('success', 'Abonnement activé avec succès.');
+    }
+
+    /**
      * Update subscription dates.
      */
     public function updateSubscriptionDates(Request $request, Subscription $subscription): RedirectResponse

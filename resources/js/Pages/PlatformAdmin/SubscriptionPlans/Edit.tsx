@@ -11,6 +11,8 @@ interface SubscriptionPlan {
     price: number;
     max_shops: number;
     max_users: number;
+    max_products: number;
+    max_depots: number;
     features: string[] | null;
     is_active: boolean;
 }
@@ -30,8 +32,10 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
         slug: plan.slug || '',
         description: plan.description || '',
         price: String(plan.price || 0),
-        max_shops: String(plan.max_shops ?? 0),
-        max_users: String(plan.max_users ?? 0),
+        max_shops:    String(plan.max_shops    ?? 0),
+        max_users:    String(plan.max_users    ?? 0),
+        max_products: String(plan.max_products ?? -1),
+        max_depots:   String(plan.max_depots   ?? -1),
         features: plan.features || [],
         is_active: plan.is_active ?? true,
     });
@@ -147,7 +151,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                     {/* Limites */}
                     <div className="grid gap-4 md:grid-cols-2">
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Nombre maximum de boutiques *</span>
+                            <span>Max boutiques *</span>
                             <input
                                 type="number"
                                 value={data.max_shops}
@@ -160,7 +164,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Nombre maximum d'utilisateurs *</span>
+                            <span>Max utilisateurs *</span>
                             <input
                                 type="number"
                                 value={data.max_users}
@@ -170,6 +174,32 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                             />
                             <p className="text-xs text-slate-400">-1 pour illimité</p>
                             {errors.max_users && <span className="text-xs text-red-400">{errors.max_users}</span>}
+                        </label>
+
+                        <label className="block space-y-1 text-sm text-slate-200">
+                            <span>Max produits *</span>
+                            <input
+                                type="number"
+                                value={data.max_products}
+                                onChange={(e) => setData('max_products', e.target.value)}
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                                required
+                            />
+                            <p className="text-xs text-slate-400">-1 pour illimité</p>
+                            {errors.max_products && <span className="text-xs text-red-400">{errors.max_products}</span>}
+                        </label>
+
+                        <label className="block space-y-1 text-sm text-slate-200">
+                            <span>Max dépôts *</span>
+                            <input
+                                type="number"
+                                value={data.max_depots}
+                                onChange={(e) => setData('max_depots', e.target.value)}
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                                required
+                            />
+                            <p className="text-xs text-slate-400">-1 pour illimité, 0 pour aucun</p>
+                            {errors.max_depots && <span className="text-xs text-red-400">{errors.max_depots}</span>}
                         </label>
                     </div>
 

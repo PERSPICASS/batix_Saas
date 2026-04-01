@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Numéros de paiement Batix
+    |--------------------------------------------------------------------------
+    */
+    'payment' => [
+        'wave'         => env('PAYMENT_WAVE_NUMBER',         ''),
+        'orange_money' => env('PAYMENT_ORANGE_NUMBER',       ''),
+        'mtn_money'    => env('PAYMENT_MTN_NUMBER',          ''),
+        'moov_money'   => env('PAYMENT_MOOV_NUMBER',         ''),
+        'virement'     => env('PAYMENT_VIREMENT_RIB',        ''),
+        'carte'        => env('PAYMENT_CARTE_INFO',          ''),
+    ],
+
 ];

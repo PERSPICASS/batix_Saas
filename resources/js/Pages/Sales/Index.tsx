@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Eye, Trash2, Search, X, SlidersHorizontal } from 'lucide-react';
+import { Plus, Eye, Trash2, Search, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useEffect } from 'react';
@@ -86,7 +86,9 @@ const statusLabels: Record<string, string> = {
 export default function SalesIndex({ sales, stats, shops, filters, auth }: Props) {
     const route = useRoute();
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; sale: Sale | null }>({ show: false, sale: null });
+    const [restoreModal, setRestoreModal] = useState<{ show: boolean; sale: Sale | null }>({ show: false, sale: null });
     const [deleting, setDeleting] = useState(false);
+    const [restoring, setRestoring] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
 
     // État local des filtres
@@ -98,6 +100,7 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
     const [creditOnly, setCreditOnly]       = useState(filters.credit_only === '1' || filters.credit_only === 'true');
 
     const canCancelSale = auth.user?.role !== 'cashier' && auth.user?.role !== 'caisse';
+    const isAdmin = auth.user?.role === 'super_admin' || auth.user?.role === 'manager';
 
     // Nombre de filtres actifs (hors recherche)
     const activeFilterCount = [status, paymentMethod, dateFrom, dateTo, creditOnly ? '1' : ''].filter(Boolean).length;
@@ -139,6 +142,17 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
     }, [search]);
 
     const handleDelete = (sale: Sale) => setDeleteModal({ show: true, sale });
+
+    const handleRestore = (sale: Sale) => setRestoreModal({ show: true, sale });
+
+    const confirmRestore = () => {
+        if (!restoreModal.sale) return;
+        setRestoring(true);
+        router.patch(route('sales.restore', { sale: restoreModal.sale.id }), {}, {
+            onSuccess: () => { setRestoreModal({ show: false, sale: null }); setRestoring(false); },
+            onError: () => setRestoring(false),
+        });
+    };
 
     const confirmDelete = () => {
         if (!deleteModal.sale) return;
@@ -248,10 +262,10 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
                                     onChange={e => setStatus(e.target.value)}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
                                 >
-                                    <option value="">Tous les statuts</option>
+                                <option value="">Toutes (hors annulées)</option>
                                     <option value="completed">Terminée</option>
                                     <option value="pending">En attente / Crédit</option>
-                                    <option value="cancelled">Annulée</option>
+                                    <option value="cancelled">Annulées uniquement</option>
                                     <option value="returned">Retournée</option>
                                 </select>
                             </div>
@@ -398,12 +412,20 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
                                     >
                                         <Eye className="size-3.5" /> Voir
                                     </Link>
-                                    {sale.status === 'completed' && canCancelSale && (
+                                    {canCancelSale && sale.status !== 'cancelled' && (isAdmin || sale.status === 'completed') && (
                                         <TableActionButton
                                             variant="danger"
                                             onClick={() => handleDelete(sale)}
                                         >
                                             <Trash2 className="size-3.5" /> Annuler
+                                        </TableActionButton>
+                                    )}
+                                    {isAdmin && sale.status === 'cancelled' && (
+                                        <TableActionButton
+                                            variant="success"
+                                            onClick={() => handleRestore(sale)}
+                                        >
+                                            <RotateCcw className="size-3.5" /> Réactiver
                                         </TableActionButton>
                                     )}
                                 </TableActions>
@@ -441,6 +463,41 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
                     confirmText="Annuler la vente"
                     processing={deleting}
                 />
+
+                {/* Modal de réactivation */}
+                {restoreModal.show && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                        <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-xl">
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="flex size-10 items-center justify-center rounded-full bg-emerald-400/10">
+                                    <RotateCcw className="size-5 text-emerald-400" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-white">Réactiver la vente</h3>
+                            </div>
+                            <p className="mb-2 text-sm text-slate-300">
+                                Voulez-vous réactiver la vente <strong className="text-white">{restoreModal.sale?.ticket_number}</strong> ?
+                            </p>
+                            <p className="mb-6 text-xs text-slate-400">
+                                Le statut repassera à "Terminée" et le stock des produits tracés sera de nouveau déduit.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={confirmRestore}
+                                    disabled={restoring}
+                                    className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-white hover:bg-emerald-400 disabled:opacity-50"
+                                >
+                                    {restoring ? 'Réactivation...' : 'Confirmer'}
+                                </button>
+                                <button
+                                    onClick={() => setRestoreModal({ show: false, sale: null })}
+                                    className="flex-1 rounded-xl border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+                                >
+                                    Fermer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </section>
         </AuthenticatedLayout>
     );

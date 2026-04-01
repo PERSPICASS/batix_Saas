@@ -31,10 +31,14 @@ interface SubscriptionPlan {
     price_fcfa: string;
     max_shops: number;
     max_users: number;
+    max_products: number;
+    max_depots: number;
     features: string[];
     shop_limit_text: string;
     has_unlimited_shops: boolean;
     has_unlimited_users: boolean;
+    has_unlimited_products: boolean;
+    has_unlimited_depots: boolean;
 }
 
 interface WelcomeProps extends PageProps {
@@ -439,8 +443,41 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
             // Déterminer le sous-titre
             const subtitle = locale === 'fr' ? 'par mois' : 'per month';
             
-            // Points à afficher (features du plan)
-            const points = plan.features || [];
+            // Points à afficher générés depuis les quotas
+            const isFr = locale === 'fr';
+            const ul = isFr ? 'Illimité' : 'Unlimited';
+
+            const shopsLabel = plan.has_unlimited_shops
+                ? (isFr ? `${ul} boutiques` : `${ul} stores`)
+                : (isFr
+                    ? `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`
+                    : `${plan.max_shops} store${plan.max_shops > 1 ? 's' : ''}`);
+
+            const usersLabel = plan.has_unlimited_users
+                ? (isFr ? `${ul} utilisateurs` : `${ul} users`)
+                : (isFr
+                    ? `${plan.max_users} utilisateurs`
+                    : `${plan.max_users} users`);
+
+            const productsLabel = plan.has_unlimited_products
+                ? (isFr ? `${ul} produits` : `${ul} products`)
+                : (isFr
+                    ? `${plan.max_products} produits`
+                    : `${plan.max_products} products`);
+
+            const depotsLabel = plan.max_depots === 0
+                ? (isFr ? 'Sans dépôt' : 'No depot')
+                : plan.has_unlimited_depots
+                    ? (isFr ? `${ul} dépôts` : `${ul} depots`)
+                    : (isFr
+                        ? `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}`
+                        : `${plan.max_depots} depot${plan.max_depots > 1 ? 's' : ''}`);
+
+            const baseFeatures = isFr
+                ? ['Ventes & caisse', 'Gestion des achats', 'Rapports & statistiques', 'Application mobile']
+                : ['Sales & POS', 'Purchase management', 'Reports & analytics', 'Mobile app'];
+
+            const points = [shopsLabel, usersLabel, productsLabel, depotsLabel, ...baseFeatures];
             
             // Le plan du milieu est mis en avant
             const highlighted = index === 1 && subscriptionPlans.length === 3;

@@ -31,10 +31,14 @@ class WelcomeController extends Controller
                     'price_fcfa' => $plan->price_fcfa,
                     'max_shops' => $plan->max_shops,
                     'max_users' => $plan->max_users,
+                    'max_products' => $plan->max_products,
+                    'max_depots' => $plan->max_depots,
                     'features' => $plan->features,
                     'shop_limit_text' => $plan->shop_limit_text,
                     'has_unlimited_shops' => $plan->hasUnlimitedShops(),
                     'has_unlimited_users' => $plan->hasUnlimitedUsers(),
+                    'has_unlimited_products' => $plan->hasUnlimitedProducts(),
+                    'has_unlimited_depots' => $plan->hasUnlimitedDepots(),
                 ];
             });
 

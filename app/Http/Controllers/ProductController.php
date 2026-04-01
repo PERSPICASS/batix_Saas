@@ -83,6 +83,8 @@ class ProductController extends Controller
             'categories' => $categories,
             'shops' => $shops,
             'filters' => $request->only(['shop_id', 'category_id', 'search', 'status']),
+            'canCreateProduct' => Auth::user()->canCreateProduct(),
+            'remainingProducts' => Auth::user()->remainingProductSlots(),
         ]);
     }
 
@@ -114,6 +116,15 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+
+        // Vérifier le quota de produits
+        if (!$user->canCreateProduct()) {
+            $limits = $user->getSubscriptionLimits();
+            $max = $limits['max_products'];
+            return back()->with('error', "Vous avez atteint la limite de {$max} produit(s) de votre offre. Passez à un plan supérieur pour en ajouter davantage.");
+        }
+
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
             'category_id' => 'nullable|exists:categories,id',
@@ -134,7 +145,7 @@ class ProductController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+        $shop = $user->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
         // Définir les valeurs par défaut pour les champs nullable
         $validated['tax_rate'] = $validated['tax_rate'] ?? 0;

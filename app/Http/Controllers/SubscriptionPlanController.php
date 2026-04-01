@@ -60,8 +60,10 @@ class SubscriptionPlanController extends Controller
             'slug' => 'required|string|max:255|unique:subscription_plans,slug',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'max_shops' => 'required|integer|min:-1',
-            'max_users' => 'required|integer|min:-1',
+            'max_shops'    => 'required|integer|min:-1',
+            'max_users'    => 'required|integer|min:-1',
+            'max_products' => 'required|integer|min:-1',
+            'max_depots'   => 'required|integer|min:-1',
             'features' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
@@ -95,8 +97,10 @@ class SubscriptionPlanController extends Controller
             'slug' => 'required|string|max:255|unique:subscription_plans,slug,' . $plan->id,
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'max_shops' => 'required|integer|min:-1',
-            'max_users' => 'required|integer|min:-1',
+            'max_shops'    => 'required|integer|min:-1',
+            'max_users'    => 'required|integer|min:-1',
+            'max_products' => 'required|integer|min:-1',
+            'max_depots'   => 'required|integer|min:-1',
             'features' => 'nullable|array',
             'is_active' => 'boolean',
         ]);
@@ -144,7 +148,16 @@ class SubscriptionPlanController extends Controller
     {
         $plans = SubscriptionPlan::where('is_active', true)
             ->orderBy('price')
-            ->get();
+            ->get()
+            ->map(fn($plan) => array_merge($plan->toArray(), [
+                'price_eur'             => $plan->price_eur,
+                'price_fcfa'            => $plan->price_fcfa,
+                'formatted_price'       => $plan->formatted_price,
+                'has_unlimited_shops'   => $plan->hasUnlimitedShops(),
+                'has_unlimited_users'   => $plan->hasUnlimitedUsers(),
+                'has_unlimited_products'=> $plan->hasUnlimitedProducts(),
+                'has_unlimited_depots'  => $plan->hasUnlimitedDepots(),
+            ]));
 
         return Inertia::render('Plans/Index', [
             'plans' => $plans,

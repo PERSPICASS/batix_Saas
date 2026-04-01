@@ -66,9 +66,11 @@ interface Props extends PageProps {
     categories: Category[];
     shops: Shop[];
     filters: Filters;
+    canCreateProduct: boolean;
+    remainingProducts: number;
 }
 
-export default function ProductsIndex({ products, categories = [], shops = [], filters = {} }: Props) {
+export default function ProductsIndex({ products, categories = [], shops = [], filters = {}, canCreateProduct = true, remainingProducts = -1 }: Props) {
     const route = useRoute();
     const [showImportModal, setShowImportModal] = useState(false);
     const [search, setSearch] = useState(filters.search || '');
@@ -311,13 +313,28 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         </div>
                         
                         {/* Bouton Nouveau */}
-                        <Link
-                            href={route('products.create')}
-                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
-                        >
-                            <Plus className="size-4" />
-                            Nouveau produit
-                        </Link>
+                        {canCreateProduct ? (
+                            <Link
+                                href={route('products.create')}
+                                className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
+                            >
+                                <Plus className="size-4" />
+                                Nouveau produit
+                            </Link>
+                        ) : (
+                            <div className="group relative">
+                                <button
+                                    disabled
+                                    className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-slate-400 opacity-60"
+                                >
+                                    <Plus className="size-4" />
+                                    Nouveau produit
+                                </button>
+                                <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+                                    Limite de produits atteinte. Passez à un plan supérieur.
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
