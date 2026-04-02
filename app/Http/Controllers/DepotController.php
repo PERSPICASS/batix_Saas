@@ -242,6 +242,7 @@ class DepotController extends Controller
             'quantity'        => 'required|integer|min:1',
             'min_stock_alert' => 'nullable|integer|min:0',
             'purchase_price'  => 'nullable|numeric|min:0',
+            'image'           => 'nullable|image|max:2048',
         ]);
 
         // Chercher d'abord dans les boutiques du compte (par nom exact ou SKU)
@@ -273,6 +274,9 @@ class DepotController extends Controller
                 'unit'            => 'Pièce',
                 'is_active'       => true,
                 'track_stock'     => true,
+                'image'           => $request->hasFile('image')
+                    ? $request->file('image')->store('products', 'public')
+                    : null,
             ]);
 
             // Générer le code-barres EAN-13 automatiquement

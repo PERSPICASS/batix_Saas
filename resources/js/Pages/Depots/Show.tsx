@@ -59,6 +59,7 @@ interface AddStockForm {
     quantity: string;
     min_stock_alert: string;
     purchase_price: string;
+    image: File | null;
 }
 
 interface TransferItem {
@@ -84,6 +85,8 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [showImport, setShowImport] = useState(false);
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
     const [search, setSearch] = useState('');
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
 
     const filteredProducts = search.trim() === ''
         ? products
@@ -105,6 +108,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         quantity: '',
         min_stock_alert: '0',
         purchase_price: '0',
+        image: null,
     });
 
     const transferForm = useForm<TransferForm>({
@@ -128,8 +132,10 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const handleAddStock = (e: React.FormEvent) => {
         e.preventDefault();
         addStockForm.post(buildRoute('depots.stock.add', { depot: depot.id }), {
+            forceFormData: true,
             onSuccess: () => {
                 setShowAddStock(false);
+                setImagePreview(null);
                 addStockForm.reset();
             },
         });
@@ -535,6 +541,48 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     placeholder="0"
                                 />
                                 {addStockForm.errors.purchase_price && <p className="mt-1 text-xs text-rose-500">{addStockForm.errors.purchase_price}</p>}
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Photo du produit</label>
+                                <div
+                                    className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-center hover:border-amber-400 dark:border-white/15 dark:bg-slate-800/50 dark:hover:border-amber-400"
+                                    onClick={() => imageInputRef.current?.click()}
+                                >
+                                    {imagePreview ? (
+                                        <img src={imagePreview} alt="Aperçu" className="mx-auto h-20 w-20 rounded-lg object-cover" />
+                                    ) : (
+                                        <>
+                                            <Upload className="size-6 text-slate-400" />
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">Cliquer pour choisir une image</p>
+                                            <p className="text-xs text-slate-400">(JPG, PNG, max 2 Mo)</p>
+                                        </>
+                                    )}
+                                </div>
+                                <input
+                                    ref={imageInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => {
+                                        const file = e.target.files?.[0] ?? null;
+                                        addStockForm.setData('image', file);
+                                        setImagePreview(file ? URL.createObjectURL(file) : null);
+                                    }}
+                                />
+                                {imagePreview && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            addStockForm.setData('image', null);
+                                            setImagePreview(null);
+                                            if (imageInputRef.current) imageInputRef.current.value = '';
+                                        }}
+                                        className="mt-1 text-xs text-rose-500 hover:text-rose-600"
+                                    >
+                                        Supprimer l'image
+                                    </button>
+                                )}
+                                {addStockForm.errors.image && <p className="mt-1 text-xs text-rose-500">{addStockForm.errors.image}</p>}
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="submit" disabled={addStockForm.processing} className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50">
