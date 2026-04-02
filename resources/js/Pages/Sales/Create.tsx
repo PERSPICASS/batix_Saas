@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import Currency from '@/Components/Currency';
+import ProductImage from '@/Components/ProductImage';
 import { useRoute } from '@/utils/route';
 
 interface Shop {
@@ -19,6 +20,7 @@ interface Product {
     id: number;
     name: string;
     sku: string;
+    image: string | null;
     selling_price: string;
     tax_rate: string;
     stock_quantity: number;
@@ -210,13 +212,16 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                         onClick={() => addToCart(product)}
                                         className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 p-3 text-left hover:bg-white/10 transition"
                                     >
-                                        <div>
-                                            <p className="font-medium text-white">{product.name}</p>
-                                            <p className="text-xs text-slate-400">
-                                                SKU: {product.sku} • Stock: {product.stock_quantity}
-                                            </p>
+                                        <div className="flex items-center gap-3">
+                                            <ProductImage src={product.image} name={product.name} thumbnailClass="size-10" />
+                                            <div>
+                                                <p className="font-medium text-white">{product.name}</p>
+                                                <p className="text-xs text-slate-400">
+                                                    SKU: {product.sku} • Stock: {product.stock_quantity}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right shrink-0 ml-3">
                                             <p className="font-semibold text-amber-300">
                                                 <Currency amount={parseFloat(product.selling_price)} />
                                             </p>

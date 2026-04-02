@@ -13,6 +13,7 @@ import {
     Users,
     Wallet,
 } from 'lucide-react';
+import ProductImage from '@/Components/ProductImage';
 
 interface KPI {
     value: number;
@@ -30,6 +31,7 @@ interface TopProduct {
     id: number;
     name: string;
     sku: string;
+    image: string | null;
     quantity: number;
     revenue: number;
 }
@@ -251,16 +253,17 @@ export default function Index({
                             <div className="space-y-3">
                                 {topProducts.map((product, index) => (
                                     <div key={product.id} className="flex items-center gap-3">
-                                        <span className={`flex items-center justify-center size-6 rounded-full text-xs font-bold ${
+                                        <span className={`flex shrink-0 items-center justify-center size-6 rounded-full text-xs font-bold ${
                                             index < 3 ? 'bg-amber-400 text-slate-900' : 'bg-slate-700 text-slate-300'
                                         }`}>
                                             {index + 1}
                                         </span>
+                                        <ProductImage src={product.image} name={product.name} thumbnailClass="size-9" />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-white truncate">{product.name}</p>
                                             <p className="text-xs text-slate-400">{product.quantity} vendus</p>
                                         </div>
-                                        <span className="text-sm font-semibold text-emerald-400">
+                                        <span className="text-sm font-semibold text-emerald-400 shrink-0">
                                             {formatCurrency(product.revenue, currencySymbol)}
                                         </span>
                                     </div>

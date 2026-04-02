@@ -2,12 +2,14 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { Building2, Mail, Phone, MapPin, Globe, FileText, Package, ArrowLeft, Pencil } from 'lucide-react';
 import Currency from '@/Components/Currency';
+import ProductImage from '@/Components/ProductImage';
 import { useRoute } from '@/utils/route';
 
 interface Product {
     id: number;
     name: string;
     sku: string;
+    image: string | null;
     price: number;
     stock: number;
 }
@@ -191,11 +193,14 @@ export default function SuppliersShow({ supplier }: Props) {
                                             key={product.id}
                                             className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
                                         >
-                                            <div>
-                                                <p className="font-medium text-slate-200">{product.name}</p>
-                                                <p className="text-sm text-slate-400">SKU: {product.sku}</p>
+                                            <div className="flex items-center gap-3">
+                                                <ProductImage src={product.image} name={product.name} thumbnailClass="size-10" />
+                                                <div>
+                                                    <p className="font-medium text-slate-200">{product.name}</p>
+                                                    <p className="text-sm text-slate-400">SKU: {product.sku}</p>
+                                                </div>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="text-right shrink-0 ml-3">
                                                 <p className="font-semibold text-amber-300">
                                                     <Currency amount={product.price} />
                                                 </p>

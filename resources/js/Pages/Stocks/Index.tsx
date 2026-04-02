@@ -5,6 +5,7 @@ import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import ProductImage from '@/Components/ProductImage';
 
 interface Shop {
     id: number;
@@ -15,6 +16,7 @@ interface Product {
     id: number;
     name: string;
     sku: string | null;
+    image: string | null;
 }
 
 interface User {
@@ -121,9 +123,12 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
             key: 'product',
             label: 'Produit',
             render: (movement: StockMovement) => (
-                <div>
-                    <p className="font-medium text-slate-200">{movement.product.name}</p>
-                    {movement.product.sku && <p className="text-xs text-slate-400">SKU: {movement.product.sku}</p>}
+                <div className="flex items-center gap-3">
+                    <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-9" />
+                    <div>
+                        <p className="font-medium text-slate-200">{movement.product.name}</p>
+                        {movement.product.sku && <p className="text-xs text-slate-400">SKU: {movement.product.sku}</p>}
+                    </div>
                 </div>
             ),
         },

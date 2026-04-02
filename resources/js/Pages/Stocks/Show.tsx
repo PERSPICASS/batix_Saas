@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Package, Calendar, User, MapPin, FileText } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import ProductImage from '@/Components/ProductImage';
 
 interface Shop {
     id: number;
@@ -12,6 +13,7 @@ interface Product {
     id: number;
     name: string;
     sku: string | null;
+    image: string | null;
 }
 
 interface User {
@@ -120,17 +122,14 @@ export default function StocksShow({ movement }: Props) {
                         <Package className="size-5 text-amber-300" />
                         Produit
                     </h3>
-                    <div className="space-y-3">
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Nom</span>
-                            <span className="font-medium text-slate-200">{movement.product.name}</span>
+                    <div className="flex items-center gap-4 mb-4">
+                        <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-16" />
+                        <div>
+                            <p className="font-semibold text-white text-lg">{movement.product.name}</p>
+                            {movement.product.sku && (
+                                <p className="text-sm font-mono text-slate-400">SKU : {movement.product.sku}</p>
+                            )}
                         </div>
-                        {movement.product.sku && (
-                            <div className="flex justify-between">
-                                <span className="text-slate-400">SKU</span>
-                                <span className="font-mono text-sm text-slate-300">{movement.product.sku}</span>
-                            </div>
-                        )}
                     </div>
                 </div>
 

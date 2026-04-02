@@ -1,12 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, AlertTriangle, Search, Filter, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw } from 'lucide-react';
+import { Pencil, Plus, Trash2, AlertTriangle, Search, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
-import { useState, useRef, FormEvent } from 'react';
+import { useState, useRef, useEffect, FormEvent } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import ProductImage from '@/Components/ProductImage';
 
 interface Category {
     id: number;
@@ -25,6 +26,7 @@ interface Product {
     sku: string | null;
     barcode: string | null;
     brand: string | null;
+    image: string | null;
     selling_price: number;
     purchase_price: number;
     stock_quantity: number;
@@ -117,30 +119,10 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
         return product.stock_quantity <= product.min_stock_alert;
     };
 
-    const applyFilters = () => {
-        router.get(route('products.index'), {
-            search: search || undefined,
-            category_id: categoryId || undefined,
-            status: status || undefined,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
-
     const clearFilters = () => {
         setSearch('');
         setCategoryId('');
         setStatus('');
-        router.get(route('products.index'), {}, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
-
-    const handleSearchSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        applyFilters();
     };
 
     const handleImport = (e: FormEvent) => {
@@ -160,6 +142,27 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     };
 
     const hasActiveFilters = search || categoryId || status;
+
+    // Debounce : déclenche la recherche 400ms après la fin de saisie
+    const isFirstRender = useRef(true);
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const timer = setTimeout(() => {
+            router.get(route('products.index'), {
+                search: search || undefined,
+                category_id: categoryId || undefined,
+                status: status || undefined,
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [search, categoryId, status]);
 
     const columns = [
         {
@@ -198,13 +201,21 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
             key: 'name',
             label: 'Nom',
             render: (product: Product) => (
-                <div className="flex items-center gap-2">
-                    {isLowStock(product) && (
-                        <span title="Stock faible">
-                            <AlertTriangle className="size-4 text-amber-400" />
-                        </span>
-                    )}
-                    <span>{product.name}</span>
+                <div className="flex items-center gap-3">
+                    <ProductImage src={product.image} name={product.name} thumbnailClass="size-10" />
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                            {isLowStock(product) && (
+                                <span title="Stock faible">
+                                    <AlertTriangle className="size-3.5 shrink-0 text-amber-400" />
+                                </span>
+                            )}
+                            <span className="font-medium text-white truncate">{product.name}</span>
+                        </div>
+                        {product.sku && (
+                            <span className="text-xs text-slate-500 font-mono">{product.sku}</span>
+                        )}
+                    </div>
                 </div>
             ),
         },
@@ -340,7 +351,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
 
                 {/* Barre de recherche et filtres */}
                 <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                    <form onSubmit={handleSearchSubmit} className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                         {/* Recherche */}
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -379,27 +390,17 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             <option value="low_stock">Stock faible</option>
                         </select>
 
-                        {/* Boutons */}
-                        <div className="flex items-center gap-2">
+                        {hasActiveFilters && (
                             <button
-                                type="submit"
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-300/20 px-4 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-300/30"
+                                type="button"
+                                onClick={clearFilters}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
                             >
-                                <Filter className="size-4" />
-                                Filtrer
+                                <X className="size-4" />
+                                Effacer
                             </button>
-                            {hasActiveFilters && (
-                                <button
-                                    type="button"
-                                    onClick={clearFilters}
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
-                                >
-                                    <X className="size-4" />
-                                    Effacer
-                                </button>
-                            )}
-                        </div>
-                    </form>
+                        )}
+                    </div>
                 </div>
 
                 {/* Indicateur filtres actifs */}
@@ -409,7 +410,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         {search && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
                                 Recherche: "{search}"
-                                <button onClick={() => { setSearch(''); applyFilters(); }}>
+                                <button onClick={() => setSearch('')}>
                                     <X className="size-3" />
                                 </button>
                             </span>
@@ -417,7 +418,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         {categoryId && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
                                 {categories.find(c => c.id.toString() === categoryId)?.name}
-                                <button onClick={() => { setCategoryId(''); applyFilters(); }}>
+                                <button onClick={() => setCategoryId('')}>
                                     <X className="size-3" />
                                 </button>
                             </span>
@@ -425,7 +426,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         {status && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
                                 {status === 'active' ? 'Actifs' : status === 'inactive' ? 'Inactifs' : 'Stock faible'}
-                                <button onClick={() => { setStatus(''); applyFilters(); }}>
+                                <button onClick={() => setStatus('')}>
                                     <X className="size-3" />
                                 </button>
                             </span>

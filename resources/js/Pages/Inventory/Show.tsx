@@ -5,6 +5,7 @@ import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import ProductImage from '@/Components/ProductImage';
 
 interface Shop {
     id: number;
@@ -21,6 +22,7 @@ interface Product {
     name: string;
     sku: string;
     barcode: string | null;
+    image: string | null;
 }
 
 interface InventoryItem {
@@ -237,9 +239,12 @@ export default function InventoryShow({ inventory }: Props) {
                                 {inventory.items.map((item) => (
                                     <tr key={item.id}>
                                         <td className="py-3 pr-4">
-                                            <div>
-                                                <p className="font-medium text-white">{item.product.name}</p>
-                                                <p className="text-xs text-slate-400">SKU: {item.product.sku}</p>
+                                            <div className="flex items-center gap-3">
+                                                <ProductImage src={item.product.image} name={item.product.name} thumbnailClass="size-9" />
+                                                <div>
+                                                    <p className="font-medium text-white">{item.product.name}</p>
+                                                    <p className="text-xs text-slate-400">SKU: {item.product.sku}</p>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="py-3 pr-4 text-right text-slate-300">

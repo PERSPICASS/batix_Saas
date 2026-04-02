@@ -333,7 +333,7 @@ class AnalyticsController extends Controller
                   ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
                   ->where('status', 'completed');
             })
-            ->with('product:id,name,sku')
+            ->with('product:id,name,sku,image')
             ->groupBy('product_id')
             ->orderByDesc('total_revenue')
             ->limit($limit)
@@ -342,6 +342,7 @@ class AnalyticsController extends Controller
                 'id' => $item->product_id,
                 'name' => $item->product->name ?? 'Produit supprimé',
                 'sku' => $item->product->sku ?? '-',
+                'image' => $item->product->image ?? null,
                 'quantity' => (int) $item->total_quantity,
                 'revenue' => (float) $item->total_revenue,
             ])
