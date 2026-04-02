@@ -198,7 +198,7 @@ Route::prefix('{code_user}')
     // Module Dépôts
     Route::resource('depots', DepotController::class)->parameters(['depots' => 'depot']);
     Route::post('depots/{depot}/stock/add', [DepotController::class, 'addStock'])->name('depots.stock.add');
-    Route::patch('depots/{depot}/stock/{depotProduct}', [DepotController::class, 'updateStock'])->name('depots.stock.update');
+    Route::match(['POST', 'PATCH'], 'depots/{depot}/stock/{depotProduct}', [DepotController::class, 'updateStock'])->name('depots.stock.update');
     Route::delete('depots/{depot}/stock/{depotProduct}', [DepotController::class, 'removeStock'])->name('depots.stock.remove');
     Route::post('depots/{depot}/transfer', [DepotController::class, 'transferStock'])->name('depots.transfer');
     Route::post('depots/{depot}/transfer-depot', [DepotController::class, 'transferToDepot'])->name('depots.transfer-depot');

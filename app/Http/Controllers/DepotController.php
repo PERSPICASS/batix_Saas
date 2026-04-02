@@ -129,6 +129,7 @@ class DepotController extends Controller
                 'reference' => $t->reference,
                 'shop_name' => $t->shop->name,
                 'product_name' => $t->product->name,
+                'product_image' => $t->product->image,
                 'quantity' => $t->quantity,
                 'user_name' => $t->user->name,
                 'transferred_at' => $t->transferred_at->format('d/m/Y H:i'),
@@ -318,14 +319,46 @@ class DepotController extends Controller
         }
 
         $validated = $request->validate([
-            'quantity' => 'required|integer|min:0',
+            'quantity'        => 'required|integer|min:0',
             'min_stock_alert' => 'nullable|integer|min:0',
             'purchase_price'  => 'nullable|numeric|min:0',
+            'name'            => 'nullable|string|max:255',
+            'sku'             => 'nullable|string|max:100',
+            'image'           => 'nullable|image|max:2048',
         ]);
 
-        $depotProduct->update($validated);
+        // Mettre à jour les champs DepotProduct
+        $depotProduct->update([
+            'quantity'        => $validated['quantity'],
+            'min_stock_alert' => $validated['min_stock_alert'] ?? $depotProduct->min_stock_alert,
+            'purchase_price'  => $validated['purchase_price'] ?? $depotProduct->purchase_price,
+        ]);
 
-        return back()->with('success', 'Stock mis à jour.');
+        // Mettre à jour les champs du Product lié
+        $product = $depotProduct->product;
+        if ($product) {
+            $productUpdates = [];
+
+            if (!empty($validated['name'])) {
+                $productUpdates['name'] = $validated['name'];
+            }
+            if (array_key_exists('sku', $validated)) {
+                $productUpdates['sku'] = $validated['sku'];
+            }
+            if ($request->hasFile('image')) {
+                // Supprimer l'ancienne image
+                if ($product->image) {
+                    \Storage::disk('public')->delete($product->image);
+                }
+                $productUpdates['image'] = $request->file('image')->store('products', 'public');
+            }
+
+            if (!empty($productUpdates)) {
+                $product->update($productUpdates);
+            }
+        }
+
+        return back()->with('success', 'Produit mis à jour.');
     }
 
     public function removeStock(string $codeUser, Depot $depot, DepotProduct $depotProduct)
@@ -509,6 +542,7 @@ class DepotController extends Controller
                 'reference' => $t->reference,
                 'shop_name' => $t->shop->name,
                 'product_name' => $t->product->name,
+                'product_image' => $t->product->image,
                 'product_sku' => $t->product->sku,
                 'quantity' => $t->quantity,
                 'notes' => $t->notes,

@@ -4,6 +4,7 @@ import { useRoute } from '@/utils/route';
 import { usePage } from '@inertiajs/react';
 import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
+import ProductImage from '@/Components/ProductImage';
 
 interface DepotProductItem {
     id: number;
@@ -23,6 +24,7 @@ interface RecentTransfer {
     reference: string;
     shop_name: string;
     product_name: string;
+    product_image: string | null;
     quantity: number;
     user_name: string;
     transferred_at: string;
@@ -86,7 +88,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
     const [search, setSearch] = useState('');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
     const imageInputRef = useRef<HTMLInputElement>(null);
+    const editImageInputRef = useRef<HTMLInputElement>(null);
 
     const filteredProducts = search.trim() === ''
         ? products
@@ -127,6 +131,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         quantity: 0,
         min_stock_alert: 0,
         purchase_price: 0,
+        name: '',
+        sku: '',
+        image: null as File | null,
     });
 
     const handleAddStock = (e: React.FormEvent) => {
@@ -164,8 +171,13 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const handleEditStock = (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingProduct) return;
-        editForm.patch(buildRoute('depots.stock.update', { depot: depot.id, depotProduct: editingProduct.id }), {
-            onSuccess: () => setEditingProduct(null),
+        editForm.post(buildRoute('depots.stock.update', { depot: depot.id, depotProduct: editingProduct.id }), {
+            forceFormData: true,
+            headers: { 'X-HTTP-Method-Override': 'PATCH' },
+            onSuccess: () => {
+                setEditingProduct(null);
+                setEditImagePreview(null);
+            },
         });
     };
 
@@ -396,9 +408,11 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                             {filteredProducts.map(product => (
                                 <div key={product.id} className="flex items-center justify-between px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                                            <Package className="size-4 text-slate-400" />
-                                        </div>
+                                        <ProductImage
+                                            src={product.product_image}
+                                            name={product.product_name}
+                                            thumbnailClass="size-9"
+                                        />
                                         <div>
                                             <p className="text-sm font-medium text-slate-900 dark:text-white">{product.product_name}</p>
                                             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -423,7 +437,17 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                             <button
                                                 onClick={() => {
                                                     setEditingProduct(product);
-                                                    editForm.setData({ quantity: product.quantity, min_stock_alert: product.min_stock_alert, purchase_price: product.purchase_price });
+                                                    setEditImagePreview(
+                                                        product.product_image ? `/storage/${product.product_image}` : null
+                                                    );
+                                                    editForm.setData({
+                                                        quantity: product.quantity,
+                                                        min_stock_alert: product.min_stock_alert,
+                                                        purchase_price: product.purchase_price,
+                                                        name: product.product_name,
+                                                        sku: product.product_sku ?? '',
+                                                        image: null,
+                                                    });
                                                 }}
                                                 className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
                                             >
@@ -458,13 +482,20 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                         <div className="divide-y divide-slate-100 dark:divide-white/5">
                             {recentTransfers.map(t => (
                                 <div key={t.id} className="flex items-center justify-between px-6 py-3">
-                                    <div>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                            {t.product_name} → {t.shop_name}
-                                        </p>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            {t.reference} • {t.user_name} • {t.transferred_at}
-                                        </p>
+                                    <div className="flex items-center gap-3">
+                                        <ProductImage
+                                            src={t.product_image}
+                                            name={t.product_name}
+                                            thumbnailClass="size-8"
+                                        />
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                                {t.product_name} → {t.shop_name}
+                                            </p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                {t.reference} • {t.user_name} • {t.transferred_at}
+                                            </p>
+                                        </div>
                                     </div>
                                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                                         {t.quantity} unités
@@ -549,7 +580,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     onClick={() => imageInputRef.current?.click()}
                                 >
                                     {imagePreview ? (
-                                        <img src={imagePreview} alt="Aperçu" className="mx-auto h-20 w-20 rounded-lg object-cover" />
+                                        <img src={imagePreview ?? undefined} alt="Aperçu" className="mx-auto h-20 w-20 rounded-lg object-cover" />
                                     ) : (
                                         <>
                                             <Upload className="size-6 text-slate-400" />
@@ -731,10 +762,37 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
             {/* Modal: Modifier stock */}
             {editingProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
-                        <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">Modifier le stock</h3>
-                        <p className="mb-4 text-sm text-slate-500">{editingProduct.product_name}</p>
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Modifier le produit</h3>
+                            <button type="button" onClick={() => { setEditingProduct(null); setEditImagePreview(null); }} className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                <X className="size-5" />
+                            </button>
+                        </div>
                         <form onSubmit={handleEditStock} className="space-y-4">
+                            {/* Infos produit */}
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nom du produit</label>
+                                <input
+                                    type="text"
+                                    value={editForm.data.name}
+                                    onChange={e => editForm.setData('name', e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                />
+                                {editForm.errors.name && <p className="mt-1 text-xs text-rose-500">{editForm.errors.name}</p>}
+                            </div>
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">SKU / Référence</label>
+                                <input
+                                    type="text"
+                                    value={editForm.data.sku}
+                                    onChange={e => editForm.setData('sku', e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                    placeholder="Ex : SKU-001 (optionnel)"
+                                />
+                                {editForm.errors.sku && <p className="mt-1 text-xs text-rose-500">{editForm.errors.sku}</p>}
+                            </div>
+                            {/* Stock */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Quantité</label>
@@ -742,9 +800,10 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         type="number"
                                         min="0"
                                         value={editForm.data.quantity}
-                                        onChange={e => editForm.setData('quantity', parseInt(e.target.value))}
+                                        onChange={e => editForm.setData('quantity', parseInt(e.target.value) || 0)}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
+                                    {editForm.errors.quantity && <p className="mt-1 text-xs text-rose-500">{editForm.errors.quantity}</p>}
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Alerte min</label>
@@ -752,7 +811,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         type="number"
                                         min="0"
                                         value={editForm.data.min_stock_alert}
-                                        onChange={e => editForm.setData('min_stock_alert', parseInt(e.target.value))}
+                                        onChange={e => editForm.setData('min_stock_alert', parseInt(e.target.value) || 0)}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
                                 </div>
@@ -768,12 +827,56 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     placeholder="0"
                                 />
+                                {editForm.errors.purchase_price && <p className="mt-1 text-xs text-rose-500">{editForm.errors.purchase_price}</p>}
+                            </div>
+                            {/* Image */}
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Photo du produit</label>
+                                <div
+                                    className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-center hover:border-amber-400 dark:border-white/15 dark:bg-slate-800/50 dark:hover:border-amber-400"
+                                    onClick={() => editImageInputRef.current?.click()}
+                                >
+                                    {editImagePreview ? (
+                                        <img src={editImagePreview ?? undefined} alt="Aperçu" className="mx-auto h-20 w-20 rounded-lg object-cover" />
+                                    ) : (
+                                        <>
+                                            <Upload className="size-6 text-slate-400" />
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">Cliquer pour changer l'image</p>
+                                            <p className="text-xs text-slate-400">(JPG, PNG, max 2 Mo)</p>
+                                        </>
+                                    )}
+                                </div>
+                                <input
+                                    ref={editImageInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={e => {
+                                        const file = e.target.files?.[0] ?? null;
+                                        editForm.setData('image', file);
+                                        setEditImagePreview(file ? URL.createObjectURL(file) : null);
+                                    }}
+                                />
+                                {editImagePreview && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            editForm.setData('image', null);
+                                            setEditImagePreview(null);
+                                            if (editImageInputRef.current) editImageInputRef.current.value = '';
+                                        }}
+                                        className="mt-1 text-xs text-rose-500 hover:text-rose-600"
+                                    >
+                                        Supprimer l'image
+                                    </button>
+                                )}
+                                {editForm.errors.image && <p className="mt-1 text-xs text-rose-500">{editForm.errors.image}</p>}
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="submit" disabled={editForm.processing} className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50">
-                                    Enregistrer
+                                    {editForm.processing ? 'Enregistrement...' : 'Enregistrer'}
                                 </button>
-                                <button type="button" onClick={() => setEditingProduct(null)} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-medium dark:border-white/10 dark:text-slate-300">
+                                <button type="button" onClick={() => { setEditingProduct(null); setEditImagePreview(null); }} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-medium dark:border-white/10 dark:text-slate-300">
                                     Annuler
                                 </button>
                             </div>

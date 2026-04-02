@@ -3,12 +3,14 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useRoute } from '@/utils/route';
 import { ArrowUpRight, Plus, Warehouse, X } from 'lucide-react';
 import { useState } from 'react';
+import ProductImage from '@/Components/ProductImage';
 
 interface Transfer {
     id: number;
     reference: string;
     shop_name: string;
     product_name: string;
+    product_image: string | null;
     quantity: number;
     notes: string | null;
     user_name: string;
@@ -159,7 +161,16 @@ export default function Transfers({ depot, transfers, shops, depotProducts }: Pr
                                         {transfers.data.map(t => (
                                             <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
                                                 <td className="px-4 py-3 font-mono text-xs text-slate-500 dark:text-slate-400">{t.reference}</td>
-                                                <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{t.product_name}</td>
+                                                <td className="px-4 py-3">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <ProductImage
+                                                            src={t.product_image}
+                                                            name={t.product_name}
+                                                            thumbnailClass="size-8"
+                                                        />
+                                                        <span className="font-medium text-slate-900 dark:text-white">{t.product_name}</span>
+                                                    </div>
+                                                </td>
                                                 <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{t.shop_name}</td>
                                                 <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">{t.quantity}</td>
                                                 <td className="px-4 py-3">
