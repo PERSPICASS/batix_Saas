@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { FormEventHandler, useState, useRef, useEffect } from 'react';
+import { Plus, Trash2, Search, X, ChevronDown } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 
 interface Shop {
@@ -26,6 +26,150 @@ interface Props {
     shops: Shop[];
     products: Product[];
 }
+
+// ── Combobox produit réutilisable par ligne ───────────────────────────────────
+function ProductCombobox({
+    products,
+    value,
+    onChange,
+    usedIds = [],
+}: {
+    products: Product[];
+    value: number | string;
+    onChange: (id: number | string) => void;
+    usedIds?: (number | string)[];
+}) {
+    const [search, setSearch]       = useState('');
+    const [open, setOpen]           = useState(false);
+    const ref                       = useRef<HTMLDivElement>(null);
+
+    const selected = products.find((p) => p.id === Number(value));
+
+    const filtered = products.filter((p) => {
+        const q = search.toLowerCase();
+        return p.name.toLowerCase().includes(q) || (p.sku ?? '').toLowerCase().includes(q);
+    });
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const select = (product: Product) => {
+        onChange(product.id);
+        setSearch('');
+        setOpen(false);
+    };
+
+    const clear = () => {
+        onChange('');
+        setSearch('');
+    };
+
+    return (
+        <div ref={ref} className="relative">
+            {selected && !open ? (
+                /* Produit sélectionné */
+                <div className="flex items-center justify-between rounded-lg border border-amber-500/50 bg-slate-950/70 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                        <span className="text-sm font-medium text-slate-200">{selected.name}</span>
+                        {selected.sku && (
+                            <span className="ml-2 text-xs text-slate-400">({selected.sku})</span>
+                        )}
+                        <span className="ml-2 text-xs text-slate-500">
+                            — Stock : {selected.stock_quantity} u.
+                        </span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1 pl-2">
+                        <button
+                            type="button"
+                            onClick={() => setOpen(true)}
+                            className="rounded p-1 text-slate-400 hover:text-white transition-colors"
+                            title="Changer"
+                        >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={clear}
+                            className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
+                            title="Effacer"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                /* Champ de recherche */
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
+                        onFocus={() => setOpen(true)}
+                        placeholder="Rechercher par nom ou SKU..."
+                        className="w-full rounded-lg border border-white/15 bg-slate-950/70 pl-8 pr-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                        autoComplete="off"
+                    />
+                </div>
+            )}
+
+            {/* Dropdown */}
+            {open && (
+                <div className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-white/15 bg-slate-900 shadow-2xl">
+                    {filtered.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                            Aucun produit trouvé
+                        </div>
+                    ) : (
+                        filtered.map((product) => {
+                            const isUsed = usedIds.includes(product.id) && product.id !== Number(value);
+                            return (
+                                <button
+                                    key={product.id}
+                                    type="button"
+                                    onClick={() => !isUsed && select(product)}
+                                    disabled={isUsed}
+                                    className={`w-full flex items-center justify-between px-4 py-2 text-left text-sm border-b border-white/5 last:border-0 transition-colors ${
+                                        product.id === Number(value)
+                                            ? 'bg-amber-500/10 text-amber-300'
+                                            : isUsed
+                                            ? 'opacity-40 cursor-not-allowed text-slate-400'
+                                            : 'text-slate-200 hover:bg-white/5'
+                                    }`}
+                                >
+                                    <div>
+                                        <span className="font-medium">{product.name}</span>
+                                        {product.sku && (
+                                            <span className="ml-2 text-xs text-slate-400">{product.sku}</span>
+                                        )}
+                                        {isUsed && (
+                                            <span className="ml-2 text-xs text-slate-500 italic">déjà ajouté</span>
+                                        )}
+                                    </div>
+                                    <span className={`ml-3 shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${
+                                        product.stock_quantity <= 0
+                                            ? 'bg-red-500/15 text-red-400'
+                                            : product.stock_quantity <= 5
+                                            ? 'bg-orange-500/15 text-orange-400'
+                                            : 'bg-emerald-500/15 text-emerald-400'
+                                    }`}>
+                                        {product.stock_quantity} u.
+                                    </span>
+                                </button>
+                            );
+                        })
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function InventoryCreate({ shops, products }: Props) {
     const route = useRoute();
@@ -155,22 +299,16 @@ export default function InventoryCreate({ shops, products }: Props) {
                                         className="rounded-xl border border-white/10 bg-slate-900/60 p-4 space-y-3"
                                     >
                                         <div className="grid gap-3 md:grid-cols-12 items-end">
-                                            <div className="md:col-span-6">
+                            <div className="md:col-span-6">
                                                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
                                                     Produit #{index + 1} *
                                                 </label>
-                                                <select
+                                                <ProductCombobox
+                                                    products={products}
                                                     value={item.product_id}
-                                                    onChange={(e) => updateItem(index, 'product_id', e.target.value)}
-                                                    className="block w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                                >
-                                                    <option value="">Sélectionner un produit</option>
-                                                    {products.map((product) => (
-                                                        <option key={product.id} value={product.id}>
-                                                            {product.name} {product.sku && `(${product.sku})`} - Stock: {product.stock_quantity}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    onChange={(id) => updateItem(index, 'product_id', id)}
+                                                    usedIds={items.map((it) => Number(it.product_id)).filter(Boolean)}
+                                                />
                                             </div>
 
                                             <div className="md:col-span-5">

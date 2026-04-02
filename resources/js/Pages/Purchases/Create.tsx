@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState, useMemo } from 'react';
-import { ArrowLeft, Plus, Trash2, Save, ShoppingCart, Package } from 'lucide-react';
+import { FormEventHandler, useState, useMemo, useRef, useEffect } from 'react';
+import { ArrowLeft, Plus, Trash2, Save, ShoppingCart, Package, Search, X, ChevronDown } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
@@ -40,6 +40,155 @@ interface Props {
     products: Product[];
     currency: string;
 }
+
+// ── Combobox produit réutilisable par ligne ───────────────────────────────────
+function PurchaseProductCombobox({
+    products,
+    value,
+    onChange,
+    usedIds = [],
+}: {
+    products: Product[];
+    value: number | string;
+    onChange: (id: string) => void;
+    usedIds?: (number | string)[];
+}) {
+    const [search, setSearch] = useState('');
+    const [open, setOpen]     = useState(false);
+    const ref                 = useRef<HTMLDivElement>(null);
+
+    const selected = products.find((p) => p.id === Number(value));
+
+    const filtered = products.filter((p) => {
+        const q = search.toLowerCase();
+        return (
+            p.name.toLowerCase().includes(q) ||
+            (p.sku ?? '').toLowerCase().includes(q) ||
+            (p.category?.name ?? '').toLowerCase().includes(q)
+        );
+    });
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const select = (product: Product) => {
+        onChange(product.id.toString());
+        setSearch('');
+        setOpen(false);
+    };
+
+    const clear = () => {
+        onChange('');
+        setSearch('');
+    };
+
+    return (
+        <div ref={ref} className="relative">
+            {selected && !open ? (
+                /* Produit sélectionné */
+                <div className="mt-1 flex items-center justify-between rounded-lg border border-amber-300/40 bg-slate-900 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                        <span className="text-sm font-medium text-white">{selected.name}</span>
+                        {selected.sku && (
+                            <span className="ml-2 text-xs text-slate-400">({selected.sku})</span>
+                        )}
+                        {selected.category && (
+                            <span className="ml-2 text-xs text-slate-500">{selected.category.name}</span>
+                        )}
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1 pl-2">
+                        <button
+                            type="button"
+                            onClick={() => setOpen(true)}
+                            className="rounded p-1 text-slate-400 hover:text-white transition-colors"
+                            title="Changer"
+                        >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={clear}
+                            className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
+                            title="Effacer"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                /* Champ de recherche */
+                <div className="relative mt-1">
+                    <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
+                        onFocus={() => setOpen(true)}
+                        placeholder="Rechercher par nom, SKU ou catégorie..."
+                        className="w-full rounded-lg border-slate-700 bg-slate-900 pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                        autoComplete="off"
+                    />
+                </div>
+            )}
+
+            {/* Dropdown */}
+            {open && (
+                <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-white/10 bg-slate-900 shadow-2xl">
+                    {filtered.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                            Aucun produit trouvé
+                        </div>
+                    ) : (
+                        filtered.map((product) => {
+                            const isUsed = usedIds.includes(product.id) && product.id !== Number(value);
+                            return (
+                                <button
+                                    key={product.id}
+                                    type="button"
+                                    onClick={() => !isUsed && select(product)}
+                                    disabled={isUsed}
+                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm border-b border-white/5 last:border-0 transition-colors ${
+                                        product.id === Number(value)
+                                            ? 'bg-amber-300/10 text-amber-300'
+                                            : isUsed
+                                            ? 'opacity-40 cursor-not-allowed text-slate-400'
+                                            : 'text-white hover:bg-white/5'
+                                    }`}
+                                >
+                                    <div>
+                                        <span className="font-medium">{product.name}</span>
+                                        {product.sku && (
+                                            <span className="ml-2 text-xs text-slate-400">{product.sku}</span>
+                                        )}
+                                        {product.category && (
+                                            <span className="ml-2 text-xs text-slate-500">
+                                                — {product.category.name}
+                                            </span>
+                                        )}
+                                        {isUsed && (
+                                            <span className="ml-2 text-xs text-slate-500 italic">déjà ajouté</span>
+                                        )}
+                                    </div>
+                                    <span className="ml-3 shrink-0 text-xs text-slate-400">
+                                        {parseFloat(product.purchase_price) > 0
+                                            ? `${parseFloat(product.purchase_price).toFixed(2)}`
+                                            : '—'}
+                                    </span>
+                                </button>
+                            );
+                        })
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function PurchasesCreate({ code_user, suppliers, products, currency }: Props) {
     const route = useRoute();
@@ -288,22 +437,12 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     <div className="grid gap-4 md:grid-cols-6">
                                         <div className="md:col-span-4">
                                             <InputLabel value="Produit *" />
-                                            <select
+                                            <PurchaseProductCombobox
+                                                products={products}
                                                 value={item.product_id}
-                                                onChange={(e) =>
-                                                    updateItem(index, 'product_id', e.target.value)
-                                                }
-                                                className="mt-1 block w-full rounded-lg border-slate-700 bg-slate-900 text-sm text-white focus:border-amber-300 focus:ring-amber-300"
-                                                required
-                                            >
-                                                <option value="">Sélectionner</option>
-                                                {products.map((product) => (
-                                                    <option key={product.id} value={product.id}>
-                                                        {product.name}
-                                                        {product.sku && ` (${product.sku})`}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                                onChange={(id) => updateItem(index, 'product_id', id)}
+                                                usedIds={items.map((it) => Number(it.product_id)).filter(Boolean)}
+                                            />
                                             <InputError
                                                 message={errors[`items.${index}.product_id` as keyof typeof errors]}
                                                 className="mt-1"

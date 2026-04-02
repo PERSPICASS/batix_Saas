@@ -7,6 +7,7 @@ use App\Services\ActivityLogger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -68,20 +69,27 @@ class CreditController extends Controller
             $query->whereNull('credit_due_date');
         }
 
-        // Tri
+        // Tri — syntaxe compatible MySQL et PostgreSQL
+        $isPostgres = DB::getDriverName() === 'pgsql';
+        $nullsLast       = $isPostgres ? 'credit_due_date ASC NULLS LAST'
+                                       : 'credit_due_date IS NULL, credit_due_date ASC';
+        $interval7days   = $isPostgres ? "CURRENT_DATE + INTERVAL '7 days'"
+                                       : 'DATE_ADD(CURDATE(), INTERVAL 7 DAY)';
+        $today           = $isPostgres ? 'CURRENT_DATE' : 'CURDATE()';
+
         match ($sort) {
             'amount_desc'   => $query->orderBy('remaining_amount', 'desc'),
             'amount_asc'    => $query->orderBy('remaining_amount', 'asc'),
-            'date_asc'      => $query->orderByRaw('credit_due_date ASC NULLS LAST'),
+            'date_asc'      => $query->orderByRaw($nullsLast),
             'date_desc'     => $query->orderBy('credit_due_date', 'desc'),
             'oldest'        => $query->orderBy('sale_date', 'asc'),
             default         => $query->orderByRaw("
                 CASE
-                    WHEN credit_due_date IS NOT NULL AND credit_due_date < CURRENT_DATE THEN 0
-                    WHEN credit_due_date IS NOT NULL AND credit_due_date <= CURRENT_DATE + INTERVAL '7 days' THEN 1
+                    WHEN credit_due_date IS NOT NULL AND credit_due_date < {$today} THEN 0
+                    WHEN credit_due_date IS NOT NULL AND credit_due_date <= {$interval7days} THEN 1
                     WHEN credit_due_date IS NOT NULL THEN 2
                     ELSE 3
-                END, credit_due_date ASC NULLS LAST
+                END, {$nullsLast}
             "),
         };
 
@@ -239,7 +247,11 @@ class CreditController extends Controller
             ->whereIn('status', ['pending', 'completed'])
             ->where('remaining_amount', '>', 0)
             ->when($activeShopId, fn($q) => $q->where('shop_id', $activeShopId))
-            ->orderByRaw('credit_due_date ASC NULLS LAST')
+            ->orderByRaw(
+                DB::getDriverName() === 'pgsql'
+                    ? 'credit_due_date ASC NULLS LAST'
+                    : 'credit_due_date IS NULL, credit_due_date ASC'
+            )
             ->get();
 
         $filename = 'creances_' . now()->format('Ymd_His') . '.csv';

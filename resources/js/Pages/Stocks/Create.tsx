@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState, useRef, useEffect } from 'react';
 import { useRoute } from '@/utils/route';
+import { Search, X, ChevronDown } from 'lucide-react';
 
 interface Shop {
     id: number;
@@ -37,7 +38,42 @@ export default function StocksCreate({ shops, products }: Props) {
         movement_date: new Date().toISOString().split('T')[0],
     });
 
+    // ── Combobox produit ──────────────────────────────────────────────────────
+    const [productSearch, setProductSearch] = useState('');
+    const [dropdownOpen, setDropdownOpen]   = useState(false);
+    const comboRef = useRef<HTMLDivElement>(null);
+
     const selectedProduct = products.find((p) => p.id === Number(data.product_id));
+
+    const filteredProducts = products.filter((p) => {
+        const q = productSearch.toLowerCase();
+        return (
+            p.name.toLowerCase().includes(q) ||
+            (p.sku ?? '').toLowerCase().includes(q)
+        );
+    });
+
+    // Fermer le dropdown si clic en dehors
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (comboRef.current && !comboRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const selectProduct = (product: Product) => {
+        setData('product_id', product.id.toString());
+        setProductSearch('');
+        setDropdownOpen(false);
+    };
+
+    const clearProduct = () => {
+        setData('product_id', '');
+        setProductSearch('');
+    };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -92,28 +128,119 @@ export default function StocksCreate({ shops, products }: Props) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="product_id" className="block text-sm font-medium text-slate-200">
+                            <label className="block text-sm font-medium text-slate-200">
                                 Produit *
                             </label>
-                            <select
-                                id="product_id"
-                                value={data.product_id}
-                                onChange={(e) => setData('product_id', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
-                            >
-                                <option value="">Sélectionner un produit</option>
-                                {products.map((product) => (
-                                    <option key={product.id} value={product.id}>
-                                        {product.name} {product.sku && `(${product.sku})`} - Stock actuel: {product.stock_quantity} - {product.shop.name}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.product_id && <p className="mt-1 text-sm text-red-400">{errors.product_id}</p>}
-                            
+
+                            {/* Combobox recherche produit */}
+                            <div ref={comboRef} className="relative mt-1">
+
+                                {/* Produit sélectionné */}
+                                {selectedProduct && !dropdownOpen ? (
+                                    <div className="flex items-center justify-between rounded-lg border border-amber-500/50 bg-slate-900/70 px-3 py-2">
+                                        <div>
+                                            <span className="text-sm font-medium text-slate-200">
+                                                {selectedProduct.name}
+                                            </span>
+                                            {selectedProduct.sku && (
+                                                <span className="ml-2 text-xs text-slate-400">
+                                                    ({selectedProduct.sku})
+                                                </span>
+                                            )}
+                                            <span className="ml-2 text-xs text-slate-500">
+                                                — Stock : {selectedProduct.stock_quantity} u.
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setDropdownOpen(true)}
+                                                className="rounded p-1 text-slate-400 hover:text-white transition-colors"
+                                                title="Changer de produit"
+                                            >
+                                                <ChevronDown className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={clearProduct}
+                                                className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
+                                                title="Supprimer"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Champ de recherche */
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                        <input
+                                            type="text"
+                                            value={productSearch}
+                                            onChange={(e) => {
+                                                setProductSearch(e.target.value);
+                                                setDropdownOpen(true);
+                                            }}
+                                            onFocus={() => setDropdownOpen(true)}
+                                            placeholder="Rechercher par nom ou SKU..."
+                                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 pl-9 pr-3 py-2 text-slate-200 placeholder-slate-500 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+                                            autoComplete="off"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Liste déroulante */}
+                                {dropdownOpen && (
+                                    <div className="absolute z-50 mt-1 w-full max-h-64 overflow-y-auto rounded-lg border border-white/15 bg-slate-900 shadow-2xl">
+                                        {filteredProducts.length === 0 ? (
+                                            <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                                                Aucun produit trouvé
+                                            </div>
+                                        ) : (
+                                            filteredProducts.map((product) => (
+                                                <button
+                                                    key={product.id}
+                                                    type="button"
+                                                    onClick={() => selectProduct(product)}
+                                                    className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${
+                                                        data.product_id === product.id.toString()
+                                                            ? 'bg-amber-500/10 text-amber-300'
+                                                            : 'text-slate-200'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <span className="font-medium">{product.name}</span>
+                                                        {product.sku && (
+                                                            <span className="ml-2 text-xs text-slate-400">
+                                                                {product.sku}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                                        product.stock_quantity <= 0
+                                                            ? 'bg-red-500/15 text-red-400'
+                                                            : product.stock_quantity <= 5
+                                                            ? 'bg-orange-500/15 text-orange-400'
+                                                            : 'bg-emerald-500/15 text-emerald-400'
+                                                    }`}>
+                                                        {product.stock_quantity} u.
+                                                    </span>
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {errors.product_id && (
+                                <p className="mt-1 text-sm text-red-400">{errors.product_id}</p>
+                            )}
+
                             {selectedProduct && (
                                 <div className="mt-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
                                     <p className="text-sm text-blue-300">
-                                        <span className="font-medium">Stock actuel:</span> {selectedProduct.stock_quantity} unités
+                                        <span className="font-medium">Stock actuel :</span>{' '}
+                                        {selectedProduct.stock_quantity} unités
                                     </p>
                                 </div>
                             )}
