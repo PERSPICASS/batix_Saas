@@ -57,14 +57,14 @@ class CreditController extends Controller
         }
 
         // Filtre statut
-        $today = Carbon::today();
-        $soon  = Carbon::today()->addDays(7);
+        $todayDate = Carbon::today();
+        $soonDate  = Carbon::today()->addDays(7);
 
         if ($status === 'overdue') {
-            $query->where('credit_due_date', '<', $today)
+            $query->where('credit_due_date', '<', $todayDate)
                   ->whereNotNull('credit_due_date');
         } elseif ($status === 'due_soon') {
-            $query->whereBetween('credit_due_date', [$today, $soon]);
+            $query->whereBetween('credit_due_date', [$todayDate, $soonDate]);
         } elseif ($status === 'no_date') {
             $query->whereNull('credit_due_date');
         }
@@ -73,9 +73,9 @@ class CreditController extends Controller
         $isPostgres = DB::getDriverName() === 'pgsql';
         $nullsLast       = $isPostgres ? 'credit_due_date ASC NULLS LAST'
                                        : 'credit_due_date IS NULL, credit_due_date ASC';
-        $interval7days   = $isPostgres ? "CURRENT_DATE + INTERVAL '7 days'"
-                                       : 'DATE_ADD(CURDATE(), INTERVAL 7 DAY)';
-        $today           = $isPostgres ? 'CURRENT_DATE' : 'CURDATE()';
+        $interval7daysSql = $isPostgres ? "CURRENT_DATE + INTERVAL '7 days'"
+                                        : 'DATE_ADD(CURDATE(), INTERVAL 7 DAY)';
+        $todaySql         = $isPostgres ? 'CURRENT_DATE' : 'CURDATE()';
 
         match ($sort) {
             'amount_desc'   => $query->orderBy('remaining_amount', 'desc'),
@@ -84,9 +84,9 @@ class CreditController extends Controller
             'date_desc'     => $query->orderBy('credit_due_date', 'desc'),
             'oldest'        => $query->orderBy('sale_date', 'asc'),
             default         => $query->orderByRaw("
-                CASE
-                    WHEN credit_due_date IS NOT NULL AND credit_due_date < {$today} THEN 0
-                    WHEN credit_due_date IS NOT NULL AND credit_due_date <= {$interval7days} THEN 1
+                    CASE
+                    WHEN credit_due_date IS NOT NULL AND credit_due_date < {$todaySql} THEN 0
+                    WHEN credit_due_date IS NOT NULL AND credit_due_date <= {$interval7daysSql} THEN 1
                     WHEN credit_due_date IS NOT NULL THEN 2
                     ELSE 3
                 END, {$nullsLast}
@@ -107,16 +107,19 @@ class CreditController extends Controller
             'total'            => $sale->total,
             'amount_paid'      => $sale->amount_paid,
             'remaining_amount' => $sale->remaining_amount,
-            'credit_due_date'  => $sale->credit_due_date?->format('Y-m-d'),
-            'overdue'          => $sale->credit_due_date && $sale->credit_due_date->isPast(),
-            'due_soon'         => $sale->credit_due_date
-                && !$sale->credit_due_date->isPast()
-                && $sale->credit_due_date->lte($soon),
-            'days_overdue'     => $sale->credit_due_date && $sale->credit_due_date->isPast()
-                ? $today->diffInDays($sale->credit_due_date)
+            'credit_due_date'  => $sale->credit_due_date
+                ? Carbon::parse($sale->credit_due_date)->format('Y-m-d')
                 : null,
-            'days_until_due'   => $sale->credit_due_date && $sale->credit_due_date->isFuture()
-                ? $today->diffInDays($sale->credit_due_date)
+            'overdue'          => $sale->credit_due_date
+                && Carbon::parse($sale->credit_due_date)->isPast(),
+            'due_soon'         => $sale->credit_due_date
+                && !Carbon::parse($sale->credit_due_date)->isPast()
+                && Carbon::parse($sale->credit_due_date)->lte($soonDate),
+            'days_overdue'     => $sale->credit_due_date && Carbon::parse($sale->credit_due_date)->isPast()
+                ? $todayDate->diffInDays(Carbon::parse($sale->credit_due_date))
+                : null,
+            'days_until_due'   => $sale->credit_due_date && Carbon::parse($sale->credit_due_date)->isFuture()
+                ? $todayDate->diffInDays(Carbon::parse($sale->credit_due_date))
                 : null,
             'notes'            => $sale->notes,
         ]);
@@ -135,15 +138,15 @@ class CreditController extends Controller
             'total_remaining'   => round((clone $kpiBase)->sum('remaining_amount')),
             'total_count'       => (clone $kpiBase)->count(),
             'overdue_remaining' => round((clone $kpiBase)
-                ->where('credit_due_date', '<', $today)
+                ->where('credit_due_date', '<', $todayDate)
                 ->whereNotNull('credit_due_date')
                 ->sum('remaining_amount')),
             'overdue_count'     => (clone $kpiBase)
-                ->where('credit_due_date', '<', $today)
+                ->where('credit_due_date', '<', $todayDate)
                 ->whereNotNull('credit_due_date')
                 ->count(),
             'due_soon_count'    => (clone $kpiBase)
-                ->whereBetween('credit_due_date', [$today, $soon])
+                ->whereBetween('credit_due_date', [$todayDate, $soonDate])
                 ->count(),
             'no_date_count'     => (clone $kpiBase)
                 ->whereNull('credit_due_date')
@@ -267,10 +270,11 @@ class CreditController extends Controller
 
             foreach ($credits as $sale) {
                 $today = Carbon::today();
+                $dueDate = $sale->credit_due_date ? Carbon::parse($sale->credit_due_date) : null;
                 $status = 'En cours';
-                if ($sale->credit_due_date && $sale->credit_due_date < $today) {
-                    $status = 'En retard (' . $today->diffInDays($sale->credit_due_date) . 'j)';
-                } elseif ($sale->credit_due_date && $sale->credit_due_date->lte($today->addDays(7))) {
+                if ($dueDate && $dueDate->lt($today)) {
+                    $status = 'En retard (' . $today->diffInDays($dueDate) . 'j)';
+                } elseif ($dueDate && $dueDate->lte($today->copy()->addDays(7))) {
                     $status = 'Échéance proche';
                 }
 
@@ -283,7 +287,7 @@ class CreditController extends Controller
                     number_format($sale->total, 0, ',', ' '),
                     number_format($sale->amount_paid, 0, ',', ' '),
                     number_format($sale->remaining_amount, 0, ',', ' '),
-                    $sale->credit_due_date?->format('d/m/Y') ?? '',
+                    $dueDate?->format('d/m/Y') ?? '',
                     $status,
                     $sale->notes ?? '',
                 ], ';');
