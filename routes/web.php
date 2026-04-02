@@ -21,6 +21,7 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\CreditController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\DepotController;
 use App\Http\Controllers\PaymentController;
@@ -155,6 +156,12 @@ Route::prefix('{code_user}')
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale']);
     Route::post('ventes/{sale}/pay-credit', [SaleController::class, 'payCredit'])->name('sales.pay-credit');
     Route::patch('ventes/{sale}/reactiver', [SaleController::class, 'restore'])->name('sales.restore');
+
+    // Routes pour les créances
+    Route::get('creances', [CreditController::class, 'index'])->name('sales.credits');
+    Route::get('creances/export', [CreditController::class, 'export'])->name('sales.credits.export');
+    Route::post('creances/{sale}/payer', [CreditController::class, 'pay'])->name('sales.credits.pay');
+    Route::patch('creances/{sale}/echeance', [CreditController::class, 'updateDueDate'])->name('sales.credits.update-due-date');
 
     // Stocks (mouvements de stock)
     Route::resource('stocks', StockMovementController::class)->except(['edit', 'update'])->parameters(['stocks' => 'stockMovement']);

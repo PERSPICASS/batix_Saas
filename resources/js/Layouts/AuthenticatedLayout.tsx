@@ -15,6 +15,7 @@ import {
     ChevronDown,
     ChevronRight,
     ClipboardList,
+    CreditCard,
     Crown,
     FileText,
     Folder,
@@ -296,8 +297,15 @@ export default function Authenticated({
             {
                 label: 'Ventes',
                 href: buildRoute('sales.index'),
-                active: route().current('sales.*'),
+                active: route().current('sales.*') && !route().current('sales.credits*'),
                 icon: ShoppingCart,
+                module: 'sales',
+            },
+            {
+                label: 'Créances',
+                href: buildRoute('sales.credits'),
+                active: route().current('sales.credits*'),
+                icon: CreditCard,
                 module: 'sales',
             },
             {
