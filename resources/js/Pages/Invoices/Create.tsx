@@ -22,6 +22,15 @@ interface Product {
     name: string;
     selling_price: string;
     shop_id: number;
+    has_variations: boolean;
+    variations: Array<{
+        id: number;
+        name: string;
+        selling_price: string;
+        shop_id: number;
+        has_variations: boolean;
+        variations: [];
+    }>;
 }
 
 interface InvoiceItem {
@@ -129,9 +138,19 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                 const updated = { ...item, [field]: value };
 
                 if (field === 'product_id' && value) {
-                    const product = filteredProducts.find((p) => p.id === Number(value));
+                    // Chercher d'abord dans les produits directs, puis dans les variations
+                    let product = filteredProducts.find((p) => p.id === Number(value));
+                    let parentProduct: typeof product | undefined;
+                    if (!product) {
+                        for (const p of filteredProducts) {
+                            const v = p.variations?.find((v) => v.id === Number(value));
+                            if (v) { product = v as any; parentProduct = p; break; }
+                        }
+                    }
                     if (product) {
-                        updated.product_name = product.name;
+                        updated.product_name = parentProduct
+                            ? `${parentProduct.name} › ${product.name}`
+                            : product.name;
                         updated.unit_price = product.selling_price;
                     }
                 }
@@ -169,9 +188,19 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
         setShowProductModal(true);
     };
 
-    const selectProduct = (product: Product) => {
+    const selectProduct = (product: Product, parent?: Product) => {
         if (productTargetLine === null) return;
-        updateItem(productTargetLine, 'product_id', String(product.id));
+        setItems((prev) =>
+            prev.map((item, i) => {
+                if (i !== productTargetLine) return item;
+                return {
+                    ...item,
+                    product_id: product.id,
+                    product_name: parent ? `${parent.name} › ${product.name}` : product.name,
+                    unit_price: product.selling_price,
+                };
+            }),
+        );
         setShowProductModal(false);
     };
 
@@ -679,18 +708,45 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                     <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-slate-900/40 p-2">
                         {filteredProductsBySearch.length > 0 ? (
                             filteredProductsBySearch.map((product, index) => (
-                                <button
-                                    key={product.id}
-                                    type="button"
-                                    onClick={() => selectProduct(product)}
-                                    className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
-                                        activeProductIndex === index
-                                            ? 'bg-amber-300/25 text-amber-100 ring-1 ring-amber-300/40'
-                                            : 'text-slate-200 hover:bg-white/10'
-                                    }`}
-                                >
-                                    <span>{product.name}</span>
-                                </button>
+                                <div key={product.id}>
+                                    {/* Produit parent avec déclinaisons — non-cliquable directement */}
+                                    {product.has_variations && product.variations?.length > 0 ? (
+                                        <div>
+                                            <div className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-400">
+                                                <span className="font-medium text-slate-300">{product.name}</span>
+                                                <span className="rounded-full bg-amber-300/15 px-1.5 py-0.5 text-xs text-amber-400">
+                                                    {product.variations.length} décl.
+                                                </span>
+                                            </div>
+                                            <div className="ml-3 space-y-0.5 border-l-2 border-amber-300/25 pl-2">
+                                                {product.variations.map((variation) => (
+                                                    <button
+                                                        key={variation.id}
+                                                        type="button"
+                                                        onClick={() => selectProduct(variation as any, product)}
+                                                        className="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-left text-sm text-slate-200 transition hover:bg-white/10"
+                                                    >
+                                                        <span>{variation.name}</span>
+                                                        <span className="text-xs text-amber-300">{variation.selling_price}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            key={product.id}
+                                            type="button"
+                                            onClick={() => selectProduct(product)}
+                                            className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
+                                                activeProductIndex === index
+                                                    ? 'bg-amber-300/25 text-amber-100 ring-1 ring-amber-300/40'
+                                                    : 'text-slate-200 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <span>{product.name}</span>
+                                        </button>
+                                    )}
+                                </div>
                             ))
                         ) : (
                             <p className="px-3 py-2 text-sm text-slate-400">

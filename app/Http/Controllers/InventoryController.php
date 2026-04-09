@@ -47,6 +47,7 @@ class InventoryController extends Controller
         
         $products = Product::with('shop')
             ->where('is_active', true)
+            ->whereNull('parent_id')
             ->whereHas('shop', function ($q) use ($activeShopId) {
                 $q->where('user_id', Auth::id());
                 if ($activeShopId) {
@@ -120,7 +121,7 @@ class InventoryController extends Controller
         return Inertia::render('Inventory/Edit', [
             'inventory' => $inventory,
             'shops' => Shop::select('id', 'name')->get(),
-            'products' => Product::with('shop')->where('is_active', true)->get(),
+            'products' => Product::with('shop')->where('is_active', true)->whereNull('parent_id')->get(),
         ]);
     }
 

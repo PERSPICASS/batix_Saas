@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CategoryController;
@@ -214,6 +215,12 @@ Route::prefix('{code_user}')
     })->name('subscriptions.index');
 
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // Dépenses
+    Route::get('depenses', [ExpenseController::class, 'index'])->name('expenses.index');
+    Route::post('depenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    Route::match(['POST', 'PATCH'], 'depenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+    Route::delete('depenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
     // Logs d'activité (super_admin uniquement)
     Route::get('/historique', [ActivityLogController::class, 'index'])->name('activity-logs.index');

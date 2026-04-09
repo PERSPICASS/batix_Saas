@@ -30,6 +30,7 @@ class ProductController extends Controller
         $status = $request->input('status');
         
         $query = Product::with(['shop', 'category', 'subcategory'])
+            ->whereNull('parent_id') // Exclure les déclinaisons
             ->orderBy('created_at', 'desc'); // Du plus récent au plus ancien
 
         // Filtrer par boutique active si sélectionnée

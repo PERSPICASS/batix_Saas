@@ -129,6 +129,8 @@ class SaleController extends Controller
         
         $products = Product::where('shop_id', $activeShopId)
             ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->with(['variations' => fn($q) => $q->where('is_active', true)->orderBy('name')])
             ->get();
 
         return Inertia::render('Sales/Create', [
@@ -200,9 +202,17 @@ class SaleController extends Controller
 
             foreach ($productItems as $itemData) {
                 $product = $itemData['product'];
+
+                // Si c'est une déclinaison, charger le parent pour avoir le nom complet
+                $parentName = null;
+                if ($product->parent_id) {
+                    $parent = $product->parent ?? Product::find($product->parent_id);
+                    $parentName = $parent?->name;
+                }
+
                 $sale->items()->create([
                     'product_id'      => $product->id,
-                    'product_name'    => $product->name,
+                    'product_name'    => $parentName ? "{$parentName} › {$product->name}" : $product->name,
                     'sku'             => $product->sku,
                     'quantity'        => $itemData['quantity'],
                     'unit_price'      => $itemData['unit_price'],
@@ -262,8 +272,15 @@ class SaleController extends Controller
 
     public function show(string $code_user, Sale $sale)
     {
-        $sale->load(['shop', 'user', 'customer', 'items.product', 'returns']);
-        
+        $sale->load(['shop', 'user', 'customer', 'items.product.parent', 'returns']);
+
+        // Enrichir le product_name des anciens items de déclinaisons qui ne l'ont pas encore
+        $sale->items->each(function ($item) {
+            if ($item->product && $item->product->parent_id && !str_contains($item->product_name, ' › ')) {
+                $item->product_name = "{$item->product->parent->name} › {$item->product->name}";
+            }
+        });
+
         return Inertia::render('Sales/Show', [
             'sale' => $sale,
         ]);

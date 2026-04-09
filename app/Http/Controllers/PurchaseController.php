@@ -94,6 +94,7 @@ class PurchaseController extends Controller
 
         $products = Product::where('shop_id', $activeShopId)
             ->where('is_active', true)
+            ->whereNull('parent_id')
             ->with(['category'])
             ->get();
 
@@ -232,6 +233,7 @@ class PurchaseController extends Controller
 
         $products = Product::where('shop_id', $activeShopId)
             ->where('is_active', true)
+            ->whereNull('parent_id')
             ->with(['category'])
             ->get();
 

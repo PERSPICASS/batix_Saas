@@ -27,6 +27,7 @@ interface Customer {
 interface Product {
     id: number;
     name: string;
+    parent: { id: number; name: string } | null;
 }
 
 interface SaleItem {
@@ -223,7 +224,17 @@ export default function SalesShow({ sale, auth }: Props) {
                             <tbody>
                                 {sale.items.map((item) => (
                                     <tr key={item.id} className="border-b border-white/5">
-                                        <td className="py-2 text-white">{item.product_name}</td>
+                                        <td className="py-2">
+                                            {item.product?.parent ? (
+                                                <span className="text-white">
+                                                    <span className="text-slate-400">{item.product.parent.name}</span>
+                                                    <span className="mx-1 text-slate-500">›</span>
+                                                    <span>{item.product.name}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="text-white">{item.product_name}</span>
+                                            )}
+                                        </td>
                                         <td className="py-2 text-center text-slate-300">
                                             {item.quantity}
                                         </td>

@@ -74,7 +74,8 @@ class InvoiceController extends Controller
             ->get();
         
         $products = Product::whereIn('shop_id', $shopIds)
-            ->with(['shop', 'category'])
+            ->whereNull('parent_id')
+            ->with(['shop', 'category', 'variations' => fn($q) => $q->where('is_active', true)->orderBy('name')])
             ->get();
 
         return Inertia::render('Invoices/Create', [
@@ -125,6 +126,16 @@ class InvoiceController extends Controller
             $invoice = $shop->invoices()->create($validated);
             
             foreach ($items as $item) {
+                // Si un product_id est fourni et que c'est une déclinaison, enrichir le product_name
+                if (!empty($item['product_id'])) {
+                    $product = \App\Models\Product::find($item['product_id']);
+                    if ($product && $product->parent_id && !str_contains($item['product_name'], ' › ')) {
+                        $parent = $product->parent ?? \App\Models\Product::find($product->parent_id);
+                        if ($parent) {
+                            $item['product_name'] = "{$parent->name} › {$product->name}";
+                        }
+                    }
+                }
                 $invoice->items()->create($item);
             }
             
@@ -144,8 +155,15 @@ class InvoiceController extends Controller
      */
     public function show(string $code_user, Invoice $invoice)
     {
-        $invoice->load(['shop', 'customer', 'user', 'items.product']);
-        
+        $invoice->load(['shop', 'customer', 'user', 'items.product.parent']);
+
+        // Enrichir le product_name des anciens items de déclinaisons qui ne l'ont pas encore
+        $invoice->items->each(function ($item) {
+            if ($item->product && $item->product->parent_id && !str_contains($item->product_name, ' › ')) {
+                $item->product_name = "{$item->product->parent->name} › {$item->product->name}";
+            }
+        });
+
         return Inertia::render('Invoices/Show', [
             'invoice' => $invoice,
         ]);
@@ -170,7 +188,8 @@ class InvoiceController extends Controller
             ->get();
         
         $products = Product::whereIn('shop_id', $shopIds)
-            ->with(['shop', 'category'])
+            ->whereNull('parent_id')
+            ->with(['shop', 'category', 'variations' => fn($q) => $q->where('is_active', true)->orderBy('name')])
             ->get();
         
         $invoice->load('items');

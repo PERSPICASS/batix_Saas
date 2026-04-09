@@ -24,6 +24,18 @@ interface Product {
     selling_price: string;
     tax_rate: string;
     stock_quantity: number;
+    has_variations: boolean;
+    variations: Array<{
+        id: number;
+        name: string;
+        sku: string;
+        image: string | null;
+        selling_price: string;
+        tax_rate: string;
+        stock_quantity: number;
+        has_variations: boolean;
+        variations: [];
+    }>;
 }
 
 interface Props {
@@ -180,7 +192,12 @@ export default function SalesCreate({ shops, customers, products }: Props) {
     const filteredProducts = products.filter(
         (product) =>
             product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-            product.sku?.toLowerCase().includes(searchProduct.toLowerCase())
+            product.sku?.toLowerCase().includes(searchProduct.toLowerCase()) ||
+            product.variations?.some(
+                (v) =>
+                    v.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                    v.sku?.toLowerCase().includes(searchProduct.toLowerCase())
+            )
     );
 
     return (
@@ -206,27 +223,67 @@ export default function SalesCreate({ shops, customers, products }: Props) {
 
                             <div className="grid gap-2 max-h-96 overflow-y-auto">
                                 {filteredProducts.map((product) => (
-                                    <button
-                                        key={product.id}
-                                        type="button"
-                                        onClick={() => addToCart(product)}
-                                        className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 p-3 text-left hover:bg-white/10 transition"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <ProductImage src={product.image} name={product.name} thumbnailClass="size-10" />
-                                            <div>
-                                                <p className="font-medium text-white">{product.name}</p>
-                                                <p className="text-xs text-slate-400">
-                                                    SKU: {product.sku} • Stock: {product.stock_quantity}
-                                                </p>
+                                    <div key={product.id}>
+                                        {/* Produit parent — cliquable seulement s'il n'a pas de déclinaisons */}
+                                        {product.has_variations && product.variations.length > 0 ? (
+                                            <div className="rounded-lg border border-white/10 bg-slate-900/50 p-3">
+                                                <div className="flex items-center gap-3">
+                                                    <ProductImage src={product.image} name={product.name} thumbnailClass="size-10" />
+                                                    <div>
+                                                        <p className="font-medium text-white">{product.name}</p>
+                                                        <p className="text-xs text-slate-400">
+                                                            SKU: {product.sku} • <span className="text-amber-400">{product.variations.length} déclinaison{product.variations.length > 1 ? 's' : ''}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                {/* Déclinaisons */}
+                                                <div className="mt-2 ml-4 space-y-1 border-l-2 border-amber-300/30 pl-3">
+                                                    {product.variations.map((variation) => (
+                                                        <button
+                                                            key={variation.id}
+                                                            type="button"
+                                                            onClick={() => addToCart(variation)}
+                                                            className="flex w-full items-center justify-between rounded-lg border border-white/5 bg-slate-800/60 px-3 py-2 text-left hover:bg-white/10 transition"
+                                                        >
+                                                            <div className="flex items-center gap-2">
+                                                                <ProductImage src={variation.image ?? product.image} name={variation.name} thumbnailClass="size-7" />
+                                                                <div>
+                                                                    <p className="text-sm font-medium text-white">{variation.name}</p>
+                                                                    <p className="text-xs text-slate-400">
+                                                                        SKU: {variation.sku} • Stock: {variation.stock_quantity}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <p className="ml-3 shrink-0 font-semibold text-amber-300 text-sm">
+                                                                <Currency amount={parseFloat(variation.selling_price)} />
+                                                            </p>
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="text-right shrink-0 ml-3">
-                                            <p className="font-semibold text-amber-300">
-                                                <Currency amount={parseFloat(product.selling_price)} />
-                                            </p>
-                                        </div>
-                                    </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => addToCart(product)}
+                                                className="flex w-full items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 p-3 text-left hover:bg-white/10 transition"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <ProductImage src={product.image} name={product.name} thumbnailClass="size-10" />
+                                                    <div>
+                                                        <p className="font-medium text-white">{product.name}</p>
+                                                        <p className="text-xs text-slate-400">
+                                                            SKU: {product.sku} • Stock: {product.stock_quantity}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0 ml-3">
+                                                    <p className="font-semibold text-amber-300">
+                                                        <Currency amount={parseFloat(product.selling_price)} />
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>

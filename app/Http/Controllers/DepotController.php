@@ -141,6 +141,7 @@ class DepotController extends Controller
             ->get(['id', 'name']);
 
         $allProducts = Product::whereIn('shop_id', $user->accessibleShopsQuery()->pluck('id'))
+            ->whereNull('parent_id')
             ->select('id', 'name', 'sku')
             ->orderBy('name')
             ->get();

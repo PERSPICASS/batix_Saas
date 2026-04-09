@@ -48,6 +48,8 @@ const MODULES = [
     { key: 'stocks', label: 'Stocks' },
     { key: 'inventory', label: 'Inventaires' },
     { key: 'sales', label: 'Ventes' },
+    { key: 'purchases', label: 'Achats' },
+    { key: 'expenses', label: 'Dépenses' },
     { key: 'suppliers', label: 'Fournisseurs' },
     { key: 'customers', label: 'Clients' },
     { key: 'invoices', label: 'Factures' },
