@@ -46,6 +46,13 @@ trait RedirectsUsers
             $accountCode = $accountOwner ? $accountOwner->code_user : $user->code_user;
         }
         
+        // Sécurité : si le code_user est null ou vide, impossible de générer la route dashboard
+        if (empty($accountCode)) {
+            session()->forget('url.intended');
+            \Log::warning('RedirectsUsers: code_user manquant pour user_id=' . $user->id . ' (role=' . $user->role . ')');
+            return route('login');
+        }
+        
         // Vérifier si l'URL intended est compatible avec le code_user
         $intended = session('url.intended');
         if ($intended) {
