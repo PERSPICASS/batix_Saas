@@ -46,7 +46,11 @@ class CheckScreenLock
                 'register',
                 'verification.code.show',
                 'verification.code.verify',
-                'verification.code.resend'
+                'verification.code.resend',
+                'password.request',
+                'password.email',
+                'password.reset',
+                'password.store',
             ];
             
             if (!in_array($currentRoute, $excludedRoutes)) {
