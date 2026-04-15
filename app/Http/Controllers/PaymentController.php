@@ -164,7 +164,7 @@ class PaymentController extends Controller
             ]);
         });
 
-        return redirect()->route('dashboard')
+        return redirect()->route('dashboard',  ['code_user' => $user->code_user])
             ->with('success', 'Plan gratuit activé avec succès !');
     }
 }
