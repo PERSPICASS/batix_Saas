@@ -147,6 +147,7 @@ class SubscriptionPlanController extends Controller
     public function publicIndex(): Response
     {
         $plans = SubscriptionPlan::where('is_active', true)
+            ->where('slug', '!=', 'free')
             ->orderBy('price')
             ->get()
             ->map(fn($plan) => array_merge($plan->toArray(), [

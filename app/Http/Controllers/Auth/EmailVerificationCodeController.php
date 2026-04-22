@@ -79,10 +79,10 @@ class EmailVerificationCodeController extends Controller
             ]);
         }
 
-        // Nouvel utilisateur sans boutique, rediriger vers le formulaire de création de boutique (Étape 3)
+        // Nouvel utilisateur sans boutique → pas de redirection, le frontend passe à l'étape 3
         return response()->json([
             'message' => 'Votre email a été vérifié avec succès ! Créez maintenant votre première boutique.',
-            'redirect' => route('shop.create.initial')
+            'step' => 3
         ]);
     }
 
@@ -114,6 +114,7 @@ class EmailVerificationCodeController extends Controller
 
         return response()->json([
             'message' => 'Un nouveau code de vérification a été envoyé à votre adresse email.',
+            'code' => app()->isLocal() ? $code : null,
         ]);
     }
 

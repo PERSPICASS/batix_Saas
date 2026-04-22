@@ -22,8 +22,30 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): Response
+    public function create(): Response|\Illuminate\Http\RedirectResponse
     {
+        $user = Auth::user();
+
+        // Utilisateur connecté mais email non vérifié → Register à l'étape 2
+        if ($user && !$user->hasVerifiedEmail()) {
+            return Inertia::render('Auth/Register', [
+                'initialStep' => 2,
+                'initialEmail' => $user->email,
+            ]);
+        }
+
+        // Utilisateur connecté et vérifié mais sans boutique → étape 3
+        if ($user && $user->hasVerifiedEmail() && !$user->shops()->exists()) {
+            return Inertia::render('Auth/Register', [
+                'initialStep' => 3,
+            ]);
+        }
+
+        // Utilisateur connecté, vérifié et avec boutique → dashboard
+        if ($user && $user->hasVerifiedEmail() && $user->code_user) {
+            return redirect()->route('dashboard', ['code_user' => $user->code_user]);
+        }
+
         return Inertia::render('Auth/Register');
     }
 
