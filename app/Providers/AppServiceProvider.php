@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +30,20 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Vite::prefetch(concurrency: 3);
+
+        // Redirect pour les utilisateurs déjà connectés (middleware guest)
+        // Évite l'erreur "Missing parameter: code_user" sur route('dashboard')
+        RedirectIfAuthenticated::redirectUsing(function ($request) {
+            $user = Auth::user();
+            if (!$user) return '/';
+            if (!$user->hasVerifiedEmail()) {
+                return route('register'); // → Register étape 2 (OTP)
+            }
+            if ($user->code_user) {
+                return route('dashboard', ['code_user' => $user->code_user]);
+            }
+            return route('register'); // → Register étape 3 (boutique inline)
+        });
 
         // Partager les boutiques de l'utilisateur avec toutes les vues Inertia
         Inertia::share([

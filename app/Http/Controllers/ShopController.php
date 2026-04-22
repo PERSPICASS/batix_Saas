@@ -150,18 +150,24 @@ class ShopController extends Controller
     /**
      * Créer la première boutique après inscription (Étape 3 de l'inscription)
      */
-    public function storeInitial(Request $request): RedirectResponse
+    public function storeInitial(Request $request)
     {
         $user = Auth::user();
 
         // Vérifier que l'utilisateur n'a pas déjà de boutique
         if ($user->shops()->exists()) {
-            return redirect()->route('dashboard', ['code_user' => $user->code_user]);
+            $redirectUrl = route('dashboard', ['code_user' => $user->code_user]);
+            return $request->wantsJson()
+                ? response()->json(['redirect' => $redirectUrl])
+                : redirect($redirectUrl);
         }
 
         // Vérifier que l'email est vérifié
         if (!$user->hasVerifiedEmail()) {
-            return redirect()->route('verification.code.show');
+            $redirectUrl = route('verification.code.show');
+            return $request->wantsJson()
+                ? response()->json(['redirect' => $redirectUrl], 403)
+                : redirect($redirectUrl);
         }
 
         $validated = $request->validate([
@@ -171,6 +177,15 @@ class ShopController extends Controller
             'postal_code' => 'nullable|string|max:20',
             'phone' => 'nullable|string|max:20',
         ]);
+
+        // Vérifier que le nom (slug) n'est pas déjà pris
+        $slug = \Illuminate\Support\Str::slug($validated['name']);
+        if (\App\Models\Shop::where('slug', $slug)->exists()) {
+            return response()->json([
+                'message' => 'Ce nom de boutique est déjà utilisé. Veuillez en choisir un autre.',
+                'errors' => ['name' => ['Ce nom de boutique est déjà utilisé. Veuillez en choisir un autre.']],
+            ], 422);
+        }
 
         // Créer la première boutique de l'utilisateur
         $shop = $user->shops()->create([
@@ -198,7 +213,7 @@ class ShopController extends Controller
             ]);
         }
 
-        // ✨ Attribuer automatiquement le plan FREE (30 jours)
+        // ✨ Attribuer automatiquement le plan FREE (14 jours)
         $freePlan = SubscriptionPlan::where('slug', 'free')->first();
         
         if ($freePlan) {
@@ -208,7 +223,7 @@ class ShopController extends Controller
                 'status' => 'trial',
                 'amount' => 0, // Plan gratuit
                 'started_at' => now(),
-                'expires_at' => now()->addDays(30), // 30 jours d'essai gratuit
+                'expires_at' => now()->addDays(14), // 14 jours d'essai gratuit
             ]);
         }
 
@@ -218,9 +233,18 @@ class ShopController extends Controller
         // Log activity
         ActivityLogger::created($shop, "Première boutique créée: {$shop->name}");
 
+        $redirectUrl = route('dashboard', ['code_user' => $user->code_user]);
+
+        // Retourner JSON si axios, redirect sinon
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Bienvenue ! Votre boutique a été créée avec succès.',
+                'redirect' => $redirectUrl,
+            ]);
+        }
+
         // Rediriger vers le dashboard avec message de bienvenue
-        return redirect()
-            ->route('dashboard', ['code_user' => $user->code_user])
-            ->with('success', 'Bienvenue ! Votre boutique a été créée avec succès. Vous disposez de 30 jours d\'essai gratuit.');
+        return redirect($redirectUrl)
+            ->with('success', 'Bienvenue ! Votre boutique a été créée avec succès. Vous disposez de 14 jours d\'essai gratuit.');
     }
 }

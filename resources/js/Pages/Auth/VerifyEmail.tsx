@@ -1,7 +1,8 @@
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState, useRef, useEffect } from 'react';
-import { Mail, Shield, ArrowRight, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import AuthSplitLayout from '@/Components/AuthSplitLayout';
+import PrimaryButton from '@/Components/PrimaryButton';
+import { Head } from '@inertiajs/react';
+import { FormEventHandler, KeyboardEvent, ClipboardEvent, useEffect, useRef, useState } from 'react';
+import { MailCheck, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 
 interface Props {
@@ -13,53 +14,52 @@ export default function VerifyEmail({ email, canResend }: Props) {
     const route = useRoute();
     const [code, setCode] = useState(['', '', '', '', '', '']);
     const [isVerifying, setIsVerifying] = useState(false);
+    const [isResending, setIsResending] = useState(false);
     const [verificationError, setVerificationError] = useState('');
     const [resendSuccess, setResendSuccess] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-    const { post, processing } = useForm({});
-
-    // Timer pour le cooldown de renvoi
     useEffect(() => {
-        if (resendCooldown > 0) {
-            const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-            return () => clearTimeout(timer);
+        if (resendCooldown <= 0) {
+            return;
         }
+
+        const timer = window.setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+        return () => window.clearTimeout(timer);
     }, [resendCooldown]);
 
     const handleCodeChange = (index: number, value: string) => {
-        // Ne garder que les chiffres
         const numericValue = value.replace(/[^0-9]/g, '');
-        
-        if (numericValue.length <= 1) {
-            const newCode = [...code];
-            newCode[index] = numericValue;
-            setCode(newCode);
-            setVerificationError('');
 
-            // Passer au champ suivant si un chiffre est entré
-            if (numericValue && index < 5) {
-                inputRefs.current[index + 1]?.focus();
-            }
+        if (numericValue.length > 1) {
+            return;
+        }
 
-            // Soumettre automatiquement si tous les champs sont remplis
-            if (index === 5 && numericValue && newCode.every(digit => digit !== '')) {
-                handleVerify(newCode.join(''));
-            }
+        const newCode = [...code];
+        newCode[index] = numericValue;
+        setCode(newCode);
+        setVerificationError('');
+
+        if (numericValue && index < 5) {
+            inputRefs.current[index + 1]?.focus();
+        }
+
+        if (index === 5 && numericValue && newCode.every((digit) => digit !== '')) {
+            handleVerify(newCode.join(''));
         }
     };
 
-    const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Backspace' && !code[index] && index > 0) {
             inputRefs.current[index - 1]?.focus();
         }
     };
 
-    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
         e.preventDefault();
         const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-        
+
         if (pastedData.length === 6) {
             const newCode = pastedData.split('');
             setCode(newCode);
@@ -83,18 +83,18 @@ export default function VerifyEmail({ email, canResend }: Props) {
                 body: JSON.stringify({ code: verificationCode }),
             });
 
-            const data = await response.json();
+            const payload = await response.json();
 
             if (response.ok) {
-                // Rediriger vers le dashboard
-                window.location.href = data.redirect;
-            } else {
-                setVerificationError(data.message);
-                setCode(['', '', '', '', '', '']);
-                inputRefs.current[0]?.focus();
+                window.location.href = payload.redirect;
+                return;
             }
-        } catch (error) {
-            setVerificationError('Une erreur est survenue. Veuillez réessayer.');
+
+            setVerificationError(payload.message || 'Code invalide. Veuillez reessayer.');
+            setCode(['', '', '', '', '', '']);
+            inputRefs.current[0]?.focus();
+        } catch {
+            setVerificationError('Une erreur est survenue. Veuillez reessayer.');
             setCode(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
         } finally {
@@ -105,16 +105,21 @@ export default function VerifyEmail({ email, canResend }: Props) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         const verificationCode = code.join('');
-        
+
         if (verificationCode.length === 6) {
             handleVerify(verificationCode);
         }
     };
 
     const handleResend = async () => {
+        if (resendCooldown > 0 || isResending) {
+            return;
+        }
+
         setResendSuccess(false);
         setVerificationError('');
-        setResendCooldown(60); // Cooldown de 60 secondes
+        setResendCooldown(60);
+        setIsResending(true);
 
         try {
             const response = await fetch(route('verification.code.resend'), {
@@ -125,160 +130,113 @@ export default function VerifyEmail({ email, canResend }: Props) {
                 },
             });
 
-            const data = await response.json();
+            if (!response.ok) {
+                throw new Error('RESEND_FAILED');
+            }
+
             setResendSuccess(true);
             setCode(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
-            
-            setTimeout(() => setResendSuccess(false), 5000);
-        } catch (error) {
-            setVerificationError('Impossible de renvoyer le code. Veuillez réessayer.');
+            window.setTimeout(() => setResendSuccess(false), 5000);
+        } catch {
+            setVerificationError('Impossible de renvoyer le code. Veuillez reessayer.');
+            setResendCooldown(0);
+        } finally {
+            setIsResending(false);
         }
     };
 
     return (
-        <GuestLayout>
-            <Head title="Vérification Email" />
+        <>
+            <Head title="Verification email" />
 
-            <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-4 py-12">
-                {/* Background decoration */}
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute -left-1/4 -top-1/4 h-1/2 w-1/2 rounded-full bg-amber-300/5 blur-3xl" />
-                    <div className="absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full bg-purple-500/5 blur-3xl" />
-                </div>
+            <AuthSplitLayout
+                title="Verifiez votre email"
+                description={`Un code a 6 chiffres a ete envoye a ${email}.`}
+                icon={<MailCheck className="size-5" />}
+                stepper={
+                    <div className="mb-4 flex items-center gap-2">
+                        <div className="flex size-7 items-center justify-center rounded-full bg-emerald-500 text-xs font-semibold text-white">✓</div>
+                        <div className="h-1 w-10 rounded-full bg-emerald-400" />
+                        <div className="flex size-7 items-center justify-center rounded-full bg-amber-500 text-xs font-semibold text-white">2</div>
+                        <div className="h-1 w-10 rounded-full bg-[#d5c9b2]" />
+                        <div className="flex size-7 items-center justify-center rounded-full bg-[#d5c9b2] text-xs font-semibold text-slate-700">3</div>
+                    </div>
+                }
+                sideStepLabel="Etape 2 sur 3"
+                sideTitle="Validez votre acces en toute securite."
+                sideDescription="Confirmez votre email pour activer votre espace et continuer la configuration."
+            >
+                <form onSubmit={submit} className="space-y-3">
+                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                        <ShieldCheck className="size-4 text-amber-700" />
+                        Entrez le code a 6 chiffres
+                    </label>
 
-                <div className="relative w-full max-w-md">
-                    {/* Header */}
-                    <div className="mb-8 text-center">
-                        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 shadow-lg shadow-amber-300/20">
-                            <Mail className="h-10 w-10 text-slate-950" />
-                        </div>
-                        <h1 className="mb-2 text-3xl font-bold text-white">Vérifiez votre email</h1>
-                        <p className="text-slate-400">
-                            Un code de vérification a été envoyé à<br />
-                            <span className="font-semibold text-amber-300">{email}</span>
-                        </p>
+                    <div className="flex gap-2">
+                        {code.map((digit, index) => (
+                            <input
+                                key={index}
+                                ref={(el) => {
+                                    inputRefs.current[index] = el;
+                                }}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={digit}
+                                onChange={(e) => handleCodeChange(index, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(index, e)}
+                                onPaste={index === 0 ? handlePaste : undefined}
+                                disabled={isVerifying}
+                                className={`h-12 w-full rounded-lg border text-center text-xl font-semibold transition-all ${
+                                    verificationError
+                                        ? 'border-red-300 bg-red-50 text-red-700'
+                                        : digit
+                                          ? 'border-amber-300 bg-amber-50 text-amber-800'
+                                          : 'border-[#cfc3ac] bg-white text-slate-800'
+                                } focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200`}
+                                autoFocus={index === 0}
+                            />
+                        ))}
                     </div>
 
-                    {/* Form Card */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
-                        <form onSubmit={submit} className="space-y-6">
-                            {/* Code Input */}
-                            <div>
-                                <label className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-200">
-                                    <Shield className="h-4 w-4 text-amber-300" />
-                                    Entrez le code à 6 chiffres
-                                </label>
-                                <div className="flex gap-2">
-                                    {code.map((digit, index) => (
-                                        <input
-                                            key={index}
-                                            ref={el => inputRefs.current[index] = el}
-                                            type="text"
-                                            inputMode="numeric"
-                                            maxLength={1}
-                                            value={digit}
-                                            onChange={(e) => handleCodeChange(index, e.target.value)}
-                                            onKeyDown={(e) => handleKeyDown(index, e)}
-                                            onPaste={index === 0 ? handlePaste : undefined}
-                                            disabled={isVerifying}
-                                            className={`h-14 w-full rounded-lg border text-center text-2xl font-bold transition-all ${
-                                                verificationError
-                                                    ? 'border-red-500/50 bg-red-500/10 text-red-400'
-                                                    : digit
-                                                    ? 'border-amber-300/50 bg-amber-300/10 text-amber-300'
-                                                    : 'border-white/15 bg-slate-900/70 text-slate-200'
-                                            } focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300/50 disabled:opacity-50`}
-                                            autoFocus={index === 0}
-                                        />
-                                    ))}
-                                </div>
-                                
-                                {verificationError && (
-                                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2">
-                                        <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-400" />
-                                        <p className="text-sm text-red-400">{verificationError}</p>
-                                    </div>
-                                )}
+                    {verificationError && (
+                        <p className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{verificationError}</p>
+                    )}
 
-                                {resendSuccess && (
-                                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2">
-                                        <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-400" />
-                                        <p className="text-sm text-green-400">Un nouveau code a été envoyé !</p>
-                                    </div>
-                                )}
-                            </div>
+                    {resendSuccess && (
+                        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Un nouveau code a ete envoye.</p>
+                    )}
 
-                            {/* Submit Button */}
+                    <PrimaryButton
+                        type="submit"
+                        disabled={code.join('').length !== 6 || isVerifying}
+                        className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800"
+                    >
+                        {isVerifying ? 'Verification...' : 'Verifier'}
+                    </PrimaryButton>
+
+                    <div className="text-center">
+                        {canResend && resendCooldown === 0 ? (
                             <button
-                                type="submit"
-                                disabled={code.join('').length !== 6 || isVerifying}
-                                className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 px-6 py-3 text-base font-semibold text-slate-950 shadow-lg shadow-amber-300/20 transition-all hover:shadow-xl hover:shadow-amber-300/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                                type="button"
+                                onClick={handleResend}
+                                disabled={isResending}
+                                className="inline-flex items-center gap-2 text-sm text-slate-700 underline underline-offset-4 transition hover:text-slate-900"
                             >
-                                {isVerifying ? (
-                                    <>
-                                        <RefreshCw className="h-5 w-5 animate-spin" />
-                                        Vérification en cours...
-                                    </>
-                                ) : (
-                                    <>
-                                        Vérifier
-                                        <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                                    </>
-                                )}
+                                <RefreshCw className={`size-4 ${isResending ? 'animate-spin' : ''}`} />
+                                Renvoyer le code
                             </button>
-
-                            {/* Divider */}
-                            <div className="relative">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-white/10" />
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-slate-900 px-2 text-slate-500">Ou</span>
-                                </div>
-                            </div>
-
-                            {/* Resend Code */}
-                            <div className="text-center">
-                                {canResend && resendCooldown === 0 ? (
-                                    <button
-                                        type="button"
-                                        onClick={handleResend}
-                                        disabled={processing}
-                                        className="inline-flex items-center gap-2 text-sm font-medium text-amber-300 transition-colors hover:text-amber-200"
-                                    >
-                                        <RefreshCw className="h-4 w-4" />
-                                        Renvoyer le code
-                                    </button>
-                                ) : resendCooldown > 0 ? (
-                                    <p className="text-sm text-slate-500">
-                                        Renvoyer le code dans{' '}
-                                        <span className="font-semibold text-amber-300">{resendCooldown}s</span>
-                                    </p>
-                                ) : (
-                                    <p className="text-sm text-slate-500">Vérifiez votre boîte de réception</p>
-                                )}
-                            </div>
-                        </form>
-
-                        {/* Info Box */}
-                        <div className="mt-6 rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
-                            <p className="text-xs text-blue-300">
-                                <strong>💡 Astuce :</strong> Vérifiez également votre dossier spam ou courrier indésirable.
-                                Le code expire dans 15 minutes.
+                        ) : resendCooldown > 0 ? (
+                            <p className="text-sm text-slate-600">
+                                Nouveau code dans <span className="font-semibold text-amber-700">{resendCooldown}s</span>
                             </p>
-                        </div>
+                        ) : (
+                            <p className="text-sm text-slate-600">Consultez votre boite de reception</p>
+                        )}
                     </div>
-
-                    {/* Footer */}
-                    <p className="mt-6 text-center text-sm text-slate-500">
-                        Besoin d'aide ?{' '}
-                        <a href="#" className="font-medium text-amber-300 hover:text-amber-200">
-                            Contactez le support
-                        </a>
-                    </p>
-                </div>
-            </div>
-        </GuestLayout>
+                </form>
+            </AuthSplitLayout>
+        </>
     );
 }

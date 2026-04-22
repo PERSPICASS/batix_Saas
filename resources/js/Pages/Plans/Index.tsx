@@ -108,7 +108,7 @@ export default function Index({ plans, auth }: PlansProps) {
                 </div>
 
                 {/* Grille des plans - Style Landing Page */}
-                <div className="grid gap-4 lg:grid-cols-4">
+                <div className="grid gap-4 lg:grid-cols-3">
                     {plans.map((plan) => {
                         const features = getPlanFeatures(plan);
                         const isCurrent = isCurrentPlan(plan.slug);

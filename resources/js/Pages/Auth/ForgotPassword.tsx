@@ -1,9 +1,11 @@
+import AuthSplitLayout from '@/Components/AuthSplitLayout';
 import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { Mail } from 'lucide-react';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -12,55 +14,57 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-
         post(route('password.email'));
     };
 
     return (
-        <GuestLayout>
+        <>
             <Head title="Mot de passe oublie" />
 
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-white">Mot de passe oublie</h1>
-                <p className="mt-1 text-sm text-slate-300">
-                    Renseigne ton email pour recevoir un lien de reinitialisation.
-                </p>
-                <Link
-                    href="/"
-                    className="mt-3 inline-flex text-sm text-amber-200 underline underline-offset-4 transition hover:text-amber-100"
-                >
-                    Retour a l'accueil
-                </Link>
-            </div>
+            <AuthSplitLayout
+                title="Recuperez votre acces"
+                description="Renseignez votre email et nous vous envoyons un lien de reinitialisation en quelques secondes."
+                icon={<Mail className="size-5" />}
+                topLink={{ href: '/', label: "Retour a l'accueil" }}
+                sideStepLabel="Recuperation"
+                sideTitle="Une etape simple pour repartir rapidement."
+                sideDescription="Gardez l'acces a votre compte meme en cas d'oubli de mot de passe."
+            >
+                {status && (
+                    <div className="mb-3 rounded-lg border border-emerald-300/60 bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800">
+                        {status}
+                    </div>
+                )}
 
-            {status && (
-                <div className="mb-4 rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-sm font-medium text-emerald-200">
-                    {status}
-                </div>
-            )}
+                <form onSubmit={submit} className="space-y-3">
+                    <div>
+                        <InputLabel htmlFor="email" value="Email" className="text-slate-700" />
+                        <TextInput
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={data.email}
+                            className="mt-1 block w-full border border-[#cfc3ac] bg-white text-slate-900 placeholder-slate-400"
+                            isFocused={true}
+                            onChange={(e) => setData('email', e.target.value)}
+                            placeholder="jean@exemple.com"
+                        />
+                        <InputError message={errors.email} className="mt-2" />
+                    </div>
 
-            <form onSubmit={submit}>
-                <TextInput
-                    id="email"
-                    type="email"
-                    name="email"
-                    value={data.email}
-                    className="mt-1 block w-full border-white/15 bg-slate-900/70 text-white placeholder:text-slate-400 focus:border-amber-300 focus:ring-amber-300"
-                    isFocused={true}
-                    onChange={(e) => setData('email', e.target.value)}
-                />
+                    <div className="space-y-2 pt-1">
+                        <PrimaryButton className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800" disabled={processing}>
+                            Envoyer le lien
+                        </PrimaryButton>
 
-                <InputError message={errors.email} className="mt-2" />
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton
-                        className="ms-4 border-0 bg-amber-300 text-slate-950 hover:bg-amber-200 focus:bg-amber-200 focus:ring-amber-300 focus:ring-offset-slate-950 active:bg-amber-300"
-                        disabled={processing}
-                    >
-                        Envoyer le lien
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+                        <div className="text-center">
+                            <Link href={route('login')} className="text-xs text-slate-600 underline underline-offset-4 transition hover:text-slate-900 sm:text-sm">
+                                Retour a la connexion
+                            </Link>
+                        </div>
+                    </div>
+                </form>
+            </AuthSplitLayout>
+        </>
     );
 }
