@@ -8,7 +8,7 @@ export default function ApplicationLogo(props: SVGAttributes<SVGElement>) {
                 <HardHat className="size-5" />
             </div>
             <div>
-                <p className="text-sm font-bold tracking-wide text-slate-900">BATIX SAAS</p>
+                <p className="text-sm font-bold tracking-wide text-slate-900">BATIX PRO</p>
                 <p className="text-xs text-slate-600">Gestion moderne des quincailleries</p>
             </div>
         </div>

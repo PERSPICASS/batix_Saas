@@ -435,7 +435,7 @@ export default function Authenticated({
                             </div>
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-600 dark:text-amber-200">
-                                    Batix SaaS
+                                    BATIX PRO
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                     Gestion moderne de quincaillerie

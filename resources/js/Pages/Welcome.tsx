@@ -1,8 +1,8 @@
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { copy, fallbackPlansByLocale, faqsByLocale, featuresByLocale, heroSlides, trustMarksByLocale } from '@/Components/Welcome/data';
-import type { Locale, PlanView, SubscriptionPlan } from '@/Components/Welcome/types';
+import { copy, fallbackPlansByLocale, faqsByLocale, featuresByLocale, heroSlides, trustMarksByLocale } from '@/types/data';
+import type { Locale, PlanView, SubscriptionPlan } from '@/types/types';
 import ContactSection from '@/Components/Welcome/ContactSection';
 import DemoSection from '@/Components/Welcome/DemoSection';
 import FaqSection from '@/Components/Welcome/FaqSection';

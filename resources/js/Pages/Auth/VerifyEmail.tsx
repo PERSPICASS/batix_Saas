@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/react';
 import { FormEventHandler, KeyboardEvent, ClipboardEvent, useEffect, useRef, useState } from 'react';
 import { MailCheck, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import axios from 'axios';
 
 interface Props {
     email: string;
@@ -74,27 +75,18 @@ export default function VerifyEmail({ email, canResend }: Props) {
         setVerificationError('');
 
         try {
-            const response = await fetch(route('verification.code.verify'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ code: verificationCode }),
+            const { data } = await axios.post(route('verification.code.verify'), {
+                code: verificationCode,
             });
 
-            const payload = await response.json();
-
-            if (response.ok) {
-                window.location.href = payload.redirect;
-                return;
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            } else if (data.step === 3) {
+                window.location.href = route('shop.create.initial');
             }
-
-            setVerificationError(payload.message || 'Code invalide. Veuillez reessayer.');
-            setCode(['', '', '', '', '', '']);
-            inputRefs.current[0]?.focus();
-        } catch {
-            setVerificationError('Une erreur est survenue. Veuillez reessayer.');
+        } catch (error: any) {
+            const message = error?.response?.data?.message || 'Code invalide. Veuillez reessayer.';
+            setVerificationError(message);
             setCode(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
         } finally {
@@ -122,17 +114,7 @@ export default function VerifyEmail({ email, canResend }: Props) {
         setIsResending(true);
 
         try {
-            const response = await fetch(route('verification.code.resend'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('RESEND_FAILED');
-            }
+            await axios.post(route('verification.code.resend'));
 
             setResendSuccess(true);
             setCode(['', '', '', '', '', '']);

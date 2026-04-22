@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, PlayCircle } from 'lucide-react';
-import { fadeUp, stagger } from './data';
-import type { Locale } from './types';
+import { fadeUp, stagger } from '../../types/data';
+import type { Locale } from '../../types/types';
 
 interface DemoSectionProps {
     locale: Locale;
