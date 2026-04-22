@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check } from 'lucide-react';
-import { fadeUp, stagger } from './data';
-import type { PlanView } from './types';
+import { fadeUp, stagger } from '../../types/data';
+import type { PlanView } from '../../types/types';
 
 interface PricingSectionProps {
     pricingTitle: string;

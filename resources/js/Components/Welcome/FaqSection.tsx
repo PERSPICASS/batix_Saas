@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { CircleHelp } from 'lucide-react';
-import { fadeUp, stagger } from './data';
-import type { Locale } from './types';
+import { fadeUp, stagger } from '../../types/data';
+import type { Locale } from '../../types/types';
 
 interface FaqItem {
     question: string;

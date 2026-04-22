@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { HardHat } from 'lucide-react';
-import type { Locale } from './types';
-import { copy } from './data';
+import type { Locale } from '../../types/types';
+import { copy } from '../../types/data';
 
 interface WelcomeHeaderProps {
     locale: Locale;
@@ -23,7 +23,7 @@ export default function WelcomeHeader({ locale, setLocale, scrolled, getDashboar
                         <HardHat className="size-5" />
                     </div>
                     <div>
-                        <p className="text-sm font-bold tracking-wide text-slate-900">BATIX SAAS</p>
+                        <p className="text-sm font-bold tracking-wide text-slate-900">BATIX PRO</p>
                         <p className="text-xs text-slate-600">{t.brandSubtitle}</p>
                     </div>
                 </div>

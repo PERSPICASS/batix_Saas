@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import featuresBackground from '/resources/images/various-repair-tools-for-sale-on-hardware-store-sh-2026-03-17-21-44-06-utc.jpg';
-import { fadeUp, stagger } from './data';
-import type { FeatureItem, Locale } from './types';
+import { fadeUp, stagger } from '../../types/data';
+import type { FeatureItem, Locale } from '../../types/types';
 
 interface FeaturesSectionProps {
     locale: Locale;

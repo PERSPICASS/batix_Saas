@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, PlayCircle, Sparkles } from 'lucide-react';
-import { fadeUp, heroSlides, stagger } from './data';
-import type { HeroSlide, Locale } from './types';
+import { fadeUp, heroSlides, stagger } from '../../types/data';
+import type { HeroSlide, Locale } from '../../types/types';
 
 interface HeroSectionProps {
     locale: Locale;
