@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Fond arrondi amber -->
+  <rect width="32" height="32" rx="7" fill="#FBBF24"/>
+
+  <!-- Casque de chantier (hardhat) stylisé -->
+  <!-- Calotte du casque -->
+  <path d="M16 7C11.5 7 8 10.2 8 14v1h16v-1c0-3.8-3.5-7-8-7z" fill="#1E293B"/>
+  <!-- Bord du casque -->
+  <rect x="6" y="15" width="20" height="2.5" rx="1.25" fill="#1E293B"/>
+  <!-- Bandeau central -->
+  <rect x="14.5" y="7" width="3" height="8" rx="1" fill="#FBBF24"/>
+</svg>
