@@ -24,7 +24,7 @@ export const stagger = {
 // ─── Textes par locale ─────────────────────────────────────────────────────
 export const copy = {
     fr: {
-        title: 'Batix SaaS | Gestion de quincaillerie plus humaine',
+        title: 'BATIX PRO | Gestion de quincaillerie plus humaine',
         brandSubtitle: 'Gestion moderne des quincailleries',
         nav: {
             demo: 'Demo',
@@ -42,7 +42,7 @@ export const copy = {
             badge: 'Concu pour les equipes terrain',
             title: 'Transformez chaque journee en ventes mieux maitrisees.',
             description:
-                'Batix fluidifie le comptoir, fiabilise le stock et donne aux gerants une vision claire pour decider vite et bien.',
+                'BATIX PRO fluidifie le comptoir, fiabilise le stock et donne aux gerants une vision claire pour decider vite et bien.',
             primary: 'Demarrer mon essai',
             secondary: 'Voir la video demo',
             helper: 'Sans carte bancaire, prise en main rapide.',
@@ -54,11 +54,11 @@ export const copy = {
         ],
         socialProof: 'Des equipes quincaillerie qui veulent aller plus vite',
         demo: {
-            title: 'Voyez Batix en action en 2 minutes',
+            title: 'Voyez BATIX PRO en action en 2 minutes',
             description:
                 'Une demo claire pour voir comment une vente, un mouvement de stock et un reporting se passent dans la vraie vie.',
             cta: 'Creer mon compte maintenant',
-            videoTitle: 'Video demo Batix',
+            videoTitle: 'Video demo BATIX PRO',
             videoHint: 'Remplacez cette video par votre demo produit finale si besoin.',
             videoUrl: 'https://www.youtube.com/embed/M7lc1UVf-VE',
         },
@@ -78,11 +78,11 @@ export const copy = {
                 'Passez d une gestion reactive a une gestion sereine avec une plateforme pensee pour des equipes reelles.',
             cta: 'Lancer mon essai gratuit',
         },
-        footerText: 'Batix SaaS, une gestion quincaillerie plus simple.',
+        footerText: 'BATIX PRO, une gestion quincaillerie plus simple.',
         langLabel: 'Langue',
     },
     en: {
-        title: 'Batix SaaS | More Human Hardware Store Management',
+        title: 'BATIX PRO | More Human Hardware Store Management',
         brandSubtitle: 'Modern hardware store operations',
         nav: {
             demo: 'Demo',
@@ -100,7 +100,7 @@ export const copy = {
             badge: 'Built for real field teams',
             title: 'Turn daily operations into controlled, profitable growth.',
             description:
-                'Batix streamlines checkout, secures stock accuracy, and gives managers the clarity to move faster with confidence.',
+                'BATIX PRO streamlines checkout, secures stock accuracy, and gives managers the clarity to move faster with confidence.',
             primary: 'Start my free trial',
             secondary: 'Watch demo video',
             helper: 'No credit card required, quick onboarding.',
@@ -112,11 +112,11 @@ export const copy = {
         ],
         socialProof: 'Chosen by hardware teams that want to move faster',
         demo: {
-            title: 'See Batix in action in 2 minutes',
+            title: 'See BATIX PRO in action in 2 minutes',
             description:
                 'A short walkthrough showing checkout, stock movements, and reporting in a real workflow.',
             cta: 'Create my account now',
-            videoTitle: 'Batix demo video',
+            videoTitle: 'BATIX PRO demo video',
             videoHint: 'Swap this placeholder with your final product demo if needed.',
             videoUrl: 'https://www.youtube.com/embed/M7lc1UVf-VE',
         },
@@ -136,7 +136,7 @@ export const copy = {
                 'Move from reactive operations to a calm, controlled workflow built for real teams.',
             cta: 'Start my free trial',
         },
-        footerText: 'Batix SaaS, simpler and more human hardware management.',
+        footerText: 'BATIX PRO, simpler and more human hardware management.',
         langLabel: 'Language',
     },
 };
@@ -423,11 +423,11 @@ const getHeroCaptionFromPath = (path: string): Record<Locale, { title: string; d
     return {
         fr: {
             title: 'Faites passer votre quincaillerie a un niveau superieur',
-            description: 'Batix relie ventes, stock et equipes dans une interface unique pour accelerer vos operations sans chaos.',
+            description: 'BATIX PRO relie ventes, stock et equipes dans une interface unique pour accelerer vos operations sans chaos.',
         },
         en: {
             title: 'Take your hardware operations to the next level',
-            description: 'Batix connects sales, stock, and team workflows in one interface to scale faster with less chaos.',
+            description: 'BATIX PRO connects sales, stock, and team workflows in one interface to scale faster with less chaos.',
         },
     };
 };
