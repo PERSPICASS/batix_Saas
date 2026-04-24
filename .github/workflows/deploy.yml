@@ -27,28 +27,18 @@ jobs:
             git fetch origin prod
             git reset --hard origin/prod
 
-            echo "=== 2. Start containers ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            echo "=== 2. Rebuild containers ==="
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
 
-            echo "=== 3. Clean old build ==="
-            rm -rf public/build
-
-            echo "=== 4. Build frontend CLEAN ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm node sh -lc "
-              node -v
-              npm -v
-
-              rm -rf node_modules package-lock.json
-
-              npm install
-
-              npm run build
-            "
-
-            echo "=== 5. Laravel migrate ==="
+            echo "=== 3. Laravel migrate ==="
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan migrate --force
 
-            echo "=== 6. Clear cache ==="
+            echo "=== 4. Clear and optimize cache ==="
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan optimize:clear
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan optimize
+
+            echo "=== 5. Verify build ==="
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app ls -la public/build
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T nginx ls -la /var/www/html/public/build || true
 
             echo "=== Deploy SUCCESS ==="
