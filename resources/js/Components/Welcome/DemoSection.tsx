@@ -35,7 +35,7 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
     return (
         <motion.section
             id="demo"
-            className="w-full scroll-mt-24 bg-[#efe6d8] py-10 md:py-14"
+            className="w-full scroll-mt-24 bg-white py-10 md:py-14"
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.15 }}
@@ -72,7 +72,7 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                                         className="flex w-full items-center gap-3 px-5 py-4 text-left"
                                     >
                                         {/* Numéro */}
-                                        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isOpen ? 'bg-amber-300 text-slate-900' : 'bg-[#e8ddd0] text-slate-600'}`}>
+                                        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isOpen ? 'bg-amber-300 text-slate-900' : 'bg-slate-100 text-slate-600'}`}>
                                             {index + 1}
                                         </span>
 
@@ -123,7 +123,7 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                         <div className="pt-3">
                             <Link
                                 href={getDashboardUrl()}
-                                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-800"
+                                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-bold text-slate-900 shadow-sm transition hover:bg-amber-300"
                             >
                                 {t.demo.cta}
                                 <ArrowRight className="size-4" />

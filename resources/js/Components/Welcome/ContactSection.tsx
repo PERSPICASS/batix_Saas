@@ -14,7 +14,7 @@ export default function ContactSection({ t, getDashboardUrl }: ContactSectionPro
     return (
         <motion.section
             id="contact"
-            className="w-full scroll-mt-24 bg-[#f9f5ef] bg-cover bg-center py-10 md:py-14"
+            className="w-full scroll-mt-24 bg-[#f5efe4] bg-cover bg-center py-10 md:py-14"
             style={{ backgroundImage: `linear-gradient(120deg, rgba(15, 23, 42, 0.76), rgba(51, 65, 85, 0.58)), url(${contactBackground})` }}
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}

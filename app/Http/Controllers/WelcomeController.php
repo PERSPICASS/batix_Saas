@@ -48,6 +48,7 @@ class WelcomeController extends Controller
             'laravelVersion' => Application::VERSION,
             'phpVersion' => PHP_VERSION,
             'subscriptionPlans' => $plans,
+            'appUrl' => rtrim(config('app.url'), '/'),
         ]);
     }
 }

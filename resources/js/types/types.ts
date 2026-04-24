@@ -24,6 +24,13 @@ export type HeroSlide = {
     caption: Record<Locale, { title: string; description: string }>;
 };
 
+export type Testimonial = {
+    quote: string;
+    name: string;
+    role: string;
+    location: string;
+};
+
 export interface SubscriptionPlan {
     id: number;
     name: string;
