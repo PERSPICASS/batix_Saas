@@ -2,20 +2,18 @@ import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, PlayCircle, Sparkles } from 'lucide-react';
 import { fadeUp, heroSlides, stagger } from '../../types/data';
-import type { HeroSlide, Locale } from '../../types/types';
+import type { Locale } from '../../types/types';
 
 interface HeroSectionProps {
     locale: Locale;
     t: {
         hero: { badge: string; primary: string; secondary: string; helper: string };
         quickPoints: string[];
-        socialProof: string;
         stats: { label: string; value: string }[];
     };
     heroHeadline: string;
     heroDescription: string;
     activeHeroSlide: number;
-    trustMarks: string[];
     getDashboardUrl: () => string;
     setActiveHeroSlide: (i: number) => void;
 }
@@ -26,7 +24,6 @@ export default function HeroSection({
     heroHeadline,
     heroDescription,
     activeHeroSlide,
-    trustMarks,
     getDashboardUrl,
     setActiveHeroSlide,
 }: HeroSectionProps) {
@@ -68,21 +65,21 @@ export default function HeroSection({
                         <div className="mt-8 flex flex-wrap items-center gap-3">
                             <Link
                                 href={getDashboardUrl()}
-                                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-6 py-3.5 font-bold text-white shadow-md transition hover:bg-slate-700 hover:shadow-lg"
+                                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 font-bold text-slate-900 shadow-md transition hover:bg-amber-300 hover:shadow-lg"
                             >
                                 {t.hero.primary}
                                 <ArrowRight className="size-4" />
                             </Link>
                             <a
                                 href="#demo"
-                                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-6 py-3.5 font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50"
+                                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
                             >
                                 <PlayCircle className="size-4 text-amber-600" />
                                 {t.hero.secondary}
                             </a>
                         </div>
 
-                        <p className="mt-3 text-xs text-slate-400">{t.hero.helper}</p>
+                        <p className="mt-3 text-xs text-slate-500">{t.hero.helper}</p>
 
                         <ul className="mt-8 space-y-2.5">
                             {t.quickPoints.map((point) => (
@@ -118,14 +115,15 @@ export default function HeroSection({
                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-900/15 to-transparent" />
 
                                 <div className="absolute bottom-5 left-5 right-5">
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-200">{t.socialProof}</p>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {trustMarks.map((brand) => (
-                                            <span key={brand} className="rounded-full border border-white/30 bg-black/30 px-3 py-1 text-xs font-medium text-white">
-                                                {brand}
-                                            </span>
-                                        ))}
-                                    </div>
+                                    <motion.p
+                                        key={`caption-${activeHeroSlide}`}
+                                        initial={{ opacity: 0, y: 6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="text-sm font-semibold leading-snug text-white drop-shadow"
+                                    >
+                                        {heroHeadline}
+                                    </motion.p>
                                 </div>
 
                                 <div className="absolute right-4 top-4">

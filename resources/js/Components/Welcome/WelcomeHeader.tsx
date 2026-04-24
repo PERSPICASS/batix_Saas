@@ -66,7 +66,7 @@ export default function WelcomeHeader({ locale, setLocale, scrolled, getDashboar
                             <Link href={route('login')} className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
                                 {t.auth.login}
                             </Link>
-                            <Link href={route('register')} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+                            <Link href={route('register')} className="rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-amber-300">
                                 {t.auth.trial}
                             </Link>
                         </>

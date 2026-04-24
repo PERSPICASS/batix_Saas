@@ -9,17 +9,18 @@ import FaqSection from '@/Components/Welcome/FaqSection';
 import FeaturesSection from '@/Components/Welcome/FeaturesSection';
 import HeroSection from '@/Components/Welcome/HeroSection';
 import PricingSection from '@/Components/Welcome/PricingSection';
+import TestimonialsSection from '@/Components/Welcome/TestimonialsSection';
 import WelcomeFooter from '@/Components/Welcome/WelcomeFooter';
 import WelcomeHeader from '@/Components/Welcome/WelcomeHeader';
 
 interface WelcomeProps extends PageProps {
     subscriptionPlans: SubscriptionPlan[];
+    appUrl: string;
 }
 
-export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
+export default function Welcome({ auth, subscriptionPlans, appUrl }: WelcomeProps) {
     const [locale, setLocale] = useState<Locale>('fr');
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
-    const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
     const [scrolled, setScrolled] = useState(false);
 
     // ── Scroll detection ───────────────────────────────────────────────────
@@ -68,7 +69,6 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
     }, [subscriptionPlans]);
 
     const hasDynamicPlans = filteredSubscriptionPlans.length > 0;
-    const maxFeatureIndex = Math.max(features.length - 1, 0);
 
     const plans = useMemo<PlanView[]>(() => {
         if (filteredSubscriptionPlans.length === 0) return fallbackPlansByLocale[locale];
@@ -125,22 +125,91 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
         return () => window.clearInterval(timer);
     }, []);
 
-    // ── Feature auto-advance ───────────────────────────────────────────────
-    useEffect(() => {
-        setActiveFeatureIndex((current) => Math.min(current, maxFeatureIndex));
-    }, [maxFeatureIndex]);
+    const canonicalUrl = appUrl || 'https://batixpro.com';
+    const ogImage = `${canonicalUrl}${t.seo.ogImage}`;
+    const ogLocale = locale === 'fr' ? 'fr_FR' : 'en_US';
+    const ogLocaleAlt = locale === 'fr' ? 'en_US' : 'fr_FR';
 
-    useEffect(() => {
-        if (features.length <= 1) return;
-        const timer = window.setInterval(() => {
-            setActiveFeatureIndex((current) => (current >= maxFeatureIndex ? 0 : current + 1));
-        }, 4200);
-        return () => window.clearInterval(timer);
-    }, [features.length, maxFeatureIndex]);
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'Organization',
+                '@id': `${canonicalUrl}/#organization`,
+                name: 'BATIX PRO',
+                url: canonicalUrl,
+                logo: {
+                    '@type': 'ImageObject',
+                    url: `${canonicalUrl}/favicon.svg`,
+                },
+                sameAs: [],
+                contactPoint: {
+                    '@type': 'ContactPoint',
+                    contactType: 'customer support',
+                    availableLanguage: ['French', 'English'],
+                },
+            },
+            {
+                '@type': 'WebSite',
+                '@id': `${canonicalUrl}/#website`,
+                url: canonicalUrl,
+                name: 'BATIX PRO',
+                description: t.seo.description,
+                publisher: { '@id': `${canonicalUrl}/#organization` },
+                inLanguage: locale === 'fr' ? 'fr-FR' : 'en-US',
+            },
+            {
+                '@type': 'SoftwareApplication',
+                name: 'BATIX PRO',
+                applicationCategory: 'BusinessApplication',
+                operatingSystem: 'Web',
+                offers: {
+                    '@type': 'AggregateOffer',
+                    priceCurrency: 'EUR',
+                    lowPrice: '0',
+                    offerCount: '4',
+                },
+                description: t.seo.description,
+                url: canonicalUrl,
+            },
+        ],
+    };
 
     return (
         <>
-            <Head title={t.title} />
+            <Head>
+                <title>{t.title}</title>
+                <meta name="description" content={t.seo.description} />
+                <meta name="keywords" content={t.seo.keywords} />
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href={canonicalUrl} />
+
+                {/* Hreflang */}
+                <link rel="alternate" hrefLang="fr" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="en" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+
+                {/* Open Graph */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={canonicalUrl} />
+                <meta property="og:title" content={t.title} />
+                <meta property="og:description" content={t.seo.description} />
+                <meta property="og:image" content={ogImage} />
+                <meta property="og:image:width" content="1200" />
+                <meta property="og:image:height" content="630" />
+                <meta property="og:site_name" content="BATIX PRO" />
+                <meta property="og:locale" content={ogLocale} />
+                <meta property="og:locale:alternate" content={ogLocaleAlt} />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={t.title} />
+                <meta name="twitter:description" content={t.seo.description} />
+                <meta name="twitter:image" content={ogImage} />
+
+                {/* JSON-LD */}
+                <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+            </Head>
             <div className="relative min-h-screen overflow-x-clip bg-[#f9f5ef] text-slate-900 selection:bg-amber-300 selection:text-slate-900">
                 <div className="pointer-events-none absolute inset-0 -z-10">
                     <div className="h-full w-full bg-gradient-to-br from-[#fdf8f0] via-[#f9f5ef] to-[#f2ebe0]" />
@@ -161,7 +230,6 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
                             heroHeadline={heroHeadline}
                             heroDescription={heroDescription}
                             activeHeroSlide={activeHeroSlide}
-                            trustMarks={trustMarks}
                             getDashboardUrl={getDashboardUrl}
                             setActiveHeroSlide={setActiveHeroSlide}
                         />
@@ -170,8 +238,6 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
                             locale={locale}
                             featuresTitle={t.featuresTitle}
                             features={features}
-                            activeFeatureIndex={activeFeatureIndex}
-                            setActiveFeatureIndex={setActiveFeatureIndex}
                         />
 
                         <DemoSection
@@ -180,14 +246,34 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
                             getDashboardUrl={getDashboardUrl}
                         />
 
+                        <TestimonialsSection
+                            locale={locale}
+                            promises={t.promises}
+                            trustReasons={t.trustReasons}
+                        />
+
                         <PricingSection
                             pricingTitle={t.pricingTitle}
+                            pricingLabel={t.pricingLabel}
                             pricingFallback={t.pricingFallback}
                             planCta={t.planCta}
                             plans={plans}
                             hasDynamicPlans={hasDynamicPlans}
                             getDashboardUrl={getDashboardUrl}
                         />
+
+                        {/* ── Séparateur Pricing / FAQ ── */}
+                        <div className="bg-slate-900 px-6 lg:px-8">
+                            <div className="mx-auto max-w-7xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-amber-400/60" />
+                                    <span className="shrink-0 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-400">
+                                        FAQ
+                                    </span>
+                                    <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-700 to-amber-400/60" />
+                                </div>
+                            </div>
+                        </div>
 
                         <FaqSection
                             locale={locale}
