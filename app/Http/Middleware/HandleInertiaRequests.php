@@ -7,96 +7,133 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that is loaded on the first page visit.
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determine the current asset version.
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
-        $shop = current_shop();
         $user = $request->user();
-        
-        // Déterminer le code_user du compte (propriétaire)
+
+        // Pages publiques : partager le strict minimum
+        if (!$user) {
+            return [
+                ...parent::share($request),
+                'auth' => ['user' => null, 'code_user' => null],
+                'flash' => [
+                    'success' => fn () => $request->session()->get('success'),
+                    'error'   => fn () => $request->session()->get('error'),
+                    'warning' => fn () => $request->session()->get('warning'),
+                    'info'    => fn () => $request->session()->get('info'),
+                ],
+                'csrf_token' => csrf_token(),
+            ];
+        }
+
+        // ── Calcul paresseux (lazy) du code_user propriétaire ──────────────
         $accountCode = null;
-        if ($user) {
-            if ($user->role === 'super_admin') {
-                $accountCode = $user->code_user;
-            } else {
-                // Trouver le propriétaire via la boutique
-                $userShop = $user->shop; // Relation belongsTo
-                
-                if (!$userShop && $user->shop_id) {
-                    // Charger explicitement si pas déjà chargé
-                    $userShop = \App\Models\Shop::find($user->shop_id);
-                }
-                
-                if ($userShop) {
-                    $owner = \App\Models\User::find($userShop->user_id);
-                    $accountCode = $owner ? $owner->code_user : null;
+        if ($user->role === 'super_admin') {
+            $accountCode = $user->code_user;
+        } else {
+            $shopId = $user->shop_id;
+            if ($shopId) {
+                // Une seule requête SQL : on récupère juste user_id du shop
+                $ownerId = \App\Models\Shop::where('id', $shopId)->value('user_id');
+                if ($ownerId) {
+                    $accountCode = \App\Models\User::where('id', $ownerId)->value('code_user');
                 }
             }
         }
-        
+
+        // ── Boutique active (calculée une seule fois) ──────────────────────
+        $shop = current_shop();
+        $activeShopData = $shop ? [
+            'id'   => $shop->id,
+            'name' => $shop->name,
+            'slug' => $shop->slug,
+        ] : null;
+
+        // ── Permissions : uniquement les colonnes utiles ───────────────────
+        $userForAuth = [
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'role'       => $user->role,
+            'code_user'  => $user->code_user,
+            'shop_id'    => $user->shop_id,
+            'avatar'     => $user->avatar ?? null,
+            'shop'       => $user->shop ? [
+                'id'      => $user->shop->id,
+                'name'    => $user->shop->name,
+                'slug'    => $user->shop->slug,
+                'address' => $user->shop->address ?? null,
+                'city'    => $user->shop->city ?? null,
+                'phone'   => $user->shop->phone ?? null,
+            ] : null,
+            // Permissions : tableau d'objets (format attendu par Profile/Edit et AuthenticatedLayout)
+            'permissions' => $user->role === 'admin_platforme'
+                ? []
+                : $user->permissions()
+                    ->select('id', 'module', 'can_view', 'can_create', 'can_edit', 'can_delete')
+                    ->get()
+                    ->map(fn($p) => [
+                        'id'         => $p->id,
+                        'module'     => $p->module,
+                        'can_view'   => (bool) $p->can_view,
+                        'can_create' => (bool) $p->can_create,
+                        'can_edit'   => (bool) $p->can_edit,
+                        'can_delete' => (bool) $p->can_delete,
+                    ])
+                    ->values()
+                    ->toArray(),
+        ];
+
+        // ── Boutiques accessibles : colonnes minimales ─────────────────────
+        $shops = $user->role !== 'admin_platforme'
+            ? $user->accessibleShops()
+                ->map(fn($s) => [
+                    'id'        => $s->id,
+                    'name'      => $s->name,
+                    'slug'      => $s->slug,
+                    'is_active' => $s->is_active ?? true,
+                ])
+                ->values()
+                ->toArray()
+            : [];
+
+        // ── Subscription : lazy closure (calculée seulement si la page en a besoin) ──
+        $subscription = $user->role === 'super_admin'
+            ? fn () => $user->getSubscriptionLimits()
+            : null;
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $user ? $user->load(['shop', 'permissions']) : null,
-                'code_user' => $user?->code_user,
+                'user'      => $userForAuth,
+                'code_user' => $user->code_user,
             ],
-            'subscription' => $user && $user->role === 'super_admin' 
-                ? $user->getSubscriptionLimits()
-                : null,
-            'shops' => $user && $user->role !== 'admin_platforme' 
-                ? $user->accessibleShops()->map(function ($shop) {
-                    return [
-                        'id' => $shop->id,
-                        'name' => $shop->name,
-                        'slug' => $shop->slug,
-                        'is_active' => $shop->is_active ?? true,
-                    ];
-                })->values()->toArray() 
-                : [],
-            'activeShop' => current_shop() ? [
-                'id' => current_shop()->id,
-                'name' => current_shop()->name,
-                'slug' => current_shop()->slug,
-            ] : null,
-            'currentShop' => current_shop() ? [
-                'id' => current_shop()->id,
-                'name' => current_shop()->name,
-                'slug' => current_shop()->slug,
-            ] : null,
-            'routeParams' => [
-                'code_user' => $accountCode, // Code du propriétaire du compte
+            'subscription'  => $subscription,
+            'shops'         => $shops,
+            'activeShop'    => $activeShopData,
+            'currentShop'   => $activeShopData, // alias conservé pour compatibilité
+            'routeParams'   => [
+                'code_user' => $accountCode,
                 'shop_slug' => shop_slug(),
             ],
             'shopSettings' => $shop ? [
-                'currency' => $shop->currency,
-                'currency_symbol' => get_currency_symbol($shop->currency),
+                'currency'         => $shop->currency,
+                'currency_symbol'  => get_currency_symbol($shop->currency),
                 'default_tax_rate' => $shop->default_tax_rate,
-                'invoice_prefix' => $shop->invoice_prefix,
+                'invoice_prefix'   => $shop->invoice_prefix,
             ] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
+                'error'   => fn () => $request->session()->get('error'),
                 'warning' => fn () => $request->session()->get('warning'),
-                'info' => fn () => $request->session()->get('info'),
+                'info'    => fn () => $request->session()->get('info'),
             ],
             'csrf_token' => csrf_token(),
         ];
