@@ -40,38 +40,25 @@ router.on('error', (event) => {
     }
 });
 
-// Rafraîchir le token CSRF périodiquement pour les utilisateurs actifs
-let lastActivity = Date.now();
-let csrfRefreshInterval: number;
+// Intercepter les réponses 419 (session/CSRF expirés) — cas non capté par router.on('error')
+router.on('invalid', (event) => {
+    if (event.detail.response.status === 419) {
+        event.preventDefault();
+        // Recharger silencieusement la page pour obtenir un nouveau token CSRF
+        window.location.reload();
+    }
+});
 
+// Rafraîchir le token CSRF toutes les 30 minutes (actif ou inactif)
 const refreshCSRF = async () => {
     try {
-        await fetch('/sanctum/csrf-cookie', {
-            credentials: 'same-origin'
-        });
-    } catch (error) {
-        console.error('Erreur lors du rafraîchissement du token CSRF:', error);
+        await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' });
+    } catch {
+        // silencieux
     }
 };
 
-// Détecter l'activité de l'utilisateur
-const updateActivity = () => {
-    lastActivity = Date.now();
-};
-
-document.addEventListener('mousemove', updateActivity);
-document.addEventListener('keydown', updateActivity);
-document.addEventListener('click', updateActivity);
-document.addEventListener('scroll', updateActivity);
-
-// Rafraîchir le token toutes les 60 minutes si l'utilisateur est actif
-csrfRefreshInterval = window.setInterval(() => {
-    const timeSinceLastActivity = Date.now() - lastActivity;
-    // Si activité dans les dernières 5 minutes, rafraîchir le token
-    if (timeSinceLastActivity < 5 * 60 * 1000) {
-        refreshCSRF();
-    }
-}, 60 * 60 * 1000); // Toutes les 60 minutes
+window.setInterval(refreshCSRF, 30 * 60 * 1000); // toutes les 30 min
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
