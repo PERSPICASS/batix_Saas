@@ -98,6 +98,7 @@ class AssignFreePlan extends Command
             'status' => 'trial',
             'started_at' => $startDate,
             'expires_at' => $expiresAt,
+            'trial_ends_at' => $expiresAt,
             'amount' => 0,
         ]);
 

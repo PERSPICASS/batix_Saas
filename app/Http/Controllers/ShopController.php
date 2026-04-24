@@ -223,7 +223,8 @@ class ShopController extends Controller
                 'status' => 'trial',
                 'amount' => 0, // Plan gratuit
                 'started_at' => now(),
-                'expires_at' => now()->addDays(14), // 14 jours d'essai gratuit
+                'expires_at' => now()->addDays(14),
+                'trial_ends_at' => now()->addDays(14), // 14 jours d'essai gratuit
             ]);
         }
 
