@@ -27,18 +27,24 @@ jobs:
             git fetch origin prod
             git reset --hard origin/prod
 
-            echo "=== 2. Rebuild containers ==="
+            echo "=== 2. Stop containers ==="
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans
+
+            echo "=== 3. Delete public volume ==="
+            docker volume rm batix_prod_batix_public || true
+
+            echo "=== 4. Rebuild containers ==="
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
 
-            echo "=== 3. Laravel migrate ==="
+            echo "=== 5. Laravel migrate ==="
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan migrate --force
 
-            echo "=== 4. Clear and optimize cache ==="
+            echo "=== 6. Clear and optimize cache ==="
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan optimize:clear
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan optimize
 
-            echo "=== 5. Verify build ==="
+            echo "=== 7. Verify build ==="
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app ls -la public/build
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T nginx ls -la /var/www/html/public/build || true
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T nginx ls -la /var/www/html/public/build
 
             echo "=== Deploy SUCCESS ==="
