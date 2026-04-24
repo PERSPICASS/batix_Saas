@@ -61,7 +61,41 @@ export const copy = {
             videoTitle: 'Video demo BATIX PRO',
             videoHint: 'Remplacez cette video par votre demo produit finale si besoin.',
             videoUrl: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            sectionTitle: 'Apprenez en regardant',
+            sectionSubtitle: 'Des courtes videos pour maitriser chaque etape, a votre rythme.',
         },
+        videoFaqs: [
+            {
+                id: 'compte',
+                question: 'Comment creer son compte et configurer sa boutique ?',
+                duration: '1 min',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'produits',
+                question: 'Comment ajouter et organiser ses produits ?',
+                duration: '2 min',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'vente',
+                question: 'Comment enregistrer une vente au comptoir ?',
+                duration: '1 min 30',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'achats',
+                question: 'Comment gerer ses achats et receptions fournisseurs ?',
+                duration: '2 min',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'rapports',
+                question: 'Comment consulter ses rapports et statistiques ?',
+                duration: '1 min 30',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+        ],
         stats: [
             { label: 'Boutiques actives', value: '1 250+' },
             { label: 'Temps gagne par semaine', value: '11h' },
@@ -119,7 +153,41 @@ export const copy = {
             videoTitle: 'BATIX PRO demo video',
             videoHint: 'Swap this placeholder with your final product demo if needed.',
             videoUrl: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            sectionTitle: 'Learn by watching',
+            sectionSubtitle: 'Short videos to master every step, at your own pace.',
         },
+        videoFaqs: [
+            {
+                id: 'account',
+                question: 'How do I create my account and set up my store?',
+                duration: '1 min',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'products',
+                question: 'How do I add and organize my products?',
+                duration: '2 min',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'sale',
+                question: 'How do I record a sale at checkout?',
+                duration: '1 min 30',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'purchases',
+                question: 'How do I manage supplier orders and deliveries?',
+                duration: '2 min',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'reports',
+                question: 'How do I read my reports and analytics?',
+                duration: '1 min 30',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+        ],
         stats: [
             { label: 'Active stores', value: '1,250+' },
             { label: 'Weekly time saved', value: '11h' },

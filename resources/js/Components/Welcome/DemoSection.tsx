@@ -1,33 +1,36 @@
 import { Link } from '@inertiajs/react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Check, PlayCircle } from 'lucide-react';
-import { fadeUp, stagger } from '../../types/data';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, ChevronDown, Clock, PlayCircle } from 'lucide-react';
+import { useState } from 'react';
+import { stagger, fadeUp } from '../../types/data';
 import type { Locale } from '../../types/types';
+
+interface VideoFaqItem {
+    id: string;
+    question: string;
+    duration: string;
+    url: string;
+}
 
 interface DemoSectionProps {
     locale: Locale;
     t: {
-        demo: { title: string; description: string; cta: string; videoTitle: string; videoHint: string; videoUrl: string };
+        demo: {
+            sectionTitle: string;
+            sectionSubtitle: string;
+            cta: string;
+        };
+        videoFaqs: VideoFaqItem[];
     };
     getDashboardUrl: () => string;
 }
 
 export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionProps) {
-    const demoHighlights = locale === 'fr'
-        ? [
-            'Parcours complet: vente, stock, reporting',
-            'Cas concrets inspires de vraies quincailleries',
-            'Equipe prete en quelques minutes, pas en quelques semaines',
-        ]
-        : [
-            'Full flow: checkout, inventory, reporting',
-            'Real use cases inspired by actual hardware stores',
-            'Team-ready in minutes, not weeks',
-        ];
+    const [openId, setOpenId] = useState<string | null>(t.videoFaqs[0]?.id ?? null);
 
-    const demoChips = locale === 'fr'
-        ? ['2 min chrono', 'Sans jargon technique', 'Vision claire pour gerants']
-        : ['2-minute walkthrough', 'No technical jargon', 'Clear manager visibility'];
+    const toggle = (id: string) => {
+        setOpenId((current) => (current === id ? null : id));
+    };
 
     return (
         <motion.section
@@ -35,69 +38,139 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
             className="w-full scroll-mt-24 bg-[#efe6d8] py-10 md:py-14"
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
+            viewport={{ once: true, amount: 0.15 }}
             variants={stagger}
         >
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                <div className="grid overflow-hidden rounded-3xl border border-[#d6c9b2] bg-[#fbf7ef] shadow-xl lg:grid-cols-12">
-                    {/* Video */}
-                    <motion.div className="p-4 sm:p-6 lg:col-span-7 lg:p-7" variants={fadeUp}>
-                        <div className="relative overflow-hidden rounded-2xl border border-[#cdbfa8] bg-slate-900 shadow-xl">
-                            <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3 py-1 text-xs font-semibold text-white">
-                                <PlayCircle className="size-3.5 text-amber-300" />
-                                {locale === 'fr' ? 'Demo guidee' : 'Guided demo'}
-                            </div>
-                            <div className="absolute right-4 top-4 z-10 rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-slate-900">
-                                2 min
-                            </div>
-                            <div className="aspect-video">
-                                <iframe
-                                    className="h-full w-full"
-                                    src={t.demo.videoUrl}
-                                    title={t.demo.videoTitle}
-                                    loading="lazy"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowFullScreen
-                                />
-                            </div>
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/90 via-slate-900/45 to-transparent" />
-                            <div className="absolute bottom-4 left-4 right-4 z-10 flex flex-wrap gap-2">
-                                {demoChips.map((chip) => (
-                                    <span key={chip} className="rounded-full border border-white/25 bg-black/35 px-3 py-1 text-xs font-medium text-white">
-                                        {chip}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </motion.div>
+                {/* En-tête */}
+                <motion.div className="mb-8" variants={fadeUp}>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                        {locale === 'fr' ? 'Tutoriels video' : 'Video tutorials'}
+                    </p>
+                    <h2 className="mt-2 text-3xl font-extrabold text-slate-900">{t.demo.sectionTitle}</h2>
+                    <div className="mt-3 h-1 w-12 rounded-full bg-amber-400" />
+                    <p className="mt-3 max-w-xl text-slate-600">{t.demo.sectionSubtitle}</p>
+                </motion.div>
 
-                    {/* Texte */}
-                    <motion.div className="border-t border-[#e1d6c5] bg-[#f8f2e8] p-6 sm:p-7 lg:col-span-5 lg:border-l lg:border-t-0 lg:p-8" variants={fadeUp}>
-                        <p className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
-                            <PlayCircle className="size-3.5" />
-                            Demo
-                        </p>
-                        <h2 className="mt-4 text-3xl font-bold leading-tight text-slate-900">{t.demo.title}</h2>
-                        <p className="mt-3 text-slate-600">{t.demo.description}</p>
+                <div className="grid gap-4 lg:grid-cols-12">
+                    {/* Accordion */}
+                    <motion.div className="space-y-2 lg:col-span-5" variants={fadeUp}>
+                        {t.videoFaqs.map((item, index) => {
+                            const isOpen = openId === item.id;
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`overflow-hidden rounded-2xl border transition-all duration-200 ${
+                                        isOpen
+                                            ? 'border-slate-900 bg-slate-900 shadow-lg'
+                                            : 'border-[#d6c9b2] bg-[#fbf7ef] hover:border-amber-300'
+                                    }`}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => toggle(item.id)}
+                                        className="flex w-full items-center gap-3 px-5 py-4 text-left"
+                                    >
+                                        {/* Numéro */}
+                                        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isOpen ? 'bg-amber-300 text-slate-900' : 'bg-[#e8ddd0] text-slate-600'}`}>
+                                            {index + 1}
+                                        </span>
 
-                        <ul className="mt-5 space-y-2.5">
-                            {demoHighlights.map((point) => (
-                                <li key={point} className="flex items-start gap-2.5 text-sm text-slate-700">
-                                    <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                                        <Check className="size-3" />
-                                    </span>
-                                    {point}
-                                </li>
-                            ))}
-                        </ul>
+                                        <span className="flex-1">
+                                            <span className={`block text-sm font-semibold leading-snug ${isOpen ? 'text-white' : 'text-slate-800'}`}>
+                                                {item.question}
+                                            </span>
+                                            <span className={`mt-1 flex items-center gap-1 text-xs ${isOpen ? 'text-amber-300' : 'text-slate-400'}`}>
+                                                <Clock className="size-3" />
+                                                {item.duration}
+                                            </span>
+                                        </span>
 
-                        <div className="mt-7">
-                            <Link href={getDashboardUrl()} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-800">
+                                        <ChevronDown className={`size-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-300' : 'text-slate-400'}`} />
+                                    </button>
+
+                                    {/* Vidéo inline sur mobile */}
+                                    <AnimatePresence initial={false}>
+                                        {isOpen && (
+                                            <motion.div
+                                                key="mobile-video"
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="lg:hidden"
+                                            >
+                                                <div className="mx-4 mb-4 overflow-hidden rounded-xl">
+                                                    <div className="aspect-video">
+                                                        <iframe
+                                                            className="h-full w-full"
+                                                            src={`${item.url}?autoplay=1&mute=1`}
+                                                            title={item.question}
+                                                            loading="lazy"
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                            allowFullScreen
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            );
+                        })}
+
+                        {/* CTA sous l'accordion */}
+                        <div className="pt-3">
+                            <Link
+                                href={getDashboardUrl()}
+                                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-semibold text-white transition hover:bg-slate-800"
+                            >
                                 {t.demo.cta}
                                 <ArrowRight className="size-4" />
                             </Link>
                         </div>
-                        <p className="mt-4 text-xs text-slate-500">{t.demo.videoHint}</p>
+                    </motion.div>
+
+                    {/* Lecteur vidéo desktop */}
+                    <motion.div className="hidden lg:col-span-7 lg:block" variants={fadeUp}>
+                        <div className="sticky top-28 overflow-hidden rounded-3xl border border-[#d6c9b2] bg-slate-900 shadow-2xl">
+                            {openId ? (
+                                (() => {
+                                    const active = t.videoFaqs.find((v) => v.id === openId);
+                                    if (!active) return null;
+                                    return (
+                                        <>
+                                            {/* Badge titre */}
+                                            <div className="flex items-center gap-3 border-b border-white/10 px-5 py-3">
+                                                <PlayCircle className="size-4 shrink-0 text-amber-300" />
+                                                <p className="truncate text-sm font-medium text-white">{active.question}</p>
+                                                <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-amber-200">
+                                                    <Clock className="size-3" />
+                                                    {active.duration}
+                                                </span>
+                                            </div>
+                                            <div className="aspect-video">
+                                                <iframe
+                                                    key={active.id}
+                                                    className="h-full w-full"
+                                                    src={`${active.url}?autoplay=1&mute=1`}
+                                                    title={active.question}
+                                                    loading="lazy"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowFullScreen
+                                                />
+                                            </div>
+                                        </>
+                                    );
+                                })()
+                            ) : (
+                                <div className="flex aspect-video items-center justify-center">
+                                    <p className="text-sm text-slate-400">
+                                        {locale === 'fr' ? 'Selectionnez une video' : 'Select a video'}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </motion.div>
                 </div>
             </div>

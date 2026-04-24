@@ -176,7 +176,7 @@ export default function Welcome({ auth, subscriptionPlans }: WelcomeProps) {
 
                         <DemoSection
                             locale={locale}
-                            t={{ demo: t.demo }}
+                            t={{ demo: t.demo, videoFaqs: t.videoFaqs }}
                             getDashboardUrl={getDashboardUrl}
                         />
 
