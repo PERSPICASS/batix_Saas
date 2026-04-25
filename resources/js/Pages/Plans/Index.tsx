@@ -70,7 +70,6 @@ export default function Index({ plans, auth }: PlansProps) {
             'Ventes & caisse',
             'Gestion des achats',
             'Rapports & statistiques',
-            'Application mobile',
         ];
     };
 
