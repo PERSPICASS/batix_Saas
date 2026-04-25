@@ -489,7 +489,7 @@ export default function Authenticated({
                             </p>
                             <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">
                                 {user
-                                    ? '5 boutiques incluses'
+                                    ? '3 boutiques incluses'
                                     : 'Connectez-vous pour voir votre plan'}
                             </p>
                             <Link
