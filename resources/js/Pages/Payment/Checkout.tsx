@@ -30,6 +30,7 @@ interface Props extends PageProps {
     plan: Plan;
     currentPlan: { name: string; slug: string } | null;
     paymentNumbers: Record<string, string>;
+    currency: string;
 }
 
 const PAYMENT_METHODS = [
@@ -41,12 +42,26 @@ const PAYMENT_METHODS = [
     { id: 'carte',        label: 'Carte bancaire',   icon: '💳' }, */
 ];
 
-export default function Checkout({ plan, currentPlan, paymentNumbers = {} }: Props) {
+export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF' }: Props) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
-    const yearlyPrice  = Math.round(plan.price * 12 * 0.85);
-    const displayPrice = billingCycle === 'yearly' ? yearlyPrice : plan.price;
-    const saving       = Math.round(plan.price * 12 - yearlyPrice);
+    // Détermine si on affiche en EUR ou en FCFA/XOF
+    const isEur = currency === 'EUR';
+
+    // Prix de base selon la devise
+    const basePrice = isEur
+        ? parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || String(plan.price))
+        : plan.price;
+    const currencyLabel = isEur ? 'EUR' : currency;
+
+    const yearlyPrice  = Math.round(basePrice * 12 * 0.85);
+    const displayPrice = billingCycle === 'yearly' ? yearlyPrice : basePrice;
+    const saving       = Math.round(basePrice * 12 - yearlyPrice);
+
+    const formatPrice = (val: number) =>
+        isEur
+            ? val.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+            : val.toLocaleString('fr-FR');
 
     const { data, setData, post, processing, errors } = useForm({
         payment_method:  '',
@@ -155,7 +170,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {} }: Pro
                                     </button>
                                 </div>
                                 {billingCycle === 'yearly' && (
-                                    <p className="text-xs text-emerald-400">Économie de {saving.toLocaleString('fr-FR')} FCFA/an</p>
+                                    <p className="text-xs text-emerald-400">Économie de {formatPrice(saving)} {currencyLabel}/an</p>
                                 )}
                             </div>
 
@@ -163,10 +178,10 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {} }: Pro
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-slate-400">Montant {billingCycle === 'yearly' ? '(annuel)' : '(mensuel)'}</span>
-                                    <span className="text-lg font-bold text-white">{displayPrice.toLocaleString('fr-FR')} FCFA</span>
+                                    <span className="text-lg font-bold text-white">{formatPrice(displayPrice)} {currencyLabel}</span>
                                 </div>
                                 {billingCycle === 'yearly' && (
-                                    <p className="text-xs text-right text-slate-500 line-through">{(plan.price * 12).toLocaleString('fr-FR')} FCFA</p>
+                                    <p className="text-xs text-right text-slate-500 line-through">{formatPrice(basePrice * 12)} {currencyLabel}</p>
                                 )}
                             </div>
 
@@ -235,7 +250,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {} }: Pro
                                     ) : (
                                         <p className="text-amber-200">Contactez le support pour obtenir les coordonnées de paiement.</p>
                                     )}
-                                    <p>Montant : <strong className="text-white">{displayPrice.toLocaleString('fr-FR')} FCFA</strong></p>
+                                    <p>Montant : <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong></p>
                                     <p>Référence à indiquer : <strong className="text-white">BTX-{plan.id}-{Date.now().toString().slice(-6)}</strong></p>
                                 </div>
                             )}
@@ -284,7 +299,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {} }: Pro
                                 ) : (
                                     <>
                                         <Building2 className="size-4" />
-                                        Confirmer — {displayPrice.toLocaleString('fr-FR')} FCFA
+                                        Confirmer — {formatPrice(displayPrice)} {currencyLabel}
                                     </>
                                 )}
                             </button>
