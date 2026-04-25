@@ -58,10 +58,19 @@ export default function PricingSection({ pricingTitle, pricingFallback, planCta,
                             )}
                             <p className={`text-sm font-semibold ${plan.highlighted ? 'text-slate-700' : 'text-amber-400'}`}>{plan.badge}</p>
                             <h3 className="mt-2 text-2xl font-bold">{plan.name}</h3>
-                            <div className="mt-3 space-y-1">
-                                <p className="text-3xl font-bold">{plan.price_eur}</p>
+
+                            {/* ── Bloc prix mis en valeur ── */}
+                            <div className={`mt-4 rounded-2xl px-5 py-4 ${plan.highlighted ? 'bg-slate-900/10' : 'bg-white/5'}`}>
+                                <div className="flex items-end gap-1">
+                                    <span className={`text-5xl font-black tracking-tight leading-none ${plan.highlighted ? 'text-slate-900' : 'text-white'}`}>
+                                        {plan.price_eur.replace(/[^0-9]/g, '')}
+                                    </span>
+                                    <span className={`mb-1 text-xl font-bold ${plan.highlighted ? 'text-slate-700' : 'text-amber-400'}`}>
+                                        {plan.price_eur.replace(/[0-9\s]/g, '').trim() || 'EUR'}
+                                    </span>
+                                </div>
+                                <p className={`mt-0.5 text-xs font-medium ${plan.highlighted ? 'text-slate-600' : 'text-slate-400'}`}>{plan.subtitle}</p>
                             </div>
-                            <p className={`mt-2 text-xs ${plan.highlighted ? 'text-slate-600' : 'text-slate-400'}`}>{plan.subtitle}</p>
                             <ul className={`mt-5 space-y-3 text-sm ${plan.highlighted ? 'text-slate-800' : 'text-slate-200'}`}>
                                 {plan.points.map((point) => (
                                     <li key={point} className="flex items-center gap-2">
