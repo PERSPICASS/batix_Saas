@@ -24,6 +24,10 @@ class PaymentController extends Controller
         $user = Auth::user();
         $currentSubscription = $user->activeSubscription();
 
+        // Devise de la boutique active de l'utilisateur
+        $shop = $user->shop ?? \App\Models\Shop::where('user_id', $user->id)->first();
+        $currency = $shop?->currency ?? 'XOF';
+
         return Inertia::render('Payment/Checkout', [
             'plan' => [
                 'id'                    => $plan->id,
@@ -32,7 +36,6 @@ class PaymentController extends Controller
                 'description'           => $plan->description,
                 'price'                 => $plan->price,
                 'price_eur'             => $plan->price_eur,
-                'price_fcfa'            => $plan->price_fcfa,
                 'max_shops'             => $plan->max_shops,
                 'max_users'             => $plan->max_users,
                 'max_products'          => $plan->max_products,
@@ -42,6 +45,7 @@ class PaymentController extends Controller
                 'has_unlimited_products'=> $plan->hasUnlimitedProducts(),
                 'has_unlimited_depots'  => $plan->hasUnlimitedDepots(),
             ],
+            'currency' => $currency,
             'currentPlan' => $currentSubscription ? [
                 'name' => $currentSubscription->plan->name,
                 'slug' => $currentSubscription->plan->slug,
