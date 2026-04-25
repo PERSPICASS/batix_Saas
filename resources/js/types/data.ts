@@ -502,7 +502,6 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Starter',
             price_eur: '29 EUR',
-            price_fcfa: '19 000 FCFA',
             subtitle: 'par mois',
             badge: "Jusqu'à 1 boutique",
             points: ['1 boutique', '5 utilisateurs', '5 000 produits', '1 dépôt', 'Support standard'],
@@ -511,7 +510,6 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Growth',
             price_eur: '79 EUR',
-            price_fcfa: '51 800 FCFA',
             subtitle: 'par mois',
             badge: "Jusqu'à 5 boutiques",
             points: ['5 boutiques', '20 utilisateurs', '50 000 produits', '5 dépôts', 'Support prioritaire'],
@@ -520,7 +518,6 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Scale',
             price_eur: '149 EUR',
-            price_fcfa: '97 700 FCFA',
             subtitle: 'par mois',
             badge: 'Boutiques illimitées',
             points: ['Boutiques illimitées', 'Utilisateurs illimités', 'Produits illimités', 'Dépôts illimités', 'Support premium'],
@@ -531,7 +528,6 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Starter',
             price_eur: '29 EUR',
-            price_fcfa: '19,000 XOF',
             subtitle: 'per month',
             badge: 'Up to 1 store',
             points: ['1 store', '5 users', '5,000 products', '1 depot', 'Standard support'],
@@ -540,7 +536,6 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Growth',
             price_eur: '79 EUR',
-            price_fcfa: '51,800 XOF',
             subtitle: 'per month',
             badge: 'Up to 5 stores',
             points: ['5 stores', '20 users', '50,000 products', '5 depots', 'Priority support'],
@@ -549,7 +544,6 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Scale',
             price_eur: '149 EUR',
-            price_fcfa: '97,700 XOF',
             subtitle: 'per month',
             badge: 'Unlimited stores',
             points: ['Unlimited stores', 'Unlimited users', 'Unlimited products', 'Unlimited depots', 'Premium support'],

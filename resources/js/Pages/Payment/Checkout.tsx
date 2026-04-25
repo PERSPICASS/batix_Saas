@@ -16,7 +16,6 @@ interface Plan {
     description: string | null;
     price: number;
     price_eur: string;
-    price_fcfa: string;
     max_shops: number;
     max_users: number;
     max_products: number;

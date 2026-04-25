@@ -60,7 +60,6 @@ export default function PricingSection({ pricingTitle, pricingFallback, planCta,
                             <h3 className="mt-2 text-2xl font-bold">{plan.name}</h3>
                             <div className="mt-3 space-y-1">
                                 <p className="text-3xl font-bold">{plan.price_eur}</p>
-                                <p className={`text-xl font-semibold ${plan.highlighted ? 'text-slate-700' : 'text-amber-300'}`}>{plan.price_fcfa}</p>
                             </div>
                             <p className={`mt-2 text-xs ${plan.highlighted ? 'text-slate-600' : 'text-slate-400'}`}>{plan.subtitle}</p>
                             <ul className={`mt-5 space-y-3 text-sm ${plan.highlighted ? 'text-slate-800' : 'text-slate-200'}`}>
