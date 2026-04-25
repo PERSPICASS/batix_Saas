@@ -28,6 +28,7 @@ use App\Http\Controllers\DepotController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\ContactController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -35,6 +36,7 @@ use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 
 Route::get('/', [WelcomeController::class, 'index']);
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
 // Route pour servir les fichiers uploadés (logos, images, etc.)
 Route::get('/storage/{path}', function ($path) {

@@ -282,6 +282,7 @@ export default function Welcome({ auth, subscriptionPlans, appUrl }: WelcomeProp
                         />
 
                         <ContactSection
+                            locale={locale}
                             t={{ contact: t.contact }}
                             getDashboardUrl={getDashboardUrl}
                         />

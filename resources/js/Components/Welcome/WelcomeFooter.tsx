@@ -8,7 +8,7 @@ interface WelcomeFooterProps {
 export default function WelcomeFooter({ footerText, nav }: WelcomeFooterProps) {
     return (
         <motion.footer
-            className="mt-0 border-t border-[#dfd3bf] bg-[#f2ebe0] pb-4 pt-8"
+            className="mt-0 border-t border-slate-800 bg-slate-900 py-8"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
