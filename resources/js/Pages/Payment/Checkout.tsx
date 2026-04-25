@@ -45,23 +45,25 @@ const PAYMENT_METHODS = [
 export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF' }: Props) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
-    // Détermine si on affiche en EUR ou en FCFA/XOF
-    const isEur = currency === 'EUR';
+    // Devises locales africaines → utiliser plan.price (FCFA/XOF)
+    // Toute autre devise (EUR, USD, GBP…) → utiliser plan.price_eur
+    const isLocalCurrency = ['XOF', 'FCFA', 'GNF', 'MRU', 'SLL'].includes(currency);
 
     // Prix de base selon la devise
-    const basePrice = isEur
-        ? parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || String(plan.price))
-        : plan.price;
-    const currencyLabel = isEur ? 'EUR' : currency;
+    const basePrice = isLocalCurrency
+        ? Number(plan.price)
+        : parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || String(plan.price));
+    // Pour les devises non-locales, on affiche toujours le prix EUR (€)
+    const currencyLabel = isLocalCurrency ? currency : '€';
 
     const yearlyPrice  = Math.round(basePrice * 12 * 0.85);
     const displayPrice = billingCycle === 'yearly' ? yearlyPrice : basePrice;
     const saving       = Math.round(basePrice * 12 - yearlyPrice);
 
     const formatPrice = (val: number) =>
-        isEur
-            ? val.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-            : val.toLocaleString('fr-FR');
+        isLocalCurrency
+            ? val.toLocaleString('fr-FR')
+            : val.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
     const { data, setData, post, processing, errors } = useForm({
         payment_method:  '',
