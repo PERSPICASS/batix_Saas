@@ -16,7 +16,6 @@ interface SubscriptionPlan {
     features: string[] | null;
     is_active: boolean;
     price_eur: string;
-    price_fcfa: string;
     formatted_price: string;
     has_unlimited_shops: boolean;
     has_unlimited_users: boolean;
@@ -134,7 +133,6 @@ export default function Index({ plans, auth }: PlansProps) {
                                 {/* Prix */}
                                 <div className="mt-3 space-y-1">
                                     <p className="text-3xl font-bold text-white">{plan.price_eur}</p>
-                                    <p className="text-2xl font-semibold text-amber-200">{plan.price_fcfa}</p>
                                 </div>
                                 <p className="mt-2 text-xs text-slate-400">par mois</p>
 

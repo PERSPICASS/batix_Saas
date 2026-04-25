@@ -78,7 +78,6 @@ export default function Welcome({ auth, subscriptionPlans, appUrl }: WelcomeProp
             const unlimited = isFr ? 'Illimite' : 'Unlimited';
             const subtitle = isFr ? 'par mois' : 'per month';
             const rawEur = plan.price_eur?.trim() || plan.formatted_price?.trim();
-            const rawFcfa = plan.price_fcfa?.trim();
             const badge = isFr
                 ? plan.shop_limit_text
                 : plan.has_unlimited_shops
@@ -107,7 +106,6 @@ export default function Welcome({ auth, subscriptionPlans, appUrl }: WelcomeProp
             return {
                 name: plan.name,
                 price_eur: rawEur || `${plan.price} EUR`,
-                price_fcfa: rawFcfa || (isFr ? 'Prix au checkout' : 'Price at checkout'),
                 subtitle,
                 badge,
                 points: [shopsLabel, usersLabel, productsLabel, depotsLabel, ...baseFeatures, ...extraFeatures],
