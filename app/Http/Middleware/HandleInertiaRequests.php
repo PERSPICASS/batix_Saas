@@ -30,6 +30,7 @@ class HandleInertiaRequests extends Middleware
                     'info'    => fn () => $request->session()->get('info'),
                 ],
                 'csrf_token' => csrf_token(),
+                'whatsapp_number' => config('app.whatsapp_number'),
             ];
         }
 
@@ -136,6 +137,7 @@ class HandleInertiaRequests extends Middleware
                 'info'    => fn () => $request->session()->get('info'),
             ],
             'csrf_token' => csrf_token(),
+            'whatsapp_number' => config('app.whatsapp_number'),
         ];
     }
 }

@@ -38,4 +38,6 @@ export type PageProps<
         code_user?: string | null;
     };
     shopSettings?: ShopSettings | null;
+    csrf_token?: string;
+    whatsapp_number?: string;
 };

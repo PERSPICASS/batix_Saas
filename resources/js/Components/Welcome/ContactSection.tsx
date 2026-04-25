@@ -39,11 +39,12 @@ type Status = 'idle' | 'sending' | 'success' | 'error';
 
 export default function ContactSection({ locale, t, getDashboardUrl }: ContactSectionProps) {
     const f = t.contact.form;
-    const pageProps = usePage().props as unknown as { csrf_token?: string };
+    const pageProps = usePage().props as unknown as { csrf_token?: string; whatsapp_number?: string };
     const csrfToken =
         pageProps.csrf_token ??
         (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null)?.content ??
         '';
+    const whatsappNumber = pageProps.whatsapp_number ?? '+2250565759428';
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -149,7 +150,7 @@ export default function ContactSection({ locale, t, getDashboardUrl }: ContactSe
                                 contact@batixpro.com
                             </a>
                             <a
-                                href="https://wa.me/message/BATIXPRO"
+                                href={`https://wa.me/${whatsappNumber.replace(/\D/g, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="group inline-flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-semibold text-slate-200 transition hover:border-green-400/40 hover:bg-green-400/10 hover:text-white"
