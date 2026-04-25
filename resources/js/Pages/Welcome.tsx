@@ -99,8 +99,8 @@ export default function Welcome({ auth, subscriptionPlans, appUrl }: WelcomeProp
                   ? isFr ? `${unlimited} depots` : `${unlimited} depots`
                   : isFr ? `${plan.max_depots} depot${plan.max_depots > 1 ? 's' : ''}` : `${plan.max_depots} depot${plan.max_depots > 1 ? 's' : ''}`;
             const baseFeatures = isFr
-                ? ['Ventes et caisse', 'Gestion des achats', 'Rapports et statistiques', 'Application mobile']
-                : ['Sales and POS', 'Purchase management', 'Reports and analytics', 'Mobile app'];
+                ? ['Ventes et caisse', 'Gestion des achats', 'Rapports et statistiques']
+                : ['Sales and POS', 'Purchase management', 'Reports and analytics'];
             const extraFeatures = Array.isArray(plan.features)
                 ? plan.features.filter((f) => f && f.trim().length > 0).slice(0, 2)
                 : [];
