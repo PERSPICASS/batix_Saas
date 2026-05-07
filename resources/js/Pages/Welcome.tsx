@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { copy, fallbackPlansByLocale, faqsByLocale, featuresByLocale, heroSlides, trustMarksByLocale } from '@/types/data';
 import type { Locale, PlanView, SubscriptionPlan } from '@/types/types';
+import BlogSection from '@/Components/Welcome/BlogSection';
 import ContactSection from '@/Components/Welcome/ContactSection';
 import DemoSection from '@/Components/Welcome/DemoSection';
 import FaqSection from '@/Components/Welcome/FaqSection';
@@ -13,12 +14,26 @@ import TestimonialsSection from '@/Components/Welcome/TestimonialsSection';
 import WelcomeFooter from '@/Components/Welcome/WelcomeFooter';
 import WelcomeHeader from '@/Components/Welcome/WelcomeHeader';
 
+interface BlogPost {
+    id: number;
+    slug: string;
+    title_fr: string;
+    title_en: string | null;
+    excerpt_fr: string | null;
+    excerpt_en: string | null;
+    cover_image: string | null;
+    author_name: string;
+    category: string | null;
+    published_at: string | null;
+}
+
 interface WelcomeProps extends PageProps {
     subscriptionPlans: SubscriptionPlan[];
     appUrl: string;
+    latestPosts: BlogPost[];
 }
 
-export default function Welcome({ auth, subscriptionPlans, appUrl }: WelcomeProps) {
+export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts = [] }: WelcomeProps) {
     const [locale, setLocale] = useState<Locale>('fr');
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
     const [scrolled, setScrolled] = useState(false);
@@ -277,6 +292,11 @@ export default function Welcome({ auth, subscriptionPlans, appUrl }: WelcomeProp
                             locale={locale}
                             faqTitle={t.faqTitle}
                             faqs={faqs}
+                        />
+
+                        <BlogSection
+                            locale={locale}
+                            posts={latestPosts}
                         />
 
                         <ContactSection

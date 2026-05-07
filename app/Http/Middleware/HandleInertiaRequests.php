@@ -31,6 +31,7 @@ class HandleInertiaRequests extends Middleware
                 ],
                 'csrf_token' => csrf_token(),
                 'whatsapp_number' => config('app.whatsapp_number'),
+                'ziggy' => fn () => [...(new \Tighten\Ziggy\Ziggy)->toArray(), 'location' => $request->url()],
             ];
         }
 
@@ -138,6 +139,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'csrf_token' => csrf_token(),
             'whatsapp_number' => config('app.whatsapp_number'),
+            'ziggy' => fn () => [...(new \Tighten\Ziggy\Ziggy)->toArray(), 'location' => $request->url()],
         ];
     }
 }

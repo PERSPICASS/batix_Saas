@@ -5,3 +5,18 @@
 html {
     scroll-behavior: smooth;
 }
+
+/* ── Tiptap rich editor ─────────────────────────────────────────────────── */
+.rich-editor-content .tiptap { outline: none; padding: 0.75rem 0; }
+.rich-editor-content .tiptap p { margin-bottom: 0.6em; }
+.rich-editor-content .tiptap h2 { font-size: 1.25rem; font-weight: 700; margin: 1em 0 0.4em; color: #fbbf24; }
+.rich-editor-content .tiptap h3 { font-size: 1.05rem; font-weight: 600; margin: 0.9em 0 0.35em; color: #fcd34d; }
+.rich-editor-content .tiptap ul { list-style: disc; padding-left: 1.4em; margin-bottom: 0.6em; }
+.rich-editor-content .tiptap ol { list-style: decimal; padding-left: 1.4em; margin-bottom: 0.6em; }
+.rich-editor-content .tiptap li { margin-bottom: 0.2em; }
+.rich-editor-content .tiptap blockquote { border-left: 3px solid #fbbf24; padding-left: 1em; color: rgba(255,255,255,0.55); font-style: italic; margin: 0.8em 0; }
+.rich-editor-content .tiptap code { background: rgba(255,255,255,0.08); border-radius: 4px; padding: 0.1em 0.35em; font-size: 0.85em; }
+.rich-editor-content .tiptap pre { background: rgba(0,0,0,0.35); border-radius: 8px; padding: 0.8em 1em; margin: 0.8em 0; overflow-x: auto; }
+.rich-editor-content .tiptap hr { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1em 0; }
+.rich-editor-content .tiptap a { color: #fbbf24; text-decoration: underline; }
+.rich-editor-content .tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: rgba(255,255,255,0.25); pointer-events: none; float: left; height: 0; }

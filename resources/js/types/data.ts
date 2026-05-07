@@ -42,6 +42,7 @@ export const copy = {
             pricing: 'Tarifs',
             faq: 'FAQ',
             contact: 'Contact',
+            blog: 'Blog',
         },
         auth: {
             dashboard: 'Dashboard',
@@ -166,6 +167,7 @@ export const copy = {
             pricing: 'Pricing',
             faq: 'FAQ',
             contact: 'Contact',
+            blog: 'Blog',
         },
         auth: {
             dashboard: 'Dashboard',

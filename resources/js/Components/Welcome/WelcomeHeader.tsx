@@ -39,6 +39,12 @@ export default function WelcomeHeader({ locale, setLocale, scrolled, getDashboar
                             {t.nav[key]}
                         </a>
                     ))}
+                    <a
+                        href="#blog"
+                        className="rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-amber-300 hover:text-slate-900"
+                    >
+                        {t.nav.blog ?? 'Blog'}
+                    </a>
                 </nav>
 
                 {/* Actions droite */}

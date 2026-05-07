@@ -6,8 +6,13 @@ export default defineConfig({
     plugins: [
         laravel({
             input: 'resources/js/app.tsx',
+            ssr: 'resources/js/ssr.tsx',
             refresh: true,
         }),
         react(),
     ],
+    ssr: {
+        noExternal: ['@inertiajs/react'],
+        external: ['@inertiajs/server'],
+    },
 });

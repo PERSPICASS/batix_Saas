@@ -8,6 +8,7 @@ import {
 } from 'react';
 import {
     BarChart3,
+    BookOpen,
     Building2,
     Boxes,
     Box,
@@ -97,7 +98,7 @@ export default function Authenticated({
         
         // Pour les autres rôles, extraire le code_user de l'URL ou des routeParams
         // L'URL devrait être /{code_user}/quelquechose
-        const urlParts = window.location.pathname.split('/').filter(Boolean);
+        const urlParts = (typeof window !== 'undefined' ? window.location.pathname : '').split('/').filter(Boolean);
         const codeFromUrl = urlParts[0] || null;
         
         return routeParams.code_user || codeFromUrl;
@@ -256,6 +257,13 @@ export default function Authenticated({
                 href: route('platform.mrr'),
                 active: route().current('platform.mrr*'),
                 icon: TrendingUp,
+                module: null,
+            },
+            {
+                label: 'Blog',
+                href: route('platform.blog.index'),
+                active: route().current('platform.blog.*'),
+                icon: BookOpen,
                 module: null,
             },
         ] : [

@@ -29,6 +29,8 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\BlogController;
+use App\Http\Controllers\BlogAdminController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -37,6 +39,9 @@ use Inertia\Inertia;
 
 Route::get('/', [WelcomeController::class, 'index']);
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+
+// Route publique pour les articles de blog
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 // Route pour servir les fichiers uploadés (logos, images, etc.)
 Route::get('/storage/{path}', function ($path) {
@@ -98,6 +103,15 @@ Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
 
     // MRR Dashboard
     Route::get('/mrr', [PlatformAdminController::class, 'mrrDashboard'])->name('platform.mrr');
+
+    // Blog Management
+    Route::get('/blog', [BlogAdminController::class, 'index'])->name('platform.blog.index');
+    Route::get('/blog/create', [BlogAdminController::class, 'create'])->name('platform.blog.create');
+    Route::post('/blog', [BlogAdminController::class, 'store'])->name('platform.blog.store');
+    Route::get('/blog/{post}/edit', [BlogAdminController::class, 'edit'])->name('platform.blog.edit');
+    Route::put('/blog/{post}', [BlogAdminController::class, 'update'])->name('platform.blog.update');
+    Route::delete('/blog/{post}', [BlogAdminController::class, 'destroy'])->name('platform.blog.destroy');
+    Route::post('/blog/{post}/toggle', [BlogAdminController::class, 'togglePublished'])->name('platform.blog.toggle');
 });
 
 // Routes avec préfixe code_user (pour tout le compte)
