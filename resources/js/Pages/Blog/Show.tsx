@@ -133,7 +133,7 @@ export default function BlogShow({ auth, post }: Props) {
                     </div>
                 </main>
 
-                <WelcomeFooter footerText={locale === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'} nav={{ demo: 'Démo', features: locale === 'fr' ? 'Fonctionnalités' : 'Features', pricing: locale === 'fr' ? 'Tarifs' : 'Pricing', faq: 'FAQ', contact: 'Contact' }} />
+                <WelcomeFooter footerText={locale === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'} nav={{ demo: 'Demo', features: locale === 'fr' ? 'Fonctionnalités' : 'Features', pricing: locale === 'fr' ? 'Tarifs' : 'Pricing', faq: 'FAQ', contact: 'Contact' }} />
             </div>
         </>
     );
