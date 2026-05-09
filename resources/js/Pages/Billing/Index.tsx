@@ -129,12 +129,12 @@ function InvoiceModal({ inv, codeUser, onClose }: { inv: Invoice; codeUser: stri
                         ['Émise le',         inv.issued_at ?? '—'],
                         ['Payée le',         inv.paid_at ?? '—'],
                         inv.expires_at ? ["Valide jusqu'au", inv.expires_at] : null,
-                    ].filter(Boolean).map(([label, value]) => (
-                        <div key={label as string} className="bg-slate-900 px-5 py-3.5">
+                    ].filter(Boolean).map((row) => { const [label, value] = row as [string, string]; return (
+                        <div key={label} className="bg-slate-900 px-5 py-3.5">
                             <p className="text-xs text-slate-500 mb-0.5">{label}</p>
                             <p className={`text-sm font-medium text-white ${label === 'Montant' ? 'text-amber-300 font-bold' : ''}`}>{value}</p>
                         </div>
-                    ))}
+                    ); })}
                 </div>
             </div>
         </div>
@@ -146,7 +146,7 @@ function InvoiceModal({ inv, codeUser, onClose }: { inv: Invoice; codeUser: stri
 export default function BillingIndex({ auth, invoices, deposits, currentSubscription }: Props) {
     const [tab, setTab] = useState<'invoices' | 'deposits'>('invoices');
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-    const codeUser = auth.user.code_user;
+    const codeUser = auth.user?.code_user ?? '';
 
     const totalPaid = invoices
         .filter(i => i.status === 'paid')

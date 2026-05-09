@@ -184,7 +184,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                         setPawaPayStatus('completed');
                         // Redirect to confirmation after a brief moment
                         setTimeout(() => {
-                            window.location.href = `/${auth.user.code_user}/dashboard`;
+                            window.location.href = `/${auth.user?.code_user}/dashboard`;
                         }, 1500);
                     } else if (status === 'FAILED' || status === 'DUPLICATE_IGNORED') {
                         clearInterval(pollRef.current!);

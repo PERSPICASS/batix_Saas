@@ -72,7 +72,7 @@ export default function Confirmation({ planName, message, auth }: Props) {
 
                     {/* CTA */}
                     <Link
-                        href={`/${auth.user.code_user}/dashboard`}
+                        href={`/${auth.user?.code_user}/dashboard`}
                         className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200"
                     >
                         Retour au dashboard
