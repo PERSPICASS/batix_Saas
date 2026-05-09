@@ -26,6 +26,7 @@ use App\Http\Controllers\CreditController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\DepotController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PawaPayController;
 use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\ContactController;
@@ -57,11 +58,21 @@ Route::get('/storage/{path}', function ($path) {
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');
 
-// Routes paiement (auth requise)
+// Routes paiement manuel (auth requise)
 Route::middleware(['auth'])->group(function () {
     Route::get('/plans/{plan}/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::post('/plans/{plan}/process', [PaymentController::class, 'process'])->name('payment.process');
     Route::get('/payment/confirmation/{planSlug}', [PaymentController::class, 'confirmation'])->name('payment.confirmation');
+});
+
+// Routes PawaPay (webhook public, autres avec auth)
+Route::post('/pawapay/webhook', [PawaPayController::class, 'webhook'])
+    ->name('pawapay.webhook')
+    ->withoutMiddleware(['web']); // stateless webhook
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/pawapay/initiate/{plan}', [PawaPayController::class, 'initiate'])->name('pawapay.initiate');
+    Route::get('/pawapay/status/{depositId}', [PawaPayController::class, 'pollStatus'])->name('pawapay.status');
 });
 
 // Routes publiques pour les invitations (avant auth)

@@ -1,13 +1,22 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { ArrowLeft, Check, CreditCard, Smartphone, Building2, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import {
+    ArrowLeft, Check, CreditCard, Smartphone, Building2,
+    Loader2, ShieldCheck, AlertTriangle, Zap, RefreshCw,
+    CheckCircle2, XCircle,
+} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 
-import logoWave        from '../../../images/logo-wave.jpg';
-import logoOrange      from '../../../images/logo_orange_money.png';
-import logoMtn         from '../../../images/logo_mtn_money.jpg';
-import logoMoov        from '../../../images/logo_moov_money.png';
+import logoWave   from '../../../images/logo-wave.jpg';
+import logoOrange from '../../../images/logo_orange_money.png';
+import logoMtn    from '../../../images/logo_mtn_money.jpg';
+import logoMoov   from '../../../images/logo_moov_money.png';
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Types
+───────────────────────────────────────────────────────────────────────────── */
 
 interface Plan {
     id: number;
@@ -33,54 +42,124 @@ interface Props extends PageProps {
     currency: string;
 }
 
-const PAYMENT_METHODS = [
-    { id: 'wave',         label: 'Wave',         logo: logoWave   },
-    { id: 'orange_money', label: 'Orange Money', logo: logoOrange },
-    { id: 'mtn_money',    label: 'MTN Money',    logo: logoMtn    },
-    { id: 'moov_money',   label: 'Moov Money',   logo: logoMoov   },
-    /* { id: 'virement',     label: 'Virement bancaire', icon: '🏦' },
-    { id: 'carte',        label: 'Carte bancaire',   icon: '💳' }, */
+type PaymentMode = 'pawapay' | 'manual';
+type PawaPayStatus = 'idle' | 'pending' | 'completed' | 'failed';
+
+interface Country {
+    name: string;
+    flag: string;
+    currency: string;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PawaPay correspondents catalogue
+   Codes: https://docs.pawapay.cloud/#tag/Deposits
+───────────────────────────────────────────────────────────────────────────── */
+
+interface Correspondent {
+    id: string;
+    label: string;
+    country: string;
+    currency: string;
+    logo: string | null;
+}
+
+const COUNTRIES: Country[] = [
+    { name: 'Sénégal',       flag: '🇸🇳', currency: 'XOF' },
+    { name: "Côte d'Ivoire", flag: '🇨🇮', currency: 'XOF' },
+    { name: 'Burkina Faso',  flag: '🇧🇫', currency: 'XOF' },
+    { name: 'Mali',          flag: '🇲🇱', currency: 'XOF' },
+    { name: 'Togo',          flag: '🇹🇬', currency: 'XOF' },
+    { name: 'Bénin',         flag: '🇧🇯', currency: 'XOF' },
+    { name: 'Guinée',        flag: '🇬🇳', currency: 'GNF' },
+    { name: 'Ghana',         flag: '🇬🇭', currency: 'GHS' },
 ];
+
+const CORRESPONDENTS: Correspondent[] = [
+    { id: 'WAVE_SEN',       label: 'Wave',             country: 'Sénégal',       currency: 'XOF', logo: logoWave   },
+    { id: 'ORANGE_SEN',     label: 'Orange Money',     country: 'Sénégal',       currency: 'XOF', logo: logoOrange },
+    { id: 'FREE_SEN',       label: 'Free Money',       country: 'Sénégal',       currency: 'XOF', logo: null       },
+    { id: 'WAVE_CIV',       label: 'Wave',             country: "Côte d'Ivoire", currency: 'XOF', logo: logoWave   },
+    { id: 'ORANGE_CIV',     label: 'Orange Money',     country: "Côte d'Ivoire", currency: 'XOF', logo: logoOrange },
+    { id: 'MTN_MOMO_CIV',   label: 'MTN Mobile Money', country: "Côte d'Ivoire", currency: 'XOF', logo: logoMtn    },
+    { id: 'MOOV_CIV',       label: 'Moov Money',       country: "Côte d'Ivoire", currency: 'XOF', logo: logoMoov   },
+    { id: 'ORANGE_BFA',     label: 'Orange Money',     country: 'Burkina Faso',  currency: 'XOF', logo: logoOrange },
+    { id: 'MOOV_BFA',       label: 'Moov Money',       country: 'Burkina Faso',  currency: 'XOF', logo: logoMoov   },
+    { id: 'ORANGE_MLI',     label: 'Orange Money',     country: 'Mali',          currency: 'XOF', logo: logoOrange },
+    { id: 'MOOV_MLI',       label: 'Moov Money',       country: 'Mali',          currency: 'XOF', logo: logoMoov   },
+    { id: 'MOOV_TGO',       label: 'Flooz (Moov)',     country: 'Togo',          currency: 'XOF', logo: logoMoov   },
+    { id: 'TMONEY_TGO',     label: 'T-Money',          country: 'Togo',          currency: 'XOF', logo: null       },
+    { id: 'MTN_MOMO_BEN',   label: 'MTN Mobile Money', country: 'Bénin',         currency: 'XOF', logo: logoMtn    },
+    { id: 'MOOV_BEN',       label: 'Moov Money',       country: 'Bénin',         currency: 'XOF', logo: logoMoov   },
+    { id: 'ORANGE_GIN',     label: 'Orange Money',     country: 'Guinée',        currency: 'GNF', logo: logoOrange },
+    { id: 'MTN_MOMO_GIN',   label: 'MTN Mobile Money', country: 'Guinée',        currency: 'GNF', logo: logoMtn    },
+    { id: 'MTN_MOMO_GHA',   label: 'MTN Mobile Money', country: 'Ghana',         currency: 'GHS', logo: logoMtn    },
+    { id: 'VODAFONE_GHA',   label: 'Vodafone Cash',    country: 'Ghana',         currency: 'GHS', logo: null       },
+    { id: 'AIRTELTIGO_GHA', label: 'AirtelTigo Money', country: 'Ghana',         currency: 'GHS', logo: null       },
+];
+
+// Manual fallback methods (Wave manual + virement)
+const MANUAL_METHODS = [
+    { id: 'wave',         label: 'Wave (manuel)',     logo: logoWave   },
+    { id: 'orange_money', label: 'Orange Money',      logo: logoOrange },
+    { id: 'mtn_money',    label: 'MTN Money',         logo: logoMtn    },
+    { id: 'moov_money',   label: 'Moov Money',        logo: logoMoov   },
+];
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────────────────────────────────────── */
+
+function getCsrfToken(): string {
+    return (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Main component
+───────────────────────────────────────────────────────────────────────────── */
 
 export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF' }: Props) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [paymentMode, setPaymentMode] = useState<PaymentMode>('pawapay');
 
-    // Devises locales africaines → utiliser plan.price (FCFA/XOF)
-    // Toute autre devise (EUR, USD, GBP…) → utiliser plan.price_eur
+    // PawaPay state — étape 1 : pays, étape 2 : opérateur
+    const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+    const [correspondent, setCorrespondent] = useState('');
+    const [msisdn, setMsisdn] = useState('');
+    const [pawaPayStatus, setPawaPayStatus] = useState<PawaPayStatus>('idle');
+    const [depositId, setDepositId] = useState<string | null>(null);
+    const [pawaPayError, setPawaPayError] = useState('');
+    const [initiating, setInitiating] = useState(false);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Manual payment state
+    const [manualMethod, setManualMethod] = useState('');
+    const [phone, setPhone] = useState('');
+    const [transactionRef, setTransactionRef] = useState('');
+    const [submittingManual, setSubmittingManual] = useState(false);
+
+    // Pricing
     const isLocalCurrency = ['XOF', 'FCFA', 'GNF', 'MRU', 'SLL'].includes(currency);
-
-    // Prix de base selon la devise
-    const basePrice = isLocalCurrency
+    const basePrice    = isLocalCurrency
         ? Number(plan.price)
         : parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || String(plan.price));
-    // Pour les devises non-locales, on affiche toujours le prix EUR (€)
     const currencyLabel = isLocalCurrency ? currency : '€';
-
-    const yearlyPrice  = Math.round(basePrice * 12 * 0.85);
-    const displayPrice = billingCycle === 'yearly' ? yearlyPrice : basePrice;
-    const saving       = Math.round(basePrice * 12 - yearlyPrice);
+    const yearlyPrice   = Math.round(basePrice * 12 * 0.85);
+    const displayPrice  = billingCycle === 'yearly' ? yearlyPrice : basePrice;
+    const saving        = Math.round(basePrice * 12 - yearlyPrice);
 
     const formatPrice = (val: number) =>
         isLocalCurrency
             ? val.toLocaleString('fr-FR')
             : val.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-    const { data, setData, post, processing, errors } = useForm({
-        payment_method:  '',
-        billing_cycle:   billingCycle,
-        phone:           '',
-        transaction_ref: '',
-    });
-
-    const selectedMethod = PAYMENT_METHODS.find(m => m.id === data.payment_method);
-    const needsPhone = ['wave', 'orange_money', 'mtn_money', 'moov_money'].includes(data.payment_method);
-
+    // Features list
     const ul = 'Illimité';
     const features = [
-        plan.has_unlimited_shops   ? `${ul} boutiques`     : `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`,
-        plan.has_unlimited_users   ? `${ul} utilisateurs`  : `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}`,
-        plan.has_unlimited_products? `${ul} produits`      : `${plan.max_products} produit${plan.max_products > 1 ? 's' : ''}`,
-        plan.max_depots === 0      ? 'Sans dépôt'
+        plan.has_unlimited_shops    ? `${ul} boutiques`    : `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`,
+        plan.has_unlimited_users    ? `${ul} utilisateurs` : `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}`,
+        plan.has_unlimited_products ? `${ul} produits`     : `${plan.max_products} produit${plan.max_products > 1 ? 's' : ''}`,
+        plan.max_depots === 0       ? 'Sans dépôt'
             : plan.has_unlimited_depots ? `${ul} dépôts`
             : `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}`,
         'Ventes & caisse',
@@ -88,13 +167,121 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
         'Rapports & statistiques',
     ];
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Countries that have at least one correspondent matching the shop currency (fallback to XOF)
+    const targetCurrency = CORRESPONDENTS.some(c => c.currency === currency) ? currency : 'XOF';
+    const availableCountries = COUNTRIES.filter(co =>
+        co.currency === targetCurrency && CORRESPONDENTS.some(c => c.country === co.name)
+    );
+
+    // Operators for the selected country
+    const countryOperators = selectedCountry
+        ? CORRESPONDENTS.filter(c => c.country === selectedCountry.name)
+        : [];
+
+    /* ── PawaPay polling ──────────────────────────────────────────────── */
+
+    useEffect(() => {
+        if (pawaPayStatus === 'pending' && depositId) {
+            pollRef.current = setInterval(async () => {
+                try {
+                    const res = await axios.get(`/pawapay/status/${depositId}`, {
+                        headers: { 'X-CSRF-TOKEN': getCsrfToken() },
+                    });
+                    const { status, subscriptionActivated } = res.data;
+
+                    if (status === 'COMPLETED' && subscriptionActivated) {
+                        clearInterval(pollRef.current!);
+                        setPawaPayStatus('completed');
+                        // Redirect to confirmation after a brief moment
+                        setTimeout(() => {
+                            window.location.href = `/payment/confirmation/${plan.slug}`;
+                        }, 1500);
+                    } else if (status === 'FAILED' || status === 'DUPLICATE_IGNORED') {
+                        clearInterval(pollRef.current!);
+                        setPawaPayStatus('failed');
+                        setPawaPayError('Le paiement a échoué ou a été annulé. Veuillez réessayer.');
+                    }
+                } catch {
+                    // Ignore network errors during polling
+                }
+            }, 3000);
+        }
+
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, [pawaPayStatus, depositId]);
+
+    /* ── PawaPay submit ───────────────────────────────────────────────── */
+
+    const handlePawaPaySubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setData('billing_cycle', billingCycle);
-        post(`/plans/${plan.id}/process`);
+        if (!correspondent || !msisdn) return;
+
+        setInitiating(true);
+        setPawaPayError('');
+
+        try {
+            const res = await axios.post(`/pawapay/initiate/${plan.id}`, {
+                billing_cycle:  billingCycle,
+                correspondent,
+                msisdn,
+                currency,
+            }, {
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (res.data.success) {
+                setDepositId(res.data.depositId);
+                setPawaPayStatus('pending');
+            } else {
+                setPawaPayError(res.data.message ?? 'Erreur inconnue.');
+            }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message
+                ?? err?.response?.data?.errors?.msisdn?.[0]
+                ?? 'Impossible de contacter le serveur de paiement.';
+            setPawaPayError(msg);
+        } finally {
+            setInitiating(false);
+        }
     };
 
-    // Plan gratuit → activation directe
+    /* ── Manual payment submit ────────────────────────────────────────── */
+
+    const handleManualSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmittingManual(true);
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/plans/${plan.id}/process`;
+
+        const fields: Record<string, string> = {
+            _token:          getCsrfToken(),
+            payment_method:  manualMethod,
+            billing_cycle:   billingCycle,
+            phone,
+            transaction_ref: transactionRef,
+        };
+
+        Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = name;
+            input.value = value;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+    };
+
+    /* ── Plan gratuit ─────────────────────────────────────────────────── */
+
     if (plan.price === 0) {
         return (
             <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">Activer le plan gratuit</h2>}>
@@ -110,7 +297,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                         <h2 className="text-xl font-bold text-white">Plan {plan.name}</h2>
                         <p className="text-slate-400">Aucun paiement requis. Activez votre plan immédiatement.</p>
                         <form method="POST" action={`/plans/${plan.id}/process`}>
-                            <input type="hidden" name="_token" value={document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''} />
+                            <input type="hidden" name="_token" value={getCsrfToken()} />
                             <input type="hidden" name="payment_method" value="wave" />
                             <input type="hidden" name="billing_cycle" value="monthly" />
                             <button type="submit" className="w-full rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200">
@@ -123,17 +310,17 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
         );
     }
 
+    /* ── Main render ──────────────────────────────────────────────────── */
+
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">Paiement</h2>}>
             <Head title={`Paiement — ${plan.name}`} />
 
             <div className="mx-auto max-w-5xl space-y-6">
-                {/* Retour */}
                 <Link href="/plans" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">
                     <ArrowLeft className="size-4" /> Retour aux plans
                 </Link>
 
-                {/* Upgrade warning */}
                 {currentPlan && currentPlan.slug !== plan.slug && (
                     <div className="flex items-start gap-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-amber-200">
                         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -143,7 +330,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                 <div className="grid gap-6 lg:grid-cols-5">
 
-                    {/* ── Récapitulatif du plan ── */}
+                    {/* ── Récapitulatif ── */}
                     <aside className="lg:col-span-2 space-y-4">
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
                             <div>
@@ -156,20 +343,16 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             <div className="space-y-2">
                                 <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Cycle de facturation</p>
                                 <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => { setBillingCycle('monthly'); setData('billing_cycle', 'monthly'); }}
-                                        className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${billingCycle === 'monthly' ? 'border-amber-300 bg-amber-300/10 text-amber-200' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
-                                    >
-                                        Mensuel
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => { setBillingCycle('yearly'); setData('billing_cycle', 'yearly'); }}
-                                        className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${billingCycle === 'yearly' ? 'border-amber-300 bg-amber-300/10 text-amber-200' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
-                                    >
-                                        Annuel <span className="text-xs text-emerald-400">−15%</span>
-                                    </button>
+                                    {(['monthly', 'yearly'] as const).map(cycle => (
+                                        <button
+                                            key={cycle}
+                                            type="button"
+                                            onClick={() => setBillingCycle(cycle)}
+                                            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${billingCycle === cycle ? 'border-amber-300 bg-amber-300/10 text-amber-200' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                                        >
+                                            {cycle === 'monthly' ? 'Mensuel' : <>Annuel <span className="text-xs text-emerald-400">−15%</span></>}
+                                        </button>
+                                    ))}
                                 </div>
                                 {billingCycle === 'yearly' && (
                                     <p className="text-xs text-emerald-400">Économie de {formatPrice(saving)} {currencyLabel}/an</p>
@@ -198,118 +381,288 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             </ul>
                         </div>
 
-                        {/* Sécurité */}
                         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
                             <ShieldCheck className="size-4 text-emerald-400 shrink-0" />
-                            Paiement sécurisé. Votre abonnement est activé après vérification manuelle dans quelques secondes.
+                            Paiement sécurisé via PawaPay.
                         </div>
                     </aside>
 
-                    {/* ── Formulaire de paiement ── */}
-                    <div className="lg:col-span-3">
-                        <form onSubmit={handleSubmit} className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
-                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                <CreditCard className="size-5 text-amber-200" />
-                                Mode de paiement
-                            </h3>
+                    {/* ── Formulaire ── */}
+                    <div className="lg:col-span-3 space-y-4">
 
-                            {/* Choix du moyen de paiement */}
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                {PAYMENT_METHODS.map(method => (
-                                    <button
-                                        key={method.id}
-                                        type="button"
-                                        onClick={() => setData('payment_method', method.id)}
-                                        className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-sm font-medium transition ${
-                                            data.payment_method === method.id
-                                                ? 'border-amber-300 bg-amber-300/10 text-amber-200'
-                                                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                                        }`}
-                                    >
-                                        <img
-                                            src={method.logo}
-                                            alt={method.label}
-                                            className="h-8 w-auto object-contain"
-                                        />
-                                        {method.label}
-                                    </button>
-                                ))}
-                            </div>
-                            {errors.payment_method && <p className="text-xs text-red-400">{errors.payment_method}</p>}
+                        {/* Mode selector */}
+                        <div className="flex gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMode('pawapay')}
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'pawapay' ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
+                            >
+                                <Zap className="size-4" />
+                                Paiement automatique
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMode('manual')}
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'manual' ? 'bg-white/15 text-white' : 'text-slate-400 hover:bg-white/5'}`}
+                            >
+                                <Building2 className="size-4" />
+                                Paiement manuel
+                            </button>
+                        </div>
 
-                            {/* Instructions selon le mode */}
-                            {selectedMethod && (
-                                <div className="rounded-xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm text-blue-200 space-y-2">
-                                    <p className="font-semibold flex items-center gap-2">
-                                        <Smartphone className="size-4" />
-                                        Instructions de paiement
-                                    </p>
-                                    {paymentNumbers[selectedMethod.id] ? (
-                                        <p>
-                                            {needsPhone ? 'Envoyez au' : 'Coordonnées'} :{' '}
-                                            <strong className="text-white">{paymentNumbers[selectedMethod.id]}</strong>
+                        {/* ══════════════════ PAWAPAY FLOW ══════════════════ */}
+                        {paymentMode === 'pawapay' && (
+                            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
+                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                    <Zap className="size-5 text-amber-300" />
+                                    Paiement mobile automatique
+                                </h3>
+
+                                {/* ── Waiting for USSD ── */}
+                                {pawaPayStatus === 'pending' && (
+                                    <div className="flex flex-col items-center gap-4 py-8 text-center">
+                                        <div className="relative">
+                                            <div className="size-16 rounded-full border-4 border-amber-300/20 border-t-amber-300 animate-spin" />
+                                            <Smartphone className="absolute inset-0 m-auto size-6 text-amber-300" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-white">Confirmation en attente</p>
+                                            <p className="mt-1 text-sm text-slate-400">
+                                                Vérifiez votre téléphone et confirmez le paiement de{' '}
+                                                <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong> via USSD.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setPawaPayStatus('idle'); setDepositId(null); }}
+                                            className="text-xs text-slate-500 hover:text-slate-300 underline"
+                                        >
+                                            Annuler et réessayer
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* ── Success ── */}
+                                {pawaPayStatus === 'completed' && (
+                                    <div className="flex flex-col items-center gap-3 py-8 text-center">
+                                        <CheckCircle2 className="size-14 text-emerald-400" />
+                                        <p className="font-semibold text-white">Paiement confirmé !</p>
+                                        <p className="text-sm text-slate-400">Redirection en cours…</p>
+                                    </div>
+                                )}
+
+                                {/* ── Failed ── */}
+                                {pawaPayStatus === 'failed' && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-start gap-3 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-300">
+                                            <XCircle className="mt-0.5 size-4 shrink-0" />
+                                            {pawaPayError}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setPawaPayStatus('idle'); setDepositId(null); setPawaPayError(''); }}
+                                            className="inline-flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200"
+                                        >
+                                            <RefreshCw className="size-4" /> Réessayer
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* ── Form ── */}
+                                {pawaPayStatus === 'idle' && (
+                                    <form onSubmit={handlePawaPaySubmit} className="space-y-6">
+                                        {pawaPayError && (
+                                            <div className="flex items-start gap-3 rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-sm text-red-300">
+                                                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                                                {pawaPayError}
+                                            </div>
+                                        )}
+
+                                        {/* Étape 1 — Pays */}
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium text-slate-300">
+                                                Étape 1 — Votre pays <span className="text-red-400">*</span>
+                                            </p>
+                                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                                                {availableCountries.map(co => (
+                                                    <button
+                                                        key={co.name}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedCountry(co);
+                                                            setCorrespondent('');
+                                                        }}
+                                                        className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                                                            selectedCountry?.name === co.name
+                                                                ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                                                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                                        }`}
+                                                    >
+                                                        <span className="text-lg leading-none">{co.flag}</span>
+                                                        <span className="truncate">{co.name}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Étape 2 — Opérateur (visible uniquement si pays sélectionné) */}
+                                        {selectedCountry && (
+                                            <div className="space-y-2">
+                                                <p className="text-sm font-medium text-slate-300">
+                                                    Étape 2 — Votre opérateur <span className="text-red-400">*</span>
+                                                </p>
+                                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                                    {countryOperators.map(op => (
+                                                        <button
+                                                            key={op.id}
+                                                            type="button"
+                                                            onClick={() => setCorrespondent(op.id)}
+                                                            className={`flex flex-col items-center gap-2 rounded-xl border px-3 py-3 text-xs font-medium transition ${
+                                                                correspondent === op.id
+                                                                    ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                                                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                                            }`}
+                                                        >
+                                                            {op.logo ? (
+                                                                <img src={op.logo} alt={op.label} className="h-7 w-auto object-contain" />
+                                                            ) : (
+                                                                <Smartphone className="size-6 text-slate-400" />
+                                                            )}
+                                                            {op.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Numéro (visible si opérateur sélectionné) */}
+                                        {correspondent && (
+                                            <div className="space-y-1.5">
+                                                <label className="block text-sm font-medium text-slate-300">
+                                                    Numéro Mobile Money <span className="text-red-400">*</span>
+                                                </label>
+                                                <input
+                                                    type="tel"
+                                                    value={msisdn}
+                                                    onChange={e => setMsisdn(e.target.value)}
+                                                    placeholder={`ex: ${selectedCountry?.flag} +221 77 000 00 00`}
+                                                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                                />
+                                                <p className="text-xs text-slate-500">Un push USSD sera envoyé sur ce numéro pour confirmer.</p>
+                                            </div>
+                                        )}
+
+                                        <button
+                                            type="submit"
+                                            disabled={initiating || !correspondent || !msisdn}
+                                            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {initiating ? (
+                                                <><Loader2 className="size-4 animate-spin" /> Initiation…</>
+                                            ) : (
+                                                <><Zap className="size-4" /> Payer {formatPrice(displayPrice)} {currencyLabel}</>
+                                            )}
+                                        </button>
+
+                                        <p className="text-center text-xs text-slate-500">
+                                            Powered by <span className="font-semibold text-slate-400">PawaPay</span> — push USSD sécurisé.
                                         </p>
-                                    ) : (
-                                        <p className="text-amber-200">Contactez le support pour obtenir les coordonnées de paiement.</p>
-                                    )}
-                                    <p>Montant : <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong></p>
-                                    <p>Référence à indiquer : <strong className="text-white">BTX-{plan.id}-{Date.now().toString().slice(-6)}</strong></p>
-                                </div>
-                            )}
+                                    </form>
+                                )}
+                            </div>
+                        )}
 
-                            {/* Numéro de téléphone (mobile money) */}
-                            {needsPhone && (
+                        {/* ══════════════════ MANUAL FLOW ══════════════════ */}
+                        {paymentMode === 'manual' && (
+                            <form onSubmit={handleManualSubmit} className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
+                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                    <CreditCard className="size-5 text-amber-200" />
+                                    Paiement manuel
+                                </h3>
+
+                                <div className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs text-amber-200">
+                                    Envoyez le montant manuellement puis saisissez la référence de transaction ci-dessous.
+                                </div>
+
+                                {/* Méthode */}
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                    {MANUAL_METHODS.map(method => (
+                                        <button
+                                            key={method.id}
+                                            type="button"
+                                            onClick={() => setManualMethod(method.id)}
+                                            className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-sm font-medium transition ${
+                                                manualMethod === method.id
+                                                    ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            <img src={method.logo} alt={method.label} className="h-8 w-auto object-contain" />
+                                            {method.label}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {/* Instructions */}
+                                {manualMethod && (
+                                    <div className="rounded-xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm text-blue-200 space-y-2">
+                                        <p className="font-semibold flex items-center gap-2">
+                                            <Smartphone className="size-4" /> Instructions
+                                        </p>
+                                        {paymentNumbers[manualMethod] ? (
+                                            <p>Envoyez à : <strong className="text-white">{paymentNumbers[manualMethod]}</strong></p>
+                                        ) : (
+                                            <p className="text-amber-200">Contactez le support pour les coordonnées de paiement.</p>
+                                        )}
+                                        <p>Montant : <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong></p>
+                                        <p>Référence : <strong className="text-white">BTX-{plan.id}-{Date.now().toString().slice(-6)}</strong></p>
+                                    </div>
+                                )}
+
+                                {/* Téléphone */}
                                 <div className="space-y-1.5">
-                                    <label className="block text-sm font-medium text-slate-300">
-                                        Numéro de téléphone utilisé <span className="text-red-400">*</span>
-                                    </label>
+                                    <label className="block text-sm font-medium text-slate-300">Numéro utilisé</label>
                                     <input
                                         type="tel"
-                                        value={data.phone}
-                                        onChange={e => setData('phone', e.target.value)}
+                                        value={phone}
+                                        onChange={e => setPhone(e.target.value)}
                                         placeholder="ex: +221 77 000 00 00"
                                         className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
                                     />
-                                    {errors.phone && <p className="text-xs text-red-400">{errors.phone}</p>}
                                 </div>
-                            )}
 
-                            {/* Référence de transaction */}
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-medium text-slate-300">
-                                    Référence / ID de transaction
-                                    <span className="ml-1 text-xs text-slate-500">(facultatif mais recommandé)</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    value={data.transaction_ref}
-                                    onChange={e => setData('transaction_ref', e.target.value)}
-                                    placeholder="ex: TXN-123456789"
-                                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
-                                />
-                                {errors.transaction_ref && <p className="text-xs text-red-400">{errors.transaction_ref}</p>}
-                            </div>
+                                {/* Référence */}
+                                <div className="space-y-1.5">
+                                    <label className="block text-sm font-medium text-slate-300">
+                                        Référence / ID de transaction
+                                        <span className="ml-1 text-xs text-slate-500">(facultatif mais recommandé)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={transactionRef}
+                                        onChange={e => setTransactionRef(e.target.value)}
+                                        placeholder="ex: TXN-123456789"
+                                        className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                    />
+                                </div>
 
-                            {/* Bouton soumettre */}
-                            <button
-                                type="submit"
-                                disabled={processing || !data.payment_method}
-                                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {processing ? (
-                                    <><Loader2 className="size-4 animate-spin" /> Traitement…</>
-                                ) : (
-                                    <>
-                                        <Building2 className="size-4" />
-                                        Confirmer — {formatPrice(displayPrice)} {currencyLabel}
-                                    </>
-                                )}
-                            </button>
+                                <button
+                                    type="submit"
+                                    disabled={submittingManual || !manualMethod}
+                                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {submittingManual ? (
+                                        <><Loader2 className="size-4 animate-spin" /> Traitement…</>
+                                    ) : (
+                                        <><Building2 className="size-4" /> Confirmer — {formatPrice(displayPrice)} {currencyLabel}</>
+                                    )}
+                                </button>
 
-                            <p className="text-center text-xs text-slate-500">
-                                En confirmant, vous acceptez nos conditions d'utilisation. L'abonnement sera activé après vérification dans quelques secondes.
-                            </p>
-                        </form>
+                                <p className="text-center text-xs text-slate-500">
+                                    L'abonnement sera activé après vérification manuelle dans quelques minutes.
+                                </p>
+                            </form>
+                        )}
                     </div>
                 </div>
             </div>
