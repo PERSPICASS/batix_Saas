@@ -3,7 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2 } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageProps } from '@/types';
 
 interface Shop {
@@ -109,6 +109,14 @@ export default function SalesShow({ sale, auth }: Props) {
         notes: '',
     });
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('print') === '1') {
+            const timer = setTimeout(() => window.print(), 400);
+            return () => clearTimeout(timer);
+        }
+    }, []);
+
     const handlePrint = () => {
         window.print();
     };
@@ -146,15 +154,31 @@ export default function SalesShow({ sale, auth }: Props) {
         >
             <Head title={`Ticket ${sale.ticket_number}`} />
 
+            <style>{`
+                @media print {
+                    #ticket-print * { color: #000 !important; background: #fff !important; }
+                    #ticket-print { max-width: 520px; margin: 0 auto; }
+                    #ticket-print table th,
+                    #ticket-print table td { border-color: #ccc !important; }
+                    #ticket-print .border-white\\/10,
+                    #ticket-print .border-white\\/5 { border-color: #ddd !important; }
+                    #ticket-print .credit-block { display: none !important; }
+                    #ticket-print .total-line { color: #000 !important; font-weight: 800; }
+                    #ticket-print .monnaie-line { color: #166534 !important; }
+                    #ticket-print .credit-line { color: #991b1b !important; }
+                    #ticket-print .footer-msg { color: #6b7280 !important; }
+                }
+            `}</style>
+
             <div className="space-y-4">
                 <Link
                     href={route('sales.index')}
-                    className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
+                    className="print:hidden inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
                 >
                     <ArrowLeft className="size-4" /> Retour aux ventes
                 </Link>
 
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
+                <div id="ticket-print" className="rounded-2xl border border-white/10 bg-white/5 p-8 print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black">
                     {/* En-tête du ticket */}
                     <div className="mb-8 text-center">
                         {sale.shop.logo && (
@@ -272,7 +296,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                 </span>
                             </div>
                         )}
-                        <div className="flex justify-between border-t border-white/10 pt-2 text-lg font-bold">
+                        <div className="total-line flex justify-between border-t border-white/10 pt-2 text-lg font-bold">
                             <span className="text-white">TOTAL:</span>
                             <span className="text-amber-300">
                                 <Currency amount={parseFloat(sale.total)} />
@@ -295,7 +319,7 @@ export default function SalesShow({ sale, auth }: Props) {
                             </span>
                         </div>
                         {parseFloat(sale.change_amount) > 0 && (
-                            <div className="flex justify-between text-sm">
+                            <div className="monnaie-line flex justify-between text-sm">
                                 <span className="text-slate-400">Monnaie rendue:</span>
                                 <span className="font-semibold text-emerald-400">
                                     <Currency amount={parseFloat(sale.change_amount)} />
@@ -322,7 +346,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
                     {/* Bouton Encaisser le reste */}
                     {parseFloat(sale.remaining_amount) > 0 && (
-                        <div className="mt-6 rounded-xl border border-rose-400/30 bg-rose-500/10 p-4">
+                        <div className="credit-block mt-6 rounded-xl border border-rose-400/30 bg-rose-500/10 p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <CreditCard className="size-5 text-rose-400" />
@@ -351,7 +375,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         </div>
                     )}
 
-                    <div className="mt-8 text-center text-xs text-slate-500">
+                    <div className="footer-msg mt-8 text-center text-xs text-slate-500">
                         <p>Merci de votre visite</p>
                         <p>À bientôt !</p>
                     </div>
@@ -360,7 +384,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
             {/* Modal: Encaisser le reste */}
             {showCreditModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
                         <div className="mb-4 flex items-center gap-3">
                             <CreditCard className="size-5 text-rose-400" />
@@ -426,7 +450,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
             {/* Modal: Confirmer annulation */}
             {showCancelModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="w-full max-w-sm rounded-2xl bg-slate-900 p-6 shadow-xl border border-white/10">
                         <div className="mb-4 flex items-center gap-3">
                             <div className="flex size-10 items-center justify-center rounded-full bg-rose-400/10">

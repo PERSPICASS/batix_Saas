@@ -89,6 +89,16 @@ class DashboardController extends Controller
             }
         }
         
+        $totalProducts = Product::whereIn('shop_id', $shopIds)->count();
+        $totalSales    = Sale::whereIn('shop_id', $shopIds)->where('status', 'completed')->count();
+
+        $onboarding = [
+            'has_shop'     => $totalShops > 0,
+            'has_product'  => $totalProducts > 0,
+            'has_sale'     => $totalSales > 0,
+            'is_complete'  => $totalShops > 0 && $totalProducts > 0 && $totalSales > 0,
+        ];
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'todaySales' => (float) $todaySales,
@@ -103,6 +113,7 @@ class DashboardController extends Controller
             'currentPeriod' => $period,
             'recentActivities' => $recentActivities,
             'currencySymbol' => $currencySymbol,
+            'onboarding' => $onboarding,
         ]);
     }
     

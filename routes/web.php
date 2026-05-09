@@ -26,6 +26,7 @@ use App\Http\Controllers\CreditController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\DepotController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PawaPayController;
 use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
@@ -73,6 +74,7 @@ Route::post('/pawapay/webhook', [PawaPayController::class, 'webhook'])
 Route::middleware(['auth'])->group(function () {
     Route::post('/pawapay/initiate/{plan}', [PawaPayController::class, 'initiate'])->name('pawapay.initiate');
     Route::get('/pawapay/status/{depositId}', [PawaPayController::class, 'pollStatus'])->name('pawapay.status');
+    Route::post('/pawapay/simulate/{depositId}', [PawaPayController::class, 'simulate'])->name('pawapay.simulate');
 });
 
 // Routes publiques pour les invitations (avant auth)
@@ -240,6 +242,9 @@ Route::prefix('{code_user}')
             'description' => 'Plans, limites de boutiques, facturation et upgrades.',
         ]);
     })->name('subscriptions.index');
+
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('/billing/invoices/{subscriptionInvoice}/download', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
 
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
 

@@ -1,0 +1,26 @@
+{
+    "name": "Batix Pro",
+    "short_name": "Batix",
+    "description": "Gestion moderne des quincailleries",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#fcd34d",
+    "orientation": "portrait-primary",
+    "lang": "fr",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/favicon.ico",
+            "sizes": "48x48",
+            "type": "image/x-icon"
+        }
+    ],
+    "screenshots": [],
+    "categories": ["business", "productivity"]
+}

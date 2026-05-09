@@ -7,6 +7,7 @@ import {
     useState,
 } from 'react';
 import {
+    AlertTriangle,
     BarChart3,
     BookOpen,
     Building2,
@@ -52,6 +53,19 @@ export default function Authenticated({
     const routeParams = page.props.routeParams as { code_user: string | null; shop_slug: string | null };
     const shopsFromProps = page.props.shops as Array<{ id: number; name: string; slug: string; is_active: boolean }> || [];
     const activeShopFromProps = page.props.activeShop as { id: number; name: string; slug: string } | null;
+    const lowStockCount = (page.props.lowStockCount as number | null) ?? 0;
+
+    const subscription = page.props.subscription as {
+        plan_name: string | null;
+        has_subscription: boolean;
+        expires_at: string | null;
+        status: string | null;
+    } | null;
+
+    const daysUntilExpiry = subscription?.expires_at
+        ? Math.ceil((new Date(subscription.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null;
+    const showExpiryBanner = daysUntilExpiry !== null && daysUntilExpiry <= 7 && user?.role === 'super_admin';
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
@@ -288,6 +302,7 @@ export default function Authenticated({
                 active: route().current('products.*'),
                 icon: Box,
                 module: 'products',
+                badge: lowStockCount > 0 ? lowStockCount : null,
             },
             {
                 label: 'Categories',
@@ -373,6 +388,7 @@ export default function Authenticated({
                 icon: FileText,
                 module: 'invoices',
             },
+            
             {
                 label: 'Analytics',
                 href: buildRoute('analytics.index'),
@@ -404,7 +420,14 @@ export default function Authenticated({
                 icon: Settings,
                 module: null, // Toujours visible
             }]
-                : []),
+            : []),
+            {
+                label: 'Facturation',
+                href: buildRoute('billing.index'),
+                active: route().current('billing.*'),
+                icon: Receipt,
+                module: null,
+            },
         ]),
     ];
 
@@ -431,7 +454,7 @@ export default function Authenticated({
             )}
 
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-300 bg-slate-100/95 p-5 backdrop-blur-xl transition-transform duration-300 dark:border-white/10 dark:bg-slate-900/95 lg:translate-x-0 ${
+                className={`print:hidden fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-300 bg-slate-100/95 p-5 backdrop-blur-xl transition-transform duration-300 dark:border-white/10 dark:bg-slate-900/95 lg:translate-x-0 ${
                     mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
@@ -476,7 +499,13 @@ export default function Authenticated({
                                         <item.icon className="size-4" />
                                         {item.label}
                                     </span>
-                                    <ChevronRight className="size-4 opacity-60" />
+                                    {(item as any).badge ? (
+                                        <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                            {(item as any).badge}
+                                        </span>
+                                    ) : (
+                                        <ChevronRight className="size-4 opacity-60" />
+                                    )}
                                 </Link>
                             ))}
                         </nav>
@@ -493,12 +522,12 @@ export default function Authenticated({
                                 </p>
                             </div>
                             <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
-                                {user ? 'Growth' : 'Starter'}
+                                {subscription?.plan_name ?? 'Aucun plan'}
                             </p>
                             <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                                {user
-                                    ? '3 boutiques incluses'
-                                    : 'Connectez-vous pour voir votre plan'}
+                                {subscription?.has_subscription
+                                    ? 'Abonnement actif'
+                                    : 'Aucun abonnement actif'}
                             </p>
                             <Link
                                 href="/plans"
@@ -514,8 +543,8 @@ export default function Authenticated({
                 </div>
             </aside>
 
-            <div className="lg:pl-72">
-                <header className="sticky top-0 z-30 border-b border-slate-300 bg-slate-100/90 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6 lg:px-8">
+            <div className="lg:pl-72 print:pl-0">
+                <header className="print:hidden sticky top-0 z-30 border-b border-slate-300 bg-slate-100/90 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <button
@@ -544,6 +573,31 @@ export default function Authenticated({
                                     {theme === 'dark' ? <Sun className="size-4 text-amber-300" /> : <Moon className="size-4 text-slate-700" />}
                                     <span className="hidden sm:inline">{theme === 'dark' ? 'Mode clair' : 'Mode sombre'}</span>
                                 </button>
+                            )}
+
+                            {/* Badge stock bas */}
+                            {lowStockCount > 0 && user?.role !== 'admin_platforme' && (
+                                <Link
+                                    href={buildRoute('products.index') + '?status=low_stock'}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
+                                >
+                                    <AlertTriangle className="size-3.5" />
+                                    <span className="hidden sm:inline">{lowStockCount} stock{lowStockCount > 1 ? 's' : ''} bas</span>
+                                    <span className="sm:hidden">{lowStockCount}</span>
+                                </Link>
+                            )}
+
+                            {/* Badge plan abonnement - super_admin uniquement */}
+                            {user?.role === 'super_admin' && (
+                                <Link
+                                    href={buildRoute('billing.index')}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/40 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-600 transition hover:bg-amber-300/20 dark:border-amber-300/30 dark:text-amber-300"
+                                >
+                                    <Crown className="size-3.5" />
+                                    <span className="hidden sm:inline">
+                                        {subscription?.plan_name ?? 'Aucun plan'}
+                                    </span>
+                                </Link>
                             )}
 
                             {/* Bouton Dépôt - masqué pour admin_platforme */}
@@ -687,9 +741,39 @@ export default function Authenticated({
                             </div>
                         </div>
                     </div>
+
+                    {/* Bannière expiration abonnement */}
+                    {showExpiryBanner && (
+                        <div className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm sm:px-6 lg:px-8 ${
+                            daysUntilExpiry! <= 1
+                                ? 'bg-rose-500/20 border-t border-rose-500/30 text-rose-300'
+                                : 'bg-amber-400/15 border-t border-amber-400/25 text-amber-300'
+                        }`}>
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle className="size-4 shrink-0" />
+                                <span className="font-medium">
+                                    {daysUntilExpiry! <= 0
+                                        ? 'Votre abonnement a expiré.'
+                                        : daysUntilExpiry === 1
+                                        ? 'Votre abonnement expire demain !'
+                                        : `Votre abonnement expire dans ${daysUntilExpiry} jours.`}
+                                </span>
+                            </div>
+                            <Link
+                                href={buildRoute('billing.index')}
+                                className={`shrink-0 rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                                    daysUntilExpiry! <= 1
+                                        ? 'bg-rose-500/30 hover:bg-rose-500/50 text-rose-200'
+                                        : 'bg-amber-400/20 hover:bg-amber-400/35 text-amber-200'
+                                }`}
+                            >
+                                Renouveler
+                            </Link>
+                        </div>
+                    )}
                 </header>
 
-                <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+                <main className="px-4 py-6 print:p-0 sm:px-6 lg:px-8">{children}</main>
             </div>
 
             {/* Toast Container */}

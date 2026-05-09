@@ -111,6 +111,17 @@ class HandleInertiaRequests extends Middleware
             ? fn () => $user->getSubscriptionLimits()
             : null;
 
+        // ── Stock bas : compte produits sous seuil d'alerte ───────────────
+        $lowStockCount = ($user->role !== 'admin_platforme' && $shop)
+            ? fn () => \App\Models\Product::where('shop_id', $shop->id)
+                ->where('track_stock', true)
+                ->whereNotNull('min_stock_alert')
+                ->where('min_stock_alert', '>', 0)
+                ->whereColumn('stock_quantity', '<=', 'min_stock_alert')
+                ->where('is_active', true)
+                ->count()
+            : null;
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -118,6 +129,7 @@ class HandleInertiaRequests extends Middleware
                 'code_user' => $user->code_user,
             ],
             'subscription'  => $subscription,
+            'lowStockCount' => $lowStockCount,
             'shops'         => $shops,
             'activeShop'    => $activeShopData,
             'currentShop'   => $activeShopData, // alias conservé pour compatibilité

@@ -11,7 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Mail\SubscriptionInvoiceMail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class PawaPayController extends Controller
@@ -35,15 +37,20 @@ class PawaPayController extends Controller
         $user    = Auth::user();
         $months  = $validated['billing_cycle'] === 'yearly' ? 12 : 1;
         $amount  = $validated['billing_cycle'] === 'yearly'
-            ? round($plan->price * 12 * 0.85)
-            : $plan->price;
+            ? round((float) $plan->price * 12 * 0.85)
+            : (float) $plan->price;
+
+        // PawaPay requires the amount as a decimal string with the correct
+        // number of decimal places for the currency (XOF/GNF = 0, GHS = 2).
+        $decimals  = $validated['currency'] === 'GHS' ? 2 : 0;
+        $amountStr = number_format($amount, $decimals, '.', '');
 
         $depositId = (string) Str::uuid();
         $msisdn    = preg_replace('/[^0-9]/', '', $validated['msisdn']);
 
         $result = $this->pawaPay->initiateDeposit(
             depositId:   $depositId,
-            amount:      (string) $amount,
+            amount:      $amountStr,
             currency:    $validated['currency'],
             correspondent: $validated['correspondent'],
             msisdn:      $msisdn,
@@ -52,13 +59,14 @@ class PawaPayController extends Controller
 
         $status = $result['status'] ?? 'FAILED';
 
-        if (!in_array($status, ['INITIATED', 'SUBMITTED'])) {
+        if (!in_array($status, ['INITIATED', 'SUBMITTED', 'ACCEPTED'])) {
             Log::warning('PawaPay initiate failed', ['result' => $result, 'plan' => $plan->id]);
 
-            return response()->json([
-                'success' => false,
-                'message' => $result['errorMessage'] ?? 'Échec de l\'initiation du paiement. Vérifiez votre numéro et réessayez.',
-            ], 422);
+            $message = $result['errorMessage']
+                ?? $result['rejectionReason']['rejectionMessage']
+                ?? 'Échec de l\'initiation du paiement. Vérifiez votre numéro et réessayez.';
+
+            return response()->json(['success' => false, 'message' => $message], 422);
         }
 
         PawaPayDeposit::create([
@@ -66,7 +74,7 @@ class PawaPayController extends Controller
             'user_id'              => $user->id,
             'subscription_plan_id' => $plan->id,
             'billing_cycle'        => $validated['billing_cycle'],
-            'amount'               => $amount,
+            'amount'               => $amountStr,
             'currency'             => $validated['currency'],
             'correspondent'        => $validated['correspondent'],
             'msisdn'               => $msisdn,
@@ -101,10 +109,13 @@ class PawaPayController extends Controller
                 'completed_at' => $newStatus === 'COMPLETED' ? now() : null,
             ]);
 
-            if ($newStatus === 'COMPLETED' && !$deposit->subscription_activated) {
-                $this->activateSubscription($deposit);
-                $deposit->refresh();
-            }
+            $deposit->refresh();
+        }
+
+        // Retry activation on every poll until confirmed (handles first-poll failures)
+        if ($deposit->status === 'COMPLETED' && !$deposit->subscription_activated) {
+            $this->activateSubscription($deposit);
+            $deposit->refresh();
         }
 
         return response()->json([
@@ -112,6 +123,24 @@ class PawaPayController extends Controller
             'depositId'           => $deposit->deposit_id,
             'subscriptionActivated' => $deposit->subscription_activated,
         ]);
+    }
+
+    /**
+     * Sandbox only — simulate deposit completion (dev/staging use).
+     */
+    public function simulate(string $depositId): JsonResponse
+    {
+        abort_unless(config('services.pawapay.sandbox'), 403);
+
+        $deposit = PawaPayDeposit::where('deposit_id', $depositId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $result = $this->pawaPay->simulateDeposit($depositId);
+
+        Log::info('PawaPay simulate called', ['depositId' => $depositId, 'result' => $result]);
+
+        return response()->json(['ok' => true, 'result' => $result]);
     }
 
     /**
@@ -155,16 +184,15 @@ class PawaPayController extends Controller
      */
     private function activateSubscription(PawaPayDeposit $deposit): void
     {
-        // Idempotency guard
         if ($deposit->subscription_activated) {
             return;
         }
 
-        DB::transaction(function () use ($deposit) {
-            $user   = $deposit->user;
-            $plan   = $deposit->plan;
-            $months = $deposit->billing_cycle === 'yearly' ? 12 : 1;
+        $user   = $deposit->user;
+        $plan   = $deposit->plan;
+        $months = $deposit->billing_cycle === 'yearly' ? 12 : 1;
 
+        $invoice = DB::transaction(function () use ($deposit, $user, $plan, $months) {
             Subscription::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
@@ -185,7 +213,7 @@ class PawaPayController extends Controller
                 ],
             ]);
 
-            SubscriptionInvoice::create([
+            $invoice = SubscriptionInvoice::create([
                 'subscription_id' => $subscription->id,
                 'user_id'         => $user->id,
                 'invoice_number'  => SubscriptionInvoice::generateInvoiceNumber(),
@@ -205,6 +233,18 @@ class PawaPayController extends Controller
             ]);
 
             $deposit->update(['subscription_activated' => true]);
+
+            return [$subscription, $invoice];
         });
+
+        // Mail hors transaction : un échec d'envoi ne rollback pas l'activation
+        try {
+            [$subscription, $invoice] = $invoice;
+            Mail::to($user->email)->send(
+                new SubscriptionInvoiceMail($user, $subscription, $invoice)
+            );
+        } catch (\Throwable $e) {
+            Log::error('SubscriptionInvoiceMail failed', ['user' => $user->id, 'error' => $e->getMessage()]);
+        }
     }
 }

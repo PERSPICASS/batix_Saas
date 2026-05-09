@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PawaPayDeposit extends Model
 {
+    protected $table = 'pawapay_deposits';
+
     protected $fillable = [
         'deposit_id',
         'user_id',

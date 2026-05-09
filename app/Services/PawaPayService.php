@@ -46,7 +46,7 @@ class PawaPayService
                         'address' => ['value' => $msisdn],
                     ],
                     'customerTimestamp'   => now()->toIso8601String(),
-                    'statementDescriptor' => substr($description, 0, 22), // PawaPay max 22 chars
+                    'statementDescription' => substr($description, 0, 22),
                 ]);
 
             return $response->json() ?? [];
@@ -72,6 +72,25 @@ class PawaPayService
             return is_array($body) && isset($body[0]) ? $body[0] : ($body ?? []);
         } catch (\Throwable $e) {
             Log::error('PawaPay getDeposit error', ['error' => $e->getMessage(), 'depositId' => $depositId]);
+            return [];
+        }
+    }
+
+    /**
+     * Sandbox only — simulate a deposit resolution (COMPLETED or FAILED).
+     */
+    public function simulateDeposit(string $depositId, string $targetStatus = 'COMPLETED'): array
+    {
+        try {
+            $response = Http::withToken($this->apiToken)
+                ->timeout(15)
+                ->post("{$this->baseUrl}/deposits/{$depositId}/simulate-resolution", [
+                    'targetStatus' => $targetStatus,
+                ]);
+
+            return $response->json() ?? [];
+        } catch (\Throwable $e) {
+            Log::error('PawaPay simulateDeposit error', ['error' => $e->getMessage()]);
             return [];
         }
     }

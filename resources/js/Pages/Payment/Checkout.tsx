@@ -40,6 +40,7 @@ interface Props extends PageProps {
     currentPlan: { name: string; slug: string } | null;
     paymentNumbers: Record<string, string>;
     currency: string;
+    isSandbox: boolean;
 }
 
 type PaymentMode = 'pawapay' | 'manual';
@@ -49,6 +50,7 @@ interface Country {
     name: string;
     flag: string;
     currency: string;
+    dialCode: string;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -65,34 +67,21 @@ interface Correspondent {
 }
 
 const COUNTRIES: Country[] = [
-    { name: 'Sénégal',       flag: '🇸🇳', currency: 'XOF' },
-    { name: "Côte d'Ivoire", flag: '🇨🇮', currency: 'XOF' },
-    { name: 'Burkina Faso',  flag: '🇧🇫', currency: 'XOF' },
-    { name: 'Mali',          flag: '🇲🇱', currency: 'XOF' },
-    { name: 'Togo',          flag: '🇹🇬', currency: 'XOF' },
-    { name: 'Bénin',         flag: '🇧🇯', currency: 'XOF' },
-    { name: 'Guinée',        flag: '🇬🇳', currency: 'GNF' },
-    { name: 'Ghana',         flag: '🇬🇭', currency: 'GHS' },
+    { name: 'Sénégal',       flag: '🇸🇳', currency: 'XOF', dialCode: '+221' },
+    { name: "Côte d'Ivoire", flag: '🇨🇮', currency: 'XOF', dialCode: '+225' },
+    { name: 'Burkina Faso',  flag: '🇧🇫', currency: 'XOF', dialCode: '+226' },
+    { name: 'Bénin',         flag: '🇧🇯', currency: 'XOF', dialCode: '+229' },
+    { name: 'Ghana',         flag: '🇬🇭', currency: 'GHS', dialCode: '+233' },
 ];
 
 const CORRESPONDENTS: Correspondent[] = [
-    { id: 'WAVE_SEN',       label: 'Wave',             country: 'Sénégal',       currency: 'XOF', logo: logoWave   },
     { id: 'ORANGE_SEN',     label: 'Orange Money',     country: 'Sénégal',       currency: 'XOF', logo: logoOrange },
     { id: 'FREE_SEN',       label: 'Free Money',       country: 'Sénégal',       currency: 'XOF', logo: null       },
-    { id: 'WAVE_CIV',       label: 'Wave',             country: "Côte d'Ivoire", currency: 'XOF', logo: logoWave   },
     { id: 'ORANGE_CIV',     label: 'Orange Money',     country: "Côte d'Ivoire", currency: 'XOF', logo: logoOrange },
     { id: 'MTN_MOMO_CIV',   label: 'MTN Mobile Money', country: "Côte d'Ivoire", currency: 'XOF', logo: logoMtn    },
-    { id: 'MOOV_CIV',       label: 'Moov Money',       country: "Côte d'Ivoire", currency: 'XOF', logo: logoMoov   },
-    { id: 'ORANGE_BFA',     label: 'Orange Money',     country: 'Burkina Faso',  currency: 'XOF', logo: logoOrange },
     { id: 'MOOV_BFA',       label: 'Moov Money',       country: 'Burkina Faso',  currency: 'XOF', logo: logoMoov   },
-    { id: 'ORANGE_MLI',     label: 'Orange Money',     country: 'Mali',          currency: 'XOF', logo: logoOrange },
-    { id: 'MOOV_MLI',       label: 'Moov Money',       country: 'Mali',          currency: 'XOF', logo: logoMoov   },
-    { id: 'MOOV_TGO',       label: 'Flooz (Moov)',     country: 'Togo',          currency: 'XOF', logo: logoMoov   },
-    { id: 'TMONEY_TGO',     label: 'T-Money',          country: 'Togo',          currency: 'XOF', logo: null       },
     { id: 'MTN_MOMO_BEN',   label: 'MTN Mobile Money', country: 'Bénin',         currency: 'XOF', logo: logoMtn    },
     { id: 'MOOV_BEN',       label: 'Moov Money',       country: 'Bénin',         currency: 'XOF', logo: logoMoov   },
-    { id: 'ORANGE_GIN',     label: 'Orange Money',     country: 'Guinée',        currency: 'GNF', logo: logoOrange },
-    { id: 'MTN_MOMO_GIN',   label: 'MTN Mobile Money', country: 'Guinée',        currency: 'GNF', logo: logoMtn    },
     { id: 'MTN_MOMO_GHA',   label: 'MTN Mobile Money', country: 'Ghana',         currency: 'GHS', logo: logoMtn    },
     { id: 'VODAFONE_GHA',   label: 'Vodafone Cash',    country: 'Ghana',         currency: 'GHS', logo: null       },
     { id: 'AIRTELTIGO_GHA', label: 'AirtelTigo Money', country: 'Ghana',         currency: 'GHS', logo: null       },
@@ -118,18 +107,19 @@ function getCsrfToken(): string {
    Main component
 ───────────────────────────────────────────────────────────────────────────── */
 
-export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF' }: Props) {
+export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth }: Props) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [paymentMode, setPaymentMode] = useState<PaymentMode>('pawapay');
 
     // PawaPay state — étape 1 : pays, étape 2 : opérateur
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
     const [correspondent, setCorrespondent] = useState('');
-    const [msisdn, setMsisdn] = useState('');
+    const [localNumber, setLocalNumber] = useState('');
     const [pawaPayStatus, setPawaPayStatus] = useState<PawaPayStatus>('idle');
     const [depositId, setDepositId] = useState<string | null>(null);
     const [pawaPayError, setPawaPayError] = useState('');
     const [initiating, setInitiating] = useState(false);
+    const [simulating, setSimulating] = useState(false);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Manual payment state
@@ -194,7 +184,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                         setPawaPayStatus('completed');
                         // Redirect to confirmation after a brief moment
                         setTimeout(() => {
-                            window.location.href = `/payment/confirmation/${plan.slug}`;
+                            window.location.href = `/${auth.user.code_user}/dashboard`;
                         }, 1500);
                     } else if (status === 'FAILED' || status === 'DUPLICATE_IGNORED') {
                         clearInterval(pollRef.current!);
@@ -216,7 +206,10 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
     const handlePawaPaySubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!correspondent || !msisdn) return;
+        if (!correspondent || !localNumber) return;
+
+        // Build full E.164 MSISDN: dial code digits + local number digits
+        const msisdn = (selectedCountry?.dialCode ?? '') + localNumber;
 
         setInitiating(true);
         setPawaPayError('');
@@ -247,6 +240,22 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
             setPawaPayError(msg);
         } finally {
             setInitiating(false);
+        }
+    };
+
+    /* ── Sandbox simulate ────────────────────────────────────────────── */
+
+    const handleSimulate = async () => {
+        if (!depositId) return;
+        setSimulating(true);
+        try {
+            await axios.post(`/pawapay/simulate/${depositId}`, {}, {
+                headers: { 'X-CSRF-TOKEN': getCsrfToken() },
+            });
+        } catch {
+            // polling will pick up the status change
+        } finally {
+            setSimulating(false);
         }
     };
 
@@ -432,6 +441,17 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                                 <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong> via USSD.
                                             </p>
                                         </div>
+                                        {isSandbox && (
+                                            <button
+                                                type="button"
+                                                onClick={handleSimulate}
+                                                disabled={simulating}
+                                                className="inline-flex items-center gap-2 rounded-lg border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-xs font-medium text-amber-300 transition hover:bg-amber-300/20 disabled:opacity-50"
+                                            >
+                                                {simulating ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
+                                                Simuler la complétion (sandbox)
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             onClick={() => { setPawaPayStatus('idle'); setDepositId(null); }}
@@ -491,6 +511,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                                         onClick={() => {
                                                             setSelectedCountry(co);
                                                             setCorrespondent('');
+                                                            setLocalNumber('');
                                                         }}
                                                         className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
                                                             selectedCountry?.name === co.name
@@ -541,20 +562,25 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                                 <label className="block text-sm font-medium text-slate-300">
                                                     Numéro Mobile Money <span className="text-red-400">*</span>
                                                 </label>
-                                                <input
-                                                    type="tel"
-                                                    value={msisdn}
-                                                    onChange={e => setMsisdn(e.target.value)}
-                                                    placeholder={`ex: ${selectedCountry?.flag} +221 77 000 00 00`}
-                                                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
-                                                />
+                                                <div className="flex overflow-hidden rounded-xl border border-white/15 bg-white/5 focus-within:border-amber-300/50 focus-within:ring-1 focus-within:ring-amber-300/50">
+                                                    <span className="flex items-center gap-1.5 border-r border-white/10 bg-white/10 px-3 text-sm font-medium text-slate-300 select-none whitespace-nowrap">
+                                                        {selectedCountry?.flag} {selectedCountry?.dialCode}
+                                                    </span>
+                                                    <input
+                                                        type="tel"
+                                                        value={localNumber}
+                                                        onChange={e => setLocalNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                                                        placeholder="77 000 00 00"
+                                                        className="flex-1 bg-transparent px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none"
+                                                    />
+                                                </div>
                                                 <p className="text-xs text-slate-500">Un push USSD sera envoyé sur ce numéro pour confirmer.</p>
                                             </div>
                                         )}
 
                                         <button
                                             type="submit"
-                                            disabled={initiating || !correspondent || !msisdn}
+                                            disabled={initiating || !correspondent || !localNumber}
                                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {initiating ? (

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SubscriptionInvoiceMail;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
@@ -9,6 +10,7 @@ use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -45,7 +47,8 @@ class PaymentController extends Controller
                 'has_unlimited_products'=> $plan->hasUnlimitedProducts(),
                 'has_unlimited_depots'  => $plan->hasUnlimitedDepots(),
             ],
-            'currency' => $currency,
+            'currency'  => $currency,
+            'isSandbox' => (bool) config('services.pawapay.sandbox', true),
             'currentPlan' => $currentSubscription ? [
                 'name' => $currentSubscription->plan->name,
                 'slug' => $currentSubscription->plan->slug,
@@ -86,15 +89,13 @@ class PaymentController extends Controller
         DB::transaction(function () use ($user, $plan, $validated) {
             $months = $validated['billing_cycle'] === 'yearly' ? 12 : 1;
             $amount = $validated['billing_cycle'] === 'yearly'
-                ? $plan->price * 12 * 0.85   // -15% annuel
+                ? $plan->price * 12 * 0.85
                 : $plan->price;
 
-            // Désactiver l'abonnement actuel
             Subscription::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
 
-            // Créer le nouvel abonnement actif immédiatement
             $subscription = Subscription::create([
                 'user_id'              => $user->id,
                 'subscription_plan_id' => $plan->id,
@@ -110,8 +111,7 @@ class PaymentController extends Controller
                 ],
             ]);
 
-            // Créer la facture marquée comme payée
-            SubscriptionInvoice::create([
+            $invoice = SubscriptionInvoice::create([
                 'subscription_id'  => $subscription->id,
                 'user_id'          => $user->id,
                 'invoice_number'   => SubscriptionInvoice::generateInvoiceNumber(),
@@ -128,6 +128,10 @@ class PaymentController extends Controller
                     'phone'           => $validated['phone'] ?? null,
                 ],
             ]);
+
+            Mail::to($user->email)->send(
+                new SubscriptionInvoiceMail($user, $subscription, $invoice)
+            );
         });
 
         return redirect()->route('payment.confirmation', ['planSlug' => $plan->slug])

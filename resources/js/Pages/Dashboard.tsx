@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Calendar, Package, ShoppingCart, Store, TrendingUp, Wallet } from 'lucide-react';
 import FreeTrialBanner from '@/Components/FreeTrialBanner';
+import GettingStarted from '@/Components/GettingStarted';
 
 interface PerformanceItem {
     label: string;
@@ -34,6 +35,12 @@ interface DashboardProps {
         time: string;
     }>;
     currencySymbol: string;
+    onboarding: {
+        has_shop: boolean;
+        has_product: boolean;
+        has_sale: boolean;
+        is_complete: boolean;
+    };
 }
 
 const periods = [
@@ -59,7 +66,7 @@ function formatCurrency(value: number, symbol: string): string {
     return formatNumber(value) + ' ' + symbol;
 }
 
-export default function Dashboard({ stats, performanceData, currentPeriod, recentActivities, currencySymbol }: DashboardProps) {
+export default function Dashboard({ stats, performanceData, currentPeriod, recentActivities, currencySymbol, onboarding }: DashboardProps) {
     
     const handlePeriodChange = (period: string) => {
         router.get(window.location.pathname, { period }, {
@@ -135,6 +142,9 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
             <section className="space-y-6">
                 {/* Bannière d'essai gratuit */}
                 <FreeTrialBanner />
+
+                {/* Checklist onboarding */}
+                <GettingStarted onboarding={onboarding} />
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {kpis.map((kpi) => (

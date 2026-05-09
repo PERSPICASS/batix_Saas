@@ -96,13 +96,15 @@ export default function Index({ plans, auth }: PlansProps) {
             <section className="space-y-8">
                 {/* Header avec retour */}
                 <div className="flex items-center justify-between">
-                    <Link
-                        href="/dashboard"
-                        className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white transition"
-                    >
-                        <ArrowLeft className="size-4" />
-                        Retour au dashboard
-                    </Link>
+                    {auth?.user?.code_user && (
+                        <Link
+                            href={`/${auth.user.code_user}/dashboard`}
+                            className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white transition"
+                        >
+                            <ArrowLeft className="size-4" />
+                            Retour au dashboard
+                        </Link>
+                    )}
                 </div>
 
                 {/* Grille des plans - Style Landing Page */}

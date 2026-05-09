@@ -18,6 +18,7 @@ class SubscriptionInvoice extends Model
         'tax',
         'total',
         'status',
+        'issued_at',
         'paid_at',
         'due_at',
         'payment_method',
@@ -40,6 +41,11 @@ class SubscriptionInvoice extends Model
     public function subscription(): BelongsTo
     {
         return $this->belongsTo(Subscription::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -71,7 +77,7 @@ class SubscriptionInvoice extends Model
     /**
      * Mark invoice as paid.
      */
-    public function markAsPaid(string $transactionId = null, string $paymentMethod = null): void
+    public function markAsPaid(?string $transactionId = null, ?string $paymentMethod = null): void
     {
         $this->update([
             'status' => 'paid',
@@ -83,7 +89,7 @@ class SubscriptionInvoice extends Model
     /**
      * Mark invoice as failed.
      */
-    public function markAsFailed(string $reason = null): void
+    public function markAsFailed(?string $reason = null): void
     {
         $this->update([
             'status' => 'failed',
