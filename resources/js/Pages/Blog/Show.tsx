@@ -116,8 +116,68 @@ export default function BlogShow({ auth, post }: Props) {
                     </h1>
 
                     {/* Contenu */}
+                    <style>{`
+                        .blog-content h2 {
+                            font-size: 1.5rem;
+                            font-weight: 700;
+                            color: #0f172a;
+                            margin-top: 2.5rem;
+                            margin-bottom: 1rem;
+                            padding-bottom: 0.5rem;
+                            border-bottom: 2px solid #fcd34d;
+                        }
+                        .blog-content h3 {
+                            font-size: 1.15rem;
+                            font-weight: 700;
+                            color: #1e293b;
+                            margin-top: 2rem;
+                            margin-bottom: 0.75rem;
+                        }
+                        .blog-content p {
+                            color: #334155;
+                            line-height: 1.85;
+                            margin-bottom: 1.25rem;
+                            font-size: 1rem;
+                        }
+                        .blog-content ul {
+                            list-style: none;
+                            padding: 0;
+                            margin: 0 0 1.5rem 0;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.6rem;
+                        }
+                        .blog-content ul li {
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 0.6rem;
+                            color: #334155;
+                            line-height: 1.7;
+                        }
+                        .blog-content ul li::before {
+                            content: '';
+                            display: block;
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 50%;
+                            background: #fbbf24;
+                            flex-shrink: 0;
+                            margin-top: 0.5rem;
+                        }
+                        .blog-content strong {
+                            color: #0f172a;
+                            font-weight: 700;
+                        }
+                        .blog-content a {
+                            color: #b45309;
+                            text-decoration: underline;
+                        }
+                        .blog-content a:hover {
+                            color: #92400e;
+                        }
+                    `}</style>
                     <article
-                        className="prose prose-slate max-w-none prose-headings:font-bold prose-a:text-amber-700 prose-img:rounded-xl"
+                        className="blog-content"
                         dangerouslySetInnerHTML={{ __html: postContent }}
                     />
 

@@ -42,7 +42,8 @@ use Inertia\Inertia;
 Route::get('/', [WelcomeController::class, 'index']);
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
-// Route publique pour les articles de blog
+// Routes publiques blog
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 // Route pour servir les fichiers uploadés (logos, images, etc.)

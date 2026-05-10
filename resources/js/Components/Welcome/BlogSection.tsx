@@ -129,6 +129,18 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
                         ))}
                     </motion.div>
                 )}
+
+                {safePosts.length > 0 && (
+                    <motion.div className="mt-10 text-center" variants={fadeUp}>
+                        <Link
+                            href={route('blog.index')}
+                            className="inline-flex items-center gap-2 rounded-xl border border-[#d8cfbe] bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-amber-400 hover:text-amber-700"
+                        >
+                            {locale === 'fr' ? 'Voir tous les articles' : 'View all articles'}
+                            <ArrowRight className="size-4" />
+                        </Link>
+                    </motion.div>
+                )}
             </div>
         </motion.section>
     );
