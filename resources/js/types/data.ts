@@ -29,7 +29,7 @@ export const stagger = {
 // ─── Textes par locale ─────────────────────────────────────────────────────
 export const copy = {
     fr: {
-        title: 'BATIX PRO | Gestion de quincaillerie plus humaine',
+        title: 'BATIX PRO – Logiciel de gestion de quincaillerie | Stock, Ventes & Caisse',
         brandSubtitle: 'Gestion moderne des quincailleries',
         seo: {
             description: 'BATIX PRO est le logiciel de gestion de quincaillerie pensé pour les équipes terrain. Ventes, stock, achats fournisseurs et rapports en temps réel. Essai gratuit 14 jours, sans carte bancaire.',
@@ -90,22 +90,28 @@ export const copy = {
             {
                 id: 'compte',
                 question: 'Comment créer son compte et configurer sa boutique ?',
-                duration: '1 min',
-                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+                duration: '1:14',
+                url: 'https://www.loom.com/embed/3b508a9f7f174fa8b9a330bc2fb5c858',
             },
             {
                 id: 'produits',
-                question: 'Comment ajouter et organiser ses produits ?',
-                duration: '2 min',
-                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+                question: 'Comment enregistrer ses produits ?',
+                duration: '0:53',
+                url: 'https://www.loom.com/embed/e05f115bb3b247aa81e99cae81393366',
+            },
+            {
+                id: 'Paramétrage',
+                question: 'Comment paramétrer les taxes, les devises et autres réglages essentiels ?',
+                duration: '0:45',
+                url: 'https://www.loom.com/embed/02deefc88a3b4d82bc54d5fade6e0313',
             },
             {
                 id: 'vente',
                 question: 'Comment enregistrer une vente au comptoir ?',
-                duration: '1 min 30',
-                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+                duration: '1:07',
+                url: 'https://www.loom.com/embed/41def1951500409b97786458bfd72ff7',
             },
-            {
+            /* {
                 id: 'achats',
                 question: 'Comment gérer ses achats et réceptions fournisseurs ?',
                 duration: '2 min',
@@ -116,7 +122,7 @@ export const copy = {
                 question: 'Comment consulter ses rapports et statistiques ?',
                 duration: '1 min 30',
                 url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
-            },
+            }, */
         ],
         stats: [
             { label: 'Première vente', value: '< 10 min' },
@@ -154,7 +160,7 @@ export const copy = {
         langLabel: 'Langue',
     },
     en: {
-        title: 'BATIX PRO | More Human Hardware Store Management',
+        title: 'BATIX PRO – Hardware Store Management Software | Inventory, Sales & POS',
         brandSubtitle: 'Modern hardware store operations',
         seo: {
             description: 'BATIX PRO is the hardware store management software built for real field teams. Sales, stock, supplier purchases and real-time reports. Free 14-day trial, no credit card required.',

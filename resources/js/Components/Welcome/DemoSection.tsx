@@ -25,6 +25,18 @@ interface DemoSectionProps {
     getDashboardUrl: () => string;
 }
 
+function buildIframeSrc(url: string, autoplay: boolean): string {
+    if (url.includes('loom.com')) {
+        return autoplay ? `${url}?autoplay=1` : url;
+    }
+    return autoplay ? `${url}?autoplay=1&mute=1` : url;
+}
+
+function iframeAllow(url: string): string {
+    if (url.includes('loom.com')) return 'fullscreen';
+    return 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+}
+
 export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionProps) {
     const [openId, setOpenId] = useState<string | null>(t.videoFaqs[0]?.id ?? null);
 
@@ -104,10 +116,10 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                                                     <div className="aspect-video">
                                                         <iframe
                                                             className="h-full w-full"
-                                                            src={`${item.url}?autoplay=1&mute=1`}
+                                                            src={buildIframeSrc(item.url, true)}
                                                             title={item.question}
                                                             loading="lazy"
-                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                            allow={iframeAllow(item.url)}
                                                             allowFullScreen
                                                         />
                                                     </div>
@@ -153,10 +165,10 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                                                 <iframe
                                                     key={active.id}
                                                     className="h-full w-full"
-                                                    src={`${active.url}?autoplay=1&mute=1`}
+                                                    src={buildIframeSrc(active.url, true)}
                                                     title={active.question}
                                                     loading="lazy"
-                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allow={iframeAllow(active.url)}
                                                     allowFullScreen
                                                 />
                                             </div>
