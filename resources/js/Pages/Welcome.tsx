@@ -197,11 +197,6 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                 <meta name="robots" content="index, follow" />
                 <link rel="canonical" href={canonicalUrl} />
 
-                {/* Hreflang */}
-                <link rel="alternate" hrefLang="fr" href={canonicalUrl} />
-                <link rel="alternate" hrefLang="en" href={canonicalUrl} />
-                <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
-
                 {/* Open Graph */}
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={canonicalUrl} />

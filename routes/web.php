@@ -33,6 +33,7 @@ use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BlogAdminController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +42,7 @@ use Inertia\Inertia;
 
 Route::get('/', [WelcomeController::class, 'index']);
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
 // Routes publiques blog
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');

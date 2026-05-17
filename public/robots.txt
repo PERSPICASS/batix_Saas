@@ -1,14 +1,38 @@
 User-agent: *
 Allow: /
-Disallow: /dashboard
-Disallow: /dashboard/*
-Disallow: /admin
-Disallow: /admin/*
 Disallow: /login
 Disallow: /register
 Disallow: /verify-email
+Disallow: /verify-email-code
 Disallow: /forgot-password
 Disallow: /reset-password
-Disallow: /profile
+Disallow: /lock-screen
+Disallow: /platform-admin/
+Disallow: /pawapay/
+Disallow: /invitation/
+
+# App routes (prefixed by user code)
+Disallow: /*/dashboard
+Disallow: /*/boutiques
+Disallow: /*/produits
+Disallow: /*/ventes
+Disallow: /*/factures
+Disallow: /*/clients
+Disallow: /*/stocks
+Disallow: /*/inventory
+Disallow: /*/analytics
+Disallow: /*/billing
+Disallow: /*/parametres
+Disallow: /*/profile
+Disallow: /*/users
+Disallow: /*/suppliers
+Disallow: /*/purchases
+Disallow: /*/depots
+Disallow: /*/creances
+Disallow: /*/depenses
+Disallow: /*/historique
+Disallow: /*/abonnements
+Disallow: /*/categories
+Disallow: /*/sous-categories
 
 Sitemap: https://batixpro.com/sitemap.xml
