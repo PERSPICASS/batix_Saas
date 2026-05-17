@@ -1,8 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useState, useMemo } from 'react';
-import { RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';
+import { FormEventHandler, useState, useMemo, useEffect } from 'react';
+import { RefreshCw, TrendingUp, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import axios from 'axios';
 
 interface Shop {
     id: number;
@@ -34,13 +35,15 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
     
+    const scannedBarcode = new URLSearchParams(window.location.search).get('barcode') ?? '';
+
     const { data, setData, post, processing, errors } = useForm({
         shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         category_id: '',
         subcategory_id: '',
         name: '',
         sku: '',
-        barcode: '',
+        barcode: scannedBarcode,
         brand: '',
         description: '',
         purchase_price: '',
@@ -95,6 +98,26 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
         const percentage = ((amount / purchase) * 100);
         return { amount, percentage };
     }, [data.purchase_price, data.selling_price]);
+
+    const [lookupState, setLookupState] = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle');
+
+    useEffect(() => {
+        if (!scannedBarcode) return;
+        setLookupState('loading');
+        axios
+            .get(route('products.barcode-lookup'), { params: { code: scannedBarcode } })
+            .then(({ data }) => {
+                if (data.found) {
+                    if (data.name)  setData('name', data.name);
+                    if (data.brand) setData('brand', data.brand);
+                    if (data.description) setData('description', data.description);
+                    setLookupState('found');
+                } else {
+                    setLookupState('not_found');
+                }
+            })
+            .catch(() => setLookupState('not_found'));
+    }, []);
 
     // Preview de l'image
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -184,9 +207,28 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 Aperçu
                             </button>
                         </div>
-                        <p className="text-xs text-slate-400">
-                            Le code-barres final sera généré automatiquement lors de la sauvegarde
-                        </p>
+                        {lookupState === 'loading' && (
+                            <p className="flex items-center gap-1.5 text-xs text-slate-400">
+                                <Loader2 className="size-3 animate-spin" />
+                                Recherche des informations produit...
+                            </p>
+                        )}
+                        {lookupState === 'found' && (
+                            <p className="flex items-center gap-1.5 text-xs text-green-400">
+                                <CheckCircle2 className="size-3" />
+                                Nom et marque récupérés automatiquement — vérifiez et complétez
+                            </p>
+                        )}
+                        {lookupState === 'not_found' && (
+                            <p className="text-xs text-slate-400">
+                                Produit non trouvé dans les bases publiques — remplissez manuellement
+                            </p>
+                        )}
+                        {lookupState === 'idle' && (
+                            <p className="text-xs text-slate-400">
+                                Le code-barres final sera généré automatiquement lors de la sauvegarde
+                            </p>
+                        )}
                         {errors.barcode && <span className="text-xs text-red-400">{errors.barcode}</span>}
                     </label>
 

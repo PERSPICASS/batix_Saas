@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, AlertTriangle, Search, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw } from 'lucide-react';
+import { Pencil, Plus, Trash2, AlertTriangle, Search, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw, ScanLine } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import Currency from '@/Components/Currency';
@@ -8,6 +8,7 @@ import { useRoute } from '@/utils/route';
 import { useState, useRef, useEffect, FormEvent } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import ProductImage from '@/Components/ProductImage';
+import BarcodeScanner from '@/Components/BarcodeScanner';
 
 interface Category {
     id: number;
@@ -82,6 +83,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
     const [removeModal, setRemoveModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
     const [deleting, setDeleting] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
 
     const { data, setData, post, processing, reset, errors } = useForm({
         file: null as File | null,
@@ -139,6 +141,16 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                 }
             },
         });
+    };
+
+    const handleScan = (code: string) => {
+        setShowScanner(false);
+        const existing = products.data.find((p) => p.barcode === code || p.sku === code);
+        if (existing) {
+            router.visit(route('products.edit', { product: existing.id }));
+        } else {
+            router.visit(route('products.create') + '?barcode=' + encodeURIComponent(code));
+        }
     };
 
     const hasActiveFilters = search || categoryId || status;
@@ -305,8 +317,15 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         Gérez votre catalogue de produits.
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
-                        {/* Bouton Import/Export */}
+                        {/* Bouton Import/Export/Scanner */}
                         <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setShowScanner(true)}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-sm text-amber-300 transition hover:bg-amber-300/20"
+                            >
+                                <ScanLine className="size-4" />
+                                Scanner
+                            </button>
                             <button
                                 onClick={() => setShowImportModal(true)}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
@@ -478,6 +497,13 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                     </div>
                 )}
             </section>
+
+            {showScanner && (
+                <BarcodeScanner
+                    onScan={handleScan}
+                    onClose={() => setShowScanner(false)}
+                />
+            )}
 
             {/* Modal Import */}
             {showImportModal && (

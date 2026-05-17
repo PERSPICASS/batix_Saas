@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
-import { ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
+import { FormEventHandler, useState, useRef, useCallback } from 'react';
+import { ArrowLeft, Plus, Trash2, Search, ScanLine, CheckCircle, AlertCircle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
+import BarcodeScanner from '@/Components/BarcodeScanner';
 
 interface Shop {
     id: number;
@@ -14,6 +15,7 @@ interface Product {
     id: number;
     name: string;
     sku: string;
+    barcode: string | null;
     stock_quantity: number;
     purchase_price: number;
     shop: Shop;
@@ -51,9 +53,15 @@ interface FormItem {
     expected_quantity: number;
 }
 
+type ScanFeedback = { type: 'success' | 'added' | 'error'; message: string } | null;
+
 export default function InventoryEdit({ inventory, shops, products }: Props) {
     const route = useRoute();
     const [searchProduct, setSearchProduct] = useState('');
+    const [showScanner, setShowScanner] = useState(false);
+    const [highlightedId, setHighlightedId] = useState<number | null>(null);
+    const [scanFeedback, setScanFeedback] = useState<ScanFeedback>(null);
+    const rowRefs = useRef<Record<number, HTMLTableRowElement | null>>({});
 
     const { data, setData, put, processing, errors } = useForm({
         shop_id: inventory.shop_id.toString(),
@@ -103,6 +111,50 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
             )
         );
     };
+
+    const showFeedback = (feedback: ScanFeedback) => {
+        setScanFeedback(feedback);
+        setTimeout(() => setScanFeedback(null), 3000);
+    };
+
+    const highlightRow = (productId: number) => {
+        setHighlightedId(productId);
+        setTimeout(() => setHighlightedId(null), 2500);
+        rowRefs.current[productId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Focus the quantity input inside the row
+        const input = rowRefs.current[productId]?.querySelector('input[type="number"]') as HTMLInputElement | null;
+        setTimeout(() => input?.focus(), 300);
+    };
+
+    const handleScan = useCallback((code: string) => {
+        setShowScanner(false);
+
+        // 1. Already in items?
+        const existingItem = data.items.find((item) => {
+            const product = products.find((p) => p.id === item.product_id);
+            return product?.barcode === code || product?.sku === code;
+        });
+
+        if (existingItem) {
+            highlightRow(existingItem.product_id);
+            showFeedback({ type: 'success', message: `Produit trouvé : ${existingItem.product_name}` });
+            return;
+        }
+
+        // 2. Not yet in items — try to add from products list
+        const product = products.find(
+            (p) => (p.barcode === code || p.sku === code) && p.shop.id.toString() === data.shop_id
+        );
+
+        if (product) {
+            addProduct(product);
+            setTimeout(() => highlightRow(product.id), 100);
+            showFeedback({ type: 'added', message: `"${product.name}" ajouté à l'inventaire` });
+            return;
+        }
+
+        showFeedback({ type: 'error', message: `Aucun produit trouvé pour ce code : ${code}` });
+    }, [data.items, data.shop_id, products]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -184,7 +236,32 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                 {/* Ajout de produits */}
                 {inventory.status !== 'completed' && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Ajouter des produits</h2>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-white">Ajouter des produits</h2>
+                            <button
+                                type="button"
+                                onClick={() => setShowScanner(true)}
+                                className="flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-sm text-amber-300 transition hover:bg-amber-300/20"
+                            >
+                                <ScanLine className="size-4" />
+                                Scanner un code
+                            </button>
+                        </div>
+
+                        {/* Feedback scan */}
+                        {scanFeedback && (
+                            <div className={`mb-4 flex items-center gap-2 rounded-lg px-4 py-2 text-sm ${
+                                scanFeedback.type === 'error'
+                                    ? 'border border-red-500/30 bg-red-500/10 text-red-300'
+                                    : 'border border-green-500/30 bg-green-500/10 text-green-300'
+                            }`}>
+                                {scanFeedback.type === 'error'
+                                    ? <AlertCircle className="size-4 shrink-0" />
+                                    : <CheckCircle className="size-4 shrink-0" />
+                                }
+                                {scanFeedback.message}
+                            </div>
+                        )}
 
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -218,6 +295,10 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                     </div>
                 )}
 
+                {showScanner && (
+                    <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+                )}
+
                 {/* Liste des produits à inventorier */}
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                     <h2 className="mb-4 text-lg font-semibold text-white">
@@ -241,8 +322,13 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                 <tbody className="divide-y divide-white/5">
                                     {data.items.map((item) => {
                                         const difference = (item.counted_quantity ?? 0) - item.expected_quantity;
+                                        const isHighlighted = highlightedId === item.product_id;
                                         return (
-                                            <tr key={item.product_id}>
+                                            <tr
+                                                key={item.product_id}
+                                                ref={(el) => { rowRefs.current[item.product_id] = el; }}
+                                                className={`transition-colors duration-500 ${isHighlighted ? 'bg-amber-300/10 ring-1 ring-inset ring-amber-300/30' : ''}`}
+                                            >
                                                 <td className="py-3 pr-4">
                                                     <div>
                                                         <p className="font-medium text-white">{item.product_name}</p>

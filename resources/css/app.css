@@ -20,3 +20,11 @@ html {
 .rich-editor-content .tiptap hr { border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1em 0; }
 .rich-editor-content .tiptap a { color: #fbbf24; text-decoration: underline; }
 .rich-editor-content .tiptap p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: rgba(255,255,255,0.25); pointer-events: none; float: left; height: 0; }
+
+/* ── Barcode scanner ─────────────────────────────────────────────────────── */
+@keyframes scan {
+    0%   { top: 0; }
+    50%  { top: calc(100% - 2px); }
+    100% { top: 0; }
+}
+.animate-scan { animation: scan 2s linear infinite; }
