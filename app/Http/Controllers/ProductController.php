@@ -10,9 +10,7 @@ use App\Models\Product;
 use App\Models\Subcategory;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -460,58 +458,6 @@ class ProductController extends Controller
         
         $checksum = (10 - ($sum % 10)) % 10;
         return $checksum;
-    }
-
-    /**
-     * Lookup product info from external APIs by barcode.
-     * Tries Open Food Facts first, then UPC Item DB.
-     */
-    public function barcodeLookup(Request $request, string $code_user): JsonResponse
-    {
-        $barcode = trim($request->input('code', ''));
-
-        if (!$barcode) {
-            return response()->json(['found' => false]);
-        }
-
-        // 1. Open Food Facts (free, no key, good for food/consumer products)
-        try {
-            $res = Http::timeout(5)->get("https://world.openfoodfacts.org/api/v0/product/{$barcode}.json");
-            if ($res->successful() && $res->json('status') === 1) {
-                $p = $res->json('product') ?? [];
-                $name = $p['product_name_fr'] ?? $p['product_name'] ?? $p['generic_name_fr'] ?? $p['generic_name'] ?? null;
-                $brand = isset($p['brands']) ? explode(',', $p['brands'])[0] : null;
-                if ($name) {
-                    return response()->json([
-                        'found'       => true,
-                        'source'      => 'Open Food Facts',
-                        'name'        => trim($name),
-                        'brand'       => $brand ? trim($brand) : null,
-                        'description' => $p['generic_name_fr'] ?? $p['generic_name'] ?? null,
-                    ]);
-                }
-            }
-        } catch (\Throwable) {}
-
-        // 2. UPC Item DB (free trial, general products)
-        try {
-            $res = Http::timeout(5)->get('https://api.upcitemdb.com/prod/trial/lookup', ['upc' => $barcode]);
-            if ($res->successful() && $res->json('code') === 'OK') {
-                $items = $res->json('items') ?? [];
-                if (!empty($items)) {
-                    $item = $items[0];
-                    return response()->json([
-                        'found'       => true,
-                        'source'      => 'UPC Item DB',
-                        'name'        => $item['title'] ?? null,
-                        'brand'       => $item['brand'] ?? null,
-                        'description' => $item['description'] ?? null,
-                    ]);
-                }
-            }
-        } catch (\Throwable) {}
-
-        return response()->json(['found' => false]);
     }
 
     /**

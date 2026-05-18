@@ -152,7 +152,6 @@ Route::prefix('{code_user}')
 
     // Routes pour les produits
     Route::resource('produits', ProductController::class)->names('products')->parameters(['produits' => 'product']);
-    Route::get('produits-barcode-lookup', [ProductController::class, 'barcodeLookup'])->name('products.barcode-lookup');
     Route::get('produits-template', [ProductController::class, 'downloadTemplate'])->name('products.template');
     Route::get('produits-export', [ProductController::class, 'export'])->name('products.export');
     Route::post('produits-import', [ProductController::class, 'import'])->name('products.import');

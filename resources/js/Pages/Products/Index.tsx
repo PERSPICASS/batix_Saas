@@ -319,13 +319,13 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                     <div className="flex flex-wrap items-center gap-2">
                         {/* Bouton Import/Export/Scanner */}
                         <div className="flex items-center gap-1">
-                            <button
+                            {/* <button
                                 onClick={() => setShowScanner(true)}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-sm text-amber-300 transition hover:bg-amber-300/20"
                             >
                                 <ScanLine className="size-4" />
                                 Scanner
-                            </button>
+                            </button> */}
                             <button
                                 onClick={() => setShowImportModal(true)}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
