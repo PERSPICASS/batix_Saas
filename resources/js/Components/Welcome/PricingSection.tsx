@@ -61,15 +61,35 @@ export default function PricingSection({ pricingTitle, pricingFallback, planCta,
 
                             {/* ── Bloc prix mis en valeur ── */}
                             <div className={`mt-4 rounded-2xl px-5 py-4 ${plan.highlighted ? 'bg-slate-900/10' : 'bg-white/5'}`}>
-                                <div className="flex items-end gap-1">
-                                    <span className={`text-5xl font-black tracking-tight leading-none ${plan.highlighted ? 'text-slate-900' : 'text-white'}`}>
-                                        {plan.price_eur.replace(/[^0-9]/g, '')}
-                                    </span>
-                                    <span className={`mb-1 text-xl font-bold ${plan.highlighted ? 'text-slate-700' : 'text-amber-400'}`}>
-                                        {plan.price_eur.replace(/[0-9\s]/g, '').trim() || 'EUR'}
-                                    </span>
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-end gap-1">
+                                            <span className={`text-4xl font-black tracking-tight leading-none ${plan.highlighted ? 'text-slate-900' : 'text-white'}`}>
+                                                {plan.price_eur.replace(/[^0-9]/g, '')}
+                                            </span>
+                                            <span className={`text-lg font-bold ${plan.highlighted ? 'text-slate-700' : 'text-amber-400'}`}>
+                                                {plan.price_eur.replace(/[0-9\s]/g, '').trim() || 'EUR'}
+                                            </span>
+                                        </div>
+                                        <p className={`mt-0.5 text-xs font-medium ${plan.highlighted ? 'text-slate-600' : 'text-slate-400'}`}>{plan.subtitle}</p>
+                                    </div>
+                                    {plan.price_fcfa && (
+                                        <div className="flex items-center h-20">
+                                            <div className="h-12" style={{ width: '1px', backgroundColor: plan.highlighted ? '#cbd5e1' : '#475569' }} />
+                                        </div>
+                                    )}
+                                    {plan.price_fcfa && (
+                                        <div className="pl-4">
+                                            <div className="flex flex-col items-start">
+                                                <p className={`text-2xl font-bold ${plan.highlighted ? 'text-slate-900' : 'text-amber-300'}`}>
+                                                    {plan.price_fcfa.replace(' FCFA', '')}
+                                                </p>
+                                                <p className={`text-xs font-medium ${plan.highlighted ? 'text-slate-700' : 'text-amber-400'}`}>FCFA</p>
+                                                <p className={`mt-0.5 text-xs font-medium ${plan.highlighted ? 'text-slate-600' : 'text-slate-400'}`}>{plan.subtitle}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <p className={`mt-0.5 text-xs font-medium ${plan.highlighted ? 'text-slate-600' : 'text-slate-400'}`}>{plan.subtitle}</p>
                             </div>
                             <ul className={`mt-5 space-y-3 text-sm ${plan.highlighted ? 'text-slate-800' : 'text-slate-200'}`}>
                                 {plan.points.map((point) => (

@@ -16,6 +16,7 @@ interface SubscriptionPlan {
     features: string[] | null;
     is_active: boolean;
     price_eur: string;
+    price_fcfa: string;
     formatted_price: string;
     has_unlimited_shops: boolean;
     has_unlimited_users: boolean;
@@ -133,10 +134,35 @@ export default function Index({ plans, auth }: PlansProps) {
                                 <h3 className="mt-2 text-2xl font-bold text-white">{plan.name}</h3>
 
                                 {/* Prix */}
-                                <div className="mt-3 space-y-1">
-                                    <p className="text-3xl font-bold text-white">{plan.price_eur}</p>
+                                <div className="mt-4 flex items-center justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-end gap-1">
+                                            <span className="text-3xl font-black tracking-tight leading-none text-white">
+                                                {plan.price_eur.replace(/[^0-9]/g, '')}
+                                            </span>
+                                            <span className="text-lg font-bold text-amber-300">
+                                                {plan.price_eur.replace(/[0-9\s]/g, '').trim() || 'EUR'}
+                                            </span>
+                                        </div>
+                                        <p className="mt-0.5 text-xs font-medium text-slate-400">par mois</p>
+                                    </div>
+                                    {plan.price_fcfa && (
+                                        <div className="flex items-center h-16">
+                                            <div className="h-10" style={{ width: '1px', backgroundColor: '#64748b' }} />
+                                        </div>
+                                    )}
+                                    {plan.price_fcfa && (
+                                        <div className="pl-4">
+                                            <div className="flex flex-col items-start">
+                                                <p className="text-xl font-bold text-amber-300">
+                                                    {plan.price_fcfa.replace(' FCFA', '')}
+                                                </p>
+                                                <p className="text-xs font-medium text-amber-300">FCFA</p>
+                                                <p className="mt-0.5 text-xs font-medium text-slate-400">par mois</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <p className="mt-2 text-xs text-slate-400">par mois</p>
 
                                 {/* Fonctionnalités */}
                                 <ul className="mt-5 space-y-3 text-sm text-slate-200">

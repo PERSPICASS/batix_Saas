@@ -89,7 +89,7 @@ class PaymentController extends Controller
         DB::transaction(function () use ($user, $plan, $validated) {
             $months = $validated['billing_cycle'] === 'yearly' ? 12 : 1;
             $amount = $validated['billing_cycle'] === 'yearly'
-                ? $plan->price * 12 * 0.85
+                ? $plan->price * 10
                 : $plan->price;
 
             Subscription::where('user_id', $user->id)

@@ -121,6 +121,7 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
             return {
                 name: plan.name,
                 price_eur: rawEur || `${plan.price} EUR`,
+                price_fcfa: plan.price_fcfa,
                 subtitle,
                 badge,
                 points: [shopsLabel, usersLabel, productsLabel, depotsLabel, ...baseFeatures, ...extraFeatures],

@@ -221,6 +221,44 @@ export const copy = {
             {
                 id: 'account',
                 question: 'How do I create my account and set up my store?',
+                duration: '1:14',
+                url: 'https://www.loom.com/embed/3b508a9f7f174fa8b9a330bc2fb5c858',
+            },
+            {
+                id: 'products',
+                question: 'How do I add and organize my products?',
+                duration: '0:53',
+                url: 'https://www.loom.com/embed/e05f115bb3b247aa81e99cae81393366',
+            },
+            {
+                id: 'settings',
+                question: 'How do I set up taxes, currencies and other essential settings?',
+                duration: '0:45',
+                url: 'https://www.loom.com/embed/02deefc88a3b4d82bc54d5fade6e0313',
+            },
+            {
+                id: 'sale',
+                question: 'How do I record a sale at checkout?',
+                duration: '1:07',
+                url: 'https://www.loom.com/embed/41def1951500409b97786458bfd72ff7',
+            },
+            /* {
+                id: 'achats',
+                question: 'Comment gérer ses achats et réceptions fournisseurs ?',
+                duration: '2 min',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            },
+            {
+                id: 'rapports',
+                question: 'Comment consulter ses rapports et statistiques ?',
+                duration: '1 min 30',
+                url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
+            }, */
+        ],
+        /* videoFaqs: [
+            {
+                id: 'account',
+                question: 'How do I create my account and set up my store?',
                 duration: '1 min',
                 url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
             },
@@ -248,7 +286,7 @@ export const copy = {
                 duration: '1 min 30',
                 url: 'https://www.youtube.com/embed/M7lc1UVf-VE',
             },
-        ],
+        ], */
         stats: [
             { label: 'First sale', value: '< 10 min' },
             { label: 'WhatsApp support', value: '< 2h' },
@@ -510,6 +548,7 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Starter',
             price_eur: '29 EUR',
+            price_fcfa: '19 000 FCFA',
             subtitle: 'par mois',
             badge: "Jusqu'à 1 boutique",
             points: ['1 boutique', '5 utilisateurs', '5 000 produits', '1 dépôt', 'Support standard'],
@@ -518,6 +557,7 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Growth',
             price_eur: '79 EUR',
+            price_fcfa: '51 800 FCFA',
             subtitle: 'par mois',
             badge: "Jusqu'à 5 boutiques",
             points: ['5 boutiques', '20 utilisateurs', '50 000 produits', '5 dépôts', 'Support prioritaire'],
@@ -526,6 +566,7 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Scale',
             price_eur: '149 EUR',
+            price_fcfa: '97 700 FCFA',
             subtitle: 'par mois',
             badge: 'Boutiques illimitées',
             points: ['Boutiques illimitées', 'Utilisateurs illimités', 'Produits illimités', 'Dépôts illimités', 'Support premium'],
@@ -536,6 +577,7 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Starter',
             price_eur: '29 EUR',
+            price_fcfa: '19 000 FCFA',
             subtitle: 'per month',
             badge: 'Up to 1 store',
             points: ['1 store', '5 users', '5,000 products', '1 depot', 'Standard support'],
@@ -544,6 +586,7 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Growth',
             price_eur: '79 EUR',
+            price_fcfa: '51 800 FCFA',
             subtitle: 'per month',
             badge: 'Up to 5 stores',
             points: ['5 stores', '20 users', '50,000 products', '5 depots', 'Priority support'],
@@ -552,6 +595,7 @@ export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
         {
             name: 'Scale',
             price_eur: '149 EUR',
+            price_fcfa: '97 700 FCFA',
             subtitle: 'per month',
             badge: 'Unlimited stores',
             points: ['Unlimited stores', 'Unlimited users', 'Unlimited products', 'Unlimited depots', 'Premium support'],

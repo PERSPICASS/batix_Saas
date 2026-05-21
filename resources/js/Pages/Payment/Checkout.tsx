@@ -134,7 +134,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
         ? Number(plan.price)
         : parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || String(plan.price));
     const currencyLabel = isLocalCurrency ? currency : '€';
-    const yearlyPrice   = Math.round(basePrice * 12 * 0.85);
+    const yearlyPrice   = Math.round(basePrice * 10);
     const displayPrice  = billingCycle === 'yearly' ? yearlyPrice : basePrice;
     const saving        = Math.round(basePrice * 12 - yearlyPrice);
 
@@ -359,7 +359,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                             onClick={() => setBillingCycle(cycle)}
                                             className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${billingCycle === cycle ? 'border-amber-300 bg-amber-300/10 text-amber-200' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
                                         >
-                                            {cycle === 'monthly' ? 'Mensuel' : <>Annuel <span className="text-xs text-emerald-400">−15%</span></>}
+                                            {cycle === 'monthly' ? 'Mensuel' : <>Annuel <span className="text-xs text-emerald-400">2 mois offerts</span></>}
                                         </button>
                                     ))}
                                 </div>

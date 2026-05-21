@@ -37,7 +37,7 @@ class PawaPayController extends Controller
         $user    = Auth::user();
         $months  = $validated['billing_cycle'] === 'yearly' ? 12 : 1;
         $amount  = $validated['billing_cycle'] === 'yearly'
-            ? round((float) $plan->price * 12 * 0.85)
+            ? round((float) $plan->price * 10)
             : (float) $plan->price;
 
         // PawaPay requires the amount as a decimal string with the correct

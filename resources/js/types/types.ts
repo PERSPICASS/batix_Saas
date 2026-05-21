@@ -11,6 +11,7 @@ export type FeatureItem = {
 export type PlanView = {
     name: string;
     price_eur: string;
+    price_fcfa?: string;
     subtitle: string;
     badge: string;
     points: string[];
@@ -38,6 +39,7 @@ export interface SubscriptionPlan {
     price: number;
     formatted_price: string;
     price_eur: string;
+    price_fcfa: string;
     max_shops: number;
     max_users: number;
     max_products: number;
