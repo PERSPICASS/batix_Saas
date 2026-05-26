@@ -61,6 +61,8 @@ export default function SalesCreate({ shops, customers, products }: Props) {
     
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchProduct, setSearchProduct] = useState('');
+    const [searchCustomer, setSearchCustomer] = useState('');
+    const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
         shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
@@ -438,18 +440,55 @@ export default function SalesCreate({ shops, customers, products }: Props) {
 
                             <label className="block space-y-1 text-sm text-slate-200">
                                 <span>Client</span>
-                                <select
-                                    value={data.customer_id}
-                                    onChange={(e) => setData('customer_id', e.target.value)}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                                >
-                                    <option value="">Anonyme</option>
-                                    {customers.map((customer) => (
-                                        <option key={customer.id} value={customer.id}>
-                                            {customer.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Rechercher ou sélectionner un client..."
+                                        value={searchCustomer}
+                                        onChange={(e) => {
+                                            setSearchCustomer(e.target.value);
+                                            setShowCustomerDropdown(true);
+                                        }}
+                                        onFocus={() => setShowCustomerDropdown(true)}
+                                        className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                                    />
+                                    {showCustomerDropdown && (
+                                        <div className="absolute top-full left-0 right-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-white/15 bg-slate-800 shadow-lg">
+                                            <button
+                                                type="button"
+                                                className="w-full px-3 py-2 text-left text-sm hover:bg-slate-700"
+                                                onClick={() => {
+                                                    setData('customer_id', '');
+                                                    setSearchCustomer('');
+                                                    setShowCustomerDropdown(false);
+                                                }}
+                                            >
+                                                Anonyme
+                                            </button>
+                                            {customers
+                                                .filter((customer) =>
+                                                    customer.name.toLowerCase().includes(searchCustomer.toLowerCase())
+                                                )
+                                                .map((customer) => (
+                                                    <button
+                                                        key={customer.id}
+                                                        type="button"
+                                                        className="w-full px-3 py-2 text-left text-sm hover:bg-slate-700"
+                                                        onClick={() => {
+                                                            setData('customer_id', customer.id.toString());
+                                                            setSearchCustomer(customer.name);
+                                                            setShowCustomerDropdown(false);
+                                                        }}
+                                                    >
+                                                        {customer.name}
+                                                    </button>
+                                                ))}
+                                        </div>
+                                    )}
+                                    {data.customer_id && (
+                                        <input type="hidden" name="customer_id" value={data.customer_id} />
+                                    )}
+                                </div>
                             </label>
 
                             <label className="block space-y-1 text-sm text-slate-200">
