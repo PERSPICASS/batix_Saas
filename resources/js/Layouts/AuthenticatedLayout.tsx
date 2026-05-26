@@ -336,7 +336,7 @@ export default function Authenticated({
                 href: buildRoute('sales.credits'),
                 active: route().current('sales.credits*'),
                 icon: CreditCard,
-                module: 'sales',
+                module: 'credits',
             },
             {
                 label: 'Fournisseurs',
@@ -381,8 +381,8 @@ export default function Authenticated({
                 icon: History,
                 module: null,
             }] : []),
-            // Paramètres pour tous sauf admin_platforme
-            ...(user && (user as any).role !== 'admin_platforme' ? [{
+            // Paramètres uniquement pour super_admin
+            ...(isSuperAdmin ? [{
                 label: 'Paramètres',
                 href: buildRoute('settings.index'),
                 active: route().current('settings.*'),
