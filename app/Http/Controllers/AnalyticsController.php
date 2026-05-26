@@ -18,45 +18,59 @@ class AnalyticsController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        
+
         // Rediriger les caissiers vers la page de ventes (pas accès aux analytics)
         if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
             return redirect()->route('sales.create', ['code_user' => $request->route('code_user')]);
         }
-        
+
         $shops = Shop::where('user_id', $user->id)->get();
         $shopIds = $shops->pluck('id');
         $activeShopId = session('active_shop_id');
-        
+
         // Si une boutique active est sélectionnée, filtrer sur celle-ci
         $filterShopIds = $activeShopId ? [$activeShopId] : $shopIds;
-        
+
         // Période sélectionnée
         $period = $request->get('period', 'month');
         $dateRange = $this->getDateRange($period);
         $previousRange = $this->getPreviousDateRange($period);
-        
+
         // KPIs principaux
         $kpis = $this->getKPIs($filterShopIds, $dateRange, $previousRange);
-        
+
         // Données du graphique des ventes
         $salesChart = $this->getSalesChart($filterShopIds, $period);
-        
+
         // Top produits
         $topProducts = $this->getTopProducts($filterShopIds, $dateRange);
-        
+
         // Ventes par catégorie
         $salesByCategory = $this->getSalesByCategory($filterShopIds, $dateRange);
-        
+
         // Top clients
         $topCustomers = $this->getTopCustomers($filterShopIds, $dateRange);
-        
+
         // Méthodes de paiement
         $paymentMethods = $this->getPaymentMethods($filterShopIds, $dateRange);
-        
+
         // Performance par boutique
         $shopPerformance = $this->getShopPerformance($shopIds, $dateRange);
-        
+
+        // Paramètres de comparaison
+        $compareMode = $request->get('compare_mode', 'year');
+        $year1 = (int) $request->get('year1', date('Y'));
+        $year2 = (int) $request->get('year2', date('Y') - 1);
+        $month1 = (int) $request->get('month1', date('n'));
+        $month2 = (int) $request->get('month2', date('n'));
+        $monthYear1 = (int) $request->get('month_year1', date('Y'));
+        $monthYear2 = (int) $request->get('month_year2', date('Y') - 1);
+
+        // Données de comparaison
+        $comparisonData = $this->getComparisonData($filterShopIds, $compareMode, compact(
+            'year1', 'year2', 'month1', 'month2', 'monthYear1', 'monthYear2'
+        ));
+
         // Récupérer le symbole de devise
         $currencySymbol = 'FCFA';
         if ($activeShopId) {
@@ -65,7 +79,7 @@ class AnalyticsController extends Controller
                 $currencySymbol = $this->getCurrencySymbol($activeShop->currency ?? 'XOF');
             }
         }
-        
+
         return Inertia::render('Analytics/Index', [
             'kpis' => $kpis,
             'salesChart' => $salesChart,
@@ -74,6 +88,7 @@ class AnalyticsController extends Controller
             'topCustomers' => $topCustomers,
             'paymentMethods' => $paymentMethods,
             'shopPerformance' => $shopPerformance,
+            'comparisonData' => $comparisonData,
             'currentPeriod' => $period,
             'currencySymbol' => $currencySymbol,
             'shops' => $shops->map(fn($shop) => [
@@ -470,5 +485,230 @@ class AnalyticsController extends Controller
             'TND' => 'DT',
             default => $currency,
         };
+    }
+
+    private function calcGrowth(float $v1, float $v2): float
+    {
+        return $v2 > 0 ? round((($v1 - $v2) / $v2) * 100, 1) : ($v1 > 0 ? 100.0 : 0.0);
+    }
+
+    private function getComparisonData($shopIds, string $mode, array $params): array
+    {
+        if ($mode === 'year') {
+            return $this->getYearlyComparison($shopIds, $params['year1'], $params['year2']);
+        } else {
+            return $this->getMonthlyComparison($shopIds, $params['month1'], $params['month2'], $params['monthYear1'], $params['monthYear2']);
+        }
+    }
+
+    private function getYearlyComparison($shopIds, int $year1, int $year2): array
+    {
+        $months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        $chart = [];
+
+        $totalRevenue1 = 0;
+        $totalRevenue2 = 0;
+        $totalSales1 = 0;
+        $totalSales2 = 0;
+        $totalProfit1 = 0;
+        $totalProfit2 = 0;
+
+        for ($i = 1; $i <= 12; $i++) {
+            $revenue1 = (float) Sale::whereIn('shop_id', $shopIds)
+                ->whereYear('sale_date', $year1)
+                ->whereMonth('sale_date', $i)
+                ->where('status', 'completed')
+                ->sum('total');
+
+            $revenue2 = (float) Sale::whereIn('shop_id', $shopIds)
+                ->whereYear('sale_date', $year2)
+                ->whereMonth('sale_date', $i)
+                ->where('status', 'completed')
+                ->sum('total');
+
+            $sales1 = Sale::whereIn('shop_id', $shopIds)
+                ->whereYear('sale_date', $year1)
+                ->whereMonth('sale_date', $i)
+                ->where('status', 'completed')
+                ->count();
+
+            $sales2 = Sale::whereIn('shop_id', $shopIds)
+                ->whereYear('sale_date', $year2)
+                ->whereMonth('sale_date', $i)
+                ->where('status', 'completed')
+                ->count();
+
+            $profit1 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
+                ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->whereHas('sale', function($q) use ($shopIds, $year1, $i) {
+                    $q->whereIn('shop_id', $shopIds)
+                      ->whereYear('sale_date', $year1)
+                      ->whereMonth('sale_date', $i)
+                      ->where('status', 'completed');
+                })
+                ->value('p') ?? 0);
+
+            $profit2 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
+                ->join('products', 'sale_items.product_id', '=', 'products.id')
+                ->whereHas('sale', function($q) use ($shopIds, $year2, $i) {
+                    $q->whereIn('shop_id', $shopIds)
+                      ->whereYear('sale_date', $year2)
+                      ->whereMonth('sale_date', $i)
+                      ->where('status', 'completed');
+                })
+                ->value('p') ?? 0);
+
+            $chart[] = [
+                'label' => $months[$i - 1],
+                'revenue1' => $revenue1,
+                'revenue2' => $revenue2,
+                'sales1' => $sales1,
+                'sales2' => $sales2,
+            ];
+
+            $totalRevenue1 += $revenue1;
+            $totalRevenue2 += $revenue2;
+            $totalSales1 += $sales1;
+            $totalSales2 += $sales2;
+            $totalProfit1 += $profit1;
+            $totalProfit2 += $profit2;
+        }
+
+        return [
+            'mode' => 'year',
+            'label1' => (string) $year1,
+            'label2' => (string) $year2,
+            'chart' => $chart,
+            'totals' => [
+                'revenue' => [
+                    'v1' => $totalRevenue1,
+                    'v2' => $totalRevenue2,
+                    'growth' => $this->calcGrowth($totalRevenue1, $totalRevenue2),
+                ],
+                'sales' => [
+                    'v1' => $totalSales1,
+                    'v2' => $totalSales2,
+                    'growth' => $this->calcGrowth($totalSales1, $totalSales2),
+                ],
+                'profit' => [
+                    'v1' => $totalProfit1,
+                    'v2' => $totalProfit2,
+                    'growth' => $this->calcGrowth($totalProfit1, $totalProfit2),
+                ],
+            ],
+        ];
+    }
+
+    private function getMonthlyComparison($shopIds, int $month1, int $month2, int $year1, int $year2): array
+    {
+        $daysInMonth1 = Carbon::createFromDate($year1, $month1, 1)->daysInMonth;
+        $daysInMonth2 = Carbon::createFromDate($year2, $month2, 1)->daysInMonth;
+        $maxDays = max($daysInMonth1, $daysInMonth2);
+
+        $chart = [];
+        $totalRevenue1 = 0;
+        $totalRevenue2 = 0;
+        $totalSales1 = 0;
+        $totalSales2 = 0;
+        $totalProfit1 = 0;
+        $totalProfit2 = 0;
+
+        for ($day = 1; $day <= $maxDays; $day++) {
+            $label = str_pad($day, 2, '0', STR_PAD_LEFT);
+
+            // Mois 1
+            $revenue1 = 0;
+            $sales1 = 0;
+            $profit1 = 0;
+            if ($day <= $daysInMonth1) {
+                $date1 = Carbon::createFromDate($year1, $month1, $day);
+                $revenue1 = (float) Sale::whereIn('shop_id', $shopIds)
+                    ->whereDate('sale_date', $date1)
+                    ->where('status', 'completed')
+                    ->sum('total');
+
+                $sales1 = Sale::whereIn('shop_id', $shopIds)
+                    ->whereDate('sale_date', $date1)
+                    ->where('status', 'completed')
+                    ->count();
+
+                $profit1 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
+                    ->join('products', 'sale_items.product_id', '=', 'products.id')
+                    ->whereHas('sale', function($q) use ($shopIds, $date1) {
+                        $q->whereIn('shop_id', $shopIds)
+                          ->whereDate('sale_date', $date1)
+                          ->where('status', 'completed');
+                    })
+                    ->value('p') ?? 0);
+            }
+
+            // Mois 2
+            $revenue2 = 0;
+            $sales2 = 0;
+            $profit2 = 0;
+            if ($day <= $daysInMonth2) {
+                $date2 = Carbon::createFromDate($year2, $month2, $day);
+                $revenue2 = (float) Sale::whereIn('shop_id', $shopIds)
+                    ->whereDate('sale_date', $date2)
+                    ->where('status', 'completed')
+                    ->sum('total');
+
+                $sales2 = Sale::whereIn('shop_id', $shopIds)
+                    ->whereDate('sale_date', $date2)
+                    ->where('status', 'completed')
+                    ->count();
+
+                $profit2 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
+                    ->join('products', 'sale_items.product_id', '=', 'products.id')
+                    ->whereHas('sale', function($q) use ($shopIds, $date2) {
+                        $q->whereIn('shop_id', $shopIds)
+                          ->whereDate('sale_date', $date2)
+                          ->where('status', 'completed');
+                    })
+                    ->value('p') ?? 0);
+            }
+
+            $chart[] = [
+                'label' => $label,
+                'revenue1' => $revenue1,
+                'revenue2' => $revenue2,
+                'sales1' => $sales1,
+                'sales2' => $sales2,
+            ];
+
+            $totalRevenue1 += $revenue1;
+            $totalRevenue2 += $revenue2;
+            $totalSales1 += $sales1;
+            $totalSales2 += $sales2;
+            $totalProfit1 += $profit1;
+            $totalProfit2 += $profit2;
+        }
+
+        $label1 = Carbon::createFromDate($year1, $month1, 1)->isoFormat('MMMM YYYY');
+        $label2 = Carbon::createFromDate($year2, $month2, 1)->isoFormat('MMMM YYYY');
+
+        return [
+            'mode' => 'month',
+            'label1' => $label1,
+            'label2' => $label2,
+            'chart' => $chart,
+            'totals' => [
+                'revenue' => [
+                    'v1' => $totalRevenue1,
+                    'v2' => $totalRevenue2,
+                    'growth' => $this->calcGrowth($totalRevenue1, $totalRevenue2),
+                ],
+                'sales' => [
+                    'v1' => $totalSales1,
+                    'v2' => $totalSales2,
+                    'growth' => $this->calcGrowth($totalSales1, $totalSales2),
+                ],
+                'profit' => [
+                    'v1' => $totalProfit1,
+                    'v2' => $totalProfit2,
+                    'growth' => $this->calcGrowth($totalProfit1, $totalProfit2),
+                ],
+            ],
+        ];
     }
 }

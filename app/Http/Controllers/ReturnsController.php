@@ -87,7 +87,6 @@ class ReturnsController extends Controller
             }
 
             // Recalculer les montants de la vente après annulation du retour
-            $sale->returns()->where('id', '!=', $return->id)->get();
             $this->recalculateSaleAmounts($sale);
 
             // Supprimer le retour
@@ -182,3 +181,4 @@ class ReturnsController extends Controller
             $item->update(['is_returned' => $totalReturned >= $item->quantity]);
         }
     }
+}

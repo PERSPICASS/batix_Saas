@@ -230,7 +230,11 @@ class SaleController extends Controller
             ? "Vente à crédit enregistrée. Reste à payer : " . number_format($sale->remaining_amount, 0, ',', ' ') . " FCFA"
             : 'Vente enregistrée avec succès.';
 
-        return redirect()->route('sales.show', ['code_user' => request()->route('code_user'), 'sale' => $sale->id, 'print' => '1'])->with('success', $msg);
+        return redirect()->route('sales.show', [
+            'code_user' => request()->route('code_user'),
+            'sale' => $sale->id,
+            'print' => '1'
+        ])->with('success', $msg);
     }
 
     /**

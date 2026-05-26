@@ -70,6 +70,7 @@ export default function Authenticated({
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
     const isPlatformAdmin = user?.role === 'admin_platforme';
+    const isSuperAdmin = user?.role === 'super_admin';
     const [theme, setTheme] = useState<'dark' | 'light'>(isPlatformAdmin ? 'light' : 'dark');
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
@@ -358,7 +359,7 @@ export default function Authenticated({
                 href: buildRoute('sales.credits'),
                 active: route().current('sales.credits*'),
                 icon: CreditCard,
-                module: 'sales',
+                module: 'credits',
             },
             {
                 label: 'Fournisseurs',
@@ -404,8 +405,8 @@ export default function Authenticated({
                 icon: History,
                 module: null,
             }] : []),
-            // Paramètres pour tous sauf admin_platforme
-            ...(user && (user as any).role !== 'admin_platforme' ? [{
+            // Paramètres uniquement pour super_admin
+            ...(isSuperAdmin ? [{
                 label: 'Paramètres',
                 href: buildRoute('settings.index'),
                 active: route().current('settings.*'),
@@ -601,14 +602,15 @@ export default function Authenticated({
                             )}
 
                             {/* Bouton Dépôt - masqué pour admin_platforme */}
-                            {user?.role !== 'admin_platforme' && (
-                            <Link
-                                href={buildRoute('depots.index')}
-                                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                            >
-                                <Warehouse className="size-4 text-amber-400" />
-                                <span className="hidden sm:inline">Dépôt</span>
-                            </Link>
+                            {user?.role !== 'admin_platforme' && isSuperAdmin && (
+                                <Link
+                                    href={buildRoute('depots.index')}
+                                   
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                >
+                                    <Warehouse className="size-4 text-amber-400" />
+                                    <span className="hidden sm:inline">Dépôt</span>
+                                </Link>
                             )}
 
                             {/* Sélecteur de boutique - masqué pour admin_platforme */}
@@ -616,9 +618,13 @@ export default function Authenticated({
                             <div className="relative" ref={shopMenuRef}>
                                 <button
                                     type="button"
-                                    onClick={() => setShopMenuOpen((prev) => !prev)}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-left text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                                    disabled={shops.length === 0}
+                                    onClick={() => isSuperAdmin && setShopMenuOpen((prev) => !prev)}
+                                    className={`relative inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                                        isSuperAdmin && shops.length > 0
+                                            ? 'border-slate-300 bg-slate-200 text-slate-800 hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 cursor-pointer'
+                                            : 'border-slate-400 bg-slate-200/60 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500 cursor-not-allowed'
+                                    }`}
+                                    disabled={shops.length === 0 || !isSuperAdmin}
                                 >
                                     <Building2 className="size-4 text-amber-200" />
                                     <span className="hidden sm:block">
@@ -633,8 +639,13 @@ export default function Authenticated({
                                         <ChevronDown className="size-4 text-slate-500 dark:text-slate-300" />
                                     )}
                                 </button>
+                               {/*  {!isSuperAdmin && (
+                                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
+                                        Seul un super admin peut changer de boutique
+                                    </p>
+                                )} */}
 
-                                {shopMenuOpen && shops.length > 0 && (
+                                {shopMenuOpen && shops.length > 0 && isSuperAdmin && (
                                     <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {shops.map((shop) => (
                                             <button
@@ -651,14 +662,21 @@ export default function Authenticated({
                                             </button>
                                         ))}
                                         <hr className="my-1 border-slate-300 dark:border-white/10" />
-                                        <Link
-                                            href={buildRoute('shops.index')}
-                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
-                                            onClick={() => setShopMenuOpen(false)}
-                                        >
-                                            <Store className="size-4" />
-                                            Gérer mes boutiques
-                                        </Link>
+                                        {isSuperAdmin ? (
+                                            <Link
+                                                href={buildRoute('shops.index')}
+                                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                onClick={() => setShopMenuOpen(false)}
+                                            >
+                                                <Store className="size-4" />
+                                                Gérer mes boutiques
+                                            </Link>
+                                        ) : (
+                                            <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 dark:text-slate-600 cursor-not-allowed">
+                                                <Store className="size-4" />
+                                                Gérer mes boutiques
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -777,7 +795,9 @@ export default function Authenticated({
             </div>
 
             {/* Toast Container */}
-            <ToastContainer />
+            <div className="print:hidden">
+                <ToastContainer />
+            </div>
         </div>
     );
 }
