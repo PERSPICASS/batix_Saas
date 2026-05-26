@@ -148,7 +148,7 @@ class SubscriptionPlanController extends Controller
     {
         $plans = SubscriptionPlan::where('is_active', true)
             ->where('slug', '!=', 'free')
-            ->orderBy('price')
+            ->orderBy('sort_order')
             ->get()
             ->map(fn($plan) => array_merge($plan->toArray(), [
                 'price_eur'             => $plan->price_eur,
