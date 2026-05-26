@@ -24,7 +24,13 @@ interface Shop {
     created_at: string;
 }
 
-export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
+interface ShopsPageProps extends PageProps {
+    shops: Shop[];
+    canCreateShop: boolean;
+    remainingShops: number;
+}
+
+export default function Index({ shops, canCreateShop, remainingShops }: ShopsPageProps) {
     const route = useRoute();
     const subscription = useSubscriptionLimits();
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; shop: Shop | null }>({ show: false, shop: null });
@@ -55,16 +61,28 @@ export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
                 {subscription && <SubscriptionBanner type="shops" />}
 
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">Gérez vos boutiques et points de vente</p>
+                    <div>
+                        <p className="text-sm text-slate-300">Gérez vos boutiques et points de vente</p>
+                        {!canCreateShop && remainingShops === 0 && (
+                            <p className="mt-1 text-xs text-amber-400">
+                                Limite atteinte. Passez à un plan supérieur pour ajouter des boutiques.
+                            </p>
+                        )}
+                        {remainingShops > 0 && (
+                            <p className="mt-1 text-xs text-slate-400">
+                                {remainingShops} boutique{remainingShops > 1 ? 's' : ''} restante{remainingShops > 1 ? 's' : ''}
+                            </p>
+                        )}
+                    </div>
                     <Link
-                        href={route('shops.create')}
+                        href={canCreateShop ? route('shops.create') : '#'}
                         className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${
-                            subscription?.can_create_shop
+                            canCreateShop
                                 ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
                                 : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                         }`}
                         onClick={(e) => {
-                            if (!subscription?.can_create_shop) {
+                            if (!canCreateShop) {
                                 e.preventDefault();
                             }
                         }}
@@ -83,14 +101,14 @@ export default function Index({ shops }: PageProps<{ shops: Shop[] }>) {
                             Commencez par créer votre première boutique pour gérer vos produits et ventes.
                         </p>
                         <Link
-                            href={route('shops.create')}
+                            href={canCreateShop ? route('shops.create') : '#'}
                             className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold ${
-                                subscription?.can_create_shop
+                                canCreateShop
                                     ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
                                     : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                             }`}
                             onClick={(e) => {
-                                if (!subscription?.can_create_shop) {
+                                if (!canCreateShop) {
                                     e.preventDefault();
                                 }
                             }}

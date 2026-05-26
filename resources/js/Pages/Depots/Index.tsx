@@ -55,6 +55,16 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Gérez vos dépôts et approvisionnez vos boutiques
                         </p>
+                        {remainingDepots === 0 && !canCreateDepot && (
+                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                                Limite atteinte. Passez à un plan supérieur pour ajouter des dépôts.
+                            </p>
+                        )}
+                        {remainingDepots > 0 && (
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                {remainingDepots} dépôt{remainingDepots > 1 ? 's' : ''} restant{remainingDepots > 1 ? 's' : ''}
+                            </p>
+                        )}
                     </div>
                     {canCreateDepot ? (
                         <Link

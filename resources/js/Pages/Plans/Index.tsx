@@ -42,24 +42,22 @@ export default function Index({ plans, auth }: PlansProps) {
     };
 
     const getPlanFeatures = (plan: SubscriptionPlan): string[] => {
-        const ul = 'Illimité';
-
         const shopsLabel = plan.has_unlimited_shops
-            ? `${ul} boutiques`
+            ? 'Boutiques illimitées'
             : `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`;
 
         const usersLabel = plan.has_unlimited_users
-            ? `${ul} utilisateurs`
+            ? 'Utilisateurs illimités'
             : `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}`;
 
         const productsLabel = plan.has_unlimited_products
-            ? `${ul} produits`
-            : `${plan.max_products} produit${plan.max_products > 1 ? 's' : ''}`;
+            ? 'Produits illimités'
+            : `${plan.max_products} produit${plan.max_products > 1 ? 's' : ''} par boutique`;
 
         const depotsLabel = plan.max_depots === 0
             ? 'Sans dépôt'
             : plan.has_unlimited_depots
-                ? `${ul} dépôts`
+                ? 'Dépôts illimités'
                 : `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}`;
 
         return [
@@ -109,7 +107,7 @@ export default function Index({ plans, auth }: PlansProps) {
                 </div>
 
                 {/* Grille des plans - Style Landing Page */}
-                <div className="grid gap-4 lg:grid-cols-3">
+                <div className="grid gap-4 lg:grid-cols-4">
                     {plans.map((plan) => {
                         const features = getPlanFeatures(plan);
                         const isCurrent = isCurrentPlan(plan.slug);
@@ -135,32 +133,41 @@ export default function Index({ plans, auth }: PlansProps) {
 
                                 {/* Prix */}
                                 <div className="mt-4 flex items-center justify-between gap-4">
-                                    <div>
-                                        <div className="flex items-end gap-1">
-                                            <span className="text-3xl font-black tracking-tight leading-none text-white">
-                                                {plan.price_eur.replace(/[^0-9]/g, '')}
-                                            </span>
-                                            <span className="text-lg font-bold text-amber-300">
-                                                {plan.price_eur.replace(/[0-9\s]/g, '').trim() || 'EUR'}
-                                            </span>
+                                    {plan.slug === 'enterprise' ? (
+                                        <div className="py-4">
+                                            <p className="text-2xl font-bold text-amber-300">Devis sur mesure</p>
+                                            <p className="mt-1 text-xs font-medium text-slate-400">Nous contacter pour obtenir un prix</p>
                                         </div>
-                                        <p className="mt-0.5 text-xs font-medium text-slate-400">par mois</p>
-                                    </div>
-                                    {plan.price_fcfa && (
-                                        <div className="flex items-center h-16">
-                                            <div className="h-10" style={{ width: '1px', backgroundColor: '#64748b' }} />
-                                        </div>
-                                    )}
-                                    {plan.price_fcfa && (
-                                        <div className="pl-4">
-                                            <div className="flex flex-col items-start">
-                                                <p className="text-xl font-bold text-amber-300">
-                                                    {plan.price_fcfa.replace(' FCFA', '')}
-                                                </p>
-                                                <p className="text-xs font-medium text-amber-300">FCFA</p>
+                                    ) : (
+                                        <>
+                                            <div>
+                                                <div className="flex items-end gap-1">
+                                                    <span className="text-3xl font-black tracking-tight leading-none text-white">
+                                                        {plan.price_eur.replace(/[^0-9]/g, '')}
+                                                    </span>
+                                                    <span className="text-lg font-bold text-amber-300">
+                                                        {plan.price_eur.replace(/[0-9\s]/g, '').trim() || 'EUR'}
+                                                    </span>
+                                                </div>
                                                 <p className="mt-0.5 text-xs font-medium text-slate-400">par mois</p>
                                             </div>
-                                        </div>
+                                            {plan.price_fcfa && (
+                                                <div className="flex items-center h-16">
+                                                    <div className="h-10" style={{ width: '1px', backgroundColor: '#64748b' }} />
+                                                </div>
+                                            )}
+                                            {plan.price_fcfa && (
+                                                <div className="pl-4">
+                                                    <div className="flex flex-col items-start">
+                                                        <p className="text-xl font-bold text-amber-300">
+                                                            {plan.price_fcfa.replace(' FCFA', '')}
+                                                        </p>
+                                                        <p className="text-xs font-medium text-amber-300">FCFA</p>
+                                                        <p className="mt-0.5 text-xs font-medium text-slate-400">par mois</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
 

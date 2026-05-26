@@ -19,10 +19,13 @@ class ShopController extends Controller
      */
     public function index(): Response
     {
-        $shops = Auth::user()->accessibleShopsQuery()->latest()->get();
-        
+        $user = Auth::user();
+        $shops = $user->accessibleShopsQuery()->latest()->get();
+
         return Inertia::render('Shops/Index', [
             'shops' => $shops,
+            'canCreateShop' => $user->canCreateShop(),
+            'remainingShops' => $user->remainingShopSlots(),
         ]);
     }
 
@@ -39,6 +42,15 @@ class ShopController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+
+        // Vérifier la limite de boutiques
+        if (!$user->canCreateShop()) {
+            $limits = $user->getSubscriptionLimits();
+            $max = $limits['max_shops'];
+            return back()->with('error', "Vous avez atteint la limite de {$max} boutique(s) de votre offre. Passez à un plan supérieur pour en ajouter davantage.");
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -50,7 +62,7 @@ class ShopController extends Controller
             'tax_id' => 'nullable|string|max:50',
         ]);
 
-        $shop = Auth::user()->accessibleShopsQuery()->create($validated);
+        $shop = $user->accessibleShopsQuery()->create($validated);
 
         // Log activity
         ActivityLogger::created($shop, "Boutique créée: {$shop->name}");

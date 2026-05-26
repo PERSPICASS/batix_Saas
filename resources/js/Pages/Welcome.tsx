@@ -76,10 +76,9 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
 
     const filteredSubscriptionPlans = useMemo(() => {
         return subscriptionPlans.filter((plan) => {
-            const identity = `${plan.slug ?? ''} ${plan.name ?? ''}`.toLowerCase().trim();
-            const looksFree = identity === 'free' || identity.includes('free') || identity.includes('gratuit');
-            const isZeroPrice = Number(plan.price) === 0;
-            return !looksFree && !isZeroPrice;
+            const slug = (plan.slug ?? '').toLowerCase().trim();
+            const isFree = slug === 'free';
+            return !isFree;
         });
     }, [subscriptionPlans]);
 
@@ -87,10 +86,8 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
 
     const plans = useMemo<PlanView[]>(() => {
         if (filteredSubscriptionPlans.length === 0) return fallbackPlansByLocale[locale];
-        const middle = Math.floor(filteredSubscriptionPlans.length / 2);
-        return filteredSubscriptionPlans.map((plan, index) => {
+        return filteredSubscriptionPlans.map((plan) => {
             const isFr = locale === 'fr';
-            const unlimited = isFr ? 'Illimite' : 'Unlimited';
             const subtitle = isFr ? 'par mois' : 'per month';
             const rawEur = plan.price_eur?.trim() || plan.formatted_price?.trim();
             const badge = isFr
@@ -99,19 +96,19 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                   ? 'Unlimited stores'
                   : `Up to ${plan.max_shops} store${plan.max_shops > 1 ? 's' : ''}`;
             const shopsLabel = plan.has_unlimited_shops
-                ? isFr ? `${unlimited} boutiques` : `${unlimited} stores`
+                ? isFr ? 'Boutiques illimitées' : 'Unlimited stores'
                 : isFr ? `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}` : `${plan.max_shops} store${plan.max_shops > 1 ? 's' : ''}`;
             const usersLabel = plan.has_unlimited_users
-                ? isFr ? `${unlimited} utilisateurs` : `${unlimited} users`
-                : isFr ? `${plan.max_users} utilisateurs` : `${plan.max_users} users`;
+                ? isFr ? 'Utilisateurs illimités' : 'Unlimited users'
+                : isFr ? `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}` : `${plan.max_users} user${plan.max_users > 1 ? 's' : ''}`;
             const productsLabel = plan.has_unlimited_products
-                ? isFr ? `${unlimited} produits` : `${unlimited} products`
-                : isFr ? `${plan.max_products} produits` : `${plan.max_products} products`;
+                ? isFr ? 'Produits illimités' : 'Unlimited products'
+                : isFr ? `${plan.max_products} produits par boutique` : `${plan.max_products} products per store`;
             const depotsLabel = plan.max_depots === 0
-                ? isFr ? 'Sans depot' : 'No depot'
+                ? isFr ? 'Sans dépôt' : 'No depot'
                 : plan.has_unlimited_depots
-                  ? isFr ? `${unlimited} depots` : `${unlimited} depots`
-                  : isFr ? `${plan.max_depots} depot${plan.max_depots > 1 ? 's' : ''}` : `${plan.max_depots} depot${plan.max_depots > 1 ? 's' : ''}`;
+                  ? isFr ? 'Dépôts illimités' : 'Unlimited depots'
+                  : isFr ? `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}` : `${plan.max_depots} depot${plan.max_depots > 1 ? 's' : ''}`;
             const baseFeatures = isFr
                 ? ['Ventes et caisse', 'Gestion des achats', 'Rapports et statistiques']
                 : ['Sales and POS', 'Purchase management', 'Reports and analytics'];
@@ -125,7 +122,7 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                 subtitle,
                 badge,
                 points: [shopsLabel, usersLabel, productsLabel, depotsLabel, ...baseFeatures, ...extraFeatures],
-                highlighted: index === middle,
+                highlighted: plan.slug === 'growth',
             };
         });
     }, [filteredSubscriptionPlans, locale]);

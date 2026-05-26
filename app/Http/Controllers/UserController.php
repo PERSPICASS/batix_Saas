@@ -18,7 +18,7 @@ class UserController extends Controller
     public function index(): Response
     {
         $currentUser = auth()->user();
-        
+
         $users = User::with('shop')
             ->where(function ($query) use ($currentUser) {
                 // Si l'utilisateur est super_admin, afficher tous les utilisateurs de ses boutiques
@@ -39,9 +39,11 @@ class UserController extends Controller
             })
             ->orderBy('created_at', 'desc')
             ->paginate(15);
-        
+
         return Inertia::render('Users/Index', [
             'users' => $users,
+            'canCreateUser' => $currentUser->canCreateUser(),
+            'remainingUsers' => $currentUser->remainingUserSlots(),
         ]);
     }
 
@@ -58,6 +60,15 @@ class UserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $currentUser = auth()->user();
+
+        // Vérifier la limite d'utilisateurs
+        if (!$currentUser->canCreateUser()) {
+            $limits = $currentUser->getSubscriptionLimits();
+            $max = $limits['max_users'];
+            return back()->with('error', "Vous avez atteint la limite de {$max} utilisateur(s) de votre offre. Passez à un plan supérieur pour en ajouter davantage.");
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -76,7 +87,7 @@ class UserController extends Controller
         $validated['password'] = Hash::make($validated['password']);
         $permissions = $validated['permissions'] ?? [];
         unset($validated['permissions']);
-        
+
         $user = User::create($validated);
 
         // Create permissions

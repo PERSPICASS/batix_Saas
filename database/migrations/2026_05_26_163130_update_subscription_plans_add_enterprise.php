@@ -20,28 +20,54 @@ return new class extends Migration
             'max_shops' => 6,
         ]);
 
-        \DB::table('subscription_plans')->insert([
-            'name' => 'Entreprise',
-            'slug' => 'enterprise',
-            'description' => 'Plan sur mesure pour les grandes entreprises',
-            'price' => 0,
-            'max_shops' => -1,
-            'max_users' => -1,
-            'max_products' => -1,
-            'max_depots' => -1,
-            'features' => json_encode([
-                'Boutiques illimitées',
-                'Utilisateurs illimités',
-                'Produits illimités',
-                'Support prioritaire',
-                'Configurations personnalisées',
-                'API accès complet',
-            ]),
-            'is_active' => true,
-            'sort_order' => 4,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // Create or update Entreprise plan
+        $enterpriseExists = \DB::table('subscription_plans')->where('slug', 'enterprise')->exists();
+
+        if ($enterpriseExists) {
+            \DB::table('subscription_plans')->where('slug', 'enterprise')->update([
+                'name' => 'Entreprise',
+                'description' => 'Plan sur mesure pour les grandes entreprises',
+                'price' => 0,
+                'max_shops' => -1,
+                'max_users' => -1,
+                'max_products' => -1,
+                'max_depots' => -1,
+                'features' => json_encode([
+                    'Boutiques illimitées',
+                    'Utilisateurs illimités',
+                    'Produits illimités',
+                    'Support prioritaire',
+                    'Configurations personnalisées',
+                    'API accès complet',
+                ]),
+                'is_active' => true,
+                'sort_order' => 4,
+                'updated_at' => now(),
+            ]);
+        } else {
+            \DB::table('subscription_plans')->insert([
+                'name' => 'Entreprise',
+                'slug' => 'enterprise',
+                'description' => 'Plan sur mesure pour les grandes entreprises',
+                'price' => 0,
+                'max_shops' => -1,
+                'max_users' => -1,
+                'max_products' => -1,
+                'max_depots' => -1,
+                'features' => json_encode([
+                    'Boutiques illimitées',
+                    'Utilisateurs illimités',
+                    'Produits illimités',
+                    'Support prioritaire',
+                    'Configurations personnalisées',
+                    'API accès complet',
+                ]),
+                'is_active' => true,
+                'sort_order' => 4,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     /**

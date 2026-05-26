@@ -474,36 +474,13 @@ class User extends Authenticatable
      */
     public function canCreateProduct(?int $shopId = null): bool
     {
+        // Products are unlimited for all plans
         if ($this->role === 'admin_platforme') {
             return false;
         }
 
         $subscription = $this->activeSubscription();
-
-        if (!$subscription) {
-            return false;
-        }
-
-        $plan = $subscription->plan;
-
-        if ($plan->hasUnlimitedProducts()) {
-            return true;
-        }
-
-        // Compter par boutique si un shop_id est fourni, sinon par boutique active
-        $query = Product::where('is_active', true);
-        if ($shopId) {
-            $query->where('shop_id', $shopId);
-        } else {
-            // Fallback : prendre la première boutique accessible
-            $firstShopId = $this->accessibleShopsQuery()->value('id');
-            if (!$firstShopId) return false;
-            $query->where('shop_id', $firstShopId);
-        }
-
-        $currentCount = $query->count();
-
-        return $currentCount < $plan->max_products;
+        return $subscription !== null;
     }
 
     /**
@@ -543,30 +520,8 @@ class User extends Authenticatable
      */
     public function remainingProductSlots(?int $shopId = null): int
     {
-        $subscription = $this->activeSubscription();
-
-        if (!$subscription) {
-            return 0;
-        }
-
-        $plan = $subscription->plan;
-
-        if ($plan->hasUnlimitedProducts()) {
-            return -1; // Unlimited
-        }
-
-        $query = Product::where('is_active', true);
-        if ($shopId) {
-            $query->where('shop_id', $shopId);
-        } else {
-            $firstShopId = $this->accessibleShopsQuery()->value('id');
-            if (!$firstShopId) return 0;
-            $query->where('shop_id', $firstShopId);
-        }
-
-        $currentCount = $query->count();
-
-        return max(0, $plan->max_products - $currentCount);
+        // Products are unlimited for all plans
+        return -1;
     }
 
     /**

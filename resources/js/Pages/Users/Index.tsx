@@ -34,6 +34,8 @@ interface PaginatedUsers {
 
 interface Props {
     users: PaginatedUsers;
+    canCreateUser: boolean;
+    remainingUsers: number;
 }
 
 const roleLabels: Record<string, string> = {
@@ -54,7 +56,7 @@ const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'd
     staff: 'success',
 };
 
-export default function UsersIndex({ users }: Props) {
+export default function UsersIndex({ users, canCreateUser, remainingUsers }: Props) {
     const route = useRoute();
     const subscription = useSubscriptionLimits();
 
@@ -169,18 +171,30 @@ export default function UsersIndex({ users }: Props) {
                 {subscription && <SubscriptionBanner type="users" />}
 
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">
-                        Gérez les comptes utilisateurs et leurs permissions
-                    </p>
+                    <div>
+                        <p className="text-sm text-slate-300">
+                            Gérez les comptes utilisateurs et leurs permissions
+                        </p>
+                        {!canCreateUser && remainingUsers === 0 && (
+                            <p className="mt-1 text-xs text-amber-400">
+                                Limite atteinte. Passez à un plan supérieur pour ajouter des utilisateurs.
+                            </p>
+                        )}
+                        {remainingUsers > 0 && (
+                            <p className="mt-1 text-xs text-slate-400">
+                                {remainingUsers} utilisateur{remainingUsers > 1 ? 's' : ''} restant{remainingUsers > 1 ? 's' : ''}
+                            </p>
+                        )}
+                    </div>
                     <Link
-                        href={route('users.create')}
+                        href={canCreateUser ? route('users.create') : '#'}
                         className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${
-                            subscription?.can_create_user
+                            canCreateUser
                                 ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
                                 : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                         }`}
                         onClick={(e) => {
-                            if (!subscription?.can_create_user) {
+                            if (!canCreateUser) {
                                 e.preventDefault();
                             }
                         }}

@@ -141,14 +141,6 @@ class ProductController extends Controller
             'track_stock' => 'boolean',
         ]);
 
-        // Vérifier le quota de produits par boutique (après validation pour avoir le shop_id)
-        $shopId = (int) $validated['shop_id'];
-        if (!$user->canCreateProduct($shopId)) {
-            $limits = $user->getSubscriptionLimits($shopId);
-            $max = $limits['max_products'];
-            return back()->with('error', "Vous avez atteint la limite de {$max} produit(s) par boutique de votre offre. Passez à un plan supérieur pour en ajouter davantage.");
-        }
-
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = $user->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         

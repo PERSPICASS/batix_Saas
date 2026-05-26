@@ -84,13 +84,13 @@ class SubscriptionPlan extends Model
      */
     public function getFormattedPriceAttribute(): string
     {
-        // Taux de change fixe EUR/XAF (Franc CFA)
         $eurToXafRate = 655.957;
-        $priceInEur = $this->price / $eurToXafRate;
-        
-        $fcfa = number_format($this->price, 0, ',', ' ') . ' FCFA';
+        $price = (float) ($this->price ?? 0);
+        $priceInEur = $price / $eurToXafRate;
+
+        $fcfa = number_format($price, 0, ',', ' ') . ' FCFA';
         $eur = number_format($priceInEur, 0, ',', ' ') . '€';
-        
+
         return $eur . '<br>' . $fcfa;
     }
 
@@ -100,16 +100,22 @@ class SubscriptionPlan extends Model
     public function getPriceEurAttribute(): string
     {
         $eurToXafRate = 655.957;
-        $priceInEur = $this->price / $eurToXafRate;
+        $price = (float) ($this->price ?? 0);
+        $priceInEur = $price / $eurToXafRate;
         return number_format($priceInEur, 0, ',', ' ') . '€';
     }
 
     /**
      * Get price in FCFA.
      */
-    public function getPriceFcfaAttribute(): string
+    public function getPriceFcfaAttribute(): ?string
     {
-        return number_format($this->price, 0, ',', ' ') . ' FCFA';
+        $price = (float) ($this->price ?? 0);
+        if ($price == 0) {
+            return null;
+        }
+
+        return number_format($price, 0, ',', ' ') . ' FCFA';
     }
 
     /**
