@@ -1,9 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageProps } from '@/types';
 
 interface Shop {
@@ -30,6 +30,11 @@ interface Product {
     parent: { id: number; name: string } | null;
 }
 
+interface SaleReturn {
+    id: number;
+    quantity_returned: number;
+}
+
 interface SaleItem {
     id: number;
     product_name: string;
@@ -39,6 +44,7 @@ interface SaleItem {
     tax_amount: string;
     total: string;
     product: Product | null;
+    returns?: SaleReturn[];
 }
 
 interface Sale {
@@ -109,6 +115,35 @@ export default function SalesShow({ sale, auth }: Props) {
         notes: '',
     });
 
+    const [showReturnModal, setShowReturnModal] = useState(false);
+    const [selectedItemIds, setSelectedItemIds] = useState<Set<number>>(new Set());
+    const [itemQuantities, setItemQuantities] = useState<{[key: number]: number}>({});
+    const [showItemsDropdown, setShowItemsDropdown] = useState(false);
+    const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
+    const [returnMessage, setReturnMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('print') === '1') {
+            const timer = setTimeout(() => window.print(), 400);
+            return () => clearTimeout(timer);
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (!target.closest('[data-dropdown-items]')) {
+                setShowItemsDropdown(false);
+            }
+        };
+
+        if (showItemsDropdown) {
+            document.addEventListener('click', handleClickOutside);
+            return () => document.removeEventListener('click', handleClickOutside);
+        }
+    }, [showItemsDropdown]);
+
     const handlePrint = () => {
         window.print();
     };
@@ -120,12 +155,124 @@ export default function SalesShow({ sale, auth }: Props) {
         });
     };
 
+    const returnForm = useForm({
+        refund_method: 'cash',
+        reason: 'other',
+        notes: '',
+    });
+
+    const handleCreateReturn = (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (selectedItemIds.size === 0) {
+            setReturnMessage({ type: 'error', text: 'Sélectionnez au moins un article' });
+            return;
+        }
+
+        setReturnMessage(null);
+        setIsSubmittingReturn(true);
+        const itemsArray = Array.from(selectedItemIds);
+        let index = 0;
+        let successCount = 0;
+
+        const submitNextItem = () => {
+            if (index >= itemsArray.length) {
+                setIsSubmittingReturn(false);
+                if (successCount === itemsArray.length) {
+                    setReturnMessage({
+                        type: 'success',
+                        text: `${successCount} retour${successCount > 1 ? 's' : ''} enregistré${successCount > 1 ? 's' : ''} avec succès`
+                    });
+                    setTimeout(() => {
+                        setShowReturnModal(false);
+                        setSelectedItemIds(new Set());
+                        setItemQuantities({});
+                        setReturnMessage(null);
+                    }, 2000);
+                } else if (successCount === 0) {
+                    setReturnMessage({
+                        type: 'error',
+                        text: 'Erreur lors de la création des retours'
+                    });
+                } else {
+                    setReturnMessage({
+                        type: 'error',
+                        text: `${successCount}/${itemsArray.length} retour(s) enregistré(s). Des erreurs se sont produites.`
+                    });
+                }
+                return;
+            }
+
+            const itemId = itemsArray[index];
+            index++;
+
+            const postData = {
+                sale_item_id: itemId,
+                quantity_returned: itemQuantities[itemId] || 1,
+                refund_method: returnForm.data.refund_method,
+                reason: returnForm.data.reason,
+                notes: returnForm.data.notes,
+            };
+
+            router.post(route('returns.store', { sale: sale.id }), postData, {
+                onSuccess: () => {
+                    successCount++;
+                    submitNextItem();
+                },
+                onError: () => {
+                    submitNextItem();
+                },
+            });
+        };
+
+        submitNextItem();
+    };
+
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="print:hidden flex items-center justify-between">
                     <h1 className="text-xl font-semibold text-white">Ticket {sale.ticket_number}</h1>
                     <div className="flex items-center gap-2">
+
+                        <button
+                            onClick={handlePrint}
+                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                        >
+                            <Printer className="size-4" /> Imprimer
+                        </button>
+
+                    </div>
+                </div>
+            }
+        >
+            <Head title={`Ticket ${sale.ticket_number}`} />
+
+            <style>{`
+                @media print {
+                    #ticket-print * { color: #000 !important; background: #fff !important; }
+                    #ticket-print { max-width: 520px; margin: 0 auto; }
+                    #ticket-print table th,
+                    #ticket-print table td { border-color: #ccc !important; }
+                    #ticket-print .border-white\\/10,
+                    #ticket-print .border-white\\/5 { border-color: #ddd !important; }
+                    #ticket-print .credit-block { display: none !important; }
+                    #ticket-print .total-line { color: #000 !important; font-weight: 800; }
+                    #ticket-print .monnaie-line { color: #166534 !important; }
+                    #ticket-print .credit-line { color: #991b1b !important; }
+                    #ticket-print .footer-msg { color: #6b7280 !important; }
+                }
+            `}</style>
+
+            <div className="space-y-4">
+                <div className='w-full print:hidden flex justify-between items-center'>
+                    <Link
+                        href={route('sales.index')}
+                        className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
+                    >
+                        <ArrowLeft className="size-4" /> Retour aux ventes
+                    </Link>
+                    <div className='flex items-center gap-2'>
                         {canCancel && (
                             <button
                                 onClick={() => setShowCancelModal(true)}
@@ -135,26 +282,25 @@ export default function SalesShow({ sale, auth }: Props) {
                             </button>
                         )}
                         <button
-                            onClick={handlePrint}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            onClick={() => {
+                                const codeUser = window.location.pathname.split('/')[1];
+                                window.location.href = route('sales.receipt', { code_user: codeUser, sale: sale.id });
+                            }}
+                            className="inline-flex items-center gap-2 rounded-lg border border-blue-400/40 bg-blue-400/10 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-400/20"
                         >
-                            <Printer className="size-4" /> Imprimer
+                            <Download className="size-4" /> Télécharger PDF
+                        </button>
+                        <button
+                            onClick={() => setShowReturnModal(true)}
+                            className="inline-flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-400/20"
+                        >
+                            <RotateCcw className="size-4" /> Retourner
                         </button>
                     </div>
                 </div>
-            }
-        >
-            <Head title={`Ticket ${sale.ticket_number}`} />
+                
 
-            <div className="space-y-4">
-                <Link
-                    href={route('sales.index')}
-                    className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
-                >
-                    <ArrowLeft className="size-4" /> Retour aux ventes
-                </Link>
-
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
+                <div id="ticket-print" className="rounded-2xl border border-white/10 bg-white/5 p-8 print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black">
                     {/* En-tête du ticket */}
                     <div className="mb-8 text-center">
                         {sale.shop.logo && (
@@ -272,7 +418,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                 </span>
                             </div>
                         )}
-                        <div className="flex justify-between border-t border-white/10 pt-2 text-lg font-bold">
+                        <div className="total-line flex justify-between border-t border-white/10 pt-2 text-lg font-bold">
                             <span className="text-white">TOTAL:</span>
                             <span className="text-amber-300">
                                 <Currency amount={parseFloat(sale.total)} />
@@ -295,7 +441,7 @@ export default function SalesShow({ sale, auth }: Props) {
                             </span>
                         </div>
                         {parseFloat(sale.change_amount) > 0 && (
-                            <div className="flex justify-between text-sm">
+                            <div className="monnaie-line flex justify-between text-sm">
                                 <span className="text-slate-400">Monnaie rendue:</span>
                                 <span className="font-semibold text-emerald-400">
                                     <Currency amount={parseFloat(sale.change_amount)} />
@@ -322,7 +468,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
                     {/* Bouton Encaisser le reste */}
                     {parseFloat(sale.remaining_amount) > 0 && (
-                        <div className="mt-6 rounded-xl border border-rose-400/30 bg-rose-500/10 p-4">
+                        <div className="credit-block mt-6 rounded-xl border border-rose-400/30 bg-rose-500/10 p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <CreditCard className="size-5 text-rose-400" />
@@ -351,7 +497,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         </div>
                     )}
 
-                    <div className="mt-8 text-center text-xs text-slate-500">
+                    <div className="footer-msg mt-8 text-center text-xs text-slate-500">
                         <p>Merci de votre visite</p>
                         <p>À bientôt !</p>
                     </div>
@@ -360,7 +506,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
             {/* Modal: Encaisser le reste */}
             {showCreditModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
                         <div className="mb-4 flex items-center gap-3">
                             <CreditCard className="size-5 text-rose-400" />
@@ -426,7 +572,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
             {/* Modal: Confirmer annulation */}
             {showCancelModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="w-full max-w-sm rounded-2xl bg-slate-900 p-6 shadow-xl border border-white/10">
                         <div className="mb-4 flex items-center gap-3">
                             <div className="flex size-10 items-center justify-center rounded-full bg-rose-400/10">
@@ -455,6 +601,189 @@ export default function SalesShow({ sale, auth }: Props) {
                                 Fermer
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de retour */}
+            {showReturnModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="rounded-xl border border-white/10 bg-slate-900 p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+                        <h3 className="text-lg font-semibold text-white mb-4">Créer un retour</h3>
+
+                        {/* Message de feedback */}
+                        {returnMessage && (
+                            <div className={`mb-4 p-3 rounded-lg text-sm ${
+                                returnMessage.type === 'success'
+                                    ? 'bg-green-500/10 border border-green-500/20 text-green-300'
+                                    : 'bg-red-500/10 border border-red-500/20 text-red-300'
+                            }`}>
+                                {returnMessage.text}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleCreateReturn} className="space-y-4">
+                            {/* Sélection des articles avec dropdown */}
+                            <div className="relative" data-dropdown-items>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Articles à retourner *
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowItemsDropdown(!showItemsDropdown)}
+                                    className={`w-full rounded-lg border px-3 py-2 text-left text-white hover:bg-slate-800 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 ${selectedItemIds.size === 0 ? 'border-red-500/50 bg-red-500/10' : 'border-white/10 bg-slate-800/50'}`}
+                                >
+                                    <span className="text-sm">
+                                        {selectedItemIds.size === 0
+                                            ? 'Sélectionner les articles...'
+                                            : `${selectedItemIds.size} article${selectedItemIds.size > 1 ? 's' : ''} sélectionné${selectedItemIds.size > 1 ? 's' : ''}`}
+                                    </span>
+                                </button>
+                                {selectedItemIds.size === 0 && (
+                                    <p className="mt-1 text-xs text-red-400">Au moins un article doit être sélectionné</p>
+                                )}
+
+                                {/* Dropdown avec checkboxes */}
+                                {showItemsDropdown && (
+                                    <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border border-white/10 bg-slate-900 shadow-lg" data-dropdown-items>
+                                        <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+                                            {sale.items.map((item) => {
+                                                const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
+                                                const available = item.quantity - alreadyReturned;
+                                                const canReturn = available > 0;
+
+                                                return (
+                                                    <label key={item.id} className={`flex items-start gap-2 p-2 rounded ${canReturn ? 'hover:bg-white/5 cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            disabled={!canReturn}
+                                                            checked={canReturn && selectedItemIds.has(item.id)}
+                                                            onChange={(e) => {
+                                                                const newSelected = new Set(selectedItemIds);
+                                                                if (e.target.checked) {
+                                                                    newSelected.add(item.id);
+                                                                    setItemQuantities({...itemQuantities, [item.id]: 1});
+                                                                } else {
+                                                                    newSelected.delete(item.id);
+                                                                    const newQty = {...itemQuantities};
+                                                                    delete newQty[item.id];
+                                                                    setItemQuantities(newQty);
+                                                                }
+                                                                setSelectedItemIds(newSelected);
+                                                            }}
+                                                            className="mt-1"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm text-white font-medium">{item.product_name}</p>
+                                                            <p className="text-xs text-slate-400">
+                                                                Vendu: {item.quantity} | Retourné: {alreadyReturned} | Disponible: {available}
+                                                            </p>
+                                                        </div>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Quantités à retourner */}
+                            {selectedItemIds.size > 0 && (
+                                <div className="bg-slate-800/30 rounded-lg p-3 space-y-2">
+                                    {sale.items
+                                        .filter(item => selectedItemIds.has(item.id))
+                                        .map((item) => {
+                                            const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
+                                            const available = item.quantity - alreadyReturned;
+
+                                            return (
+                                                <div key={item.id} className="space-y-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs text-slate-400">{item.product_name}</span>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max={available}
+                                                            value={Math.min(itemQuantities[item.id] || 1, available)}
+                                                            onChange={(e) => {
+                                                                const val = Math.min(parseInt(e.target.value) || 1, available);
+                                                                setItemQuantities({...itemQuantities, [item.id]: val});
+                                                            }}
+                                                            className="w-12 text-xs rounded border border-white/10 bg-slate-800 px-2 py-1 text-white focus:border-amber-500 focus:outline-none"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 ml-0">Max: {available}</p>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            )}
+
+                            {/* Raison */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Raison *
+                                </label>
+                                <select
+                                    value={returnForm.data.reason}
+                                    onChange={(e) => returnForm.setData('reason', e.target.value)}
+                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                                >
+                                    <option value="defective">Défectueux</option>
+                                    <option value="wrong_item">Mauvais article</option>
+                                    <option value="not_satisfied">Non satisfait</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                            </div>
+
+                            {/* Méthode de remboursement */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Mode de remboursement *
+                                </label>
+                                <select
+                                    value={returnForm.data.refund_method}
+                                    onChange={(e) => returnForm.setData('refund_method', e.target.value)}
+                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                                >
+                                    <option value="cash">Espèces</option>
+                                    <option value="card">Carte</option>
+                                    <option value="store_credit">Crédit magasin</option>
+                                    <option value="exchange">Échange</option>
+                                </select>
+                            </div>
+
+                            {/* Notes */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    Notes
+                                </label>
+                                <textarea
+                                    value={returnForm.data.notes}
+                                    onChange={(e) => returnForm.setData('notes', e.target.value)}
+                                    rows={2}
+                                    placeholder="Ajouter des détails sur le retour..."
+                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReturnModal(false)}
+                                    className="flex-1 rounded-xl border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingReturn || selectedItemIds.size === 0}
+                                    className="flex-1 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
+                                >
+                                    {isSubmittingReturn ? 'Traitement...' : 'Créer le retour'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

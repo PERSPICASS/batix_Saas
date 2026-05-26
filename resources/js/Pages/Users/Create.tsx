@@ -19,6 +19,7 @@ interface ModulePermission {
 
 interface Props {
     shops: Shop[];
+    currentUserRole: string;
 }
 
 const MODULES = [
@@ -30,11 +31,16 @@ const MODULES = [
     { key: 'sales', label: 'Ventes' },
     { key: 'purchases', label: 'Achats' },
     { key: 'expenses', label: 'Dépenses' },
+    { key: 'depots', label: 'Dépôts' },
     { key: 'suppliers', label: 'Fournisseurs' },
     { key: 'customers', label: 'Clients' },
     { key: 'invoices', label: 'Factures' },
+    { key: 'credits', label: 'Créances' },
     { key: 'users', label: 'Utilisateurs' },
     { key: 'reports', label: 'Rapports' },
+    { key: 'analytics', label: 'Analytiques' },
+    { key: 'activity_logs', label: 'Journaux d\'activité' },
+    { key: 'settings', label: 'Paramètres' },
 ];
 
 const ROLES = [
@@ -46,8 +52,9 @@ const ROLES = [
     { value: 'admin_platforme', label: 'Admin Plateforme' },
 ];
 
-export default function UsersCreate({ shops }: Props) {
+export default function UsersCreate({ shops, currentUserRole }: Props) {
     const route = useRoute();
+    const isSuperAdmin = currentUserRole === 'super_admin';
 
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -189,14 +196,19 @@ export default function UsersCreate({ shops }: Props) {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="shop_id" className={`block text-sm font-medium ${isSuperAdmin ? 'text-slate-200' : 'text-slate-400'}`}>
                                     Boutique
                                 </label>
                                 <select
                                     id="shop_id"
                                     value={data.shop_id}
                                     onChange={(e) => setData('shop_id', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    disabled={!isSuperAdmin}
+                                    className={`mt-1 block w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 ${
+                                        isSuperAdmin
+                                            ? 'border-white/15 bg-slate-900/70 text-slate-200 focus:border-amber-300 focus:ring-amber-300'
+                                            : 'border-slate-600 bg-slate-800/50 text-slate-500 cursor-not-allowed'
+                                    }`}
                                 >
                                     <option value="">-- Aucune boutique --</option>
                                     {shops.map((shop) => (
@@ -205,6 +217,7 @@ export default function UsersCreate({ shops }: Props) {
                                         </option>
                                     ))}
                                 </select>
+                                {!isSuperAdmin && <p className="mt-1 text-xs text-slate-500">Seul un super admin peut assigner une boutique</p>}
                                 {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
                             </div>
 

@@ -47,10 +47,12 @@ class UserController extends Controller
 
     public function create(): Response
     {
-        $shops = Shop::select('id', 'name')->orderBy('name')->get();
-        
+        $user = auth()->user();
+        $shops = $user->accessibleShopsQuery()->select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('Users/Create', [
             'shops' => $shops,
+            'currentUserRole' => $user->role,
         ]);
     }
 
@@ -97,12 +99,14 @@ class UserController extends Controller
 
     public function edit(string $code_user, User $user): Response
     {
-        $shops = Shop::select('id', 'name')->orderBy('name')->get();
+        $currentUser = auth()->user();
+        $shops = $currentUser->accessibleShopsQuery()->select('id', 'name')->orderBy('name')->get();
         $user->load('permissions');
-        
+
         return Inertia::render('Users/Edit', [
             'user' => $user,
             'shops' => $shops,
+            'currentUserRole' => $currentUser->role,
         ]);
     }
 

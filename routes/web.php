@@ -29,6 +29,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ReturnsController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -159,6 +160,10 @@ Route::prefix('{code_user}')
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale']);
     Route::post('ventes/{sale}/pay-credit', [SaleController::class, 'payCredit'])->name('sales.pay-credit');
     Route::patch('ventes/{sale}/reactiver', [SaleController::class, 'restore'])->name('sales.restore');
+
+    // Routes pour les retours
+    Route::post('ventes/{sale}/retours', [ReturnsController::class, 'store'])->name('returns.store');
+    Route::delete('retours/{return}', [ReturnsController::class, 'destroy'])->name('returns.destroy');
 
     // Routes pour les créances
     Route::get('creances', [CreditController::class, 'index'])->name('sales.credits');

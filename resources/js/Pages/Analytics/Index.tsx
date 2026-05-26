@@ -13,7 +13,9 @@ import {
     Users,
     Wallet,
 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 import ProductImage from '@/Components/ProductImage';
+import { useState } from 'react';
 
 interface KPI {
     value: number;
@@ -65,6 +67,32 @@ interface ShopPerformance {
     revenue: number;
 }
 
+interface ComparisonPoint {
+    label: string;
+    revenue1: number;
+    revenue2: number;
+    sales1: number;
+    sales2: number;
+}
+
+interface ComparisonMetric {
+    v1: number;
+    v2: number;
+    growth: number;
+}
+
+interface ComparisonData {
+    mode: 'year' | 'month';
+    label1: string;
+    label2: string;
+    chart: ComparisonPoint[];
+    totals: {
+        revenue: ComparisonMetric;
+        sales: ComparisonMetric;
+        profit: ComparisonMetric;
+    };
+}
+
 interface AnalyticsProps {
     kpis: {
         revenue: KPI;
@@ -79,6 +107,7 @@ interface AnalyticsProps {
     topCustomers: TopCustomer[];
     paymentMethods: PaymentMethod[];
     shopPerformance: ShopPerformance[];
+    comparisonData: ComparisonData;
     currentPeriod: string;
     currencySymbol: string;
     shops: Array<{ id: number; name: string }>;
@@ -127,11 +156,35 @@ export default function Index({
     topCustomers,
     paymentMethods,
     shopPerformance,
+    comparisonData,
     currentPeriod,
     currencySymbol,
 }: AnalyticsProps) {
+    const [compareMode, setCompareMode] = useState<'year' | 'month'>(comparisonData.mode);
+    const [year1, setYear1] = useState(parseInt(comparisonData.label1));
+    const [year2, setYear2] = useState(parseInt(comparisonData.label2));
+    const currentYear = new Date().getFullYear();
+    const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - (5 - i));
+
     const handlePeriodChange = (period: string) => {
         router.get(window.location.pathname, { period }, {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
+
+    const handleCompareChange = () => {
+        const params: Record<string, any> = {
+            period: currentPeriod,
+            compare_mode: compareMode,
+        };
+
+        if (compareMode === 'year') {
+            params.year1 = year1;
+            params.year2 = year2;
+        }
+
+        router.get(window.location.pathname, params, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -233,6 +286,185 @@ export default function Index({
                                 <span className="text-[10px] text-slate-400 truncate max-w-full">{item.label}</span>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Section Comparaison */}
+                <div className="space-y-4">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                        <h2 className="text-lg font-semibold text-white mb-4">Comparaison Années/Mois</h2>
+
+                        {/* Contrôles */}
+                        <div className="space-y-4 mb-6">
+                            {/* Toggle Mode */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => { setCompareMode('year'); }}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        compareMode === 'year'
+                                            ? 'bg-amber-300 text-slate-900'
+                                            : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                                    }`}
+                                >
+                                    Années
+                                </button>
+                                <button
+                                    onClick={() => { setCompareMode('month'); }}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        compareMode === 'month'
+                                            ? 'bg-amber-300 text-slate-900'
+                                            : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                                    }`}
+                                >
+                                    Mois
+                                </button>
+                            </div>
+
+                            {/* Sélecteurs */}
+                            {compareMode === 'year' && (
+                                <div className="flex gap-4 items-end">
+                                    <div className="flex-1">
+                                        <label className="block text-xs text-slate-400 mb-1">Année 1</label>
+                                        <select
+                                            value={year1}
+                                            onChange={(e) => setYear1(parseInt(e.target.value))}
+                                            className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                        >
+                                            {yearOptions.map(year => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="flex-1">
+                                        <label className="block text-xs text-slate-400 mb-1">Année 2</label>
+                                        <select
+                                            value={year2}
+                                            onChange={(e) => setYear2(parseInt(e.target.value))}
+                                            className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                        >
+                                            {yearOptions.map(year => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <button
+                                        onClick={handleCompareChange}
+                                        className="px-4 py-2 rounded-lg bg-amber-300 text-slate-900 text-sm font-medium hover:bg-amber-200 transition"
+                                    >
+                                        Comparer
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Cartes métriques */}
+                        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                            {/* CA */}
+                            <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
+                                <p className="text-xs text-slate-400 mb-2">Chiffre d'affaires</p>
+                                <div className="space-y-2">
+                                    <div>
+                                        <span className="text-xs text-slate-500">{comparisonData.label1}</span>
+                                        <p className="text-lg font-bold text-amber-300">
+                                            {formatCurrency(comparisonData.totals.revenue.v1, currencySymbol)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-slate-500">{comparisonData.label2}</span>
+                                        <p className="text-lg font-bold text-slate-300">
+                                            {formatCurrency(comparisonData.totals.revenue.v2, currencySymbol)}
+                                        </p>
+                                    </div>
+                                    <div className={`text-sm font-semibold ${comparisonData.totals.revenue.growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {comparisonData.totals.revenue.growth >= 0 ? '+' : ''}{comparisonData.totals.revenue.growth}%
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Ventes */}
+                            <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
+                                <p className="text-xs text-slate-400 mb-2">Nombre de ventes</p>
+                                <div className="space-y-2">
+                                    <div>
+                                        <span className="text-xs text-slate-500">{comparisonData.label1}</span>
+                                        <p className="text-lg font-bold text-amber-300">
+                                            {comparisonData.totals.sales.v1}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-slate-500">{comparisonData.label2}</span>
+                                        <p className="text-lg font-bold text-slate-300">
+                                            {comparisonData.totals.sales.v2}
+                                        </p>
+                                    </div>
+                                    <div className={`text-sm font-semibold ${comparisonData.totals.sales.growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {comparisonData.totals.sales.growth >= 0 ? '+' : ''}{comparisonData.totals.sales.growth}%
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Bénéfice */}
+                            <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
+                                <p className="text-xs text-slate-400 mb-2">Bénéfice brut</p>
+                                <div className="space-y-2">
+                                    <div>
+                                        <span className="text-xs text-slate-500">{comparisonData.label1}</span>
+                                        <p className="text-lg font-bold text-amber-300">
+                                            {formatCurrency(comparisonData.totals.profit.v1, currencySymbol)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs text-slate-500">{comparisonData.label2}</span>
+                                        <p className="text-lg font-bold text-slate-300">
+                                            {formatCurrency(comparisonData.totals.profit.v2, currencySymbol)}
+                                        </p>
+                                    </div>
+                                    <div className={`text-sm font-semibold ${comparisonData.totals.profit.growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {comparisonData.totals.profit.growth >= 0 ? '+' : ''}{comparisonData.totals.profit.growth}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Graphique recharts */}
+                        <div className="mt-6">
+                            <p className="text-sm text-slate-400 mb-4">Chiffre d'affaires par {compareMode === 'year' ? 'mois' : 'jour'}</p>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <BarChart data={comparisonData.chart} barGap={4} barSize={14}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                                    <XAxis
+                                        dataKey="label"
+                                        tick={{ fill: '#94a3b8', fontSize: 11 }}
+                                    />
+                                    <YAxis
+                                        tickFormatter={formatNumber}
+                                        tick={{ fill: '#94a3b8', fontSize: 11 }}
+                                    />
+                                    <Tooltip
+                                        formatter={(value: number | undefined) => value ? formatCurrency(value, currencySymbol) : '-'}
+                                        contentStyle={{
+                                            background: '#1e293b',
+                                            border: '1px solid #334155',
+                                            borderRadius: 8,
+                                        }}
+                                        labelStyle={{ color: '#cbd5e1' }}
+                                    />
+                                    <Legend wrapperStyle={{ color: '#cbd5e1', fontSize: 12 }} />
+                                    <Bar
+                                        dataKey="revenue1"
+                                        name={comparisonData.label1}
+                                        fill="#fbbf24"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                    <Bar
+                                        dataKey="revenue2"
+                                        name={comparisonData.label2}
+                                        fill="#60a5fa"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
 
