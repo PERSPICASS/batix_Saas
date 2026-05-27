@@ -9,21 +9,57 @@ use Inertia\Inertia;
 
 class ReturnedInventoryController extends Controller
 {
-    public function index(string $code_user)
+    public function index(string $code_user, Request $request)
     {
         $user = Auth::user();
         if (!$user->accessibleShopsQuery()->exists()) {
             abort(403);
         }
 
-        $items = ReturnedInventory::with(['saleReturn', 'product', 'shop', 'reviewedBy'])
-            ->whereIn('shop_id', $user->accessibleShopsQuery()->pluck('id'))
-            ->orderBy('status', 'asc')
+        $query = ReturnedInventory::with(['saleReturn', 'product', 'shop', 'reviewedBy'])
+            ->whereIn('shop_id', $user->accessibleShopsQuery()->pluck('id'));
+
+        // Filtrer par statut
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filtrer par condition
+        if ($request->filled('condition')) {
+            $query->where('condition', $request->condition);
+        }
+
+        // Filtrer par produit (recherche)
+        if ($request->filled('product')) {
+            $query->whereHas('product', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->product . '%');
+            });
+        }
+
+        // Filtrer par date (depuis)
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        // Filtrer par date (jusqu'au)
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $items = $query->orderBy('status', 'asc')
             ->orderBy('created_at', 'desc')
-            ->paginate(25);
+            ->paginate(25)
+            ->withQueryString();
 
         return Inertia::render('ReturnedInventory/Index', [
             'items' => $items,
+            'filters' => [
+                'status' => $request->status,
+                'condition' => $request->condition,
+                'product' => $request->product,
+                'date_from' => $request->date_from,
+                'date_to' => $request->date_to,
+            ],
         ]);
     }
 

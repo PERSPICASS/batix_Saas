@@ -47,6 +47,13 @@ interface Props extends PageProps {
             last_page: number;
         };
     };
+    filters?: {
+        status?: string;
+        condition?: string;
+        product?: string;
+        date_from?: string;
+        date_to?: string;
+    };
 }
 
 const statusLabels: Record<string, string> = {
@@ -79,9 +86,17 @@ const reasonLabels: Record<string, string> = {
     other: 'Autre',
 };
 
-export default function ReturnedInventoryIndex({ items, auth }: Props) {
+export default function ReturnedInventoryIndex({ items, auth, filters }: Props) {
     const route = useRoute();
     const [processing, setProcessing] = useState<number | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterValues, setFilterValues] = useState({
+        status: filters?.status || '',
+        condition: filters?.condition || '',
+        product: filters?.product || '',
+        date_from: filters?.date_from || '',
+        date_to: filters?.date_to || '',
+    });
 
     const handleApprove = (id: number) => {
         if (!confirm('Approuver ce retour?')) return;
@@ -99,6 +114,21 @@ export default function ReturnedInventoryIndex({ items, auth }: Props) {
         });
     };
 
+    const handleApplyFilters = () => {
+        router.get(route('returned-inventory.index'), filterValues);
+    };
+
+    const handleResetFilters = () => {
+        setFilterValues({
+            status: '',
+            condition: '',
+            product: '',
+            date_from: '',
+            date_to: '',
+        });
+        router.get(route('returned-inventory.index'));
+    };
+
     return (
         <AuthenticatedLayout
             header={
@@ -113,6 +143,110 @@ export default function ReturnedInventoryIndex({ items, auth }: Props) {
             <Head title="Inventaire de retour" />
 
             <div className="space-y-4">
+                {/* Filtres */}
+                {showFilters && (
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                            {/* Statut */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Statut
+                                </label>
+                                <select
+                                    value={filterValues.status}
+                                    onChange={(e) => setFilterValues({...filterValues, status: e.target.value})}
+                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                >
+                                    <option value="">Tous</option>
+                                    <option value="pending">En attente</option>
+                                    <option value="approved">Approuvé</option>
+                                    <option value="rejected">Rejeté</option>
+                                </select>
+                            </div>
+
+                            {/* Condition */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Condition
+                                </label>
+                                <select
+                                    value={filterValues.condition}
+                                    onChange={(e) => setFilterValues({...filterValues, condition: e.target.value})}
+                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                >
+                                    <option value="">Tous</option>
+                                    <option value="good">Bon état</option>
+                                    <option value="defective">Défectueux</option>
+                                </select>
+                            </div>
+
+                            {/* Produit */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Produit
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Rechercher..."
+                                    value={filterValues.product}
+                                    onChange={(e) => setFilterValues({...filterValues, product: e.target.value})}
+                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Date depuis */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Depuis
+                                </label>
+                                <input
+                                    type="date"
+                                    value={filterValues.date_from}
+                                    onChange={(e) => setFilterValues({...filterValues, date_from: e.target.value})}
+                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                />
+                            </div>
+
+                            {/* Date jusqu'au */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1">
+                                    Jusqu'au
+                                </label>
+                                <input
+                                    type="date"
+                                    value={filterValues.date_to}
+                                    onChange={(e) => setFilterValues({...filterValues, date_to: e.target.value})}
+                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-3 flex gap-2">
+                            <button
+                                onClick={handleApplyFilters}
+                                className="rounded bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-400"
+                            >
+                                Appliquer
+                            </button>
+                            <button
+                                onClick={handleResetFilters}
+                                className="rounded border border-white/10 px-4 py-2 text-sm text-slate-300 hover:bg-white/5"
+                            >
+                                Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Bouton pour afficher/masquer les filtres */}
+                <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="inline-flex items-center gap-2 rounded border border-white/10 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
+                >
+                    <AlertCircle className="size-4" />
+                    {showFilters ? 'Masquer les filtres' : 'Afficher les filtres'}
+                </button>
+
                 {!items.data || items.data.length === 0 ? (
                     <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
                         <AlertCircle className="mx-auto size-12 text-slate-400 mb-3" />
