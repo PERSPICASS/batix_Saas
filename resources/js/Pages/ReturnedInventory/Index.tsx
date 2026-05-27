@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertCircle, SlidersHorizontal, X } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState } from 'react';
@@ -98,6 +98,8 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
         date_to: filters?.date_to || '',
     });
 
+    const activeFilterCount = [filterValues.status, filterValues.condition, filterValues.product, filterValues.date_from, filterValues.date_to].filter(Boolean).length;
+
     const handleApprove = (id: number) => {
         if (!confirm('Approuver ce retour?')) return;
         setProcessing(id);
@@ -143,19 +145,43 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
             <Head title="Inventaire de retour" />
 
             <div className="space-y-4">
-                {/* Filtres */}
+                <div className="flex items-center justify-between">
+                    {/* Bouton filtres */}
+                    <button
+                        onClick={() => setShowFilters(v => !v)}
+                        className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${showFilters || activeFilterCount > 0 ? 'border-amber-300/50 bg-amber-300/10 text-amber-300' : 'border-white/15 text-slate-300 hover:bg-white/5'}`}
+                    >
+                        <SlidersHorizontal className="size-4" />
+                        Filtres
+                        {activeFilterCount > 0 && (
+                            <span className="flex size-5 items-center justify-center rounded-full bg-amber-300 text-xs font-bold text-slate-950">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </button>
+
+                    {/* Reset */}
+                    {activeFilterCount > 0 && (
+                        <button
+                            onClick={handleResetFilters}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-400 hover:text-white"
+                        >
+                            <X className="size-4" /> Réinitialiser
+                        </button>
+                    )}
+                </div>
+
+                {/* Panneau de filtres avancés */}
                 {showFilters && (
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                             {/* Statut */}
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">
-                                    Statut
-                                </label>
+                                <label className="mb-1 block text-xs text-slate-400">Statut</label>
                                 <select
                                     value={filterValues.status}
                                     onChange={(e) => setFilterValues({...filterValues, status: e.target.value})}
-                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
                                 >
                                     <option value="">Tous</option>
                                     <option value="pending">En attente</option>
@@ -166,13 +192,11 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
 
                             {/* Condition */}
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">
-                                    Condition
-                                </label>
+                                <label className="mb-1 block text-xs text-slate-400">Condition</label>
                                 <select
                                     value={filterValues.condition}
                                     onChange={(e) => setFilterValues({...filterValues, condition: e.target.value})}
-                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
                                 >
                                     <option value="">Tous</option>
                                     <option value="good">Bon état</option>
@@ -182,70 +206,49 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
 
                             {/* Produit */}
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">
-                                    Produit
-                                </label>
+                                <label className="mb-1 block text-xs text-slate-400">Produit</label>
                                 <input
                                     type="text"
                                     placeholder="Rechercher..."
                                     value={filterValues.product}
                                     onChange={(e) => setFilterValues({...filterValues, product: e.target.value})}
-                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
                                 />
                             </div>
 
                             {/* Date depuis */}
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">
-                                    Depuis
-                                </label>
+                                <label className="mb-1 block text-xs text-slate-400">Du</label>
                                 <input
                                     type="date"
                                     value={filterValues.date_from}
                                     onChange={(e) => setFilterValues({...filterValues, date_from: e.target.value})}
-                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
                                 />
                             </div>
 
                             {/* Date jusqu'au */}
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 mb-1">
-                                    Jusqu'au
-                                </label>
+                                <label className="mb-1 block text-xs text-slate-400">Au</label>
                                 <input
                                     type="date"
                                     value={filterValues.date_to}
                                     onChange={(e) => setFilterValues({...filterValues, date_to: e.target.value})}
-                                    className="w-full rounded border border-white/10 bg-slate-800 px-2 py-1 text-sm text-white focus:border-amber-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
                                 />
                             </div>
                         </div>
 
-                        <div className="mt-3 flex gap-2">
+                        <div className="mt-4 flex justify-end">
                             <button
                                 onClick={handleApplyFilters}
-                                className="rounded bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-400"
+                                className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-medium text-slate-950 hover:bg-amber-200"
                             >
-                                Appliquer
-                            </button>
-                            <button
-                                onClick={handleResetFilters}
-                                className="rounded border border-white/10 px-4 py-2 text-sm text-slate-300 hover:bg-white/5"
-                            >
-                                Réinitialiser
+                                Appliquer les filtres
                             </button>
                         </div>
                     </div>
                 )}
-
-                {/* Bouton pour afficher/masquer les filtres */}
-                <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="inline-flex items-center gap-2 rounded border border-white/10 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
-                >
-                    <AlertCircle className="size-4" />
-                    {showFilters ? 'Masquer les filtres' : 'Afficher les filtres'}
-                </button>
 
                 {!items.data || items.data.length === 0 ? (
                     <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
