@@ -42,8 +42,10 @@ interface ReturnedInventoryItem {
 interface Props extends PageProps {
     items: {
         data: ReturnedInventoryItem[];
-        links: any;
-        meta: any;
+        links?: any[];
+        meta?: {
+            last_page: number;
+        };
     };
 }
 
@@ -103,7 +105,7 @@ export default function ReturnedInventoryIndex({ items, auth }: Props) {
                 <div className="flex items-center justify-between">
                     <h1 className="text-xl font-semibold text-white">Inventaire de retour</h1>
                     <div className="text-sm text-slate-400">
-                        {items.data.filter(i => i.status === 'pending').length} en attente
+                        {items.data ? items.data.filter(i => i.status === 'pending').length : 0} en attente
                     </div>
                 </div>
             }
@@ -111,7 +113,7 @@ export default function ReturnedInventoryIndex({ items, auth }: Props) {
             <Head title="Inventaire de retour" />
 
             <div className="space-y-4">
-                {items.data.length === 0 ? (
+                {!items.data || items.data.length === 0 ? (
                     <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
                         <AlertCircle className="mx-auto size-12 text-slate-400 mb-3" />
                         <p className="text-slate-300">Aucun retour à traiter</p>
@@ -195,7 +197,7 @@ export default function ReturnedInventoryIndex({ items, auth }: Props) {
                     </div>
                 )}
 
-                {items.meta.last_page > 1 && (
+                {items.meta && items.links && items.meta.last_page > 1 && (
                     <div className="flex items-center justify-center gap-2">
                         {items.links.map((link: any, index: number) => (
                             <a
