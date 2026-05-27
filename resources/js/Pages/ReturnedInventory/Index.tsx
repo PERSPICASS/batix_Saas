@@ -90,6 +90,11 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
     const route = useRoute();
     const [processing, setProcessing] = useState<number | null>(null);
     const [showFilters, setShowFilters] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{ show: boolean; action: 'approve' | 'reject' | null; itemId: number | null }>({
+        show: false,
+        action: null,
+        itemId: null,
+    });
     const [filterValues, setFilterValues] = useState({
         status: filters?.status || '',
         condition: filters?.condition || '',
@@ -101,18 +106,26 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
     const activeFilterCount = [filterValues.status, filterValues.condition, filterValues.product, filterValues.date_from, filterValues.date_to].filter(Boolean).length;
 
     const handleApprove = (id: number) => {
-        if (!confirm('Approuver ce retour?')) return;
-        setProcessing(id);
-        router.post(route('returned-inventory.approve', { item: id }), {}, {
-            onFinish: () => setProcessing(null),
-        });
+        setConfirmModal({ show: true, action: 'approve', itemId: id });
     };
 
     const handleReject = (id: number) => {
-        if (!confirm('Rejeter ce retour?')) return;
-        setProcessing(id);
-        router.post(route('returned-inventory.reject', { item: id }), {}, {
-            onFinish: () => setProcessing(null),
+        setConfirmModal({ show: true, action: 'reject', itemId: id });
+    };
+
+    const confirmAction = () => {
+        if (!confirmModal.itemId || !confirmModal.action) return;
+
+        setProcessing(confirmModal.itemId);
+        const route_name = confirmModal.action === 'approve'
+            ? 'returned-inventory.approve'
+            : 'returned-inventory.reject';
+
+        router.post(route(route_name, { item: confirmModal.itemId }), {}, {
+            onFinish: () => {
+                setProcessing(null);
+                setConfirmModal({ show: false, action: null, itemId: null });
+            },
         });
     };
 
@@ -143,6 +156,50 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
             }
         >
             <Head title="Inventaire de retour" />
+
+            {/* Modal de confirmation */}
+            {confirmModal.show && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
+                        <div className="mb-4">
+                            <h3 className="text-lg font-semibold text-white">
+                                {confirmModal.action === 'approve'
+                                    ? 'Approuver ce retour ?'
+                                    : 'Rejeter ce retour ?'}
+                            </h3>
+                        </div>
+                        <p className="mb-6 text-sm text-slate-400">
+                            {confirmModal.action === 'approve'
+                                ? 'Le stock sera mis à jour selon la condition de l\'article (bon état ou défectueux).'
+                                : 'Le stock ne sera pas modifié. Ce retour sera marqué comme rejeté.'}
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={confirmAction}
+                                disabled={processing === confirmModal.itemId}
+                                className={`flex-1 rounded-lg py-2.5 text-sm font-semibold text-white ${
+                                    confirmModal.action === 'approve'
+                                        ? 'bg-green-500 hover:bg-green-400'
+                                        : 'bg-red-500 hover:bg-red-400'
+                                } disabled:opacity-50`}
+                            >
+                                {processing === confirmModal.itemId
+                                    ? 'Traitement...'
+                                    : confirmModal.action === 'approve'
+                                      ? 'Approuver'
+                                      : 'Rejeter'}
+                            </button>
+                            <button
+                                onClick={() => setConfirmModal({ show: false, action: null, itemId: null })}
+                                disabled={processing === confirmModal.itemId}
+                                className="flex-1 rounded-lg border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-50"
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
