@@ -106,9 +106,16 @@ class DepotController extends Controller
 
         $depot->load(['user']);
 
+        $search = $request->input('search');
+
         $products = DepotProduct::where('depot_id', $depot->id)
             ->with(['product.category'])
+            ->when($search, fn($q) => $q->whereHas('product', fn($pq) => $pq
+                ->where('name', 'like', "%{$search}%")
+                ->orWhere('sku', 'like', "%{$search}%")
+            ))
             ->paginate(25)
+            ->withQueryString()
             ->through(fn($dp) => [
                 'id' => $dp->id,
                 'product_id' => $dp->product_id,
@@ -179,6 +186,7 @@ class DepotController extends Controller
             'shops' => $shops,
             'allProducts' => $allProducts,
             'otherDepots' => $otherDepots,
+            'filters' => $request->only(['search']),
         ]);
     }
 

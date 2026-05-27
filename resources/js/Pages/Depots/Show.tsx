@@ -3,8 +3,8 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import React from 'react';
 import { useRoute } from '@/utils/route';
 import { usePage } from '@inertiajs/react';
-import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
+import { useRef, useState, useEffect } from 'react';
 import ProductImage from '@/Components/ProductImage';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
@@ -70,6 +70,7 @@ interface Props {
     recentTransfers: RecentTransfer[];
     stats: Stats;
     otherDepots: Array<{ id: number; name: string }>;
+    filters: { search?: string };
 }
 
 interface AddStockForm {
@@ -92,7 +93,7 @@ interface TransferForm {
     items: TransferItem[];
 }
 
-export default function Show({ depot, products, recentTransfers, stats, otherDepots }: Props) {
+export default function Show({ depot, products, recentTransfers, stats, otherDepots, filters }: Props) {
     const buildRoute = useRoute();
     const page = usePage<any>();
     const shops = page.props.shops as Array<{ id: number; name: string; slug: string }> || [];
@@ -104,6 +105,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [showImport, setShowImport] = useState(false);
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
     const [removeProductId, setRemoveProductId] = useState<number | null>(null);
+    const [search, setSearch] = useState(filters.search ?? '');
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
     const [isImporting, setIsImporting] = useState(false);
@@ -111,6 +113,18 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const editImageInputRef = useRef<HTMLInputElement>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Debounce search: trigger router.get 400ms after last keystroke
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            router.get(
+                buildRoute('depots.show', { depot: depot.id }),
+                search ? { search } : {},
+                { preserveState: true, preserveScroll: true, replace: true }
+            );
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [search]);
 
     // Flash messages from page props
     const flash = (page.props as any).flash as { success?: string; warning?: string; error?: string } | undefined;
@@ -393,8 +407,35 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
 
                 {/* Liste des produits */}
                 <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900">
-                    <div className="border-b border-slate-200 px-6 py-4 dark:border-white/10">
-                        <h3 className="font-semibold text-slate-900 dark:text-white">Stock du dépôt ({products.total} produit{products.total !== 1 ? 's' : ''})</h3>
+                    <div className="flex flex-col gap-3 border-b border-slate-200 px-6 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-slate-900 dark:text-white">Stock du dépôt ({products.total} produit{products.total !== 1 ? 's' : ''})</h3>
+                            {search && (
+                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-400">
+                                    {products.total} résultat{products.total !== 1 ? 's' : ''}
+                                </span>
+                            )}
+                        </div>
+                        {(products.total > 0 || search) && (
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Nom, SKU..."
+                                    className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                />
+                                {search && (
+                                    <button
+                                        onClick={() => setSearch('')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                    >
+                                        <X className="size-3.5" />
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {products.total === 0 ? (
