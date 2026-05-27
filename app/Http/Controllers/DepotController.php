@@ -104,20 +104,25 @@ class DepotController extends Controller
             abort(403);
         }
 
-        $depot->load(['depotProducts.product.category', 'user']);
+        $depot->load(['user']);
 
-        $products = $depot->depotProducts->map(fn($dp) => [
-            'id' => $dp->id,
-            'product_id' => $dp->product_id,
-            'product_name' => $dp->product->name,
-            'product_sku' => $dp->product->sku,
-            'product_category' => $dp->product->category?->name,
-            'product_image' => $dp->product->image,
-            'quantity' => $dp->quantity,
-            'min_stock_alert' => $dp->min_stock_alert,
-            'purchase_price' => (float) $dp->purchase_price,
-            'is_low_stock' => $dp->isLowStock(),
-        ]);
+        $products = DepotProduct::where('depot_id', $depot->id)
+            ->with(['product.category'])
+            ->paginate(25)
+            ->through(fn($dp) => [
+                'id' => $dp->id,
+                'product_id' => $dp->product_id,
+                'product_name' => $dp->product->name,
+                'product_sku' => $dp->product->sku,
+                'product_category' => $dp->product->category?->name,
+                'product_image' => $dp->product->image,
+                'quantity' => $dp->quantity,
+                'min_stock_alert' => $dp->min_stock_alert,
+                'purchase_price' => (float) $dp->purchase_price,
+                'is_low_stock' => $dp->isLowStock(),
+            ]);
+
+        $allDepotProducts = $depot->depotProducts()->get();
 
         // Historique des 10 derniers transferts
         $recentTransfers = DepotTransfer::where('depot_id', $depot->id)
@@ -166,10 +171,10 @@ class DepotController extends Controller
             'products' => $products,
             'recentTransfers' => $recentTransfers,
             'stats' => [
-                'total_products'   => $depot->depotProducts->count(),
-                'total_stock'      => $depot->depotProducts->sum('quantity'),
-                'low_stock_count'  => $depot->depotProducts->filter(fn($dp) => $dp->isLowStock())->count(),
-                'total_value'      => $depot->depotProducts->sum(fn($dp) => $dp->quantity * $dp->purchase_price),
+                'total_products'   => $allDepotProducts->count(),
+                'total_stock'      => $allDepotProducts->sum('quantity'),
+                'low_stock_count'  => $allDepotProducts->filter(fn($dp) => $dp->isLowStock())->count(),
+                'total_value'      => $allDepotProducts->sum(fn($dp) => $dp->quantity * $dp->purchase_price),
             ],
             'shops' => $shops,
             'allProducts' => $allProducts,
@@ -619,12 +624,22 @@ class DepotController extends Controller
 
             $message = "Import terminé : " . implode(', ', $parts) . ".";
 
+            if ($request->expectsJson()) {
+                if (!empty($errors)) {
+                    return response()->json(['success' => true, 'message' => $message, 'errors' => $errors], 200);
+                }
+                return response()->json(['success' => true, 'message' => $message], 200);
+            }
+
             if (!empty($errors)) {
                 return back()->with('warning', $message)->with('import_errors', $errors);
             }
 
             return back()->with('success', $message);
         } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Erreur lors de l\'import : ' . $e->getMessage()], 400);
+            }
             return back()->with('error', 'Erreur lors de l\'import : ' . $e->getMessage());
         }
     }

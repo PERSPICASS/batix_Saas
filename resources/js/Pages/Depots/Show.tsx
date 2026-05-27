@@ -3,9 +3,10 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import React from 'react';
 import { useRoute } from '@/utils/route';
 import { usePage } from '@inertiajs/react';
-import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
+import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { useRef, useState } from 'react';
 import ProductImage from '@/Components/ProductImage';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 
 interface DepotProductItem {
     id: number;
@@ -18,6 +19,21 @@ interface DepotProductItem {
     min_stock_alert: number;
     purchase_price: number;
     is_low_stock: boolean;
+}
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface PaginatedProducts {
+    data: DepotProductItem[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    links: PaginationLink[];
 }
 
 interface RecentTransfer {
@@ -50,7 +66,7 @@ interface DepotInfo {
 
 interface Props {
     depot: DepotInfo;
-    products: DepotProductItem[];
+    products: PaginatedProducts;
     recentTransfers: RecentTransfer[];
     stats: Stats;
     otherDepots: Array<{ id: number; name: string }>;
@@ -87,20 +103,13 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [showTransferDepot, setShowTransferDepot] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
-    const [search, setSearch] = useState('');
+    const [removeProductId, setRemoveProductId] = useState<number | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+    const [isImporting, setIsImporting] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
     const editImageInputRef = useRef<HTMLInputElement>(null);
 
-    const filteredProducts = search.trim() === ''
-        ? products
-        : products.filter(p => {
-            const q = search.toLowerCase();
-            return p.product_name.toLowerCase().includes(q)
-                || (p.product_sku ?? '').toLowerCase().includes(q)
-                || (p.product_category ?? '').toLowerCase().includes(q);
-        });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Flash messages from page props
@@ -135,10 +144,6 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         name: '',
         sku: '',
         image: null as File | null,
-    });
-
-    const importForm = useForm({
-        file: null as File | null,
     });
 
     const handleAddStock = (e: React.FormEvent) => {
@@ -187,22 +192,52 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     };
 
     const handleRemoveProduct = (depotProductId: number) => {
-        if (!confirm('Retirer ce produit du dépôt ?')) return;
-        router.delete(buildRoute('depots.stock.remove', { depot: depot.id, depotProduct: depotProductId }));
+        setRemoveProductId(depotProductId);
+    };
+
+    const handleConfirmRemove = () => {
+        if (!removeProductId) return;
+        router.delete(buildRoute('depots.stock.remove', { depot: depot.id, depotProduct: removeProductId }), {
+            onFinish: () => setRemoveProductId(null),
+        });
     };
 
     const handleImport = (e: React.FormEvent) => {
         e.preventDefault();
         const file = fileInputRef.current?.files?.[0];
         if (!file) return;
-        importForm.setData('file', file);
-        importForm.post(buildRoute('depots.stock.import', { depot: depot.id }), {
-            forceFormData: true,
-            onSuccess: () => {
-                setShowImport(false);
-                importForm.reset();
-                if (fileInputRef.current) fileInputRef.current.value = '';
+
+        setIsImporting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        const url = buildRoute('depots.stock.import', { depot: depot.id });
+
+        // Récupérer le token CSRF depuis le meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
             },
+        })
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+            if (response.ok) {
+                setShowImport(false);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                window.location.reload();
+            } else {
+                throw new Error(data.message || `Erreur HTTP ${response.status}`);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de l\'import:', error);
+            alert('Erreur lors de l\'import : ' + error.message);
+            setIsImporting(false);
         });
     };
 
@@ -358,38 +393,11 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
 
                 {/* Liste des produits */}
                 <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900">
-                    <div className="flex flex-col gap-3 border-b border-slate-200 px-6 py-4 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-slate-900 dark:text-white">Stock du dépôt</h3>
-                            {search.trim() !== '' && (
-                                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-400/10 dark:text-amber-400">
-                                    {filteredProducts.length} résultat{filteredProducts.length !== 1 ? 's' : ''}
-                                </span>
-                            )}
-                        </div>
-                        {products.length > 0 && (
-                            <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Nom, SKU, catégorie..."
-                                    className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-8 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
-                                />
-                                {search && (
-                                    <button
-                                        onClick={() => setSearch('')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                                    >
-                                        <X className="size-3.5" />
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                    <div className="border-b border-slate-200 px-6 py-4 dark:border-white/10">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Stock du dépôt ({products.total} produit{products.total !== 1 ? 's' : ''})</h3>
                     </div>
 
-                    {products.length === 0 ? (
+                    {products.total === 0 ? (
                         <div className="flex flex-col items-center py-12">
                             <Package className="size-10 text-slate-300 dark:text-slate-600" />
                             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Aucun produit en stock</p>
@@ -401,17 +409,10 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 Ajouter des produits
                             </button>
                         </div>
-                    ) : filteredProducts.length === 0 ? (
-                        <div className="flex flex-col items-center py-12">
-                            <Search className="size-10 text-slate-300 dark:text-slate-600" />
-                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Aucun produit ne correspond à "<strong>{search}</strong>"</p>
-                            <button onClick={() => setSearch('')} className="mt-2 text-sm text-amber-500 hover:text-amber-400">
-                                Effacer la recherche
-                            </button>
-                        </div>
                     ) : (
+                        <>
                         <div className="divide-y divide-slate-100 dark:divide-white/5">
-                            {filteredProducts.map(product => (
+                            {products.data.map(product => (
                                 <div key={product.id} className="flex items-center justify-between px-6 py-4">
                                     <div className="flex items-center gap-3">
                                         <ProductImage
@@ -470,6 +471,33 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 </div>
                             ))}
                         </div>
+                        {/* Pagination */}
+                        {products.last_page > 1 && (
+                            <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 dark:border-white/5">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Page {products.current_page} / {products.last_page}
+                                </p>
+                                <div className="flex gap-1">
+                                    {products.links.map((link, i) => (
+                                        link.url ? (
+                                            <Link
+                                                key={i}
+                                                href={link.url}
+                                                className={`rounded-lg px-3 py-1.5 text-sm ${link.active ? 'bg-amber-300 font-semibold text-slate-950' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/5'}`}
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        ) : (
+                                            <span
+                                                key={i}
+                                                className="rounded-lg px-3 py-1.5 text-sm text-slate-300 dark:text-slate-600"
+                                                dangerouslySetInnerHTML={{ __html: link.label }}
+                                            />
+                                        )
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        </>
                     )}
                 </div>
 
@@ -677,7 +705,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 </div>
 
                                 {(transferForm.data.items ?? []).map((item, index) => {
-                                    const depotProd = products.find(p => String(p.product_id) === item.product_id);
+                                    const depotProd = products.data.find((p: DepotProductItem) => String(p.product_id) === item.product_id);
                                     return (
                                         <div key={index} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
                                             <div className="flex-1 space-y-2">
@@ -692,7 +720,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                     required
                                                 >
                                                     <option value="">-- Produit --</option>
-                                                    {products.map(p => (
+                                                    {products.data.map((p: DepotProductItem) => (
                                                         <option key={p.product_id} value={p.product_id} disabled={p.quantity <= 0}>
                                                             {p.product_name} (stock: {p.quantity})
                                                         </option>
@@ -930,10 +958,23 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                             <div className="flex gap-3 pt-1">
                                 <button
                                     type="submit"
-                                    className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                                    disabled={isImporting}
+                                    className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Upload className="mr-1.5 inline size-4" />
-                                    Importer
+                                    {isImporting ? (
+                                        <>
+                                            <svg className="mr-1.5 inline size-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Import en cours...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="mr-1.5 inline size-4" />
+                                            Importer
+                                        </>
+                                    )}
                                 </button>
                                 <button
                                     type="button"
@@ -990,7 +1031,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 </div>
 
                                 {transferDepotForm.data.items.map((item, index) => {
-                                    const depotProd = products.find(p => String(p.product_id) === item.product_id);
+                                    const depotProd = products.data.find((p: DepotProductItem) => String(p.product_id) === item.product_id);
                                     return (
                                         <div key={index} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
                                             <div className="flex-1 space-y-2">
@@ -1005,7 +1046,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                     required
                                                 >
                                                     <option value="">-- Produit --</option>
-                                                    {products.map(p => (
+                                                    {products.data.map((p: DepotProductItem) => (
                                                         <option key={p.product_id} value={p.product_id} disabled={p.quantity <= 0}>
                                                             {p.product_name} (stock: {p.quantity})
                                                         </option>
@@ -1078,6 +1119,14 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                 </div>
             )}
 
+            <ConfirmDeleteModal
+                show={removeProductId !== null}
+                onClose={() => setRemoveProductId(null)}
+                onConfirm={handleConfirmRemove}
+                title="Retirer le produit"
+                message="Voulez-vous retirer ce produit du dépôt ? Le stock associé sera supprimé."
+                confirmText="Retirer"
+            />
         </AuthenticatedLayout>
     );
 }
