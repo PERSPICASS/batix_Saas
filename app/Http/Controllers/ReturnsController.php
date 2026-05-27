@@ -53,6 +53,10 @@ class ReturnsController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
+            // Recharger la vente avec les relations mises à jour
+            $sale->refresh();
+            $sale->load('items.returns');
+
             // Recalculer les montants de la vente après retour
             $this->recalculateSaleAmounts($sale);
 
@@ -61,7 +65,45 @@ class ReturnsController extends Controller
 
         ActivityLogger::created($return, "Retour enregistré pour {$saleItem->product_name} (Qté: {$validated['quantity_returned']})");
 
-        return back()->with('success', "Retour enregistré. Remboursement de " . number_format($refundAmount, 0, ',', ' ') . " FCFA");
+        // Recharger la vente avec les items et retours mis à jour pour la réponse
+        $sale = $sale->fresh(['items.returns', 'items.product', 'customer']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Retour enregistré. Remboursement de " . number_format($refundAmount, 0, ',', ' ') . " FCFA",
+            'sale' => [
+                'id' => $sale->id,
+                'ticket_number' => $sale->ticket_number,
+                'sale_date' => $sale->sale_date,
+                'payment_method' => $sale->payment_method,
+                'status' => $sale->status,
+                'subtotal' => $sale->subtotal,
+                'tax_amount' => $sale->tax_amount,
+                'discount_amount' => $sale->discount_amount,
+                'total' => $sale->total,
+                'amount_paid' => $sale->amount_paid,
+                'change_amount' => $sale->change_amount,
+                'remaining_amount' => $sale->remaining_amount,
+                'credit_due_date' => $sale->credit_due_date,
+                'notes' => $sale->notes,
+                'shop' => $sale->shop,
+                'user' => $sale->user,
+                'customer' => $sale->customer,
+                'items' => $sale->items->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'product_name' => $item->product_name,
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'tax_rate' => $item->tax_rate,
+                        'tax_amount' => $item->tax_amount,
+                        'total' => $item->total,
+                        'product' => $item->product,
+                        'returns' => $item->returns,
+                    ];
+                })->all(),
+            ],
+        ]);
     }
 
     public function destroy(string $code_user, SaleReturn $return)
@@ -81,6 +123,13 @@ class ReturnsController extends Controller
         $refundAmount = $return->refund_amount;
 
         DB::transaction(function () use ($return, $sale, $saleItem, $refundAmount) {
+            // Supprimer le retour d'abord
+            $return->delete();
+
+            // Recharger la vente avec les relations mises à jour
+            $sale->refresh();
+            $sale->load('items.returns');
+
             // Restaurer le stock
             if ($saleItem->product && $saleItem->product->track_stock) {
                 $saleItem->product->decrement('stock_quantity', $return->quantity_returned);
@@ -88,9 +137,6 @@ class ReturnsController extends Controller
 
             // Recalculer les montants de la vente après annulation du retour
             $this->recalculateSaleAmounts($sale);
-
-            // Supprimer le retour
-            $return->delete();
         });
 
         ActivityLogger::deleted($return, "Retour annulé pour {$saleItem->product_name}");
@@ -175,10 +221,12 @@ class ReturnsController extends Controller
             'status' => $newStatus,
         ]);
 
-        // Marquer les articles retournés
+        // Marquer les articles retournés (bypass model events pour éviter de réappeler calculateTotals)
         foreach ($sale->items as $item) {
             $totalReturned = $item->returns->sum('quantity_returned');
-            $item->update(['is_returned' => $totalReturned >= $item->quantity]);
+            DB::table('sale_items')
+                ->where('id', $item->id)
+                ->update(['is_returned' => $totalReturned >= $item->quantity]);
         }
     }
 }
