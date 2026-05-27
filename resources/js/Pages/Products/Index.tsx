@@ -31,6 +31,7 @@ interface Product {
     selling_price: number;
     purchase_price: number;
     stock_quantity: number;
+    defective_stock_quantity: number;
     min_stock_alert: number | null;
     is_active: boolean;
     track_stock: boolean;
@@ -249,6 +250,16 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
             render: (product: Product) => (
                 <span className={isLowStock(product) ? 'text-amber-300 font-semibold' : ''}>
                     {product.stock_quantity}
+                </span>
+            ),
+        },
+        {
+            key: 'defective_stock_quantity',
+            label: 'Défectueux',
+            align: 'center' as const,
+            render: (product: Product) => (
+                <span className={product.defective_stock_quantity > 0 ? 'text-red-400 font-semibold' : 'text-slate-500'}>
+                    {product.defective_stock_quantity}
                 </span>
             ),
         },
