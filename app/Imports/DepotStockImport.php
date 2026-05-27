@@ -85,7 +85,7 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 'selling_price'  => 0,
                 'purchase_price' => $purchasePrice !== null ? (float) $purchasePrice : 0,
                 'unit'           => 'Pièce',
-                'is_active'      => true,
+                'is_active'      => false,
                 'track_stock'    => true,
             ]);
 

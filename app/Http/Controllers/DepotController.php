@@ -298,7 +298,7 @@ class DepotController extends Controller
                 'selling_price'   => 0,
                 'purchase_price'  => 0,
                 'unit'            => 'Pièce',
-                'is_active'       => true,
+                'is_active'       => false,
                 'track_stock'     => true,
                 'image'           => $request->hasFile('image')
                     ? $request->file('image')->store('products', 'public')
@@ -469,9 +469,20 @@ class DepotController extends Controller
                         $depotTransfer
                     );
 
+                    $updates = [];
+
+                    // Activer le produit au premier transfert depuis le dépôt
+                    if (!$shopProduct->is_active) {
+                        $updates['is_active'] = true;
+                    }
+
                     // Propager le prix d'achat du dépôt vers le produit de la boutique
                     if ($depotProduct->purchase_price > 0) {
-                        $shopProduct->update(['purchase_price' => $depotProduct->purchase_price]);
+                        $updates['purchase_price'] = $depotProduct->purchase_price;
+                    }
+
+                    if (!empty($updates)) {
+                        $shopProduct->update($updates);
                     }
                 }
             }
