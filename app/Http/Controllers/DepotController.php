@@ -131,6 +131,15 @@ class DepotController extends Controller
 
         $allDepotProducts = $depot->depotProducts()->get();
 
+        $depotProductsForTransfer = $allDepotProducts
+            ->map(fn($dp) => [
+                'depot_product_id' => $dp->id,
+                'product_id'       => $dp->product_id,
+                'product_name'     => $dp->product->name,
+                'product_sku'      => $dp->product->sku,
+                'quantity'         => $dp->quantity,
+            ]);
+
         // Historique des 10 derniers transferts
         $recentTransfers = DepotTransfer::where('depot_id', $depot->id)
             ->with(['shop', 'product', 'user'])
@@ -186,6 +195,7 @@ class DepotController extends Controller
             'shops' => $shops,
             'allProducts' => $allProducts,
             'otherDepots' => $otherDepots,
+            'depotProductsForTransfer' => $depotProductsForTransfer,
             'filters' => $request->only(['search']),
         ]);
     }

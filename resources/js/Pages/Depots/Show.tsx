@@ -36,6 +36,14 @@ interface PaginatedProducts {
     links: PaginationLink[];
 }
 
+interface DepotProductForTransfer {
+    depot_product_id: number;
+    product_id: number;
+    product_name: string;
+    product_sku: string | null;
+    quantity: number;
+}
+
 interface RecentTransfer {
     id: number;
     reference: string;
@@ -71,6 +79,7 @@ interface Props {
     stats: Stats;
     otherDepots: Array<{ id: number; name: string }>;
     filters: { search?: string };
+    depotProductsForTransfer: DepotProductForTransfer[];
 }
 
 interface AddStockForm {
@@ -93,7 +102,7 @@ interface TransferForm {
     items: TransferItem[];
 }
 
-export default function Show({ depot, products, recentTransfers, stats, otherDepots, filters }: Props) {
+export default function Show({ depot, products, recentTransfers, stats, otherDepots, filters, depotProductsForTransfer }: Props) {
     const buildRoute = useRoute();
     const page = usePage<any>();
     const shops = page.props.shops as Array<{ id: number; name: string; slug: string }> || [];
@@ -106,6 +115,8 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
     const [removeProductId, setRemoveProductId] = useState<number | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
+    const [transferSearches, setTransferSearches] = useState<string[]>([]);
+    const [openTransferDropdown, setOpenTransferDropdown] = useState<number | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
     const [isImporting, setIsImporting] = useState(false);
@@ -746,27 +757,65 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 </div>
 
                                 {(transferForm.data.items ?? []).map((item, index) => {
-                                    const depotProd = products.data.find((p: DepotProductItem) => String(p.product_id) === item.product_id);
+                                    const depotProd = depotProductsForTransfer.find(p => String(p.product_id) === item.product_id);
+                                    const selected = depotProductsForTransfer.find(p => String(p.product_id) === item.product_id);
+                                    const searchTerm = openTransferDropdown === index ? (transferSearches[index] ?? '') : '';
+                                    const filtered = depotProductsForTransfer.filter(p =>
+                                        p.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                        (p.product_sku ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+                                    );
                                     return (
                                         <div key={index} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
                                             <div className="flex-1 space-y-2">
-                                                <select
-                                                    value={item.product_id}
-                                                    onChange={e => {
-                                                        const newItems = [...(transferForm.data.items ?? [])];
-                                                        newItems[index] = { ...newItems[index], product_id: e.target.value };
-                                                        transferForm.setData('items', newItems);
-                                                    }}
-                                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
-                                                    required
-                                                >
-                                                    <option value="">-- Produit --</option>
-                                                    {products.data.map((p: DepotProductItem) => (
-                                                        <option key={p.product_id} value={p.product_id} disabled={p.quantity <= 0}>
-                                                            {p.product_name} (stock: {p.quantity})
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                {/* Combobox produit */}
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        readOnly={openTransferDropdown !== index}
+                                                        value={openTransferDropdown === index ? searchTerm : (selected?.product_name ?? '')}
+                                                        placeholder="Rechercher un produit (nom, SKU)..."
+                                                        onFocus={() => {
+                                                            setOpenTransferDropdown(index);
+                                                            setTransferSearches(s => { const n = [...s]; n[index] = ''; return n; });
+                                                        }}
+                                                        onChange={e => setTransferSearches(s => {
+                                                            const n = [...s]; n[index] = e.target.value; return n;
+                                                        })}
+                                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                                    />
+                                                    {openTransferDropdown === index && (
+                                                        <>
+                                                            {/* Overlay pour fermer en cliquant ailleurs */}
+                                                            <div className="fixed inset-0 z-10" onClick={() => setOpenTransferDropdown(null)} />
+                                                            <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-white/10 dark:bg-slate-800">
+                                                                {filtered.length === 0 ? (
+                                                                    <p className="px-3 py-2 text-sm text-slate-400">Aucun produit trouvé</p>
+                                                                ) : filtered.map(p => (
+                                                                    <button
+                                                                        key={p.product_id}
+                                                                        type="button"
+                                                                        disabled={p.quantity <= 0}
+                                                                        onClick={() => {
+                                                                            const newItems = [...(transferForm.data.items ?? [])];
+                                                                            newItems[index] = { ...newItems[index], product_id: String(p.product_id) };
+                                                                            transferForm.setData('items', newItems);
+                                                                            setOpenTransferDropdown(null);
+                                                                        }}
+                                                                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        <span>
+                                                                            <span className="font-medium text-slate-900 dark:text-white">{p.product_name}</span>
+                                                                            {p.product_sku && <span className="ml-2 text-xs text-slate-400">{p.product_sku}</span>}
+                                                                        </span>
+                                                                        <span className={`text-xs font-medium ${p.quantity <= 0 ? 'text-rose-500' : p.quantity <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
+                                                                            {p.quantity} en stock
+                                                                        </span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="number"
