@@ -566,7 +566,7 @@ class DepotController extends Controller
 
     // --- Page transferts ---
 
-    public function transfers(Request $request, string $codeUser, Depot $depot): Response
+    public function transfers(Request $request, Depot $depot): Response
     {
         $user = Auth::user();
 
@@ -673,7 +673,7 @@ class DepotController extends Controller
         }
     }
 
-    public function stockTemplate(string $codeUser, Depot $depot)
+    public function stockTemplate(Depot $depot)
     {
         $user = Auth::user();
 
