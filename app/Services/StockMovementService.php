@@ -1,0 +1,411 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Product;
+use App\Models\StockMovement;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+
+class StockMovementService
+{
+    /**
+     * Decrease stock when a sale item is created (POS sale).
+     *
+     * @param Product      $product
+     * @param int          $quantity   Positive number of units sold
+     * @param int          $shopId
+     * @param Model|null   $reference  The Sale model (for polymorphic reference)
+     * @param string|null  $notes
+     */
+    public static function recordSale(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        ?Model $reference = null,
+        ?string $notes = null
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->decrement('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'sale',
+            'quantity'       => -$quantity,
+            'reference_id'   => $reference?->getKey(),
+            'reference_type' => $reference ? class_basename($reference) : null,
+            'notes'          => $notes ?? 'Vente enregistrée',
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Adjust stock when a sale item quantity is edited (delta correction).
+     *
+     * @param Product  $product
+     * @param int      $oldQuantity  The original quantity before edit
+     * @param int      $newQuantity  The new quantity after edit
+     * @param int      $shopId
+     * @param Model    $reference    The Sale model
+     */
+    public static function recordSaleItemEdit(
+        Product $product,
+        int $oldQuantity,
+        int $newQuantity,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $delta = $newQuantity - $oldQuantity;
+
+        if ($delta === 0) {
+            return null;
+        }
+
+        if ($delta > 0) {
+            $product->decrement('stock_quantity', $delta);
+        } else {
+            $product->increment('stock_quantity', abs($delta));
+        }
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'adjustment',
+            'quantity'       => -$delta,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => "Correction quantité article vendu (ancienne: {$oldQuantity}, nouvelle: {$newQuantity})",
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Return stock to shelf when a sale is cancelled.
+     *
+     * @param Product      $product
+     * @param int          $quantity
+     * @param int          $shopId
+     * @param Model        $reference  The Sale model
+     */
+    public static function recordSaleCancellation(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->increment('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'return',
+            'quantity'       => $quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => "Annulation vente {$reference->ticket_number}",
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Re-deduct stock when a cancelled sale is restored.
+     *
+     * @param Product  $product
+     * @param int      $quantity
+     * @param int      $shopId
+     * @param Model    $reference  The Sale model
+     */
+    public static function recordSaleRestore(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->decrement('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'sale',
+            'quantity'       => -$quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => "Réactivation vente {$reference->ticket_number}",
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Restore stock when a sale return is cancelled.
+     */
+    public static function recordReturnCancellation(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->decrement('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'sale',
+            'quantity'       => -$quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => 'Annulation du retour (re-déduction stock)',
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Add good-condition returned item to stock_quantity.
+     * Add defective-condition returned item to defective_stock_quantity.
+     *
+     * @param Product  $product
+     * @param int      $quantity
+     * @param string   $condition  'good' or 'defective'
+     * @param int      $shopId
+     * @param Model    $reference  The ReturnedInventory model
+     */
+    public static function recordReturnedInventoryApproval(
+        Product $product,
+        int $quantity,
+        string $condition,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        if ($condition === 'good') {
+            $product->increment('stock_quantity', $quantity);
+            $type = 'return';
+            $notes = 'Article retourné approuvé (bon état)';
+        } else {
+            $product->increment('defective_stock_quantity', $quantity);
+            $type = 'return_defective';
+            $notes = 'Article retourné approuvé (défectueux)';
+        }
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => $type,
+            'quantity'       => $quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => $notes,
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Add stock when a purchase order is received.
+     *
+     * @param Product       $product
+     * @param int           $quantity
+     * @param float|null    $unitCost
+     * @param int           $shopId
+     * @param Model         $reference  The Purchase model
+     * @param string|null   $notes
+     */
+    public static function recordPurchaseReceipt(
+        Product $product,
+        int $quantity,
+        ?float $unitCost,
+        int $shopId,
+        Model $reference,
+        ?string $notes = null
+    ): StockMovement {
+        $product->increment('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'in',
+            'quantity'       => $quantity,
+            'unit_cost'      => $unitCost,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => $notes ?? "Réception bon de commande {$reference->reference}",
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Add stock from depot transfer to shop product.
+     *
+     * @param Product  $product
+     * @param int      $quantity
+     * @param int      $shopId
+     * @param Model    $reference  The DepotTransfer model
+     */
+    public static function recordDepotTransfer(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->increment('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'transfer',
+            'quantity'       => $quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => 'Transfert depuis dépôt',
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Manual adjustment (from StockMovementController form submission).
+     *
+     * @param Product      $product
+     * @param int          $quantity   Can be positive (in) or negative (out)
+     * @param string       $type       One of: in, out, transfer, adjustment
+     * @param int          $shopId
+     * @param string|null  $notes
+     * @param string|null  $movementDate
+     * @param float|null   $unitCost
+     */
+    public static function recordManualAdjustment(
+        Product $product,
+        int $quantity,
+        string $type,
+        int $shopId,
+        ?string $notes = null,
+        ?string $movementDate = null,
+        ?float $unitCost = null
+    ): StockMovement {
+        $isIn = in_array($type, ['in', 'return', 'adjustment']) && $quantity > 0;
+        $isOut = in_array($type, ['out', 'sale']) || $quantity < 0;
+
+        if ($isIn) {
+            $product->increment('stock_quantity', abs($quantity));
+        } elseif ($isOut) {
+            $product->decrement('stock_quantity', abs($quantity));
+        }
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => $type,
+            'quantity'       => $quantity,
+            'unit_cost'      => $unitCost,
+            'notes'          => $notes,
+            'movement_date'  => $movementDate ?? now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Hard-set stock_quantity to a counted value (inventory completion).
+     *
+     * @param Product       $product
+     * @param int           $countedQty
+     * @param int           $shopId
+     * @param Model         $reference   The Inventory model
+     * @param float|null    $unitCost
+     */
+    public static function recordInventoryAdjustment(
+        Product $product,
+        int $countedQty,
+        int $shopId,
+        Model $reference,
+        ?float $unitCost = null
+    ): ?StockMovement {
+        $difference = $countedQty - $product->stock_quantity;
+
+        if ($difference === 0) {
+            return null;
+        }
+
+        $product->update(['stock_quantity' => $countedQty]);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'adjustment',
+            'quantity'       => $difference,
+            'unit_cost'      => $unitCost,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => "Ajustement inventaire {$reference->inventory_number} (attendu: " . ($countedQty - $difference) . ", compté: {$countedQty})",
+            'movement_date'  => $reference->inventory_date->toDateString(),
+        ]);
+    }
+
+    /**
+     * Reverse a previously written StockMovement.
+     */
+    public static function reverseMovement(StockMovement $movement): StockMovement
+    {
+        $product = $movement->product;
+
+        if ($movement->quantity > 0) {
+            $product->decrement('stock_quantity', $movement->quantity);
+            $reversalQty = -$movement->quantity;
+        } else {
+            $product->increment('stock_quantity', abs($movement->quantity));
+            $reversalQty = abs($movement->quantity);
+        }
+
+        return self::writeMovement([
+            'shop_id'        => $movement->shop_id,
+            'product_id'     => $movement->product_id,
+            'user_id'        => Auth::id(),
+            'type'           => 'adjustment',
+            'quantity'       => $reversalQty,
+            'reference_id'   => $movement->id,
+            'reference_type' => 'StockMovement',
+            'notes'          => "Annulation du mouvement #{$movement->id}",
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Internal: write the StockMovement record.
+     */
+    private static function writeMovement(array $data): StockMovement
+    {
+        return StockMovement::create($data);
+    }
+}
