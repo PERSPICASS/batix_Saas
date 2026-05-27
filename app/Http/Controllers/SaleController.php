@@ -276,7 +276,7 @@ class SaleController extends Controller
 
     public function show(string $code_user, Sale $sale)
     {
-        $sale->load(['shop', 'user', 'customer', 'items.product.parent', 'returns']);
+        $sale->load(['shop', 'user', 'customer', 'items.product.parent', 'items.returns', 'returns']);
 
         // Enrichir le product_name des anciens items de déclinaisons qui ne l'ont pas encore
         $sale->items->each(function ($item) {
