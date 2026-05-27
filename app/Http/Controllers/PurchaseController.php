@@ -7,8 +7,8 @@ use App\Models\PurchaseItem;
 use App\Models\Supplier;
 use App\Models\Product;
 use App\Models\Shop;
-use App\Models\StockMovement;
 use App\Services\ActivityLogger;
+use App\Services\StockMovementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -367,22 +367,14 @@ class PurchaseController extends Controller
                     $item->quantity_received += $quantityToReceive;
                     $item->save();
 
-                    StockMovement::create([
-                        'shop_id' => $purchase->shop_id,
-                        'product_id' => $item->product_id,
-                        'user_id' => Auth::id(),
-                        'type' => 'in',
-                        'quantity' => $quantityToReceive,
-                        'unit_cost' => $item->unit_price,
-                        'reference_id' => $purchase->id,
-                        'reference_type' => 'Purchase',
-                        'notes' => "Réception du bon de commande {$purchase->reference}",
-                        'movement_date' => now(),
-                    ]);
-
-                    $product = $item->product;
-                    $product->stock_quantity += $quantityToReceive;
-                    $product->save();
+                    StockMovementService::recordPurchaseReceipt(
+                        $item->product,
+                        $quantityToReceive,
+                        $item->unit_price,
+                        $purchase->shop_id,
+                        $purchase,
+                        "Réception du bon de commande {$purchase->reference}"
+                    );
                 }
             }
 

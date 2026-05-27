@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\StockMovement;
 use App\Models\Shop;
 use App\Models\Product;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -90,17 +92,18 @@ class StockMovementController extends Controller
             'movement_date' => 'required|date',
         ]);
 
-        $validated['user_id'] = auth()->id();
-        $movement = StockMovement::create($validated);
-
-        // Update product stock
-        $product = Product::findOrFail($validated['product_id']);
-        if (in_array($validated['type'], ['in', 'return', 'adjustment']) && $validated['quantity'] > 0) {
-            $product->stock_quantity += abs($validated['quantity']);
-        } elseif (in_array($validated['type'], ['out', 'sale']) || $validated['quantity'] < 0) {
-            $product->stock_quantity -= abs($validated['quantity']);
-        }
-        $product->save();
+        DB::transaction(function () use ($validated) {
+            $product = Product::findOrFail($validated['product_id']);
+            StockMovementService::recordManualAdjustment(
+                $product,
+                (int) $validated['quantity'],
+                $validated['type'],
+                (int) $validated['shop_id'],
+                $validated['notes'] ?? null,
+                $validated['movement_date'],
+                isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null
+            );
+        });
 
         return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement de stock créé avec succès.');
     }
@@ -113,14 +116,10 @@ class StockMovementController extends Controller
 
     public function destroy(string $code_user, StockMovement $stock): RedirectResponse
     {
-        $product = $stock->product;
-        if (in_array($stock->type, ['in', 'return']) || $stock->quantity > 0) {
-            $product->stock_quantity -= abs($stock->quantity);
-        } else {
-            $product->stock_quantity += abs($stock->quantity);
-        }
-        $product->save();
-        $stock->delete();
+        DB::transaction(function () use ($stock) {
+            StockMovementService::reverseMovement($stock);
+            $stock->delete();
+        });
 
         return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement supprimé et stock ajusté.');
     }

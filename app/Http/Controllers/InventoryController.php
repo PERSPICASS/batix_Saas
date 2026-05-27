@@ -6,7 +6,7 @@ use App\Models\Inventory;
 use App\Models\InventoryItem;
 use App\Models\Shop;
 use App\Models\Product;
-use App\Models\StockMovement;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -184,26 +184,13 @@ class InventoryController extends Controller
 
         DB::transaction(function () use ($inventory) {
             foreach ($inventory->items as $item) {
-                if ($item->difference != 0) {
-                    // Create stock movement for the difference
-                    StockMovement::create([
-                        'shop_id' => $inventory->shop_id,
-                        'product_id' => $item->product_id,
-                        'user_id' => auth()->id(),
-                        'type' => 'adjustment',
-                        'quantity' => $item->difference,
-                        'unit_cost' => $item->unit_cost,
-                        'reference_id' => $inventory->id,
-                        'reference_type' => 'Inventory',
-                        'notes' => "Ajustement suite à l'inventaire {$inventory->inventory_number}",
-                        'movement_date' => $inventory->inventory_date,
-                    ]);
-
-                    // Update product stock
-                    $product = $item->product;
-                    $product->stock_quantity = $item->counted_quantity;
-                    $product->save();
-                }
+                StockMovementService::recordInventoryAdjustment(
+                    $item->product,
+                    $item->counted_quantity,
+                    $inventory->shop_id,
+                    $inventory,
+                    $item->unit_cost
+                );
             }
 
             $inventory->status = 'completed';
