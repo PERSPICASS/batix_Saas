@@ -9,6 +9,7 @@ use App\Models\DepotProduct;
 use App\Models\DepotTransfer;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Services\StockMovementService;
 use App\Traits\GeneratesBarcode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -421,22 +422,8 @@ class DepotController extends Controller
                 // Décrémenter le stock du dépôt
                 $depotProduct->decrement('quantity', $item['quantity']);
 
-                // Incrémenter le stock du produit dans la boutique
-                $shopProduct = Product::where('id', $item['product_id'])
-                    ->where('shop_id', $validated['shop_id'])
-                    ->first();
-
-                if ($shopProduct) {
-                    $shopProduct->increment('stock_quantity', $item['quantity']);
-
-                    // Propager le prix d'achat du dépôt vers le produit de la boutique
-                    if ($depotProduct->purchase_price > 0) {
-                        $shopProduct->update(['purchase_price' => $depotProduct->purchase_price]);
-                    }
-                }
-
-                // Enregistrer le transfert
-                DepotTransfer::create([
+                // Créer le transfert d'abord (pour la référence)
+                $depotTransfer = DepotTransfer::create([
                     'depot_id'   => $depot->id,
                     'shop_id'    => $validated['shop_id'],
                     'user_id'    => $user->id,
@@ -445,6 +432,25 @@ class DepotController extends Controller
                     'notes'      => $validated['notes'] ?? null,
                     'status'     => 'completed',
                 ]);
+
+                // Incrémenter le stock du produit dans la boutique
+                $shopProduct = Product::where('id', $item['product_id'])
+                    ->where('shop_id', $validated['shop_id'])
+                    ->first();
+
+                if ($shopProduct) {
+                    StockMovementService::recordDepotTransfer(
+                        $shopProduct,
+                        $item['quantity'],
+                        $validated['shop_id'],
+                        $depotTransfer
+                    );
+
+                    // Propager le prix d'achat du dépôt vers le produit de la boutique
+                    if ($depotProduct->purchase_price > 0) {
+                        $shopProduct->update(['purchase_price' => $depotProduct->purchase_price]);
+                    }
+                }
             }
         });
 

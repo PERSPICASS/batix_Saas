@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Subcategory;
 use App\Services\ActivityLogger;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -226,7 +227,7 @@ class ProductController extends Controller
     public function update(Request $request, string $code_user, Product $product)
     {
         $this->authorize('update', $product);
-        
+
         $validated = $request->validate([
             'category_id' => 'nullable|exists:categories,id',
             'subcategory_id' => 'nullable|exists:subcategories,id',
@@ -255,7 +256,28 @@ class ProductController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        $product->update($validated);
+        $oldStock = $product->stock_quantity;
+        $newStock = (int) ($validated['stock_quantity'] ?? $oldStock);
+
+        // Séparer stock_quantity de la mise à jour normale
+        $updateData = collect($validated)
+            ->except(['stock_quantity'])
+            ->toArray();
+
+        DB::transaction(function () use ($product, $updateData, $oldStock, $newStock, $code_user) {
+            $product->update($updateData);
+
+            // Enregistrer l'ajustement de stock s'il y a un changement
+            if ($newStock !== $oldStock) {
+                StockMovementService::recordManualAdjustment(
+                    $product,
+                    $newStock - $oldStock,
+                    'adjustment',
+                    $product->shop_id,
+                    "Correction manuelle via formulaire produit (ancienne valeur: {$oldStock}, nouvelle: {$newStock})"
+                );
+            }
+        });
 
         // Log activity
         ActivityLogger::updated($product, [], "Produit mis à jour: {$product->name}");
