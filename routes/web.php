@@ -35,6 +35,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BlogAdminController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ReturnsController;
+use App\Http\Controllers\ReturnedInventoryController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -194,6 +195,11 @@ Route::prefix('{code_user}')
     // Routes pour les retours
     Route::post('ventes/{sale}/retours', [ReturnsController::class, 'store'])->name('returns.store');
     Route::delete('retours/{return}', [ReturnsController::class, 'destroy'])->name('returns.destroy');
+
+    // Routes pour l'inventaire de retour
+    Route::get('inventaire-retours', [ReturnedInventoryController::class, 'index'])->name('returned-inventory.index');
+    Route::post('inventaire-retours/{item}/approve', [ReturnedInventoryController::class, 'approve'])->name('returned-inventory.approve');
+    Route::post('inventaire-retours/{item}/reject', [ReturnedInventoryController::class, 'reject'])->name('returned-inventory.reject');
 
     // Routes pour les créances
     Route::get('creances', [CreditController::class, 'index'])->name('sales.credits');

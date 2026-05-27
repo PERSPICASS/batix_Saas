@@ -163,8 +163,29 @@ export default function Index({
     const [compareMode, setCompareMode] = useState<'year' | 'month'>(comparisonData.mode);
     const [year1, setYear1] = useState(parseInt(comparisonData.label1));
     const [year2, setYear2] = useState(parseInt(comparisonData.label2));
+
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
     const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - (5 - i));
+    const monthOptions = [
+        { value: 1, label: 'Janvier' },
+        { value: 2, label: 'Février' },
+        { value: 3, label: 'Mars' },
+        { value: 4, label: 'Avril' },
+        { value: 5, label: 'Mai' },
+        { value: 6, label: 'Juin' },
+        { value: 7, label: 'Juillet' },
+        { value: 8, label: 'Août' },
+        { value: 9, label: 'Septembre' },
+        { value: 10, label: 'Octobre' },
+        { value: 11, label: 'Novembre' },
+        { value: 12, label: 'Décembre' },
+    ];
+
+    const [month1, setMonth1] = useState(currentMonth);
+    const [monthYear1, setMonthYear1] = useState(currentYear);
+    const [month2, setMonth2] = useState(currentMonth === 1 ? 12 : currentMonth - 1);
+    const [monthYear2, setMonthYear2] = useState(currentMonth === 1 ? currentYear - 1 : currentYear);
 
     const handlePeriodChange = (period: string) => {
         router.get(window.location.pathname, { period }, {
@@ -182,6 +203,11 @@ export default function Index({
         if (compareMode === 'year') {
             params.year1 = year1;
             params.year2 = year2;
+        } else {
+            params.month1 = month1;
+            params.month_year1 = monthYear1;
+            params.month2 = month2;
+            params.month_year2 = monthYear2;
         }
 
         router.get(window.location.pathname, params, {
@@ -346,6 +372,67 @@ export default function Index({
                                                 <option key={year} value={year}>{year}</option>
                                             ))}
                                         </select>
+                                    </div>
+                                    <button
+                                        onClick={handleCompareChange}
+                                        className="px-4 py-2 rounded-lg bg-amber-300 text-slate-900 text-sm font-medium hover:bg-amber-200 transition"
+                                    >
+                                        Comparer
+                                    </button>
+                                </div>
+                            )}
+
+                            {compareMode === 'month' && (
+                                <div className="space-y-4">
+                                    <div className="grid gap-4 sm:grid-cols-4">
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Mois 1</label>
+                                            <select
+                                                value={month1}
+                                                onChange={(e) => setMonth1(parseInt(e.target.value))}
+                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                            >
+                                                {monthOptions.map(m => (
+                                                    <option key={m.value} value={m.value}>{m.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Année 1</label>
+                                            <select
+                                                value={monthYear1}
+                                                onChange={(e) => setMonthYear1(parseInt(e.target.value))}
+                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                            >
+                                                {yearOptions.map(year => (
+                                                    <option key={year} value={year}>{year}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Mois 2</label>
+                                            <select
+                                                value={month2}
+                                                onChange={(e) => setMonth2(parseInt(e.target.value))}
+                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                            >
+                                                {monthOptions.map(m => (
+                                                    <option key={m.value} value={m.value}>{m.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Année 2</label>
+                                            <select
+                                                value={monthYear2}
+                                                onChange={(e) => setMonthYear2(parseInt(e.target.value))}
+                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                            >
+                                                {yearOptions.map(year => (
+                                                    <option key={year} value={year}>{year}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={handleCompareChange}

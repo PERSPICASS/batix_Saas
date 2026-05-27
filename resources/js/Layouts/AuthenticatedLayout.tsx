@@ -361,6 +361,13 @@ export default function Authenticated({
                 icon: CreditCard,
                 module: 'credits',
             },
+            ...(isCashier() ? [] : [{
+                label: 'Inventaire retours',
+                href: buildRoute('returned-inventory.index'),
+                active: route().current('returned-inventory.*'),
+                icon: ClipboardList,
+                module: 'returns',
+            }]),
             {
                 label: 'Fournisseurs',
                 href: buildRoute('suppliers.index'),

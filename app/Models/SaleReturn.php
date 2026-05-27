@@ -44,22 +44,31 @@ class SaleReturn extends Model
             // Marquer l'article comme retourné si toute la quantité est retournée
             $saleItem = $return->saleItem;
             $totalReturned = $saleItem->returns->sum('quantity_returned');
-            
+
             if ($totalReturned >= $saleItem->quantity) {
                 $saleItem->update(['is_returned' => true]);
             }
-            
-            // Remettre le stock si le produit existe et que le suivi de stock est activé
-            if ($saleItem->product && $saleItem->product->track_stock) {
-                $saleItem->product->increment('stock_quantity', $return->quantity_returned);
+
+            // Créer une entrée dans returned_inventories au lieu de modifier le stock immédiatement
+            if ($saleItem->product) {
+                \App\Models\ReturnedInventory::create([
+                    'sale_return_id' => $return->id,
+                    'product_id' => $saleItem->product_id,
+                    'shop_id' => $return->sale->shop_id,
+                    'quantity' => $return->quantity_returned,
+                    'reason' => $return->reason,
+                    'condition' => $return->reason === 'defective' ? 'defective' : 'good',
+                    'status' => 'pending',
+                    'notes' => $return->notes,
+                ]);
             }
-            
+
             // Vérifier si toute la vente est retournée
             $sale = $return->sale;
             $allItemsReturned = $sale->items->every(function ($item) {
                 return $item->is_returned;
             });
-            
+
             if ($allItemsReturned) {
                 $sale->update(['status' => 'returned']);
             }

@@ -158,6 +158,7 @@ export default function SalesShow({ sale, auth }: Props) {
     const returnForm = useForm({
         refund_method: 'cash',
         reason: 'other',
+        condition: 'good',
         notes: '',
     });
 
@@ -773,6 +774,21 @@ export default function SalesShow({ sale, auth }: Props) {
                                     <option value="wrong_item">Mauvais article</option>
                                     <option value="not_satisfied">Non satisfait</option>
                                     <option value="other">Autre</option>
+                                </select>
+                            </div>
+
+                            {/* Condition */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    État de l'article *
+                                </label>
+                                <select
+                                    value={returnForm.data.condition}
+                                    onChange={(e) => returnForm.setData('condition', e.target.value)}
+                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                                >
+                                    <option value="good">Bon état</option>
+                                    <option value="defective">Défectueux</option>
                                 </select>
                             </div>
 
