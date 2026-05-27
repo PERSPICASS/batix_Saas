@@ -190,7 +190,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         setSelectedItemIds(new Set());
                         setItemQuantities({});
                         setReturnMessage(null);
-                        router.visit(route('sales.index'));
+                        router.reload();
                     }, 1500);
                 } else if (successCount === 0) {
                     setReturnMessage({
