@@ -716,8 +716,8 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
 
             {/* Modal: Transférer vers boutique */}
             {showTransfer && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+                    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900 my-4">
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Transférer vers une boutique</h3>
                             <button onClick={() => setShowTransfer(false)} className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
@@ -787,7 +787,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                         <>
                                                             {/* Overlay pour fermer en cliquant ailleurs */}
                                                             <div className="fixed inset-0 z-10" onClick={() => setOpenTransferDropdown(null)} />
-                                                            <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-white/10 dark:bg-slate-800">
+                                                            <div className="absolute z-20 mt-1 max-h-96 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-white/10 dark:bg-slate-800">
                                                                 {filtered.length === 0 ? (
                                                                     <p className="px-3 py-2 text-sm text-slate-400">Aucun produit trouvé</p>
                                                                 ) : filtered.map(p => (
