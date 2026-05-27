@@ -91,6 +91,7 @@ const statusLabels: Record<string, string> = {
 
 export default function SalesShow({ sale, auth }: Props) {
     const route = useRoute();
+    const [displayedSale, setDisplayedSale] = useState<Sale>(sale);
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelling, setCancelling] = useState(false);
@@ -110,7 +111,7 @@ export default function SalesShow({ sale, auth }: Props) {
     };
 
     const creditForm = useForm({
-        payment_amount: sale.remaining_amount,
+        payment_amount: displayedSale.remaining_amount,
         payment_method: 'cash',
         notes: '',
     });
@@ -162,6 +163,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
     const handleCreateReturn = (e: React.FormEvent) => {
         e.preventDefault();
+        console.log('handleCreateReturn appelé', { selectedItemIds: Array.from(selectedItemIds) });
 
         if (selectedItemIds.size === 0) {
             setReturnMessage({ type: 'error', text: 'Sélectionnez au moins un article' });
@@ -170,6 +172,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
         setReturnMessage(null);
         setIsSubmittingReturn(true);
+        console.log('Envoi des retours...');
         const itemsArray = Array.from(selectedItemIds);
         let index = 0;
         let successCount = 0;
@@ -187,7 +190,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         setSelectedItemIds(new Set());
                         setItemQuantities({});
                         setReturnMessage(null);
-                    }, 2000);
+                    }, 1500);
                 } else if (successCount === 0) {
                     setReturnMessage({
                         type: 'error',
@@ -213,14 +216,33 @@ export default function SalesShow({ sale, auth }: Props) {
                 notes: returnForm.data.notes,
             };
 
-            router.post(route('returns.store', { sale: sale.id }), postData, {
-                onSuccess: () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            fetch(route('returns.store', { sale: sale.id }), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken,
+                },
+                body: JSON.stringify(postData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Réponse du serveur:', data);
+                if (data.success && data.sale) {
+                    console.log('Mise à jour displayedSale avec:', data.sale);
+                    setDisplayedSale(data.sale);
                     successCount++;
                     submitNextItem();
-                },
-                onError: () => {
+                } else {
+                    console.error('Erreur: pas de données retournées', data);
                     submitNextItem();
-                },
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'enregistrement du retour', error);
+                submitNextItem();
             });
         };
 
@@ -231,7 +253,7 @@ export default function SalesShow({ sale, auth }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="print:hidden flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Ticket {sale.ticket_number}</h1>
+                    <h1 className="text-xl font-semibold text-white">Ticket {displayedSale.ticket_number}</h1>
                     <div className="flex items-center gap-2">
 
                         <button
@@ -245,7 +267,7 @@ export default function SalesShow({ sale, auth }: Props) {
                 </div>
             }
         >
-            <Head title={`Ticket ${sale.ticket_number}`} />
+            <Head title={`Ticket ${displayedSale.ticket_number}`} />
 
             <style>{`
                 @media print {
@@ -300,55 +322,55 @@ export default function SalesShow({ sale, auth }: Props) {
                 <div id="ticket-print" className="rounded-2xl border border-white/10 bg-white/5 p-8 print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black">
                     {/* En-tête du ticket */}
                     <div className="mb-8 text-center">
-                        {sale.shop.logo && (
+                        {displayedSale.shop.logo && (
                             <div className="mb-4 flex justify-center">
                                 <img 
-                                    src={`/storage/${sale.shop.logo}`} 
-                                    alt={sale.shop.name}
+                                    src={`/storage/${displayedSale.shop.logo}`} 
+                                    alt={displayedSale.shop.name}
                                     className="h-20 w-auto object-contain print:h-16"
                                 />
                             </div>
                         )}
-                        <h2 className="text-2xl font-bold text-white">{sale.shop.name}</h2>
-                        <p className="text-sm text-slate-400">{sale.shop.address}</p>
-                        <p className="text-sm text-slate-400">{sale.shop.phone}</p>
+                        <h2 className="text-2xl font-bold text-white">{displayedSale.shop.name}</h2>
+                        <p className="text-sm text-slate-400">{displayedSale.shop.address}</p>
+                        <p className="text-sm text-slate-400">{displayedSale.shop.phone}</p>
                     </div>
 
                     <div className="mb-6 space-y-2 border-y border-white/10 py-4">
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">N° Ticket:</span>
                             <span className="font-mono font-semibold text-white">
-                                {sale.ticket_number}
+                                {displayedSale.ticket_number}
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Date:</span>
                             <span className="text-white">
-                                {new Date(sale.sale_date).toLocaleString('fr-FR')}
+                                {new Date(displayedSale.sale_date).toLocaleString('fr-FR')}
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Vendeur:</span>
-                            <span className="text-white">{sale.user.name}</span>
+                            <span className="text-white">{displayedSale.user.name}</span>
                         </div>
-                        {sale.customer && (
+                        {displayedSale.customer && (
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">Client:</span>
-                                <span className="text-white">{sale.customer.name}</span>
+                                <span className="text-white">{displayedSale.customer?.name}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Statut:</span>
                             <span
                                 className={`font-semibold ${
-                                    sale.status === 'completed'
+                                    displayedSale.status === 'completed'
                                         ? 'text-green-400'
-                                        : sale.status === 'cancelled'
+                                        : displayedSale.status === 'cancelled'
                                           ? 'text-red-400'
                                           : 'text-slate-300'
                                 }`}
                             >
-                                {statusLabels[sale.status] || sale.status}
+                                {statusLabels[displayedSale.status] || displayedSale.status}
                             </span>
                         </div>
                     </div>
@@ -365,7 +387,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {sale.items.map((item) => (
+                                {displayedSale.items.map((item) => (
                                     <tr key={item.id} className="border-b border-white/5">
                                         <td className="py-2">
                                             {item.product?.parent ? (
@@ -379,7 +401,13 @@ export default function SalesShow({ sale, auth }: Props) {
                                             )}
                                         </td>
                                         <td className="py-2 text-center text-slate-300">
-                                            {item.quantity}
+                                            {(() => {
+                                                const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
+                                                if (alreadyReturned > 0) {
+                                                    return `${item.quantity} (-${alreadyReturned})`;
+                                                }
+                                                return item.quantity;
+                                            })()}
                                         </td>
                                         <td className="py-2 text-right text-slate-300">
                                             <Currency amount={parseFloat(item.unit_price)} />
@@ -398,27 +426,27 @@ export default function SalesShow({ sale, auth }: Props) {
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Sous-total:</span>
                             <span className="text-white">
-                                <Currency amount={parseFloat(sale.subtotal)} />
+                                <Currency amount={parseFloat(displayedSale.subtotal)} />
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">TVA:</span>
                             <span className="text-white">
-                                <Currency amount={parseFloat(sale.tax_amount)} />
+                                <Currency amount={parseFloat(displayedSale.tax_amount)} />
                             </span>
                         </div>
-                        {parseFloat(sale.discount_amount) > 0 && (
+                        {parseFloat(displayedSale.discount_amount) > 0 && (
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">Remise:</span>
                                 <span className="text-red-400">
-                                    -<Currency amount={parseFloat(sale.discount_amount)} />
+                                    -<Currency amount={parseFloat(displayedSale.discount_amount)} />
                                 </span>
                             </div>
                         )}
                         <div className="total-line flex justify-between border-t border-white/10 pt-2 text-lg font-bold">
                             <span className="text-white">TOTAL:</span>
                             <span className="text-amber-300">
-                                <Currency amount={parseFloat(sale.total)} />
+                                <Currency amount={parseFloat(displayedSale.total)} />
                             </span>
                         </div>
                     </div>
@@ -428,43 +456,43 @@ export default function SalesShow({ sale, auth }: Props) {
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Mode de paiement:</span>
                             <span className="text-white">
-                                {paymentMethodLabels[sale.payment_method] || sale.payment_method}
+                                {paymentMethodLabels[displayedSale.payment_method] || displayedSale.payment_method}
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-slate-400">Montant payé:</span>
                             <span className="text-white">
-                                <Currency amount={parseFloat(sale.amount_paid)} />
+                                <Currency amount={parseFloat(displayedSale.amount_paid)} />
                             </span>
                         </div>
-                        {parseFloat(sale.change_amount) > 0 && (
+                        {parseFloat(displayedSale.change_amount) > 0 && (
                             <div className="monnaie-line flex justify-between text-sm">
                                 <span className="text-slate-400">Monnaie rendue:</span>
                                 <span className="font-semibold text-emerald-400">
-                                    <Currency amount={parseFloat(sale.change_amount)} />
+                                    <Currency amount={parseFloat(displayedSale.change_amount)} />
                                 </span>
                             </div>
                         )}
-                        {parseFloat(sale.remaining_amount) > 0 && (
+                        {parseFloat(displayedSale.remaining_amount) > 0 && (
                             <div className="flex justify-between text-sm font-semibold border-t border-white/10 pt-2">
                                 <span className="text-rose-400">Reste à payer:</span>
                                 <span className="text-rose-400">
-                                    <Currency amount={parseFloat(sale.remaining_amount)} />
+                                    <Currency amount={parseFloat(displayedSale.remaining_amount)} />
                                 </span>
                             </div>
                         )}
-                        {sale.credit_due_date && parseFloat(sale.remaining_amount) > 0 && (
+                        {displayedSale.credit_due_date && parseFloat(displayedSale.remaining_amount) > 0 && (
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-400">Échéance:</span>
                                 <span className="text-amber-300">
-                                    {new Date(sale.credit_due_date).toLocaleDateString('fr-FR')}
+                                    {new Date(displayedSale.credit_due_date || '').toLocaleDateString('fr-FR')}
                                 </span>
                             </div>
                         )}
                     </div>
 
                     {/* Bouton Encaisser le reste */}
-                    {parseFloat(sale.remaining_amount) > 0 && (
+                    {parseFloat(displayedSale.remaining_amount) > 0 && (
                         <div className="credit-block mt-6 rounded-xl border border-rose-400/30 bg-rose-500/10 p-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -472,7 +500,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                     <div>
                                         <p className="text-sm font-semibold text-rose-300">Vente à crédit</p>
                                         <p className="text-xs text-slate-400">
-                                            Reste : <Currency amount={parseFloat(sale.remaining_amount)} />
+                                            Reste : <Currency amount={parseFloat(displayedSale.remaining_amount)} />
                                         </p>
                                     </div>
                                 </div>
@@ -487,10 +515,10 @@ export default function SalesShow({ sale, auth }: Props) {
                         </div>
                     )}
 
-                    {sale.notes && (
+                    {displayedSale.notes && (
                         <div className="mt-6 rounded-lg bg-slate-900/50 p-4">
                             <p className="text-sm text-slate-400">Notes:</p>
-                            <p className="text-white">{sale.notes}</p>
+                            <p className="text-white">{displayedSale.notes}</p>
                         </div>
                     )}
 
@@ -512,7 +540,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         <div className="mb-4 rounded-lg bg-white/5 p-3 text-center">
                             <p className="text-xs text-slate-400">Reste à payer</p>
                             <p className="text-2xl font-bold text-rose-400">
-                                <Currency amount={parseFloat(sale.remaining_amount)} />
+                                <Currency amount={parseFloat(displayedSale.remaining_amount)} />
                             </p>
                         </div>
                         <form onSubmit={handlePayCredit} className="space-y-4">
@@ -522,7 +550,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                     type="number"
                                     step="0.01"
                                     min="0.01"
-                                    max={sale.remaining_amount}
+                                    max={displayedSale.remaining_amount}
                                     value={creditForm.data.payment_amount}
                                     onChange={e => creditForm.setData('payment_amount', e.target.value)}
                                     className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white focus:border-amber-300 focus:outline-none"
@@ -578,7 +606,7 @@ export default function SalesShow({ sale, auth }: Props) {
                             <h3 className="text-lg font-semibold text-white">Annuler la vente</h3>
                         </div>
                         <p className="mb-2 text-sm text-slate-300">
-                            Voulez-vous vraiment annuler la vente <strong className="text-white">{sale.ticket_number}</strong> ?
+                            Voulez-vous vraiment annuler la vente <strong className="text-white">{displayedSale.ticket_number}</strong> ?
                         </p>
                         <p className="mb-6 text-xs text-slate-400">
                             Le stock des produits tracés sera automatiquement remis à jour. Cette action est irréversible.
@@ -644,7 +672,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                 {showItemsDropdown && (
                                     <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-lg border border-white/10 bg-slate-900 shadow-lg" data-dropdown-items>
                                         <div className="max-h-48 overflow-y-auto p-2 space-y-1">
-                                            {sale.items.map((item) => {
+                                            {displayedSale.items.map((item) => {
                                                 const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
                                                 const available = item.quantity - alreadyReturned;
                                                 const canReturn = available > 0;
@@ -687,7 +715,7 @@ export default function SalesShow({ sale, auth }: Props) {
                             {/* Quantités à retourner */}
                             {selectedItemIds.size > 0 && (
                                 <div className="bg-slate-800/30 rounded-lg p-3 space-y-2">
-                                    {sale.items
+                                    {displayedSale.items
                                         .filter(item => selectedItemIds.has(item.id))
                                         .map((item) => {
                                             const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
