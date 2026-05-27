@@ -619,7 +619,7 @@ class DepotController extends Controller
 
     // --- Import CSV / Excel ---
 
-    public function importStock(Request $request, string $codeUser, Depot $depot)
+    public function importStock(Request $request, Depot $depot)
     {
         $user = Auth::user();
 
