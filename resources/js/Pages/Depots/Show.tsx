@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import React from 'react';
 import { useRoute } from '@/utils/route';
 import { usePage } from '@inertiajs/react';
 import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
@@ -136,6 +137,10 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         image: null as File | null,
     });
 
+    const importForm = useForm({
+        file: null as File | null,
+    });
+
     const handleAddStock = (e: React.FormEvent) => {
         e.preventDefault();
         addStockForm.post(buildRoute('depots.stock.add', { depot: depot.id }), {
@@ -190,11 +195,12 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         e.preventDefault();
         const file = fileInputRef.current?.files?.[0];
         if (!file) return;
-        const formData = new FormData();
-        formData.append('file', file);
-        router.post(buildRoute('depots.stock.import', { depot: depot.id }), formData as any, {
+        importForm.setData('file', file);
+        importForm.post(buildRoute('depots.stock.import', { depot: depot.id }), {
+            forceFormData: true,
             onSuccess: () => {
                 setShowImport(false);
+                importForm.reset();
                 if (fileInputRef.current) fileInputRef.current.value = '';
             },
         });
