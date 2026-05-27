@@ -96,7 +96,7 @@ class DepotController extends Controller
         ])->with('success', 'Dépôt créé avec succès.');
     }
 
-    public function show(string $codeUser, Depot $depot): Response
+    public function show(string $codeUser, Depot $depot, Request $request): Response
     {
         $user = Auth::user();
 
