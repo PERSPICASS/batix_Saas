@@ -743,7 +743,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                             </div>
 
                             {/* Lignes produits */}
-                            <div className="space-y-2">
+                            <div className="flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
                                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Produits *</label>
                                     <button
@@ -756,6 +756,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     </button>
                                 </div>
 
+                                <div className="max-h-64 space-y-2 overflow-y-auto">
                                 {(transferForm.data.items ?? []).map((item, index) => {
                                     const depotProd = depotProductsForTransfer.find(p => String(p.product_id) === item.product_id);
                                     const selected = depotProductsForTransfer.find(p => String(p.product_id) === item.product_id);
@@ -856,6 +857,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         </div>
                                     );
                                 })}
+                                </div>
                             </div>
 
                             {/* Notes */}
