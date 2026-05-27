@@ -190,6 +190,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         setSelectedItemIds(new Set());
                         setItemQuantities({});
                         setReturnMessage(null);
+                        router.visit(route('sales.index'));
                     }, 1500);
                 } else if (successCount === 0) {
                     setReturnMessage({
@@ -413,7 +414,21 @@ export default function SalesShow({ sale, auth }: Props) {
                                             <Currency amount={parseFloat(item.unit_price)} />
                                         </td>
                                         <td className="py-2 text-right font-semibold text-white">
-                                            <Currency amount={parseFloat(item.total)} />
+                                            {(() => {
+                                                const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
+                                                if (alreadyReturned > 0) {
+                                                    const refundedAmount = alreadyReturned * parseFloat(item.unit_price);
+                                                    return (
+                                                        <div className="flex flex-col items-end">
+                                                            <Currency amount={parseFloat(item.total)} />
+                                                            <span className="text-xs text-red-400">
+                                                                -<Currency amount={refundedAmount} />
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                }
+                                                return <Currency amount={parseFloat(item.total)} />;
+                                            })()}
                                         </td>
                                     </tr>
                                 ))}
