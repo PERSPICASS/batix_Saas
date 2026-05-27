@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Services\ActivityLogger;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -320,8 +321,13 @@ class SaleController extends Controller
             // Remettre le stock uniquement si la vente n'était pas déjà retournée
             if ($sale->status !== 'returned') {
                 foreach ($sale->items as $item) {
-                    if ($item->product && $item->product->track_stock) {
-                        $item->product->increment('stock_quantity', $item->quantity);
+                    if ($item->product) {
+                        StockMovementService::recordSaleCancellation(
+                            $item->product,
+                            $item->quantity,
+                            $sale->shop_id,
+                            $sale
+                        );
                     }
                 }
             }
@@ -356,8 +362,13 @@ class SaleController extends Controller
         DB::transaction(function () use ($sale) {
             // Redéduire le stock (l'annulation l'avait remis)
             foreach ($sale->items as $item) {
-                if ($item->product && $item->product->track_stock) {
-                    $item->product->decrement('stock_quantity', $item->quantity);
+                if ($item->product) {
+                    StockMovementService::recordSaleRestore(
+                        $item->product,
+                        $item->quantity,
+                        $sale->shop_id,
+                        $sale
+                    );
                 }
             }
 

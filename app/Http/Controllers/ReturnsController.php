@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Services\ActivityLogger;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -131,8 +132,13 @@ class ReturnsController extends Controller
             $sale->load('items.returns');
 
             // Restaurer le stock
-            if ($saleItem->product && $saleItem->product->track_stock) {
-                $saleItem->product->decrement('stock_quantity', $return->quantity_returned);
+            if ($saleItem->product) {
+                StockMovementService::recordReturnCancellation(
+                    $saleItem->product,
+                    $return->quantity_returned,
+                    $sale->shop_id,
+                    $return->sale
+                );
             }
 
             // Recalculer les montants de la vente après annulation du retour

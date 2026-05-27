@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ReturnedInventory;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ReturnedInventoryController extends Controller
@@ -78,18 +80,21 @@ class ReturnedInventoryController extends Controller
             return back()->with('error', 'Cet article ne peut pas être approuvé.');
         }
 
-        $item->update([
-            'status' => 'approved',
-            'reviewed_by' => $user->id,
-            'reviewed_at' => now(),
-        ]);
+        DB::transaction(function () use ($user, $item) {
+            $item->update([
+                'status' => 'approved',
+                'reviewed_by' => $user->id,
+                'reviewed_at' => now(),
+            ]);
 
-        // Mettre à jour le stock selon la condition
-        if ($item->condition === 'good') {
-            $item->product->increment('stock_quantity', $item->quantity);
-        } else {
-            $item->product->increment('defective_stock_quantity', $item->quantity);
-        }
+            StockMovementService::recordReturnedInventoryApproval(
+                $item->product,
+                $item->quantity,
+                $item->condition,
+                $item->shop_id,
+                $item
+            );
+        });
 
         return back()->with('success', 'Article approuvé et stock mis à jour.');
     }
