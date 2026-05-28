@@ -138,6 +138,7 @@ class DepotController extends Controller
                 'product_name'     => $dp->product->name,
                 'product_sku'      => $dp->product->sku,
                 'quantity'         => $dp->quantity,
+                'purchase_price'   => (float) $dp->purchase_price,
             ]);
 
         // Historique des 10 derniers transferts
@@ -415,6 +416,7 @@ class DepotController extends Controller
             'items'                => 'required|array|min:1',
             'items.*.product_id'   => 'required|exists:products,id',
             'items.*.quantity'     => 'required|integer|min:1',
+            'items.*.selling_price' => 'nullable|numeric|min:0',
         ]);
 
         // Vérifier le stock disponible pour chaque produit
@@ -479,6 +481,11 @@ class DepotController extends Controller
                     // Propager le prix d'achat du dépôt vers le produit de la boutique
                     if ($depotProduct->purchase_price > 0) {
                         $updates['purchase_price'] = $depotProduct->purchase_price;
+                    }
+
+                    // Appliquer le prix de vente saisi lors du transfert
+                    if (isset($item['selling_price']) && $item['selling_price'] > 0) {
+                        $updates['selling_price'] = $item['selling_price'];
                     }
 
                     if (!empty($updates)) {

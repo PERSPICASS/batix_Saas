@@ -42,6 +42,7 @@ interface DepotProductForTransfer {
     product_name: string;
     product_sku: string | null;
     quantity: number;
+    purchase_price: number;
 }
 
 interface RecentTransfer {
@@ -94,6 +95,7 @@ interface AddStockForm {
 interface TransferItem {
     product_id: string;
     quantity: string;
+    selling_price: string;
 }
 
 interface TransferForm {
@@ -153,13 +155,13 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const transferForm = useForm<TransferForm>({
         shop_id: '',
         notes: '',
-        items: [{ product_id: '', quantity: '1' }],
+        items: [{ product_id: '', quantity: '1', selling_price: '' }],
     });
 
     const transferDepotForm = useForm({
         target_depot_id: '',
         notes: '',
-        items: [{ product_id: '', quantity: '1' }] as TransferItem[],
+        items: [{ product_id: '', quantity: '1', selling_price: '' }] as TransferItem[],
     });
 
     const editForm = useForm({
@@ -748,7 +750,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Produits *</label>
                                     <button
                                         type="button"
-                                        onClick={() => transferForm.setData('items', [...(transferForm.data.items ?? []), { product_id: '', quantity: '1' }])}
+                                        onClick={() => transferForm.setData('items', [...(transferForm.data.items ?? []), { product_id: '', quantity: '1', selling_price: '' }])}
                                         className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
                                     >
                                         <Plus className="size-3.5" />
@@ -840,6 +842,45 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                 </div>
                                                 {(transferForm.errors as any)[`items.${index}.quantity`] && (
                                                     <p className="text-xs text-rose-500">{(transferForm.errors as any)[`items.${index}.quantity`]}</p>
+                                                )}
+                                                <div className="space-y-1.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="1"
+                                                            value={item.selling_price}
+                                                            onChange={e => {
+                                                                const newItems = [...(transferForm.data.items ?? [])];
+                                                                newItems[index] = { ...newItems[index], selling_price: e.target.value };
+                                                                transferForm.setData('items', newItems);
+                                                            }}
+                                                            className="w-32 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
+                                                            placeholder="Prix vente"
+                                                        />
+                                                        {depotProd && (
+                                                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                                PA : {Number(depotProd.purchase_price).toLocaleString('fr-FR')} FCFA
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {depotProd && item.selling_price && Number(item.selling_price) > 0 && (
+                                                        <div className="flex items-center gap-2 pl-0">
+                                                            {(() => {
+                                                                const margin = Number(item.selling_price) - depotProd.purchase_price;
+                                                                const marginPercent = depotProd.purchase_price > 0 ? ((margin / depotProd.purchase_price) * 100).toFixed(1) : 0;
+                                                                const marginColor = margin > 0 ? 'text-emerald-600 dark:text-emerald-400' : margin < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500';
+                                                                return (
+                                                                    <span className={`text-xs font-medium ${marginColor}`}>
+                                                                        Marge : {Number(margin).toLocaleString('fr-FR')} FCFA ({marginPercent}%)
+                                                                    </span>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {(transferForm.errors as any)[`items.${index}.selling_price`] && (
+                                                    <p className="text-xs text-rose-500">{(transferForm.errors as any)[`items.${index}.selling_price`]}</p>
                                                 )}
                                             </div>
                                             {(transferForm.data.items ?? []).length > 1 && (
@@ -1114,7 +1155,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Produits *</label>
                                     <button
                                         type="button"
-                                        onClick={() => transferDepotForm.setData('items', [...transferDepotForm.data.items, { product_id: '', quantity: '1' }])}
+                                        onClick={() => transferDepotForm.setData('items', [...transferDepotForm.data.items, { product_id: '', quantity: '1', selling_price: '' }])}
                                         className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-500 dark:text-amber-400"
                                     >
                                         <Plus className="size-3.5" />
