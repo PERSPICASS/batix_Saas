@@ -237,10 +237,14 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         setIsImporting(true);
         const formData = new FormData();
         formData.append('file', file);
-        const url = buildRoute('depots.stock.import', { depot: depot.id });
 
         // Récupérer le token CSRF depuis le meta tag
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            formData.append('_token', csrfToken);
+        }
+
+        const url = buildRoute('depots.stock.import', { depot: depot.id });
 
         fetch(url, {
             method: 'POST',
@@ -248,7 +252,6 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
-                ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
             },
         })
         .then(response => response.json().then(data => ({ response, data })))
