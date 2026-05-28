@@ -7,6 +7,7 @@ use App\Models\DepotProduct;
 use App\Models\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -70,6 +71,11 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         if (!$product && $name) {
             $product = Product::whereIn('shop_id', $this->shopIds)->where('name', $name)->first();
         }
+        // Chercher aussi par slug généré automatiquement pour éviter les doublons
+        if (!$product && $name) {
+            $slug = Str::slug($name);
+            $product = Product::whereIn('shop_id', $this->shopIds)->where('slug', $slug)->first();
+        }
 
         // 2. Si introuvable, créer le produit dans la boutique par défaut
         if (!$product) {
@@ -77,19 +83,32 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 throw new \Exception("Produit introuvable (SKU: {$sku}, code-barres: {$barcode}) et aucun nom fourni pour le créer.");
             }
 
-            $product = Product::create([
-                'name'           => $name,
-                'sku'            => $sku ?? ('SKU-' . strtoupper(substr(uniqid(), -8))),
-                'shop_id'        => $this->defaultShopId,
-                'stock_quantity' => 0,
-                'selling_price'  => 0,
-                'purchase_price' => $purchasePrice !== null ? (float) $purchasePrice : 0,
-                'unit'           => 'Pièce',
-                'is_active'      => false,
-                'track_stock'    => true,
-            ]);
+            try {
+                $product = Product::create([
+                    'name'           => $name,
+                    'sku'            => $sku ?? ('SKU-' . strtoupper(substr(uniqid(), -8))),
+                    'shop_id'        => $this->defaultShopId,
+                    'stock_quantity' => 0,
+                    'selling_price'  => 0,
+                    'purchase_price' => $purchasePrice !== null ? (float) $purchasePrice : 0,
+                    'unit'           => 'Pièce',
+                    'is_active'      => false,
+                    'track_stock'    => true,
+                ]);
 
-            $this->importedCount['products_created']++;
+                $this->importedCount['products_created']++;
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Si le produit existe déjà (contrainte unique), le chercher et l'utiliser
+                if (str_contains($e->getMessage(), 'unique') || str_contains($e->getMessage(), 'already exists')) {
+                    $slug = Str::slug($name);
+                    $product = Product::where('shop_id', $this->defaultShopId)->where('slug', $slug)->first();
+                    if (!$product) {
+                        throw new \Exception("Le produit '{$name}' existe déjà mais ne peut pas être trouvé.");
+                    }
+                } else {
+                    throw $e;
+                }
+            }
         }
 
         // 3. Mettre à jour ou créer l'entrée depot_products
