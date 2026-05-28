@@ -771,7 +771,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         (p.product_sku ?? '').toLowerCase().includes(searchTerm.toLowerCase())
                                     );
                                     return (
-                                        <div key={index} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
+                                        <div key={`transfer-item-${index}-${item.product_id || 'empty'}`} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
                                             <div className="flex-1 space-y-2">
                                                 {/* Combobox produit */}
                                                 <div className="relative">
@@ -1169,7 +1169,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 {transferDepotForm.data.items.map((item, index) => {
                                     const depotProd = products.data.find((p: DepotProductItem) => String(p.product_id) === item.product_id);
                                     return (
-                                        <div key={index} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
+                                        <div key={`depot-transfer-item-${index}-${item.product_id || 'empty'}`} className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-slate-800/50">
                                             <div className="flex-1 space-y-2">
                                                 <select
                                                     value={item.product_id}
