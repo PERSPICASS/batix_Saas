@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, Search, X, ChevronDown } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -172,6 +173,7 @@ function ProductCombobox({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function InventoryCreate({ shops, products }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { props } = usePage();

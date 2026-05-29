@@ -32,6 +32,7 @@ import {
     Cell,
     ComposedChart,
 } from 'recharts';
+import { useLocale } from '@/contexts/LocaleContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -186,6 +187,7 @@ export default function MRRDashboard({
     recent_churns,
     at_risk,
 }: Props) {
+    const { t } = useLocale();
     return (
         <AuthenticatedLayout
             header={

@@ -7,6 +7,7 @@ import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { FormEventHandler, useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Variation {
     id: number;
@@ -35,6 +36,7 @@ interface Props extends PageProps {
 }
 
 export default function VariationsIndex({ product, variations }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingVariation, setEditingVariation] = useState<Variation | null>(null);

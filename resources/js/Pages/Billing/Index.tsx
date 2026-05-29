@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { useState } from 'react';
 import Table, { TableBadge, TableActions, TableActionButton } from '@/Components/Table';
+import { useLocale } from '@/contexts/LocaleContext';
 import { AlertTriangle, Crown, Receipt, CreditCard, X, Download, RefreshCw } from 'lucide-react';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
@@ -144,6 +145,7 @@ function InvoiceModal({ inv, codeUser, onClose }: { inv: Invoice; codeUser: stri
 /* ── Main ───────────────────────────────────────────────────────────────── */
 
 export default function BillingIndex({ auth, invoices, deposits, currentSubscription }: Props) {
+    const { t } = useLocale();
     const [tab, setTab] = useState<'invoices' | 'deposits'>('invoices');
     const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
     const codeUser = auth.user?.code_user ?? '';

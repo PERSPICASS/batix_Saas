@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 import { useRoute } from '@/utils/route';
 import { PageProps } from '@/types';
 import { 
@@ -53,6 +54,7 @@ interface Props {
 
 export default function Settings({ shop, currencies, error }: Props) {
     const route = useRoute();
+    const { t } = useLocale();
     const { auth } = usePage<PageProps>().props;
     const isSuperAdmin = auth.user?.role === 'super_admin';
     const [logoPreview, setLogoPreview] = useState<string | null>(
@@ -103,8 +105,8 @@ export default function Settings({ shop, currencies, error }: Props) {
 
     if (error || !shop) {
         return (
-            <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Paramètres</h1>}>
-                <Head title="Paramètres" />
+            <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.settings.title}</h1>}>
+                <Head title={t.settings.title} />
                 <div className="mx-auto max-w-4xl">
                     <div className="rounded-2xl border border-red-500/20 bg-red-900/10 p-6">
                         <div className="flex items-center gap-3">
@@ -118,8 +120,8 @@ export default function Settings({ shop, currencies, error }: Props) {
     }
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Paramètres de la Boutique</h1>}>
-            <Head title="Paramètres" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.settings.title}</h1>}>
+            <Head title={t.settings.title} />
 
             <div className="mx-auto max-w-4xl">
                 {/* Bannière d'information pour super_admin */}
@@ -148,7 +150,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="mb-6 flex items-center gap-2">
                             <Store className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">Informations générales</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.general}</h2>
                         </div>
 
                         <div className="space-y-4">
@@ -414,7 +416,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="mb-6 flex items-center gap-2">
                             <FileText className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">Configuration des factures</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.invoices}</h2>
                         </div>
 
                         <div className="space-y-4">
@@ -463,7 +465,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                     <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="flex items-center gap-2">
                             {recentlySuccessful && (
-                                <span className="text-sm text-green-400">✓ Paramètres enregistrés</span>
+                                <span className="text-sm text-green-400">✓ {t.settings.saveSuccess}</span>
                             )}
                         </div>
                         <button
@@ -472,7 +474,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                             className="flex items-center gap-2 rounded-lg bg-amber-300 px-6 py-2.5 text-sm font-semibold text-slate-900 hover:bg-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
                         >
                             <Save className="h-4 w-4" />
-                            {processing ? 'Enregistrement...' : 'Enregistrer les paramètres'}
+                            {processing ? t.settings.saving : t.settings.save}
                         </button>
                     </div>
                 </form>

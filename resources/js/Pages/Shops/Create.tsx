@@ -3,8 +3,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { Store, MapPin, Phone, Mail, FileText, Globe } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Create() {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { data, setData, post, processing, errors } = useForm({

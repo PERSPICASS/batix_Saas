@@ -27,6 +27,7 @@ use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\DepotController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\JekoController;
 use App\Http\Controllers\PawaPayController;
 use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
@@ -80,6 +81,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pawapay/initiate/{plan}', [PawaPayController::class, 'initiate'])->name('pawapay.initiate');
     Route::get('/pawapay/status/{depositId}', [PawaPayController::class, 'pollStatus'])->name('pawapay.status');
     Route::post('/pawapay/simulate/{depositId}', [PawaPayController::class, 'simulate'])->name('pawapay.simulate');
+});
+
+// Routes Jèko (webhook public, success/error public redirects, initiate with auth)
+Route::post('/jeko/webhook', [JekoController::class, 'webhook'])
+    ->name('jeko.webhook')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook, no CSRF
+
+Route::get('/jeko/success', [JekoController::class, 'success'])->name('jeko.success');
+Route::get('/jeko/error', [JekoController::class, 'error'])->name('jeko.error');
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/jeko/initiate/{plan}', [JekoController::class, 'initiate'])->name('jeko.initiate');
 });
 
 // Routes publiques pour les invitations (avant auth)

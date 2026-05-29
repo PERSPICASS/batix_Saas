@@ -5,6 +5,7 @@ import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState } from 'react';
 import { PageProps } from '@/types';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Product {
     id: number;
@@ -88,6 +89,7 @@ const reasonLabels: Record<string, string> = {
 
 export default function ReturnedInventoryIndex({ items, auth, filters }: Props) {
     const route = useRoute();
+    const { t } = useLocale();
     const [processing, setProcessing] = useState<number | null>(null);
     const [showFilters, setShowFilters] = useState(false);
     const [confirmModal, setConfirmModal] = useState<{ show: boolean; action: 'approve' | 'reject' | null; itemId: number | null }>({

@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Package, Calendar, User, MapPin, FileText } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import ProductImage from '@/Components/ProductImage';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -39,6 +40,7 @@ interface Props {
 }
 
 export default function StocksShow({ movement }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const getTypeBadge = (type: string) => {

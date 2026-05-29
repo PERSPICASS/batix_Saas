@@ -6,6 +6,7 @@ import ConfirmDialog from '@/Components/ConfirmDialog';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
 import SubscriptionBanner, { useSubscriptionLimits } from '@/Components/SubscriptionBanner';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -38,15 +39,6 @@ interface Props {
     remainingUsers: number;
 }
 
-const roleLabels: Record<string, string> = {
-    super_admin: 'Super Admin',
-    admin_platforme: 'Admin Plateforme',
-    admin: 'Administrateur',
-    manager: 'Gestionnaire',
-    cashier: 'Caissier',
-    staff: 'Personnel',
-};
-
 const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'danger'> = {
     super_admin: 'danger',
     admin_platforme: 'danger',
@@ -58,6 +50,7 @@ const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'd
 
 export default function UsersIndex({ users, canCreateUser, remainingUsers }: Props) {
     const route = useRoute();
+    const { t } = useLocale();
     const subscription = useSubscriptionLimits();
 
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -85,7 +78,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
     const columns = [
         {
             key: 'name',
-            label: 'Nom',
+            label: t.users.columns.name,
             render: (user: User) => (
                 <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-300/20 text-sm font-semibold text-amber-300">
@@ -97,7 +90,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
         },
         {
             key: 'email',
-            label: 'Email',
+            label: t.users.columns.email,
             render: (user: User) => (
                 <div className="flex items-center gap-2 text-slate-300">
                     <Mail className="size-4" />
@@ -107,7 +100,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
         },
         {
             key: 'shop',
-            label: 'Boutique',
+            label: t.users.columns.shop,
             render: (user: User) => (
                 <div className="flex items-center gap-2 text-slate-300">
                     {user.shop ? (
@@ -123,28 +116,28 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
         },
         {
             key: 'role',
-            label: 'Rôle',
+            label: t.users.columns.role,
             align: 'center' as const,
             render: (user: User) => (
                 <TableBadge variant={roleColors[user.role] || 'info'}>
                     <Shield className="size-3" />
-                    {roleLabels[user.role] || user.role}
+                    {(t.users.roles as Record<string, string>)[user.role] || user.role}
                 </TableBadge>
             ),
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.users.columns.status,
             align: 'center' as const,
             render: (user: User) => (
                 <TableBadge variant={user.is_active ? 'success' : 'danger'}>
-                    {user.is_active ? 'Actif' : 'Inactif'}
+                    {user.is_active ? t.common.status.active : t.common.status.inactive}
                 </TableBadge>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t.users.columns.actions,
             align: 'right' as const,
             render: (user: User) => (
                 <TableActions>
@@ -152,10 +145,10 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
                         href={route('users.edit', { user: user.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
-                        <Pencil className="size-3.5" /> Modifier
+                        <Pencil className="size-3.5" /> {t.users.actions.edit}
                     </Link>
                     <TableActionButton variant="danger" onClick={() => handleDeleteClick(user)}>
-                        <Trash2 className="size-3.5" /> Supprimer
+                        <Trash2 className="size-3.5" /> {t.users.actions.delete}
                     </TableActionButton>
                 </TableActions>
             ),
@@ -163,27 +156,20 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Utilisateurs</h1>}>
-            <Head title="Utilisateurs" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.users.title}</h1>}>
+            <Head title={t.users.title} />
 
             <section className="space-y-6">
-                {/* Bannière d'abonnement */}
                 {subscription && <SubscriptionBanner type="users" />}
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-slate-300">
-                            Gérez les comptes utilisateurs et leurs permissions
-                        </p>
+                        <p className="text-sm text-slate-300">{t.users.subtitle}</p>
                         {!canCreateUser && remainingUsers === 0 && (
-                            <p className="mt-1 text-xs text-amber-400">
-                                Limite atteinte. Passez à un plan supérieur pour ajouter des utilisateurs.
-                            </p>
+                            <p className="mt-1 text-xs text-amber-400">{t.users.limitReached}</p>
                         )}
                         {remainingUsers > 0 && (
-                            <p className="mt-1 text-xs text-slate-400">
-                                {remainingUsers} utilisateur{remainingUsers > 1 ? 's' : ''} restant{remainingUsers > 1 ? 's' : ''}
-                            </p>
+                            <p className="mt-1 text-xs text-slate-400">{t.users.remaining(remainingUsers)}</p>
                         )}
                     </div>
                     <Link
@@ -193,17 +179,13 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
                                 ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
                                 : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                         }`}
-                        onClick={(e) => {
-                            if (!canCreateUser) {
-                                e.preventDefault();
-                            }
-                        }}
+                        onClick={(e) => { if (!canCreateUser) e.preventDefault(); }}
                     >
-                        <Plus className="size-4" /> Nouvel utilisateur
+                        <Plus className="size-4" /> {t.users.actions.new}
                     </Link>
                 </div>
 
-                <Table columns={columns} data={users.data} emptyMessage="Aucun utilisateur trouvé" />
+                <Table columns={columns} data={users.data} emptyMessage={t.users.emptyMessage} />
 
                 {users.links && (
                     <div className="flex items-center justify-center gap-1">
@@ -228,10 +210,8 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
                 show={showDeleteDialog}
                 onClose={() => setShowDeleteDialog(false)}
                 onConfirm={handleConfirmDelete}
-                title="Supprimer l'utilisateur"
-                message={`Êtes-vous sûr de vouloir supprimer l'utilisateur "${userToDelete?.name}" ? Cette action est irréversible.`}
-                confirmText="Supprimer"
-                cancelText="Annuler"
+                title={t.users.deleteTitle}
+                message={t.users.deleteMessage(userToDelete?.name ?? '')}
                 type="danger"
                 isProcessing={isDeleting}
             />

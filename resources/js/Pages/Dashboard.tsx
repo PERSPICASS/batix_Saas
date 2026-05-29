@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Calendar, Package, ShoppingCart, Store, TrendingUp, Wallet } from 'lucide-react';
 import FreeTrialBanner from '@/Components/FreeTrialBanner';
 import GettingStarted from '@/Components/GettingStarted';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface PerformanceItem {
     label: string;
@@ -43,15 +44,6 @@ interface DashboardProps {
     };
 }
 
-const periods = [
-    { value: 'day', label: 'Jour', shortLabel: '24h' },
-    { value: 'week', label: 'Semaine', shortLabel: '7j' },
-    { value: 'month', label: 'Mois', shortLabel: '4sem' },
-    { value: 'quarter', label: 'Trimestre', shortLabel: '3m' },
-    { value: 'semester', label: 'Semestre', shortLabel: '6m' },
-    { value: 'year', label: 'Année', shortLabel: '12m' },
-];
-
 function formatNumber(value: number): string {
     if (value >= 1000000) {
         return (value / 1000000).toFixed(1).replace('.', ',') + 'M';
@@ -67,7 +59,17 @@ function formatCurrency(value: number, symbol: string): string {
 }
 
 export default function Dashboard({ stats, performanceData, currentPeriod, recentActivities, currencySymbol, onboarding }: DashboardProps) {
-    
+    const { t } = useLocale();
+
+    const periods = [
+        { value: 'day', label: t.dashboard.periods.day, shortLabel: t.dashboard.periods.dayShort },
+        { value: 'week', label: t.dashboard.periods.week, shortLabel: t.dashboard.periods.weekShort },
+        { value: 'month', label: t.dashboard.periods.month, shortLabel: t.dashboard.periods.monthShort },
+        { value: 'quarter', label: t.dashboard.periods.quarter, shortLabel: t.dashboard.periods.quarterShort },
+        { value: 'semester', label: t.dashboard.periods.semester, shortLabel: t.dashboard.periods.semesterShort },
+        { value: 'year', label: t.dashboard.periods.year, shortLabel: t.dashboard.periods.yearShort },
+    ];
+
     const handlePeriodChange = (period: string) => {
         router.get(window.location.pathname, { period }, {
             preserveState: true,
@@ -77,7 +79,7 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
 
     const kpis = [
         {
-            label: 'CA du jour',
+            label: t.dashboard.kpis.revenue,
             value: formatCurrency(stats.todaySales, currencySymbol),
             trend: stats.salesTrend,
             trendLabel: stats.salesTrend >= 0 ? `+${stats.salesTrend}%` : `${stats.salesTrend}%`,
@@ -85,26 +87,26 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
             positive: stats.salesTrend >= 0,
         },
         {
-            label: 'Boutiques actives',
+            label: t.dashboard.kpis.activeShops,
             value: `${stats.activeShops} / ${stats.totalShops}`,
             trend: null,
-            trendLabel: 'En ligne',
+            trendLabel: t.dashboard.kpis.online,
             icon: Store,
             positive: true,
         },
         {
-            label: 'Produits en stock',
+            label: t.dashboard.kpis.productsInStock,
             value: formatNumber(stats.productsInStock),
             trend: stats.newProductsThisWeek,
-            trendLabel: `+${stats.newProductsThisWeek} cette semaine`,
+            trendLabel: t.dashboard.kpis.thisWeek(stats.newProductsThisWeek),
             icon: Package,
             positive: true,
         },
         {
-            label: 'Alertes stock',
+            label: t.dashboard.kpis.stockAlerts,
             value: stats.lowStockAlerts.toString(),
             trend: null,
-            trendLabel: stats.lowStockAlerts > 0 ? 'À traiter' : 'RAS',
+            trendLabel: stats.lowStockAlerts > 0 ? t.dashboard.kpis.toProcess : t.dashboard.kpis.ok,
             icon: AlertTriangle,
             positive: stats.lowStockAlerts === 0,
         },
@@ -123,27 +125,23 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
         }
     };
 
-    // Adapter le nombre de colonnes selon le nombre d'items
     const getGridCols = () => {
         const count = performanceData.items.length;
         if (count <= 4) return 'grid-cols-4';
         if (count <= 6) return 'grid-cols-6';
         if (count <= 7) return 'grid-cols-7';
         if (count <= 12) return 'grid-cols-12';
-        return 'grid-cols-12'; // Pour 24h, on scrolle
+        return 'grid-cols-12';
     };
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Dashboard</h1>}
+            header={<h1 className="text-xl font-semibold text-white">{t.dashboard.title}</h1>}
         >
-            <Head title="Dashboard" />
+            <Head title={t.dashboard.title} />
 
             <section className="space-y-6">
-                {/* Bannière d'essai gratuit */}
                 <FreeTrialBanner />
-
-                {/* Checklist onboarding */}
                 <GettingStarted onboarding={onboarding} />
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -173,14 +171,13 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                     <article className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl xl:col-span-2">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h2 className="text-lg font-semibold text-white">Performance</h2>
+                                <h2 className="text-lg font-semibold text-white">{t.dashboard.performance.title}</h2>
                                 <p className="mt-1 flex items-center gap-2 text-sm text-slate-300">
                                     <Calendar className="size-4" />
                                     {performanceData.periodLabel}
                                 </p>
                             </div>
-                            
-                            {/* Sélecteur de période */}
+
                             <div className="flex flex-wrap gap-1">
                                 {periods.map((period) => (
                                     <button
@@ -218,18 +215,17 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                                     </div>
                                 ))}
                             </div>
-                            
-                            {/* Afficher les 12 dernières heures pour "day" */}
+
                             {currentPeriod === 'day' && (
                                 <p className="mt-2 text-xs text-slate-500 text-center">
-                                    Faites défiler pour voir les 24 heures
+                                    {t.dashboard.performance.scrollHint}
                                 </p>
                             )}
                         </div>
-                        
+
                         {performanceData.items.length > 0 && (
                             <div className="mt-4 flex items-center justify-between text-sm border-t border-white/10 pt-4">
-                                <span className="text-slate-400">Total période:</span>
+                                <span className="text-slate-400">{t.dashboard.performance.totalLabel}</span>
                                 <span className="font-semibold text-white text-lg">
                                     {formatCurrency(performanceData.total, currencySymbol)}
                                 </span>
@@ -238,13 +234,13 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                     </article>
 
                     <article className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="text-lg font-semibold text-white">Activité récente</h2>
+                        <h2 className="text-lg font-semibold text-white">{t.dashboard.recentActivity.title}</h2>
                         {recentActivities.length === 0 ? (
                             <div className="mt-4 flex flex-col items-center justify-center py-8 text-center">
                                 <Package className="size-12 text-slate-600" />
-                                <p className="mt-2 text-sm text-slate-400">Aucune activité récente</p>
+                                <p className="mt-2 text-sm text-slate-400">{t.dashboard.recentActivity.empty}</p>
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Les ventes et mouvements de stock apparaîtront ici
+                                    {t.dashboard.recentActivity.emptyHint}
                                 </p>
                             </div>
                         ) : (

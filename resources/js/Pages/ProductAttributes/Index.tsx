@@ -5,6 +5,7 @@ import { PageProps } from '@/types';
 import { useRoute } from '@/utils/route';
 import { FormEventHandler, useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface AttributeValue {
     id: number;
@@ -22,6 +23,7 @@ interface Attribute {
 }
 
 export default function ProductAttributesIndex({ attributes }: PageProps<{ attributes: Attribute[] }>) {
+    const { t } = useLocale();
     const route = useRoute();
     const [expandedAttributes, setExpandedAttributes] = useState<number[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);

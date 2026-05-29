@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -32,59 +33,60 @@ interface Props {
 
 export default function CustomersIndex({ customers }: Props) {
     const route = useRoute();
+    const { t } = useLocale();
 
     const handleDelete = (customer: Customer) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer le client "${customer.name}" ?`)) {
+        if (confirm(t.customers.deleteConfirm(customer.name))) {
             router.delete(route('customers.destroy', { customer: customer.id }));
         }
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Clients</h1>}>
-            <Head title="Clients" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.customers.title}</h1>}>
+            <Head title={t.customers.title} />
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-slate-300">
-                        {customers.data.length} client{customers.data.length > 1 ? 's' : ''}
+                        {t.customers.count(customers.data.length)}
                     </p>
                     <Link
                         href={route('customers.create')}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                     >
-                        <Plus className="size-4" /> Nouveau client
+                        <Plus className="size-4" /> {t.customers.actions.new}
                     </Link>
                 </div>
 
                 <Table
                     data={customers.data}
                     columns={[
-                        { key: 'name', label: 'Nom' },
-                        { key: 'email', label: 'Email' },
-                        { key: 'phone', label: 'Téléphone' },
+                        { key: 'name', label: t.customers.columns.name },
+                        { key: 'email', label: t.customers.columns.email },
+                        { key: 'phone', label: t.customers.columns.phone },
                         {
                             key: 'total_purchases',
-                            label: 'Total achats',
+                            label: t.customers.columns.totalPurchases,
                             align: 'right',
                             render: (customer) => <Currency amount={parseFloat(customer.total_purchases)} />,
                         },
                         {
                             key: 'is_active',
-                            label: 'Statut',
+                            label: t.customers.columns.status,
                             align: 'center',
                             render: (customer) => (
                                 <TableBadge variant={customer.is_active ? 'success' : 'danger'}>
-                                    {customer.is_active ? 'Actif' : 'Inactif'}
+                                    {customer.is_active ? t.customers.status.active : t.customers.status.inactive}
                                 </TableBadge>
                             ),
                         },
                         {
                             key: 'shop',
-                            label: 'Boutique',
+                            label: t.customers.columns.shop,
                             render: (customer) => customer.shop.name,
                         },
                         {
                             key: 'actions',
-                            label: 'Actions',
+                            label: t.customers.columns.actions,
                             align: 'right',
                             render: (customer) => (
                                 <TableActions>
@@ -92,19 +94,18 @@ export default function CustomersIndex({ customers }: Props) {
                                         href={route('customers.edit', { customer: customer.id })}
                                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                                     >
-                                        <Pencil className="size-3.5" /> Modifier
+                                        <Pencil className="size-3.5" /> {t.customers.actions.edit}
                                     </Link>
                                     <TableActionButton variant="danger" onClick={() => handleDelete(customer)}>
-                                        <Trash2 className="size-3.5" /> Supprimer
+                                        <Trash2 className="size-3.5" /> {t.customers.actions.delete}
                                     </TableActionButton>
                                 </TableActions>
                             ),
                         },
                     ]}
-                    emptyMessage="Aucun client trouvé"
+                    emptyMessage={t.customers.emptyMessage}
                 />
 
-                {/* Pagination */}
                 {customers.links && (
                     <div className="flex items-center justify-center gap-1">
                         {customers.links.map((link: any, index: number) => (

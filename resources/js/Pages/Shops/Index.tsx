@@ -6,6 +6,7 @@ import { useRoute } from '@/utils/route';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import SubscriptionBanner, { useSubscriptionLimits } from '@/Components/SubscriptionBanner';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -32,6 +33,7 @@ interface ShopsPageProps extends PageProps {
 
 export default function Index({ shops, canCreateShop, remainingShops }: ShopsPageProps) {
     const route = useRoute();
+    const { t } = useLocale();
     const subscription = useSubscriptionLimits();
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; shop: Shop | null }>({ show: false, shop: null });
     const [deleting, setDeleting] = useState(false);
@@ -53,25 +55,20 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Mes Boutiques</h1>}>
-            <Head title="Mes Boutiques" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.shops.titleLong}</h1>}>
+            <Head title={t.shops.titleLong} />
 
             <section className="space-y-6">
-                {/* Bannière d'abonnement */}
                 {subscription && <SubscriptionBanner type="shops" />}
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-slate-300">Gérez vos boutiques et points de vente</p>
+                        <p className="text-sm text-slate-300">{t.shops.subtitle}</p>
                         {!canCreateShop && remainingShops === 0 && (
-                            <p className="mt-1 text-xs text-amber-400">
-                                Limite atteinte. Passez à un plan supérieur pour ajouter des boutiques.
-                            </p>
+                            <p className="mt-1 text-xs text-amber-400">{t.shops.limitReached}</p>
                         )}
                         {remainingShops > 0 && (
-                            <p className="mt-1 text-xs text-slate-400">
-                                {remainingShops} boutique{remainingShops > 1 ? 's' : ''} restante{remainingShops > 1 ? 's' : ''}
-                            </p>
+                            <p className="mt-1 text-xs text-slate-400">{t.shops.remaining(remainingShops)}</p>
                         )}
                     </div>
                     <Link
@@ -81,13 +78,9 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                                 ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
                                 : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                         }`}
-                        onClick={(e) => {
-                            if (!canCreateShop) {
-                                e.preventDefault();
-                            }
-                        }}
+                        onClick={(e) => { if (!canCreateShop) e.preventDefault(); }}
                     >
-                        <Plus className="size-4" /> Nouvelle boutique
+                        <Plus className="size-4" /> {t.shops.actions.new}
                     </Link>
                 </div>
 
@@ -96,10 +89,8 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-amber-300/20">
                             <Store className="size-8 text-amber-300" />
                         </div>
-                        <h3 className="mb-2 text-lg font-semibold text-white">Aucune boutique</h3>
-                        <p className="mb-6 text-sm text-slate-400">
-                            Commencez par créer votre première boutique pour gérer vos produits et ventes.
-                        </p>
+                        <h3 className="mb-2 text-lg font-semibold text-white">{t.shops.empty.title}</h3>
+                        <p className="mb-6 text-sm text-slate-400">{t.shops.empty.description}</p>
                         <Link
                             href={canCreateShop ? route('shops.create') : '#'}
                             className={`inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold ${
@@ -107,13 +98,9 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                                     ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
                                     : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
                             }`}
-                            onClick={(e) => {
-                                if (!canCreateShop) {
-                                    e.preventDefault();
-                                }
-                            }}
+                            onClick={(e) => { if (!canCreateShop) e.preventDefault(); }}
                         >
-                            <Plus className="size-4" /> Créer ma première boutique
+                            <Plus className="size-4" /> {t.shops.empty.cta}
                         </Link>
                     </div>
                 ) : (
@@ -128,12 +115,12 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                                     {shop.is_active ? (
                                         <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2.5 py-1 text-xs font-medium text-green-400">
                                             <span className="size-1.5 rounded-full bg-green-400"></span>
-                                            Active
+                                            {t.common.status.active}
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 rounded-full bg-red-500/20 px-2.5 py-1 text-xs font-medium text-red-400">
                                             <span className="size-1.5 rounded-full bg-red-400"></span>
-                                            Inactive
+                                            {t.common.status.inactive}
                                         </span>
                                     )}
                                 </div>
@@ -236,7 +223,7 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                     show={deleteModal.show}
                     onClose={() => setDeleteModal({ show: false, shop: null })}
                     onConfirm={confirmDelete}
-                    message={`Êtes-vous sûr de vouloir supprimer la boutique "${deleteModal.shop?.name}" ?`}
+                    message={t.shops.deleteConfirm(deleteModal.shop?.name ?? '')}
                     processing={deleting}
                 />
             </section>

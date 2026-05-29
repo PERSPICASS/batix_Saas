@@ -7,6 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Supplier {
     id: number;
@@ -213,6 +214,7 @@ function PurchaseProductCombobox({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PurchasesEdit({ code_user, suppliers, products, currency, purchase }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     // Initialiser les items à partir du bon de commande existant

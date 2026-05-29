@@ -4,6 +4,7 @@ import { Search, Store, Power, User, Package } from 'lucide-react';
 import Table, { TableActions, TableBadge } from '@/Components/Table';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Owner {
     id: number;
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function PlatformAdminShops({ shops, filters }: Props) {
+    const { t } = useLocale();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [confirmToggle, setConfirmToggle] = useState<number | null>(null);
 

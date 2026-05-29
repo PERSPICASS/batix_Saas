@@ -5,8 +5,10 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import { Warehouse } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Create() {
+    const { t } = useLocale();
     const buildRoute = useRoute();
 
     const { data, setData, post, processing, errors } = useForm({

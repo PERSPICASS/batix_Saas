@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef, useEffect } from 'react';
 import { useRoute } from '@/utils/route';
 import { Search, X, ChevronDown } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function StocksCreate({ shops, products }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { props } = usePage();

@@ -4,6 +4,7 @@ import { Building2, Mail, Phone, MapPin, Globe, FileText, Package, ArrowLeft, Pe
 import Currency from '@/Components/Currency';
 import ProductImage from '@/Components/ProductImage';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Product {
     id: number;
@@ -38,6 +39,7 @@ interface Props {
 }
 
 export default function SuppliersShow({ supplier }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     return (

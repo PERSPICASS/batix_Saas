@@ -6,6 +6,7 @@ import Currency from '@/Components/Currency';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import ProductImage from '@/Components/ProductImage';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -52,6 +53,7 @@ interface Props {
 }
 
 export default function InventoryShow({ inventory }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const [completeModal, setCompleteModal] = useState(false);
     const [processing, setProcessing] = useState(false);

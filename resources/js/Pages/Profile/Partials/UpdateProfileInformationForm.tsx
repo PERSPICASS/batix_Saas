@@ -6,6 +6,7 @@ import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { User, Mail, CheckCircle } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
@@ -16,6 +17,7 @@ export default function UpdateProfileInformation({
     status?: string;
     className?: string;
 }) {
+    const { t } = useLocale();
     const user = usePage().props.auth.user!;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =

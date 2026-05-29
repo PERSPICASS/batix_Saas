@@ -11,6 +11,7 @@ import {
     XCircle
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Stats {
     total_accounts: number;
@@ -85,6 +86,7 @@ const COLORS = {
 const PIE_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#a855f7', '#f97316'];
 
 export default function PlatformAdminDashboard({ stats, charts, recent_accounts, recent_shops }: Props) {
+    const { t } = useLocale();
     const kpis = [
         {
             label: 'Comptes totaux',

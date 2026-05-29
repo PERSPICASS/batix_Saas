@@ -4,6 +4,7 @@ import { useRoute } from '@/utils/route';
 import { ArrowUpRight, Plus, Warehouse, X } from 'lucide-react';
 import { useState } from 'react';
 import ProductImage from '@/Components/ProductImage';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Transfer {
     id: number;
@@ -76,6 +77,7 @@ const statusClass: Record<string, string> = {
 };
 
 export default function Transfers({ depot, transfers, shops, depotProducts }: Props) {
+    const { t } = useLocale();
     const buildRoute = useRoute();
     const [showForm, setShowForm] = useState(false);
 

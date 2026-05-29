@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Package, User, DollarSign, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Preorder {
     id: number;
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function Show({ preorder }: Props) {
+    const { t } = useLocale();
     const [showStatusModal, setShowStatusModal] = useState(false);
     const { data, setData, patch, processing, errors } = useForm({
         status: preorder.status,

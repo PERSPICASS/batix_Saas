@@ -1,6 +1,7 @@
 import { usePage, Link } from '@inertiajs/react';
-import { CheckCircle2, Circle, Store, Package, ShoppingCart, ChevronRight, X } from 'lucide-react';
+import { CheckCircle2, Store, Package, ShoppingCart, ChevronRight, X } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Onboarding {
     has_shop: boolean;
@@ -9,47 +10,39 @@ interface Onboarding {
     is_complete: boolean;
 }
 
-interface Step {
-    key: keyof Omit<Onboarding, 'is_complete'>;
-    label: string;
-    description: string;
-    icon: React.ElementType;
-    href: string;
-    cta: string;
-}
-
 export default function GettingStarted({ onboarding }: { onboarding: Onboarding }) {
     const { auth, routeParams } = usePage<any>().props;
     const [dismissed, setDismissed] = useState(false);
+    const { t } = useLocale();
 
     if (onboarding.is_complete || dismissed) return null;
 
     const codeUser = auth?.user?.code_user ?? routeParams?.code_user ?? '';
 
-    const steps: Step[] = [
+    const steps = [
         {
-            key: 'has_shop',
-            label: 'Créer votre boutique',
-            description: 'Configurez votre première boutique pour commencer.',
+            key: 'has_shop' as const,
+            label: t.gettingStarted.steps.shop.label,
+            description: t.gettingStarted.steps.shop.description,
             icon: Store,
             href: `/${codeUser}/boutiques/create`,
-            cta: 'Créer une boutique',
+            cta: t.gettingStarted.steps.shop.cta,
         },
         {
-            key: 'has_product',
-            label: 'Ajouter vos produits',
-            description: 'Renseignez votre catalogue de produits et stocks.',
+            key: 'has_product' as const,
+            label: t.gettingStarted.steps.product.label,
+            description: t.gettingStarted.steps.product.description,
             icon: Package,
             href: `/${codeUser}/produits/create`,
-            cta: 'Ajouter un produit',
+            cta: t.gettingStarted.steps.product.cta,
         },
         {
-            key: 'has_sale',
-            label: 'Effectuer une vente',
-            description: 'Enregistrez votre première transaction.',
+            key: 'has_sale' as const,
+            label: t.gettingStarted.steps.sale.label,
+            description: t.gettingStarted.steps.sale.description,
             icon: ShoppingCart,
             href: `/${codeUser}/ventes/create`,
-            cta: 'Nouvelle vente',
+            cta: t.gettingStarted.steps.sale.cta,
         },
     ];
 
@@ -58,14 +51,13 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
 
     return (
         <div className="rounded-2xl border border-amber-300/20 bg-gradient-to-br from-amber-300/10 via-amber-200/5 to-transparent p-6">
-            {/* Header */}
             <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-base font-bold text-white">Démarrage rapide</h2>
+                    <h2 className="text-base font-bold text-white">{t.gettingStarted.title}</h2>
                     <p className="mt-0.5 text-sm text-slate-400">
                         {completedCount === 0
-                            ? 'Suivez ces 3 étapes pour lancer votre activité.'
-                            : `${completedCount} sur ${steps.length} étapes complétées.`}
+                            ? t.gettingStarted.progressZero
+                            : t.gettingStarted.progressN(completedCount, steps.length)}
                     </p>
                 </div>
                 <button
@@ -77,7 +69,6 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                 </button>
             </div>
 
-            {/* Progress bar */}
             <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                 <div
                     className="h-full rounded-full bg-amber-300 transition-all duration-500"
@@ -85,7 +76,6 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                 />
             </div>
 
-            {/* Steps */}
             <div className="space-y-3">
                 {steps.map((step, idx) => {
                     const done = onboarding[step.key];
@@ -103,7 +93,6 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                                     : 'border-white/5 bg-white/3'
                             }`}
                         >
-                            {/* Step number / check */}
                             <div className={`flex size-8 shrink-0 items-center justify-center rounded-full ${
                                 done ? 'bg-emerald-500/20' : isNext ? 'bg-amber-300/20' : 'bg-white/5'
                             }`}>
@@ -116,7 +105,6 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                                 )}
                             </div>
 
-                            {/* Content */}
                             <div className="min-w-0 flex-1">
                                 <p className={`text-sm font-semibold ${done ? 'text-slate-400 line-through' : 'text-white'}`}>
                                     {step.label}
@@ -126,7 +114,6 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                                 )}
                             </div>
 
-                            {/* CTA */}
                             {!done && (
                                 <Link
                                     href={step.href}

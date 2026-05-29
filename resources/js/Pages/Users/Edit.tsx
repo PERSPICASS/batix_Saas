@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState, useEffect } from 'react';
 import { Shield, Check } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -73,6 +74,7 @@ const ROLES = [
 ];
 
 export default function UsersEdit({ user, shops, currentUserRole }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const isSuperAdmin = currentUserRole === 'super_admin';
 

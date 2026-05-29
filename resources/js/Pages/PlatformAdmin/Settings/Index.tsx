@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Save, Loader2, Settings, CreditCard, Phone, Globe, Mail } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Settings {
     general: {
@@ -25,6 +26,7 @@ interface Props extends PageProps {
 }
 
 export default function PlatformSettings({ settings }: Props) {
+    const { t } = useLocale();
     const { data, setData, patch, processing, errors, recentlySuccessful } = useForm({
         general: { ...settings.general },
         payment: { ...settings.payment },

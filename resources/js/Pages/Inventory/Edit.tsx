@@ -5,6 +5,7 @@ import { ArrowLeft, Plus, Trash2, Search, ScanLine, CheckCircle, AlertCircle } f
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
 import BarcodeScanner from '@/Components/BarcodeScanner';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -56,6 +57,7 @@ interface FormItem {
 type ScanFeedback = { type: 'success' | 'added' | 'error'; message: string } | null;
 
 export default function InventoryEdit({ inventory, shops, products }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const [searchProduct, setSearchProduct] = useState('');
     const [showScanner, setShowScanner] = useState(false);

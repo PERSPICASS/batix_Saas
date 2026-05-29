@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { AlertCircle, Check, X } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface SubscriptionLimits {
     has_subscription: boolean;
@@ -27,6 +28,7 @@ interface SubscriptionBannerProps {
 
 export default function SubscriptionBanner({ type, className = '' }: SubscriptionBannerProps) {
     const { subscription } = usePage<PageProps & { subscription: SubscriptionLimits | null }>().props;
+    const { t } = useLocale();
 
     if (!subscription || !subscription.has_subscription) {
         return (
@@ -34,9 +36,9 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
                 <div className="flex items-start gap-3">
                     <AlertCircle className="size-5 text-rose-400" />
                     <div className="flex-1">
-                        <h3 className="font-semibold text-rose-200">Aucun abonnement actif</h3>
+                        <h3 className="font-semibold text-rose-200">{t.subscriptionBanner.noSubscription.title}</h3>
                         <p className="mt-1 text-sm text-rose-300">
-                            Vous devez avoir un abonnement actif pour créer des boutiques et des utilisateurs.
+                            {t.subscriptionBanner.noSubscription.description}
                         </p>
                     </div>
                 </div>
@@ -49,7 +51,7 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
             return (
                 <div className="flex items-center gap-2 text-sm text-emerald-400">
                     <Check className="size-4" />
-                    <span>Boutiques illimitées</span>
+                    <span>{t.subscriptionBanner.unlimitedShops}</span>
                 </div>
             );
         }
@@ -65,8 +67,8 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
                     <Check className="size-4 text-emerald-400" />
                 )}
                 <span className={isAtLimit ? 'text-rose-300' : isNearLimit ? 'text-amber-300' : 'text-slate-300'}>
-                    {subscription.current_shops} / {subscription.max_shops} boutiques utilisées
-                    {subscription.remaining_shops > 0 && ` (${subscription.remaining_shops} restante${subscription.remaining_shops > 1 ? 's' : ''})`}
+                    {t.subscriptionBanner.shopsUsed(subscription.current_shops, subscription.max_shops)}
+                    {subscription.remaining_shops > 0 && ` ${t.subscriptionBanner.remaining(subscription.remaining_shops, true)}`}
                 </span>
             </div>
         );
@@ -77,7 +79,7 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
             return (
                 <div className="flex items-center gap-2 text-sm text-emerald-400">
                     <Check className="size-4" />
-                    <span>Utilisateurs illimités</span>
+                    <span>{t.subscriptionBanner.unlimitedUsers}</span>
                 </div>
             );
         }
@@ -93,18 +95,18 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
                     <Check className="size-4 text-emerald-400" />
                 )}
                 <span className={isAtLimit ? 'text-rose-300' : isNearLimit ? 'text-amber-300' : 'text-slate-300'}>
-                    {subscription.current_users} / {subscription.max_users} utilisateurs
-                    {subscription.remaining_users > 0 && ` (${subscription.remaining_users} restant${subscription.remaining_users > 1 ? 's' : ''})`}
+                    {t.subscriptionBanner.usersUsed(subscription.current_users, subscription.max_users)}
+                    {subscription.remaining_users > 0 && ` ${t.subscriptionBanner.remainingUsers(subscription.remaining_users)}`}
                 </span>
             </div>
         );
     };
 
-    const showWarning = (type === 'shops' && !subscription.can_create_shop) || 
+    const showWarning = (type === 'shops' && !subscription.can_create_shop) ||
                        (type === 'users' && !subscription.can_create_user);
 
     if (!showWarning && type) {
-        return null; // Ne rien afficher si tout va bien et qu'on demande un type spécifique
+        return null;
     }
 
     return (
@@ -123,8 +125,8 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
                             subscription.status === 'trial' ? 'bg-blue-500/20 text-blue-300' :
                             'bg-slate-500/20 text-slate-300'
                         }`}>
-                            {subscription.status === 'active' ? 'Actif' : 
-                             subscription.status === 'trial' ? 'Essai' : subscription.status}
+                            {subscription.status === 'active' ? t.subscriptionBanner.status.active :
+                             subscription.status === 'trial' ? t.subscriptionBanner.status.trial : subscription.status}
                         </span>
                     </div>
                     <div className="mt-3 space-y-2">
@@ -133,9 +135,7 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
                     </div>
                     {showWarning && (
                         <p className="mt-3 text-sm text-amber-300">
-                            {type === 'shops' ? 
-                                'Limite de boutiques atteinte. Veuillez mettre à niveau votre abonnement.' :
-                                'Limite d\'utilisateurs atteinte. Veuillez mettre à niveau votre abonnement.'}
+                            {type === 'shops' ? t.subscriptionBanner.limitShops : t.subscriptionBanner.limitUsers}
                         </p>
                     )}
                 </div>
@@ -144,7 +144,6 @@ export default function SubscriptionBanner({ type, className = '' }: Subscriptio
     );
 }
 
-// Hook pour accéder facilement aux limites d'abonnement
 export function useSubscriptionLimits() {
     const { subscription } = usePage<PageProps & { subscription: SubscriptionLimits | null }>().props;
     return subscription;

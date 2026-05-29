@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
+import { useLocale } from '@/contexts/LocaleContext';
 import {
     ArrowDownRight,
     ArrowUpRight,
@@ -160,6 +161,7 @@ export default function Index({
     currentPeriod,
     currencySymbol,
 }: AnalyticsProps) {
+    const { t } = useLocale();
     const [compareMode, setCompareMode] = useState<'year' | 'month'>(comparisonData.mode);
     const [year1, setYear1] = useState(parseInt(comparisonData.label1));
     const [year2, setYear2] = useState(parseInt(comparisonData.label2));
@@ -223,7 +225,7 @@ export default function Index({
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Analytics</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.analytics.title}</h1>
                     
                     {/* Sélecteur de période */}
                     <div className="flex gap-1">

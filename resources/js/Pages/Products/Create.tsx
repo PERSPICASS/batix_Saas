@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState, useMemo } from 'react';
 import { RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function ProductsCreate({ shops, categories, subcategories }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { props } = usePage();

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRoute } from '@/utils/route';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { router } from '@inertiajs/react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Depot {
     id: number;
@@ -28,6 +29,7 @@ interface Props {
 
 export default function Index({ depots, filters, canCreateDepot = true, remainingDepots = -1 }: Props) {
     const buildRoute = useRoute();
+    const { t } = useLocale();
     const [search, setSearch] = useState(filters.search || '');
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -44,26 +46,19 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Dépôts</h2>}>
-            <Head title="Dépôts" />
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold">{t.depots.title}</h2>}>
+            <Head title={t.depots.title} />
 
             <div className="space-y-6">
-                {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Dépôts</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Gérez vos dépôts et approvisionnez vos boutiques
-                        </p>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.depots.title}</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.depots.subtitle}</p>
                         {remainingDepots === 0 && !canCreateDepot && (
-                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                                Limite atteinte. Passez à un plan supérieur pour ajouter des dépôts.
-                            </p>
+                            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{t.depots.limitReached}</p>
                         )}
                         {remainingDepots > 0 && (
-                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                                {remainingDepots} dépôt{remainingDepots > 1 ? 's' : ''} restant{remainingDepots > 1 ? 's' : ''}
-                            </p>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.depots.remaining(remainingDepots)}</p>
                         )}
                     </div>
                     {canCreateDepot ? (
@@ -72,21 +67,16 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                             className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
                         >
                             <Plus className="size-4" />
-                            Nouveau dépôt
+                            {t.depots.actions.new}
                         </Link>
                     ) : (
                         <div className="group relative">
-                            <button
-                                disabled
-                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-400 opacity-60 dark:bg-slate-700 dark:text-slate-500"
-                            >
+                            <button disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-400 opacity-60 dark:bg-slate-700 dark:text-slate-500">
                                 <Plus className="size-4" />
-                                Nouveau dépôt
+                                {t.depots.actions.new}
                             </button>
                             <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-3 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-                                {remainingDepots === 0
-                                    ? "Votre offre ne permet pas de créer des dépôts."
-                                    : "Limite de dépôts atteinte. Passez à un plan supérieur."}
+                                {remainingDepots === 0 ? t.depots.noOffer : t.depots.limitReachedShort}
                             </div>
                         </div>
                     )}
@@ -100,12 +90,12 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                             type="text"
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            placeholder="Rechercher un dépôt..."
+                            placeholder={t.depots.searchPlaceholder}
                             className="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-4 py-2 text-sm dark:border-white/10 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                         />
                     </div>
                     <button type="submit" className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
-                        Rechercher
+                        {t.depots.searchButton}
                     </button>
                 </form>
 
@@ -113,14 +103,14 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                 {depots.length === 0 ? (
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 py-16 dark:border-white/10">
                         <Warehouse className="size-12 text-slate-300 dark:text-slate-600" />
-                        <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">Aucun dépôt</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">Créez votre premier dépôt pour commencer</p>
+                        <p className="mt-3 text-sm font-medium text-slate-500 dark:text-slate-400">{t.depots.empty.title}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">{t.depots.empty.description}</p>
                         <Link
                             href={buildRoute('depots.create')}
                             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                         >
                             <Plus className="size-4" />
-                            Créer un dépôt
+                            {t.depots.empty.cta}
                         </Link>
                     </div>
                 ) : (
@@ -143,7 +133,7 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                                         </div>
                                     </div>
                                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${depot.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
-                                        {depot.is_active ? 'Actif' : 'Inactif'}
+                                        {depot.is_active ? t.common.status.active : t.common.status.inactive}
                                     </span>
                                 </div>
 
@@ -151,14 +141,14 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                                     <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
                                         <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                                             <Package className="size-3.5" />
-                                            Références
+                                            {t.depots.card.references}
                                         </div>
                                         <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{depot.depot_products_count}</p>
                                     </div>
                                     <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
                                         <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                                             <AlertTriangle className="size-3.5" />
-                                            Unités en stock
+                                            {t.depots.card.unitsInStock}
                                         </div>
                                         <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{depot.total_stock}</p>
                                     </div>
@@ -170,7 +160,7 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                                         className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-amber-300 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-amber-200"
                                     >
                                         <Eye className="size-3.5" />
-                                        Voir
+                                        {t.depots.actions.view}
                                     </Link>
                                     <Link
                                         href={buildRoute('depots.edit', { depot: depot.id })}
@@ -196,8 +186,8 @@ export default function Index({ depots, filters, canCreateDepot = true, remainin
                 show={!!deleteId}
                 onClose={() => setDeleteId(null)}
                 onConfirm={handleDelete}
-                title="Supprimer le dépôt"
-                message="Êtes-vous sûr de vouloir supprimer ce dépôt ? Tout le stock associé sera perdu."
+                title={t.depots.deleteTitle}
+                message={t.depots.deleteMessage}
             />
         </AuthenticatedLayout>
     );

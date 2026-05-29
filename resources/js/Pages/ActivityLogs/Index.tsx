@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { History, Search, Filter, Eye, Download, User, Clock, Activity } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Activity {
     id: number;
@@ -49,6 +50,7 @@ interface Props {
 }
 
 export default function Index({ activities, filters, filterOptions }: Props) {
+    const { t } = useLocale();
     const [search, setSearch] = useState(filters.search || '');
     const [showFilters, setShowFilters] = useState(false);
 

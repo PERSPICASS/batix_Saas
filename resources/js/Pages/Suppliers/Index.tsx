@@ -5,6 +5,7 @@ import Table, { TableActions, TableActionButton, TableBadge } from '@/Components
 import { useState, FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -43,6 +44,7 @@ interface Props {
 
 export default function SuppliersIndex({ suppliers, filters }: Props) {
     const route = useRoute();
+    const { t } = useLocale();
 
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || '');
@@ -77,7 +79,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
     const columns = [
         {
             key: 'name',
-            label: 'Fournisseur',
+            label: t.suppliers.columns.name,
             render: (supplier: Supplier) => (
                 <div>
                     <div className="flex items-center gap-2">
@@ -92,7 +94,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
         },
         {
             key: 'contact',
-            label: 'Contact',
+            label: t.suppliers.contact,
             render: (supplier: Supplier) => (
                 <div className="space-y-1 text-sm text-slate-300">
                     {supplier.phone && (
@@ -107,7 +109,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
         },
         {
             key: 'location',
-            label: 'Localisation',
+            label: t.suppliers.location,
             render: (supplier: Supplier) => (
                 <div className="flex items-center gap-2 text-slate-300">
                     <MapPin className="size-4" />
@@ -120,7 +122,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
         },
         {
             key: 'shops',
-            label: 'Boutiques',
+            label: t.suppliers.columns.shops,
             render: (supplier: Supplier) => (
                 <div className="flex flex-wrap gap-1">
                     {supplier.shops?.map((shop) => (
@@ -137,17 +139,17 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.suppliers.columns.status,
             align: 'center' as const,
             render: (supplier: Supplier) => (
                 <TableBadge variant={supplier.is_active ? 'success' : 'danger'}>
-                    {supplier.is_active ? 'Actif' : 'Inactif'}
+                    {supplier.is_active ? t.common.status.active : t.common.status.inactive}
                 </TableBadge>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t.suppliers.columns.actions,
             align: 'right' as const,
             render: (supplier: Supplier) => (
                 <TableActions>
@@ -155,16 +157,16 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                         href={route('suppliers.show', { supplier: supplier.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
-                        <Eye className="size-3.5" /> Voir
+                        <Eye className="size-3.5" /> {t.suppliers.actions.view}
                     </Link>
                     <Link
                         href={route('suppliers.edit', { supplier: supplier.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                     >
-                        <Pencil className="size-3.5" /> Modifier
+                        <Pencil className="size-3.5" /> {t.suppliers.actions.edit}
                     </Link>
                     <TableActionButton variant="danger" onClick={() => handleDelete(supplier)}>
-                        <Trash2 className="size-3.5" /> Supprimer
+                        <Trash2 className="size-3.5" /> {t.suppliers.actions.delete}
                     </TableActionButton>
                 </TableActions>
             ),
@@ -172,25 +174,24 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Fournisseurs</h1>}>
-            <Head title="Fournisseurs" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.suppliers.title}</h1>}>
+            <Head title={t.suppliers.title} />
             <section className="space-y-6">
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">Gérez vos fournisseurs et leurs informations</p>
+                    <p className="text-sm text-slate-300">{t.suppliers.subtitle}</p>
                     <Link
                         href={route('suppliers.create')}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                     >
-                        <Plus className="size-4" /> Nouveau fournisseur
+                        <Plus className="size-4" /> {t.suppliers.actions.new}
                     </Link>
                 </div>
 
-                {/* Filtres */}
                 <form onSubmit={handleFilter} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
                             <label htmlFor="search" className="block text-sm font-medium text-slate-200">
-                                Recherche
+                                {t.common.actions.search}
                             </label>
                             <div className="relative mt-1">
                                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -200,14 +201,14 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     className="block w-full rounded-lg border border-white/15 bg-slate-900/70 py-2 pl-10 pr-3 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    placeholder="Nom, email, téléphone..."
+                                    placeholder={t.suppliers.searchPlaceholder}
                                 />
                             </div>
                         </div>
 
                         <div>
                             <label htmlFor="status" className="block text-sm font-medium text-slate-200">
-                                Statut
+                                {t.common.misc.status}
                             </label>
                             <select
                                 id="status"
@@ -215,9 +216,9 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                                 onChange={(e) => setStatus(e.target.value)}
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                             >
-                                <option value="">Tous</option>
-                                <option value="active">Actifs</option>
-                                <option value="inactive">Inactifs</option>
+                                <option value="">{t.suppliers.filterAll}</option>
+                                <option value="active">{t.suppliers.filterActive}</option>
+                                <option value="inactive">{t.suppliers.filterInactive}</option>
                             </select>
                         </div>
 
@@ -226,13 +227,13 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                                 type="submit"
                                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                             >
-                                <Filter className="size-4" /> Filtrer
+                                <Filter className="size-4" /> {t.suppliers.filterButton}
                             </button>
                         </div>
                     </div>
                 </form>
 
-                <Table columns={columns} data={suppliers.data} emptyMessage="Aucun fournisseur trouvé" />
+                <Table columns={columns} data={suppliers.data} emptyMessage={t.suppliers.emptyMessage} />
 
                 {/* Pagination */}
                 {suppliers.links && (
@@ -257,7 +258,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                     show={deleteModal.show}
                     onClose={() => setDeleteModal({ show: false, supplier: null })}
                     onConfirm={confirmDelete}
-                    message={`Êtes-vous sûr de vouloir supprimer le fournisseur "${deleteModal.supplier?.name}" ?`}
+                    message={t.suppliers.deleteConfirm(deleteModal.supplier?.name ?? '')}
                     processing={deleting}
                 />
             </section>

@@ -5,6 +5,7 @@ import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useEffect } from 'react';
 import { PageProps } from '@/types';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -90,6 +91,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SalesShow({ sale, auth }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const [displayedSale, setDisplayedSale] = useState<Sale>(sale);
     const [showCreditModal, setShowCreditModal] = useState(false);

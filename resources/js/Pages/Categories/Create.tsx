@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEvent } from 'react';
 import { PageProps } from '@/types';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -10,6 +11,7 @@ interface Shop {
 }
 
 export default function CategoriesCreate({ shops }: PageProps<{ shops: Shop[] }>) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { props } = usePage();

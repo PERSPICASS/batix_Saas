@@ -7,6 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Supplier {
     id: number;
@@ -191,6 +192,7 @@ function PurchaseProductCombobox({
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PurchasesCreate({ code_user, suppliers, products, currency }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const [items, setItems] = useState<PurchaseItem[]>([

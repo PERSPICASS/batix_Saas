@@ -3,6 +3,7 @@ import Currency from '@/Components/Currency';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Printer } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Customer {
     id: number;
@@ -75,6 +76,7 @@ const paymentLabels: Record<string, string> = {
 };
 
 export default function InvoicesShow({ invoice }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const handlePrint = () => window.print();
 

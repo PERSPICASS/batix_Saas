@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Search, Filter, Calendar, Package, User, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Preorder {
     id: number;
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export default function Index({ preorders, shops, filters }: Props) {
+    const { t } = useLocale();
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
     const [shopFilter, setShopFilter] = useState(filters.shop_id || '');

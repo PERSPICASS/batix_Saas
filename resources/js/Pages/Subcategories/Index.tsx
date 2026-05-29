@@ -4,6 +4,7 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Subcategory {
     id: number;
@@ -28,6 +29,7 @@ interface Category {
 
 export default function SubcategoriesIndex({ subcategories, categories }: PageProps<{ subcategories: Subcategory[], categories: Category[] }>) {
     const route = useRoute();
+    const { t } = useLocale();
 
     const handleDelete = (id: number) => {
         if (confirm('Êtes-vous sûr de vouloir supprimer cette sous-catégorie ?')) {

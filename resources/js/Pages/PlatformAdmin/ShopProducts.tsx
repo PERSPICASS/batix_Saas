@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Search, Package, ArrowLeft } from 'lucide-react';
 import Table, { TableBadge } from '@/Components/Table';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Owner {
     id: number;
@@ -60,6 +61,7 @@ interface Props {
 }
 
 export default function ShopProducts({ shop, products, categories, filters }: Props) {
+    const { t } = useLocale();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
 
     const handleSearch = (e: React.FormEvent) => {

@@ -1,0 +1,68 @@
+export const invoices = {
+    fr: {
+        title: 'Factures',
+        columns: {
+            number: 'Numéro',
+            date: 'Date',
+            dueDate: "Date d'échéance",
+            customer: 'Client',
+            total: 'Total',
+            status: 'Statut',
+            actions: 'Actions',
+        },
+        status: {
+            draft: 'Brouillon',
+            sent: 'Envoyée',
+            paid: 'Payée',
+            overdue: 'En retard',
+            cancelled: 'Annulée',
+        },
+        actions: {
+            new: 'Nouvelle facture',
+            view: 'Voir',
+            edit: 'Modifier',
+            delete: 'Supprimer',
+            send: 'Envoyer',
+            markPaid: 'Marquer payée',
+            download: 'Télécharger',
+        },
+        emptyMessage: 'Aucune facture trouvée',
+        filters: {
+            searchPlaceholder: 'N° facture, client...',
+            allStatuses: 'Tous les statuts',
+        },
+    },
+    en: {
+        title: 'Invoices',
+        columns: {
+            number: 'Number',
+            date: 'Date',
+            dueDate: 'Due date',
+            customer: 'Customer',
+            total: 'Total',
+            status: 'Status',
+            actions: 'Actions',
+        },
+        status: {
+            draft: 'Draft',
+            sent: 'Sent',
+            paid: 'Paid',
+            overdue: 'Overdue',
+            cancelled: 'Cancelled',
+        },
+        actions: {
+            new: 'New invoice',
+            view: 'View',
+            edit: 'Edit',
+            delete: 'Delete',
+            send: 'Send',
+            markPaid: 'Mark as paid',
+            download: 'Download',
+        },
+        emptyMessage: 'No invoices found',
+        filters: {
+            searchPlaceholder: 'Invoice #, customer...',
+            allStatuses: 'All statuses',
+        },
+    },
+} as const;

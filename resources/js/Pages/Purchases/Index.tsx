@@ -5,23 +5,11 @@ import Table, { TableActions, TableActionButton, TableBadge } from '@/Components
 import { useState, FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
-interface Supplier {
-    id: number;
-    name: string;
-    company_name: string | null;
-}
-
-interface User {
-    id: number;
-    name: string;
-}
-
-interface PurchaseItem {
-    id: number;
-    quantity_ordered: number;
-    quantity_received: number;
-}
+interface Supplier { id: number; name: string; company_name: string | null }
+interface User { id: number; name: string }
+interface PurchaseItem { id: number; quantity_ordered: number; quantity_received: number }
 
 interface Purchase {
     id: number;
@@ -46,33 +34,23 @@ interface PaginatedPurchases {
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
 
-interface SupplierOption {
-    id: number;
-    name: string;
-}
+interface SupplierOption { id: number; name: string }
 
 interface Props {
     code_user: string;
     purchases: PaginatedPurchases;
     suppliers: SupplierOption[];
     currency: string;
-    filters: {
-        search?: string;
-        status?: string;
-        supplier_id?: string;
-    };
+    filters: { search?: string; status?: string; supplier_id?: string };
 }
 
 export default function PurchasesIndex({ code_user, purchases, suppliers, currency, filters }: Props) {
     const route = useRoute();
-
+    const { t, locale } = useLocale();
     const [search, setSearch] = useState(filters.search || '');
     const [status, setStatus] = useState(filters.status || 'all');
     const [supplierId, setSupplierId] = useState(filters.supplier_id || '');
-    const [deleteModal, setDeleteModal] = useState<{ show: boolean; purchase: Purchase | null }>({ 
-        show: false, 
-        purchase: null 
-    });
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; purchase: Purchase | null }>({ show: false, purchase: null });
     const [deleting, setDeleting] = useState(false);
 
     const handleFilter: FormEventHandler = (e) => {
@@ -84,68 +62,61 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
         );
     };
 
-    const handleDelete = (purchase: Purchase) => {
-        setDeleteModal({ show: true, purchase });
-    };
+    const handleDelete = (purchase: Purchase) => setDeleteModal({ show: true, purchase });
 
     const confirmDelete = () => {
         if (!deleteModal.purchase) return;
         setDeleting(true);
         router.delete(route('purchases.destroy', { code_user, purchase: deleteModal.purchase.id }), {
-            onSuccess: () => {
-                setDeleteModal({ show: false, purchase: null });
-                setDeleting(false);
-            },
+            onSuccess: () => { setDeleteModal({ show: false, purchase: null }); setDeleting(false); },
             onError: () => setDeleting(false),
         });
     };
 
+    const statusLabels: Record<string, string> = {
+        draft: t.purchases.status.draft,
+        confirmed: t.purchases.status.confirmed,
+        received: t.purchases.status.received,
+        partial: t.purchases.status.partial,
+        cancelled: t.purchases.status.cancelled,
+    };
+
     const getStatusBadge = (status: Purchase['status']) => {
-        const statusConfig = {
-            draft: { label: 'Brouillon', variant: 'default' as const },
-            confirmed: { label: 'Confirmé', variant: 'info' as const },
-            partial: { label: 'Partiel', variant: 'warning' as const },
-            received: { label: 'Reçu', variant: 'success' as const },
-            cancelled: { label: 'Annulé', variant: 'danger' as const },
+        const variants: Record<string, 'default' | 'info' | 'warning' | 'success' | 'danger'> = {
+            draft: 'default',
+            confirmed: 'info',
+            partial: 'warning',
+            received: 'success',
+            cancelled: 'danger',
         };
-        const config = statusConfig[status];
-        return <TableBadge variant={config.variant}>{config.label}</TableBadge>;
+        return <TableBadge variant={variants[status] ?? 'default'}>{statusLabels[status]}</TableBadge>;
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
+    const formatDate = (dateString: string) =>
+        new Date(dateString).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
         });
-    };
 
-    const formatCurrency = (amount: string, currency: string) => {
-        return new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: currency,
-        }).format(parseFloat(amount));
-    };
+    const formatCurrencyVal = (amount: string, curr: string) =>
+        new Intl.NumberFormat(locale === 'fr' ? 'fr-FR' : 'en-GB', { style: 'currency', currency: curr }).format(parseFloat(amount));
 
     const columns = [
         {
             key: 'reference',
-            label: 'Référence',
+            label: t.purchases.columns.reference,
             render: (purchase: Purchase) => (
                 <div>
                     <div className="flex items-center gap-2">
                         <ShoppingCart className="size-4 text-amber-300" />
                         <span className="font-medium">{purchase.reference}</span>
                     </div>
-                    <div className="mt-0.5 text-xs text-slate-400">
-                        {purchase.items.length} article{purchase.items.length > 1 ? 's' : ''}
-                    </div>
+                    <div className="mt-0.5 text-xs text-slate-400">{t.purchases.items(purchase.items.length)}</div>
                 </div>
             ),
         },
         {
             key: 'supplier',
-            label: 'Fournisseur',
+            label: t.purchases.columns.supplier,
             render: (purchase: Purchase) => (
                 <div>
                     <div className="font-medium">{purchase.supplier.name}</div>
@@ -157,78 +128,55 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
         },
         {
             key: 'dates',
-            label: 'Dates',
+            label: t.purchases.columns.date,
             render: (purchase: Purchase) => (
                 <div className="space-y-1 text-sm">
                     <div className="flex items-center gap-2 text-slate-300">
                         <Calendar className="size-3.5" />
-                        <span>Commande: {formatDate(purchase.order_date)}</span>
+                        <span>{t.purchases.dates.order} {formatDate(purchase.order_date)}</span>
                     </div>
                     {purchase.expected_date && (
-                        <div className="text-xs text-slate-400">
-                            Prévue: {formatDate(purchase.expected_date)}
-                        </div>
+                        <div className="text-xs text-slate-400">{t.purchases.dates.expected} {formatDate(purchase.expected_date)}</div>
                     )}
                     {purchase.received_date && (
-                        <div className="text-xs text-green-400">
-                            Reçue: {formatDate(purchase.received_date)}
-                        </div>
+                        <div className="text-xs text-green-400">{t.purchases.dates.received} {formatDate(purchase.received_date)}</div>
                     )}
                 </div>
             ),
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.purchases.columns.status,
             render: (purchase: Purchase) => getStatusBadge(purchase.status),
         },
         {
             key: 'total',
-            label: 'Total',
+            label: t.purchases.columns.total,
             render: (purchase: Purchase) => (
-                <div className="flex items-center gap-2">
-                    
-                    <span className="font-semibold text-green-400">
-                        {formatCurrency(purchase.total, purchase.currency)}
-                    </span>
-                </div>
+                <span className="font-semibold text-green-400">{formatCurrencyVal(purchase.total, purchase.currency)}</span>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t.purchases.columns.actions,
             render: (purchase: Purchase) => (
                 <TableActions>
                     <Link href={route('purchases.show', { code_user, purchase: purchase.id })}>
-                        <TableActionButton>
-                            <Eye className="size-4" />
-                            Voir
-                        </TableActionButton>
+                        <TableActionButton><Eye className="size-4" /> {t.purchases.actions.view}</TableActionButton>
                     </Link>
                     {purchase.status === 'draft' && (
                         <>
                             <Link href={route('purchases.edit', { code_user, purchase: purchase.id })}>
-                                <TableActionButton>
-                                    <Pencil className="size-4" />
-                                    Modifier
-                                </TableActionButton>
+                                <TableActionButton><Pencil className="size-4" /> {t.purchases.actions.edit}</TableActionButton>
                             </Link>
-                            <TableActionButton
-                                onClick={() => handleDelete(purchase)}
-                                variant="danger"
-                            >
-                                <Trash2 className="size-4" />
-                                Supprimer
+                            <TableActionButton onClick={() => handleDelete(purchase)} variant="danger">
+                                <Trash2 className="size-4" /> {t.purchases.actions.delete}
                             </TableActionButton>
                         </>
                     )}
                     {purchase.status === 'cancelled' && (
-                        <TableActionButton
-                            onClick={() => handleDelete(purchase)}
-                            variant="danger"
-                        >
-                            <Trash2 className="size-4" />
-                            Supprimer
+                        <TableActionButton onClick={() => handleDelete(purchase)} variant="danger">
+                            <Trash2 className="size-4" /> {t.purchases.actions.delete}
                         </TableActionButton>
                     )}
                 </TableActions>
@@ -236,79 +184,74 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
         },
     ];
 
+    const pendingCount = purchases.data.filter(p => p.status === 'confirmed' || p.status === 'partial').length;
+    const receivedCount = purchases.data.filter(p => p.status === 'received').length;
+    const totalValue = purchases.data
+        .filter(p => p.status !== 'cancelled')
+        .reduce((sum, p) => sum + parseFloat(p.total), 0)
+        .toString();
+
     return (
         <AuthenticatedLayout>
-            <Head title="Bons de commande" />
+            <Head title={t.purchases.titleLong} />
 
             <div className="space-y-6">
-                {/* En-tête */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Bons de commande</h1>
-                        <p className="mt-1 text-sm text-slate-400">
-                            Gérez vos commandes fournisseurs et réceptionnez la marchandise
-                        </p>
+                        <h1 className="text-2xl font-bold text-white">{t.purchases.titleLong}</h1>
+                        <p className="mt-1 text-sm text-slate-400">{t.purchases.subtitle}</p>
                     </div>
                     <Link
                         href={route('purchases.create', { code_user })}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-400"
                     >
                         <Plus className="size-5" />
-                        Nouveau bon de commande
+                        {t.purchases.newLong}
                     </Link>
                 </div>
 
-                {/* Filtres */}
                 <form onSubmit={handleFilter} className="rounded-xl bg-slate-800/50 p-4">
                     <div className="grid gap-4 md:grid-cols-4">
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-300">
-                                Recherche
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-slate-300">{t.common.actions.search}</label>
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Référence, fournisseur..."
+                                    placeholder={t.purchases.filters.searchPlaceholder}
                                     className="w-full rounded-lg border-slate-700 bg-slate-900/50 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-amber-300 focus:ring-amber-300"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-300">
-                                Statut
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-slate-300">{t.common.misc.status}</label>
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value)}
                                 className="w-full rounded-lg border-slate-700 bg-slate-900/50 py-2 px-4 text-sm text-white focus:border-amber-300 focus:ring-amber-300"
                             >
-                                <option value="all">Tous les statuts</option>
-                                <option value="draft">Brouillon</option>
-                                <option value="confirmed">Confirmé</option>
-                                <option value="partial">Partiel</option>
-                                <option value="received">Reçu</option>
-                                <option value="cancelled">Annulé</option>
+                                <option value="all">{t.purchases.filters.allStatuses}</option>
+                                <option value="draft">{t.purchases.status.draft}</option>
+                                <option value="confirmed">{t.purchases.status.confirmed}</option>
+                                <option value="partial">{t.purchases.status.partial}</option>
+                                <option value="received">{t.purchases.status.received}</option>
+                                <option value="cancelled">{t.purchases.status.cancelled}</option>
                             </select>
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-300">
-                                Fournisseur
-                            </label>
+                            <label className="mb-1 block text-sm font-medium text-slate-300">{t.nav.suppliers}</label>
                             <select
                                 value={supplierId}
                                 onChange={(e) => setSupplierId(e.target.value)}
                                 className="w-full rounded-lg border-slate-700 bg-slate-900/50 py-2 px-4 text-sm text-white focus:border-amber-300 focus:ring-amber-300"
                             >
-                                <option value="">Tous les fournisseurs</option>
+                                <option value="">{t.purchases.filters.allSuppliers}</option>
                                 {suppliers.map((supplier) => (
-                                    <option key={supplier.id} value={supplier.id}>
-                                        {supplier.name}
-                                    </option>
+                                    <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -318,83 +261,53 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                                 type="submit"
                                 className="w-full rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-400"
                             >
-                                Filtrer
+                                {t.common.actions.filter}
                             </button>
                         </div>
                     </div>
                 </form>
 
-                {/* Statistiques rapides */}
                 <div className="grid gap-4 md:grid-cols-4">
                     <div className="rounded-xl bg-slate-800/50 p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-blue-500/10 p-3">
-                                <ShoppingCart className="size-6 text-blue-400" />
-                            </div>
+                            <div className="rounded-lg bg-blue-500/10 p-3"><ShoppingCart className="size-6 text-blue-400" /></div>
                             <div>
                                 <div className="text-2xl font-bold text-white">{purchases.total}</div>
-                                <div className="text-sm text-slate-400">Total commandes</div>
+                                <div className="text-sm text-slate-400">{t.purchases.stats.total}</div>
                             </div>
                         </div>
                     </div>
-
                     <div className="rounded-xl bg-slate-800/50 p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-yellow-500/10 p-3">
-                                <Package className="size-6 text-yellow-400" />
-                            </div>
+                            <div className="rounded-lg bg-yellow-500/10 p-3"><Package className="size-6 text-yellow-400" /></div>
                             <div>
-                                <div className="text-2xl font-bold text-white">
-                                    {purchases.data.filter(p => p.status === 'confirmed' || p.status === 'partial').length}
-                                </div>
-                                <div className="text-sm text-slate-400">En attente</div>
+                                <div className="text-2xl font-bold text-white">{pendingCount}</div>
+                                <div className="text-sm text-slate-400">{t.purchases.stats.pending}</div>
                             </div>
                         </div>
                     </div>
-
                     <div className="rounded-xl bg-slate-800/50 p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-green-500/10 p-3">
-                                <Package className="size-6 text-green-400" />
-                            </div>
+                            <div className="rounded-lg bg-green-500/10 p-3"><Package className="size-6 text-green-400" /></div>
                             <div>
-                                <div className="text-2xl font-bold text-white">
-                                    {purchases.data.filter(p => p.status === 'received').length}
-                                </div>
-                                <div className="text-sm text-slate-400">Reçues</div>
+                                <div className="text-2xl font-bold text-white">{receivedCount}</div>
+                                <div className="text-sm text-slate-400">{t.purchases.stats.received}</div>
                             </div>
                         </div>
                     </div>
-
                     <div className="rounded-xl bg-slate-800/50 p-4">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-amber-500/10 p-3">
-                                <DollarSign className="size-6 text-amber-400" />
-                            </div>
+                            <div className="rounded-lg bg-amber-500/10 p-3"><DollarSign className="size-6 text-amber-400" /></div>
                             <div>
-                                <div className="text-2xl font-bold text-white">
-                                    {formatCurrency(
-                                        purchases.data
-                                            .filter(p => p.status !== 'cancelled')
-                                            .reduce((sum, p) => sum + parseFloat(p.total), 0)
-                                            .toString(),
-                                        currency
-                                    )}
-                                </div>
-                                <div className="text-sm text-slate-400">Valeur totale</div>
+                                <div className="text-2xl font-bold text-white">{formatCurrencyVal(totalValue, currency)}</div>
+                                <div className="text-sm text-slate-400">{t.purchases.stats.totalValue}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Tableau */}
-                <Table
-                    columns={columns}
-                    data={purchases.data}
-                    emptyMessage="Aucun bon de commande trouvé"
-                />
+                <Table columns={columns} data={purchases.data} emptyMessage={t.purchases.emptyMessage} />
 
-                {/* Pagination */}
                 {purchases.last_page > 1 && (
                     <div className="mt-6 flex items-center justify-center gap-2">
                         {purchases.links.map((link, index) => {
@@ -426,13 +339,12 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                 )}
             </div>
 
-            {/* Modal de confirmation de suppression */}
             <ConfirmDeleteModal
                 show={deleteModal.show}
                 onClose={() => setDeleteModal({ show: false, purchase: null })}
                 onConfirm={confirmDelete}
-                title="Supprimer le bon de commande"
-                message={`Êtes-vous sûr de vouloir supprimer le bon de commande ${deleteModal.purchase?.reference} ? Cette action est irréversible.`}
+                title={t.purchases.deleteTitle}
+                message={t.purchases.deleteMessage(deleteModal.purchase?.reference ?? '')}
                 processing={deleting}
             />
         </AuthenticatedLayout>

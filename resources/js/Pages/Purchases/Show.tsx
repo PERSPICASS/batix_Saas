@@ -20,6 +20,7 @@ import Modal from '@/Components/Modal';
 import PrimaryButton from '@/Components/PrimaryButton';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Supplier {
     id: number;
@@ -90,6 +91,7 @@ interface Props {
 }
 
 export default function PurchasesShow({ code_user, purchase }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const [showReceiveModal, setShowReceiveModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);

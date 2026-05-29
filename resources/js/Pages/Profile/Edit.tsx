@@ -5,6 +5,7 @@ import { User, Shield, Store, CheckCircle, XCircle } from 'lucide-react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Permission {
     id: number;
@@ -37,6 +38,7 @@ export default function Edit({
     mustVerifyEmail,
     status,
 }: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+    const { t } = useLocale();
     const { auth } = usePage().props;
     const user = auth.user as unknown as UserWithDetails;
 

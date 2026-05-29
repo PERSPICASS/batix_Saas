@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { AlertTriangle, X } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface ConfirmDialogProps {
     show: boolean;
@@ -20,63 +21,53 @@ export default function ConfirmDialog({
     onConfirm,
     title,
     message,
-    confirmText = 'Confirmer',
-    cancelText = 'Annuler',
+    confirmText,
+    cancelText,
     type = 'danger',
     isProcessing = false,
 }: ConfirmDialogProps) {
+    const { t } = useLocale();
+
+    const resolvedConfirmText = confirmText ?? t.common.confirm.confirmText;
+    const resolvedCancelText = cancelText ?? t.common.confirm.cancelText;
+
     const getIconColor = () => {
         switch (type) {
-            case 'danger':
-                return 'bg-red-900/30 border-red-500/30';
-            case 'warning':
-                return 'bg-yellow-900/30 border-yellow-500/30';
-            case 'info':
-                return 'bg-blue-900/30 border-blue-500/30';
+            case 'danger': return 'bg-red-900/30 border-red-500/30';
+            case 'warning': return 'bg-yellow-900/30 border-yellow-500/30';
+            case 'info': return 'bg-blue-900/30 border-blue-500/30';
         }
     };
 
     const getIconTextColor = () => {
         switch (type) {
-            case 'danger':
-                return 'text-red-400';
-            case 'warning':
-                return 'text-yellow-400';
-            case 'info':
-                return 'text-blue-400';
+            case 'danger': return 'text-red-400';
+            case 'warning': return 'text-yellow-400';
+            case 'info': return 'text-blue-400';
         }
     };
 
     const getAlertBgColor = () => {
         switch (type) {
-            case 'danger':
-                return 'bg-red-900/20 border-red-500/30';
-            case 'warning':
-                return 'bg-yellow-900/20 border-yellow-500/30';
-            case 'info':
-                return 'bg-blue-900/20 border-blue-500/30';
+            case 'danger': return 'bg-red-900/20 border-red-500/30';
+            case 'warning': return 'bg-yellow-900/20 border-yellow-500/30';
+            case 'info': return 'bg-blue-900/20 border-blue-500/30';
         }
     };
 
     const getAlertTextColor = () => {
         switch (type) {
-            case 'danger':
-                return 'text-red-200';
-            case 'warning':
-                return 'text-yellow-200';
-            case 'info':
-                return 'text-blue-200';
+            case 'danger': return 'text-red-200';
+            case 'warning': return 'text-yellow-200';
+            case 'info': return 'text-blue-200';
         }
     };
 
     const getConfirmButtonColor = () => {
         switch (type) {
-            case 'danger':
-                return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
-            case 'warning':
-                return 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500';
-            case 'info':
-                return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
+            case 'danger': return 'bg-red-600 hover:bg-red-700 focus:ring-red-500';
+            case 'warning': return 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500';
+            case 'info': return 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500';
         }
     };
 
@@ -138,7 +129,7 @@ export default function ConfirmDialog({
                                         disabled={isProcessing}
                                         className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
                                     >
-                                        {cancelText}
+                                        {resolvedCancelText}
                                     </button>
                                     <button
                                         type="button"
@@ -146,7 +137,7 @@ export default function ConfirmDialog({
                                         disabled={isProcessing}
                                         className={`rounded-lg px-4 py-2 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 ${getConfirmButtonColor()}`}
                                     >
-                                        {isProcessing ? 'En cours...' : confirmText}
+                                        {isProcessing ? t.common.confirm.processing : resolvedConfirmText}
                                     </button>
                                 </div>
                             </Dialog.Panel>

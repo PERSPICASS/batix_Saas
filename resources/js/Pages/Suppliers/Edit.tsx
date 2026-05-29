@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import { Check } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export default function SuppliersEdit({ supplier, shops }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { data, setData, put, processing, errors } = useForm({

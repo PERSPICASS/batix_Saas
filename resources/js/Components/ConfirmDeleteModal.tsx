@@ -1,5 +1,6 @@
 import Modal from '@/Components/Modal';
 import { AlertTriangle } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface ConfirmDeleteModalProps {
     show: boolean;
@@ -16,12 +17,18 @@ export default function ConfirmDeleteModal({
     show,
     onClose,
     onConfirm,
-    title = 'Confirmer la suppression',
+    title,
     message,
-    confirmText = 'Supprimer',
-    cancelText = 'Annuler',
+    confirmText,
+    cancelText,
     processing = false,
 }: ConfirmDeleteModalProps) {
+    const { t } = useLocale();
+
+    const resolvedTitle = title ?? t.common.confirm.deleteTitle;
+    const resolvedConfirmText = confirmText ?? t.common.actions.delete;
+    const resolvedCancelText = cancelText ?? t.common.actions.cancel;
+
     return (
         <Modal show={show} onClose={onClose} maxWidth="md">
             <div className="bg-slate-900 p-6">
@@ -30,7 +37,7 @@ export default function ConfirmDeleteModal({
                         <AlertTriangle className="size-6 text-red-400" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">{title}</h3>
+                        <h3 className="text-lg font-semibold text-white">{resolvedTitle}</h3>
                         <p className="mt-2 text-sm text-slate-300">{message}</p>
                     </div>
                 </div>
@@ -42,7 +49,7 @@ export default function ConfirmDeleteModal({
                         disabled={processing}
                         className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-50"
                     >
-                        {cancelText}
+                        {resolvedCancelText}
                     </button>
                     <button
                         type="button"
@@ -50,7 +57,7 @@ export default function ConfirmDeleteModal({
                         disabled={processing}
                         className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
                     >
-                        {processing ? 'Suppression...' : confirmText}
+                        {processing ? t.common.actions.deleting : resolvedConfirmText}
                     </button>
                 </div>
             </div>

@@ -7,6 +7,7 @@ import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, Ar
 import { useRef, useState, useEffect } from 'react';
 import ProductImage from '@/Components/ProductImage';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface DepotProductItem {
     id: number;
@@ -105,6 +106,7 @@ interface TransferForm {
 }
 
 export default function Show({ depot, products, recentTransfers, stats, otherDepots, filters, depotProductsForTransfer }: Props) {
+    const { t } = useLocale();
     const buildRoute = useRoute();
     const page = usePage<any>();
     const shops = page.props.shops as Array<{ id: number; name: string; slug: string }> || [];

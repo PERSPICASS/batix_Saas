@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function CustomersCreate({ shops }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { props } = usePage();

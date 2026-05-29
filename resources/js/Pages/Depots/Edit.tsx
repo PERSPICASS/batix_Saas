@@ -5,6 +5,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import { Warehouse } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Depot {
     id: number;
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function Edit({ depot }: Props) {
+    const { t } = useLocale();
     const buildRoute = useRoute();
 
     const { data, setData, patch, processing, errors } = useForm({

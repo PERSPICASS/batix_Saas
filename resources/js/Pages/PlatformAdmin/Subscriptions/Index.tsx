@@ -5,6 +5,7 @@ import Table, { TableActionButton, TableActions, TableBadge } from '@/Components
 import { Calendar, XCircle, RotateCw, Search, Filter, Edit, CheckCircle } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Plan {
     id: number;
@@ -52,6 +53,7 @@ interface Props {
 }
 
 export default function Index({ subscriptions, plans, filters }: Props) {
+    const { t } = useLocale();
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showRenewModal, setShowRenewModal] = useState(false);

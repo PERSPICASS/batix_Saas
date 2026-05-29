@@ -1,0 +1,56 @@
+export const preorders = {
+    fr: {
+        title: 'Précommandes',
+        columns: {
+            number: 'Numéro',
+            date: 'Date',
+            customer: 'Client',
+            total: 'Total',
+            status: 'Statut',
+            shop: 'Boutique',
+            actions: 'Actions',
+        },
+        status: {
+            pending: 'En attente',
+            confirmed: 'Confirmé',
+            completed: 'Terminé',
+            cancelled: 'Annulé',
+        },
+        actions: {
+            new: 'Nouvelle précommande',
+            view: 'Voir',
+            edit: 'Modifier',
+            delete: 'Supprimer',
+            confirm: 'Confirmer',
+            complete: 'Terminer',
+        },
+        emptyMessage: 'Aucune précommande trouvée',
+    },
+    en: {
+        title: 'Pre-orders',
+        columns: {
+            number: 'Number',
+            date: 'Date',
+            customer: 'Customer',
+            total: 'Total',
+            status: 'Status',
+            shop: 'Shop',
+            actions: 'Actions',
+        },
+        status: {
+            pending: 'Pending',
+            confirmed: 'Confirmed',
+            completed: 'Completed',
+            cancelled: 'Cancelled',
+        },
+        actions: {
+            new: 'New pre-order',
+            view: 'View',
+            edit: 'Edit',
+            delete: 'Delete',
+            confirm: 'Confirm',
+            complete: 'Complete',
+        },
+        emptyMessage: 'No pre-orders found',
+    },
+} as const;

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, User, Clock, Zap, MapPin, Globe, Code } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface ActivityLog {
     id: number;
@@ -38,6 +39,7 @@ interface Props {
 }
 
 export default function Show({ activity }: Props) {
+    const { t } = useLocale();
     const getActionColor = (action: string) => {
         const colors: Record<string, string> = {
             'created': 'text-green-400 bg-green-400/10',

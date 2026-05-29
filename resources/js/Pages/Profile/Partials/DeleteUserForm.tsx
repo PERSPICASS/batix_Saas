@@ -7,12 +7,14 @@ import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function DeleteUserForm({
     className = '',
 }: {
     className?: string;
 }) {
+    const { t } = useLocale();
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const passwordInput = useRef<HTMLInputElement>(null);
 

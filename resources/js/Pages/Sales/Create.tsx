@@ -5,6 +5,7 @@ import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import ProductImage from '@/Components/ProductImage';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -54,6 +55,7 @@ interface CartItem {
 }
 
 export default function SalesCreate({ shops, customers, products }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { props } = usePage();

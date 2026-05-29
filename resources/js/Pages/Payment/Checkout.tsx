@@ -43,8 +43,9 @@ interface Props extends PageProps {
     isSandbox: boolean;
 }
 
-type PaymentMode = 'pawapay' | 'manual';
+type PaymentMode = 'pawapay' | 'jeko' | 'manual';
 type PawaPayStatus = 'idle' | 'pending' | 'completed' | 'failed';
+type JekoStatus = 'idle' | 'redirecting' | 'failed';
 
 interface Country {
     name: string;
@@ -87,6 +88,14 @@ const CORRESPONDENTS: Correspondent[] = [
     { id: 'AIRTELTIGO_GHA', label: 'AirtelTigo Money', country: 'Ghana',         currency: 'GHS', logo: null       },
 ];
 
+// Jèko payment methods
+const JEKO_METHODS = [
+    { id: 'wave',   label: 'Wave',          logo: logoWave   },
+    { id: 'orange', label: 'Orange Money',  logo: logoOrange },
+    { id: 'mtn',    label: 'MTN',           logo: logoMtn    },
+    { id: 'moov',   label: 'Moov Money',    logo: logoMoov   },
+];
+
 // Manual fallback methods (Wave manual + virement)
 const MANUAL_METHODS = [
     { id: 'wave',         label: 'Wave (manuel)',     logo: logoWave   },
@@ -121,6 +130,12 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
     const [initiating, setInitiating] = useState(false);
     const [simulating, setSimulating] = useState(false);
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    // Jèko payment state
+    const [jekoMethod, setJekoMethod] = useState('');
+    const [jekoInitiating, setJekoInitiating] = useState(false);
+    const [jekoError, setJekoError] = useState('');
+    const [jekoStatus, setJekoStatus] = useState<JekoStatus>('idle');
 
     // Manual payment state
     const [manualMethod, setManualMethod] = useState('');
@@ -261,6 +276,47 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
     /* ── Manual payment submit ────────────────────────────────────────── */
 
+    /* ── Jèko submit ────────────────────────────────────────── */
+
+    const handleJekoSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!jekoMethod) return;
+
+        setJekoInitiating(true);
+        setJekoError('');
+
+        try {
+            const res = await axios.post(`/jeko/initiate/${plan.id}`, {
+                billing_cycle: billingCycle,
+                payment_method: jekoMethod,
+            }, {
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (res.data.success && res.data.redirectUrl) {
+                setJekoStatus('redirecting');
+                // Redirect to Jèko payment page
+                window.location.href = res.data.redirectUrl;
+            } else {
+                setJekoError(res.data.message ?? 'Erreur inconnue.');
+                setJekoStatus('failed');
+            }
+        } catch (err: any) {
+            const msg = err?.response?.data?.message
+                ?? err?.response?.data?.errors?.payment_method?.[0]
+                ?? 'Impossible de contacter le serveur de paiement.';
+            setJekoError(msg);
+            setJekoStatus('failed');
+        } finally {
+            setJekoInitiating(false);
+        }
+    };
+
+    /* ── Manual payment submit ────────────────────────────────── */
+
     const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setSubmittingManual(true);
@@ -392,7 +448,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
                             <ShieldCheck className="size-4 text-emerald-400 shrink-0" />
-                            Paiement sécurisé via PawaPay.
+                            Paiement sécurisé via PawaPay ou Jèko.
                         </div>
                     </aside>
 
@@ -403,11 +459,19 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                         <div className="flex gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
                             <button
                                 type="button"
-                                onClick={() => setPaymentMode('pawapay')}
+                                onClick={() => { setPaymentMode('pawapay'); setPawaPayError(''); }}
                                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'pawapay' ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
                             >
                                 <Zap className="size-4" />
-                                Paiement automatique
+                                PawaPay
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setPaymentMode('jeko'); setJekoError(''); setJekoStatus('idle'); }}
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'jeko' ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
+                            >
+                                <Zap className="size-4" />
+                                Jèko
                             </button>
                             <button
                                 type="button"
@@ -415,7 +479,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'manual' ? 'bg-white/15 text-white' : 'text-slate-400 hover:bg-white/5'}`}
                             >
                                 <Building2 className="size-4" />
-                                Paiement manuel
+                                Manuel
                             </button>
                         </div>
 
@@ -594,6 +658,91 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                             Powered by <span className="font-semibold text-slate-400">PawaPay</span> — push USSD sécurisé.
                                         </p>
                                     </form>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ══════════════════ JÈKO FLOW ══════════════════ */}
+                        {paymentMode === 'jeko' && (
+                            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
+                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                    <Zap className="size-5 text-amber-300" />
+                                    Paiement Jèko
+                                </h3>
+
+                                {jekoStatus === 'failed' && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-start gap-3 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-300">
+                                            <XCircle className="mt-0.5 size-4 shrink-0" />
+                                            {jekoError}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setJekoStatus('idle'); setJekoError(''); setJekoMethod(''); }}
+                                            className="inline-flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200"
+                                        >
+                                            <RefreshCw className="size-4" /> Réessayer
+                                        </button>
+                                    </div>
+                                )}
+
+                                {jekoStatus === 'idle' && (
+                                    <form onSubmit={handleJekoSubmit} className="space-y-6">
+                                        <div className="rounded-xl border border-blue-400/20 bg-blue-400/10 p-3 text-xs text-blue-200">
+                                            Choisissez votre opérateur mobile et confirmez le paiement sur la page Jèko.
+                                        </div>
+
+                                        {/* Méthode de paiement Jèko */}
+                                        <div className="space-y-2">
+                                            <p className="text-sm font-medium text-slate-300">Opérateur mobile</p>
+                                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                                                {JEKO_METHODS.map(method => (
+                                                    <button
+                                                        key={method.id}
+                                                        type="button"
+                                                        onClick={() => setJekoMethod(method.id)}
+                                                        className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-xs font-medium transition ${
+                                                            jekoMethod === method.id
+                                                                ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                                                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                                        }`}
+                                                    >
+                                                        <img src={method.logo} alt={method.label} className="h-6 w-auto object-contain" />
+                                                        {method.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={jekoInitiating || !jekoMethod}
+                                            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {jekoInitiating ? (
+                                                <><Loader2 className="size-4 animate-spin" /> Redirection…</>
+                                            ) : (
+                                                <><Zap className="size-4" /> Payer {formatPrice(displayPrice)} {currencyLabel}</>
+                                            )}
+                                        </button>
+
+                                        <p className="text-center text-xs text-slate-500">
+                                            Powered by <span className="font-semibold text-slate-400">Jèko</span> — paiement sécurisé.
+                                        </p>
+                                    </form>
+                                )}
+
+                                {jekoStatus === 'redirecting' && (
+                                    <div className="flex flex-col items-center gap-4 py-8 text-center">
+                                        <div className="relative">
+                                            <div className="size-16 rounded-full border-4 border-amber-300/20 border-t-amber-300 animate-spin" />
+                                            <Zap className="absolute inset-0 m-auto size-6 text-amber-300" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-white">Redirection vers Jèko</p>
+                                            <p className="mt-1 text-sm text-slate-400">Veuillez patienter…</p>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         )}

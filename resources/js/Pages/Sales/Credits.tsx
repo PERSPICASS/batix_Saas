@@ -14,6 +14,7 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import { useRoute } from '@/utils/route';
 import { PageProps } from '@/types';
+import { useLocale } from '@/contexts/LocaleContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -427,6 +428,7 @@ function DueBadge({ sale }: { sale: CreditSale }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Credits({ credits, shops = [], kpis, filters = {}, auth }: Props) {
+    const { t } = useLocale();
     const buildRoute = useRoute();
     const isFirstRender = useRef(true);
     const safeFilters: Record<string, unknown> =

@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEvent } from 'react';
 import { PageProps } from '@/types';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Category {
     id: number;
@@ -14,6 +15,7 @@ interface Category {
 }
 
 export default function SubcategoriesCreate({ categories }: PageProps<{ categories: Category[] }>) {
+    const { t } = useLocale();
     const route = useRoute();
 
     const { data, setData, post, processing, errors } = useForm({

@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import { Lock, Shield, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Module {
     [key: string]: string;
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export default function Index({ users, selectedUser, modules, permissions }: Props) {
+    const { t } = useLocale();
     const [permissionsState, setPermissionsState] = useState<{ [key: string]: Permission }>(permissions);
 
     const handlePermissionChange = (module: string, action: 'can_view' | 'can_create' | 'can_edit' | 'can_delete', value: boolean) => {

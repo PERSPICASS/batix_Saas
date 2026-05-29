@@ -5,6 +5,7 @@ import { Calculator, FileText, Plus, Search, Trash2, UserRound, X } from 'lucide
 import Currency, { useShopSettings } from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import Modal from '@/Components/Modal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Customer {
     id: number;
@@ -49,6 +50,7 @@ interface Props {
 }
 
 export default function InvoicesCreate({ customers, shops, products }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;

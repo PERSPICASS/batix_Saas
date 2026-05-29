@@ -1,0 +1,78 @@
+export const analytics = {
+    fr: {
+        title: 'Analytics',
+        periods: {
+            today: "Aujourd'hui",
+            week: 'Cette semaine',
+            month: 'Ce mois',
+            quarter: 'Ce trimestre',
+            year: 'Cette année',
+        },
+        kpis: {
+            revenue: "Chiffre d'affaires",
+            salesCount: 'Nombre de ventes',
+            avgBasket: 'Panier moyen',
+            marginRate: 'Taux de marge',
+            newCustomers: 'Nouveaux clients',
+        },
+        sections: {
+            topProducts: 'Top produits',
+            byCategory: 'Par catégorie',
+            topCustomers: 'Top clients',
+            paymentMethods: 'Modes de paiement',
+            shopPerformance: 'Performance boutiques',
+            comparison: 'Comparaison',
+            salesEvolution: 'Évolution des ventes',
+        },
+        columns: {
+            product: 'Produit',
+            qty: 'Qté vendue',
+            revenue: 'CA',
+            customer: 'Client',
+            sales: 'Ventes',
+            spent: 'Total dépensé',
+        },
+        comparison: {
+            vs: 'vs',
+        },
+        noData: 'Aucune donnée disponible',
+    },
+    en: {
+        title: 'Analytics',
+        periods: {
+            today: 'Today',
+            week: 'This week',
+            month: 'This month',
+            quarter: 'This quarter',
+            year: 'This year',
+        },
+        kpis: {
+            revenue: 'Revenue',
+            salesCount: 'Number of sales',
+            avgBasket: 'Average basket',
+            marginRate: 'Margin rate',
+            newCustomers: 'New customers',
+        },
+        sections: {
+            topProducts: 'Top products',
+            byCategory: 'By category',
+            topCustomers: 'Top customers',
+            paymentMethods: 'Payment methods',
+            shopPerformance: 'Shop performance',
+            comparison: 'Comparison',
+            salesEvolution: 'Sales evolution',
+        },
+        columns: {
+            product: 'Product',
+            qty: 'Qty sold',
+            revenue: 'Revenue',
+            customer: 'Customer',
+            sales: 'Sales',
+            spent: 'Total spent',
+        },
+        comparison: {
+            vs: 'vs',
+        },
+        noData: 'No data available',
+    },
+} as const;

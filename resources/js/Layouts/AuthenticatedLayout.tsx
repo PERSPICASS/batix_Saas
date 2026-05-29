@@ -43,12 +43,15 @@ import {
     X,
 } from 'lucide-react';
 import ToastContainer from '@/Components/ToastContainer';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const page = usePage();
+    const { t } = useLocale();
     const user = page.props.auth?.user;
     const routeParams = page.props.routeParams as { code_user: string | null; shop_slug: string | null };
     const shopsFromProps = page.props.shops as Array<{ id: number; name: string; slug: string; is_active: boolean }> || [];
@@ -75,102 +78,67 @@ export default function Authenticated({
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
 
-    // Fonction pour vérifier si l'utilisateur peut voir un module
     const canViewModule = (module: string): boolean => {
-        // Super admin peut tout voir
-        if (user?.role === 'super_admin') {
-            return true;
-        }
-
-        // Vérifier les permissions de l'utilisateur
+        if (user?.role === 'super_admin') return true;
         const permission = user?.permissions?.find((p: any) => p.module === module);
         return permission ? permission.can_view : false;
     };
 
-    // Fonction pour vérifier si l'utilisateur est un caissier
     const isCashier = (): boolean => {
         return user?.role === 'cashier' || user?.role === 'caisse';
     };
 
-    // Fonction pour vérifier si l'utilisateur est admin (super_admin ou manager)
     const isAdmin = (): boolean => {
         return user?.role === 'super_admin' || user?.role === 'manager';
     };
 
-    // Déterminer le code_user du compte (du propriétaire)
     const getAccountCode = (): string | null => {
         if (!user) return null;
-        
-        // Si l'utilisateur est admin_platforme, pas besoin de code_user
-        if (user.role === 'admin_platforme') {
-            return null;
-        }
-        
-        // Si l'utilisateur est super_admin, c'est son propre code
-        if (user.role === 'super_admin') {
-            return user.code_user;
-        }
-        
-        // Pour les autres rôles, extraire le code_user de l'URL ou des routeParams
-        // L'URL devrait être /{code_user}/quelquechose
+        if (user.role === 'admin_platforme') return null;
+        if (user.role === 'super_admin') return user.code_user;
         const urlParts = (typeof window !== 'undefined' ? window.location.pathname : '').split('/').filter(Boolean);
         const codeFromUrl = urlParts[0] || null;
-        
         return routeParams.code_user || codeFromUrl;
     };
-    
+
     const accountCode = getAccountCode();
 
-    // Helper pour générer les routes avec le code_user du compte
     const buildRoute = (name: string, params: Record<string, any> = {}) => {
-        // Pour admin_platforme, utiliser les routes sans code_user
-        if (user?.role === 'admin_platforme') {
-            return route(name, params);
-        }
-        
+        if (user?.role === 'admin_platforme') return route(name, params);
         if (!accountCode) {
             console.warn('Account code not available for route:', name);
             return '#';
         }
-        
-        return route(name, {
-            code_user: accountCode,
-            ...params
-        });
+        return route(name, { code_user: accountCode, ...params });
     };
 
-    // Si le code_user n'est pas disponible et que ce n'est pas un admin_platforme, afficher un loader
     if (!accountCode && user?.role !== 'admin_platforme') {
         return (
             <div className={`flex h-screen items-center justify-center ${theme === 'dark' ? 'bg-slate-950' : 'bg-slate-100'}`}>
                 <div className="text-center">
                     <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-amber-300 border-r-transparent"></div>
-                    <p className={theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>Chargement...</p>
+                    <p className={theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>{t.layout.loading}</p>
                 </div>
             </div>
         );
     }
 
-    // Pour admin_platforme, pas de shops dans le contexte
-    const shops = Array.isArray(shopsFromProps) 
+    const shops = Array.isArray(shopsFromProps)
         ? shopsFromProps.filter(shop => shop.is_active).map(shop => ({
             id: shop.id.toString(),
             name: shop.name,
             slug: shop.slug,
         }))
         : [];
-    
-    // Utiliser la boutique active depuis la session (partagée via Inertia)
-    const activeShop = activeShopFromProps 
+
+    const activeShop = activeShopFromProps
         ? { id: activeShopFromProps.id.toString(), name: activeShopFromProps.name, slug: activeShopFromProps.slug }
         : (shops.length > 0 ? shops[0] : null);
 
-
     const handleShopChange = (shopId: string) => {
-        // Changer la boutique en visitant l'URL actuelle avec le paramètre shop
         const [currentPath] = page.url.split('?');
         router.visit(`${currentPath}?shop=${shopId}`, {
-            preserveState: false, // Recharger pour mettre à jour toutes les données
+            preserveState: false,
             preserveScroll: true,
         });
         setShopMenuOpen(false);
@@ -186,7 +154,6 @@ export default function Authenticated({
             setTheme('light');
             return;
         }
-
         setTheme('dark');
     }, [isPlatformAdmin]);
 
@@ -196,7 +163,6 @@ export default function Authenticated({
         } else {
             document.documentElement.classList.remove('dark');
         }
-
         if (isPlatformAdmin) {
             window.localStorage.setItem('platform_admin_theme', theme);
         }
@@ -204,101 +170,92 @@ export default function Authenticated({
 
     useEffect(() => {
         const onClickOutside = (event: MouseEvent) => {
-            if (
-                userMenuRef.current &&
-                !userMenuRef.current.contains(event.target as Node)
-            ) {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
                 setUserMenuOpen(false);
             }
-            if (
-                shopMenuRef.current &&
-                !shopMenuRef.current.contains(event.target as Node)
-            ) {
+            if (shopMenuRef.current && !shopMenuRef.current.contains(event.target as Node)) {
                 setShopMenuOpen(false);
             }
         };
-
         window.addEventListener('mousedown', onClickOutside);
         return () => window.removeEventListener('mousedown', onClickOutside);
     }, []);
 
     const allNavItems = [
-        // Admin plateforme (uniquement pour admin_platforme)
         ...(user?.role === 'admin_platforme' ? [
             {
-                label: 'Dashboard Plateforme',
+                label: t.nav.platformDashboard,
                 href: route('platform.dashboard'),
                 active: route().current('platform.dashboard'),
                 icon: Crown,
                 module: null,
             },
             {
-                label: 'Comptes',
+                label: t.nav.accounts,
                 href: route('platform.accounts'),
                 active: route().current('platform.accounts'),
                 icon: Users,
                 module: null,
             },
             {
-                label: 'Boutiques',
+                label: t.nav.shops,
                 href: route('platform.shops'),
                 active: route().current('platform.shops'),
                 icon: Store,
                 module: null,
             },
             {
-                label: 'Plans',
+                label: t.nav.plans,
                 href: route('platform.subscriptions.index'),
                 active: route().current('platform.subscriptions.*'),
                 icon: Crown,
                 module: null,
             },
             {
-                label: 'Abonnements',
+                label: t.nav.subscriptions,
                 href: route('platform.active-subscriptions'),
                 active: route().current('platform.active-subscriptions*'),
                 icon: Calendar,
                 module: null,
             },
             {
-                label: 'Paramètres',
+                label: t.nav.settings,
                 href: route('platform.settings'),
                 active: route().current('platform.settings*'),
                 icon: Settings,
                 module: null,
             },
             {
-                label: 'MRR & Revenus',
+                label: t.nav.mrr,
                 href: route('platform.mrr'),
                 active: route().current('platform.mrr*'),
                 icon: TrendingUp,
                 module: null,
             },
             {
-                label: 'Blog',
+                label: t.nav.blog,
                 href: route('platform.blog.index'),
                 active: route().current('platform.blog.*'),
                 icon: BookOpen,
                 module: null,
             },
         ] : [
-            // Menus normaux pour les autres utilisateurs
             {
-                label: 'Dashboard',
+                label: t.nav.dashboard,
                 href: buildRoute('dashboard'),
                 active: route().current('dashboard'),
                 icon: LayoutDashboard,
-                module: 'dashboard', // Restreint aux admins
+                module: 'dashboard',
             },
             {
-                label: 'Boutiques',
+                label: t.nav.shops,
                 href: buildRoute('shops.index'),
                 active: route().current('shops.*'),
                 icon: Store,
                 module: 'shops',
             },
             {
-                label: 'Produits',
+                label: t.nav.products,
                 href: buildRoute('products.index'),
                 active: route().current('products.*'),
                 icon: Box,
@@ -306,115 +263,112 @@ export default function Authenticated({
                 badge: lowStockCount > 0 ? lowStockCount : null,
             },
             {
-                label: 'Categories',
+                label: t.nav.categories,
                 href: buildRoute('categories.index'),
                 active: route().current('categories.*'),
                 icon: Folder,
                 module: 'categories',
             },
             {
-                label: 'Sous categorie',
+                label: t.nav.subcategories,
                 href: buildRoute('subcategories.index'),
                 active: route().current('subcategories.*'),
                 icon: FolderTree,
                 module: 'categories',
             },
             {
-                label: 'Stocks',
+                label: t.nav.stocks,
                 href: buildRoute('stocks.index'),
                 active: route().current('stocks.*'),
                 icon: Boxes,
                 module: 'stocks',
             },
             {
-                label: 'Inventaire',
+                label: t.nav.inventory,
                 href: buildRoute('inventory.index'),
                 active: route().current('inventory.*'),
                 icon: ClipboardList,
                 module: 'inventory',
             },
             {
-                label: 'Achats',
+                label: t.nav.purchases,
                 href: buildRoute('purchases.index'),
                 active: route().current('purchases.*'),
                 icon: ShoppingCart,
                 module: 'purchases',
             },
             {
-                label: 'Dépenses',
+                label: t.nav.expenses,
                 href: buildRoute('expenses.index'),
                 active: route().current('expenses.*'),
                 icon: TrendingDown,
                 module: 'expenses',
             },
             {
-                label: 'Ventes',
+                label: t.nav.sales,
                 href: buildRoute('sales.index'),
                 active: route().current('sales.*') && !route().current('sales.credits*'),
                 icon: ShoppingCart,
                 module: 'sales',
             },
             {
-                label: 'Créances',
+                label: t.nav.credits,
                 href: buildRoute('sales.credits'),
                 active: route().current('sales.credits*'),
                 icon: CreditCard,
                 module: 'credits',
             },
             ...(isCashier() ? [] : [{
-                label: 'Inventaire retours',
+                label: t.nav.returnedInventory,
                 href: buildRoute('returned-inventory.index'),
                 active: route().current('returned-inventory.*'),
                 icon: ClipboardList,
                 module: 'returns',
             }]),
             {
-                label: 'Fournisseurs',
+                label: t.nav.suppliers,
                 href: buildRoute('suppliers.index'),
                 active: route().current('suppliers.*'),
                 icon: Truck,
                 module: 'suppliers',
             },
             {
-                label: 'Utilisateurs',
+                label: t.nav.users,
                 href: buildRoute('users.index'),
                 active: route().current('users.*'),
                 icon: Users,
                 module: 'users',
             },
             {
-                label: 'Client',
+                label: t.nav.customers,
                 href: buildRoute('customers.index'),
                 active: route().current('customers.*'),
                 icon: User,
                 module: 'customers',
             },
             {
-                label: 'Factures',
+                label: t.nav.invoices,
                 href: buildRoute('invoices.index'),
                 active: route().current('invoices.*'),
                 icon: FileText,
                 module: 'invoices',
             },
-            
             {
-                label: 'Analytics',
+                label: t.nav.analytics,
                 href: buildRoute('analytics.index'),
                 active: route().current('analytics.*'),
                 icon: BarChart3,
-                module: 'analytics', // Restreint aux admins
+                module: 'analytics',
             },
-            // Logs d'activité pour super_admin uniquement
             ...((user as any)?.role === 'super_admin' ? [{
-                label: 'Historique',
+                label: t.nav.history,
                 href: buildRoute('activity-logs.index'),
                 active: route().current('activity-logs.*'),
                 icon: History,
                 module: null,
             }] : []),
-            // Paramètres uniquement pour super_admin
             ...(isSuperAdmin ? [{
-                label: 'Paramètres',
+                label: t.nav.settings,
                 href: buildRoute('settings.index'),
                 active: route().current('settings.*'),
                 icon: Settings,
@@ -422,15 +376,15 @@ export default function Authenticated({
             }] : []),
             ...(user && (user as any).role !== 'admin_platforme'
                 ? [{
-                label: 'Profil',
+                label: t.nav.profile,
                 href: buildRoute('profile.edit'),
                 active: route().current('profile.*'),
                 icon: Settings,
-                module: null, // Toujours visible
+                module: null,
             }]
             : []),
             {
-                label: 'Facturation',
+                label: t.nav.billing,
                 href: buildRoute('billing.index'),
                 active: route().current('billing.*'),
                 icon: Receipt,
@@ -439,9 +393,8 @@ export default function Authenticated({
         ]),
     ];
 
-    // Filtrer les menus selon les permissions
     const navItems = allNavItems.filter(item => {
-        if (!item.module) return true; // Toujours afficher si pas de module
+        if (!item.module) return true;
         return canViewModule(item.module);
     });
 
@@ -457,7 +410,7 @@ export default function Authenticated({
                     type="button"
                     onClick={() => setMobileSidebarOpen(false)}
                     className="fixed inset-0 z-40 bg-slate-900/50 dark:bg-slate-950/70 lg:hidden"
-                    aria-label="Fermer le menu"
+                    aria-label={t.layout.closeMenu}
                 />
             )}
 
@@ -477,7 +430,7 @@ export default function Authenticated({
                                     BATIX PRO
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    Gestion moderne de quincaillerie
+                                    {t.layout.brandSubtitle}
                                 </p>
                             </div>
                         </Link>
@@ -517,7 +470,6 @@ export default function Authenticated({
                                 </Link>
                             ))}
                         </nav>
-                        
                     </div>
 
                     <div className="space-y-3 pt-4">
@@ -526,27 +478,25 @@ export default function Authenticated({
                             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-100">
                                 <Crown className="size-4" />
                                 <p className="text-xs font-semibold uppercase tracking-wider">
-                                    Abonnement
+                                    {t.layout.subscription.title}
                                 </p>
                             </div>
                             <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
-                                {subscription?.plan_name ?? 'Aucun plan'}
+                                {subscription?.plan_name ?? t.layout.subscription.noPlan}
                             </p>
                             <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">
                                 {subscription?.has_subscription
-                                    ? 'Abonnement actif'
-                                    : 'Aucun abonnement actif'}
+                                    ? t.layout.subscription.active
+                                    : t.layout.subscription.noActive}
                             </p>
                             <Link
                                 href="/plans"
                                 className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
                             >
-                                Upgrade
+                                {t.layout.subscription.upgrade}
                             </Link>
                         </div>
                         )}
-
-                        
                     </div>
                 </div>
             </aside>
@@ -565,13 +515,15 @@ export default function Authenticated({
                             <div>
                                 {header ?? (
                                     <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                        Dashboard
+                                        {t.nav.dashboard}
                                     </h1>
                                 )}
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2">
+                            <LanguageSwitcher />
+
                             {isPlatformAdmin && (
                                 <button
                                     type="button"
@@ -579,23 +531,21 @@ export default function Authenticated({
                                     className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
                                     {theme === 'dark' ? <Sun className="size-4 text-amber-300" /> : <Moon className="size-4 text-slate-700" />}
-                                    <span className="hidden sm:inline">{theme === 'dark' ? 'Mode clair' : 'Mode sombre'}</span>
+                                    <span className="hidden sm:inline">{theme === 'dark' ? t.layout.theme.light : t.layout.theme.dark}</span>
                                 </button>
                             )}
 
-                            {/* Badge stock bas */}
                             {lowStockCount > 0 && user?.role !== 'admin_platforme' && (
                                 <Link
                                     href={buildRoute('products.index') + '?status=low_stock'}
                                     className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
                                 >
                                     <AlertTriangle className="size-3.5" />
-                                    <span className="hidden sm:inline">{lowStockCount} stock{lowStockCount > 1 ? 's' : ''} bas</span>
+                                    <span className="hidden sm:inline">{t.layout.lowStock(lowStockCount)}</span>
                                     <span className="sm:hidden">{lowStockCount}</span>
                                 </Link>
                             )}
 
-                            {/* Badge plan abonnement - super_admin uniquement */}
                             {user?.role === 'super_admin' && (
                                 <Link
                                     href={buildRoute('billing.index')}
@@ -603,24 +553,21 @@ export default function Authenticated({
                                 >
                                     <Crown className="size-3.5" />
                                     <span className="hidden sm:inline">
-                                        {subscription?.plan_name ?? 'Aucun plan'}
+                                        {subscription?.plan_name ?? t.layout.subscription.noPlan}
                                     </span>
                                 </Link>
                             )}
 
-                            {/* Bouton Dépôt - masqué pour admin_platforme */}
                             {user?.role !== 'admin_platforme' && isSuperAdmin && (
                                 <Link
                                     href={buildRoute('depots.index')}
-                                   
                                     className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
                                     <Warehouse className="size-4 text-amber-400" />
-                                    <span className="hidden sm:inline">Dépôt</span>
+                                    <span className="hidden sm:inline">{t.layout.depot}</span>
                                 </Link>
                             )}
 
-                            {/* Sélecteur de boutique - masqué pour admin_platforme */}
                             {user?.role !== 'admin_platforme' && (
                             <div className="relative" ref={shopMenuRef}>
                                 <button
@@ -636,21 +583,16 @@ export default function Authenticated({
                                     <Building2 className="size-4 text-amber-200" />
                                     <span className="hidden sm:block">
                                         <span className="block text-[11px] text-slate-500 dark:text-slate-400">
-                                            Boutique active
+                                            {t.layout.activeShop}
                                         </span>
                                         <span className="block font-semibold text-slate-900 dark:text-white">
-                                            {shops.length > 0 ? activeShop?.name : 'Aucune boutique'}
+                                            {shops.length > 0 ? activeShop?.name : t.layout.noShop}
                                         </span>
                                     </span>
                                     {shops.length > 0 && (
                                         <ChevronDown className="size-4 text-slate-500 dark:text-slate-300" />
                                     )}
                                 </button>
-                               {/*  {!isSuperAdmin && (
-                                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
-                                        Seul un super admin peut changer de boutique
-                                    </p>
-                                )} */}
 
                                 {shopMenuOpen && shops.length > 0 && isSuperAdmin && (
                                     <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
@@ -676,12 +618,12 @@ export default function Authenticated({
                                                 onClick={() => setShopMenuOpen(false)}
                                             >
                                                 <Store className="size-4" />
-                                                Gérer mes boutiques
+                                                {t.layout.manageShops}
                                             </Link>
                                         ) : (
                                             <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 dark:text-slate-600 cursor-not-allowed">
                                                 <Store className="size-4" />
-                                                Gérer mes boutiques
+                                                {t.layout.manageShops}
                                             </div>
                                         )}
                                     </div>
@@ -718,7 +660,7 @@ export default function Authenticated({
                                                             onClick={() => setUserMenuOpen(false)}
                                                         >
                                                             <User className="size-4" />
-                                                            <span>Profil</span>
+                                                            <span>{t.layout.userMenu.profile}</span>
                                                         </Link>
                                                         <Link
                                                             href={buildRoute('settings.index')}
@@ -726,7 +668,7 @@ export default function Authenticated({
                                                             onClick={() => setUserMenuOpen(false)}
                                                         >
                                                             <Settings className="size-4" />
-                                                            <span>Parametres</span>
+                                                            <span>{t.layout.userMenu.settings}</span>
                                                         </Link>
                                                         <div className="my-1 border-t border-slate-300 dark:border-white/10"></div>
                                                     </>
@@ -739,7 +681,7 @@ export default function Authenticated({
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
                                                     <Lock className="size-4" />
-                                                    <span>Verrouiller</span>
+                                                    <span>{t.layout.userMenu.lock}</span>
                                                 </Link>
                                                 <Link
                                                     href={route('logout')}
@@ -749,7 +691,7 @@ export default function Authenticated({
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
                                                     <LogOut className="size-4" />
-                                                    <span>Deconnexion</span>
+                                                    <span>{t.layout.userMenu.logout}</span>
                                                 </Link>
                                             </>
                                         ) : (
@@ -758,7 +700,7 @@ export default function Authenticated({
                                                 className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
                                                 onClick={() => setUserMenuOpen(false)}
                                             >
-                                                Connexion
+                                                {t.layout.userMenu.login}
                                             </Link>
                                         )}
                                     </div>
@@ -767,7 +709,6 @@ export default function Authenticated({
                         </div>
                     </div>
 
-                    {/* Bannière expiration abonnement */}
                     {showExpiryBanner && (
                         <div className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm sm:px-6 lg:px-8 ${
                             daysUntilExpiry! <= 1
@@ -778,10 +719,10 @@ export default function Authenticated({
                                 <AlertTriangle className="size-4 shrink-0" />
                                 <span className="font-medium">
                                     {daysUntilExpiry! <= 0
-                                        ? 'Votre abonnement a expiré.'
+                                        ? t.layout.expiryBanner.expired
                                         : daysUntilExpiry === 1
-                                        ? 'Votre abonnement expire demain !'
-                                        : `Votre abonnement expire dans ${daysUntilExpiry} jours.`}
+                                        ? t.layout.expiryBanner.tomorrow
+                                        : t.layout.expiryBanner.days(daysUntilExpiry!)}
                                 </span>
                             </div>
                             <Link
@@ -792,7 +733,7 @@ export default function Authenticated({
                                         : 'bg-amber-400/20 hover:bg-amber-400/35 text-amber-200'
                                 }`}
                             >
-                                Renouveler
+                                {t.layout.expiryBanner.renew}
                             </Link>
                         </div>
                     )}
@@ -801,7 +742,6 @@ export default function Authenticated({
                 <main className="px-4 py-6 print:p-0 sm:px-6 lg:px-8">{children}</main>
             </div>
 
-            {/* Toast Container */}
             <div className="print:hidden">
                 <ToastContainer />
             </div>

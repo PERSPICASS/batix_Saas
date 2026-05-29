@@ -3,6 +3,7 @@ import './bootstrap';
 
 import { createInertiaApp } from '@inertiajs/react';
 import { router } from '@inertiajs/react';
+import { LocaleProvider } from '@/contexts/LocaleContext';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { hydrateRoot } from 'react-dom/client';
 
@@ -68,7 +69,11 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.tsx'),
         ),
     setup({ el, App, props }) {
-        hydrateRoot(el, <App {...props} />);
+        hydrateRoot(el, (
+            <LocaleProvider>
+                <App {...props} />
+            </LocaleProvider>
+        ));
     },
     progress: {
         color: '#FBBF24',

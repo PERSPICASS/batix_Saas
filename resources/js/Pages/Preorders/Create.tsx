@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function Create({ shops, customers, products }: Props) {
+    const { t } = useLocale();
     const { data, setData, post, processing, errors } = useForm({
         shop_id: shops[0]?.id || '',
         customer_id: '',

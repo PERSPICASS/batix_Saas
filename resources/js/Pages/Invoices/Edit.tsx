@@ -4,6 +4,7 @@ import { FormEventHandler, useMemo, useState } from 'react';
 import { Calculator, FilePenLine, Plus, Trash2 } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import Currency, { useShopSettings } from '@/Components/Currency';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Customer {
     id: number;
@@ -53,6 +54,7 @@ interface Props {
 }
 
 export default function InvoicesEdit({ invoice, customers, shops, products }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const { currencySymbol } = useShopSettings();
 
