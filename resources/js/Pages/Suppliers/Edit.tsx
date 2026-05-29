@@ -72,21 +72,18 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Modifier fournisseur</h1>}>
-            <Head title="Modifier fournisseur" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.suppliers.form.editTitle}</h1>}>
+            <Head title={t.suppliers.form.editTitle} />
 
             <div className="mx-auto max-w-4xl">
                 <form onSubmit={submit} className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
                     {/* Informations générales */}
                     <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-white">Informations générales</h2>
+                        <h2 className="text-lg font-semibold text-white">{t.common.form.generalInfo}</h2>
 
-                        {/* Boutiques */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">
-                                Boutiques *
-                            </label>
-                            <p className="mt-1 text-xs text-slate-400">Sélectionnez une ou plusieurs boutiques pour ce fournisseur</p>
+                            <label className="block text-sm font-medium text-slate-200">{t.suppliers.form.shopsLabel}</label>
+                            <p className="mt-1 text-xs text-slate-400">{t.suppliers.form.shopsHint}</p>
                             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 {shops.map((shop) => (
                                     <button
@@ -118,7 +115,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-slate-200">
-                                    Nom du contact *
+                                    {t.suppliers.form.contactName}
                                 </label>
                                 <input
                                     type="text"
@@ -133,7 +130,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                             <div>
                                 <label htmlFor="company_name" className="block text-sm font-medium text-slate-200">
-                                    Raison sociale
+                                    {t.suppliers.form.companyName}
                                 </label>
                                 <input
                                     type="text"
@@ -151,7 +148,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-slate-200">
-                                    Email
+                                    {t.common.form.email}
                                 </label>
                                 <input
                                     type="email"
@@ -165,7 +162,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                             <div>
                                 <label htmlFor="phone" className="block text-sm font-medium text-slate-200">
-                                    Téléphone fixe
+                                    {t.suppliers.form.landline}
                                 </label>
                                 <input
                                     type="text"
@@ -179,7 +176,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                             <div>
                                 <label htmlFor="mobile" className="block text-sm font-medium text-slate-200">
-                                    Mobile
+                                    {t.suppliers.form.mobile}
                                 </label>
                                 <input
                                     type="text"
@@ -195,11 +192,11 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                     {/* Adresse */}
                     <div className="space-y-6 border-t border-white/10 pt-6">
-                        <h2 className="text-lg font-semibold text-white">Adresse</h2>
+                        <h2 className="text-lg font-semibold text-white">{t.suppliers.form.addressSection}</h2>
 
                         <div>
                             <label htmlFor="address" className="block text-sm font-medium text-slate-200">
-                                Adresse complète
+                                {t.suppliers.form.fullAddress}
                             </label>
                             <textarea
                                 id="address"
@@ -214,7 +211,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
                         <div className="grid grid-cols-3 gap-4">
                             <div>
                                 <label htmlFor="city" className="block text-sm font-medium text-slate-200">
-                                    Ville
+                                    {t.common.form.city}
                                 </label>
                                 <input
                                     type="text"
@@ -228,7 +225,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                             <div>
                                 <label htmlFor="postal_code" className="block text-sm font-medium text-slate-200">
-                                    Code postal
+                                    {t.common.form.postalCode}
                                 </label>
                                 <input
                                     type="text"
@@ -244,7 +241,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                             <div>
                                 <label htmlFor="country" className="block text-sm font-medium text-slate-200">
-                                    Pays
+                                    {t.common.form.country}
                                 </label>
                                 <input
                                     type="text"
@@ -260,12 +257,12 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                     {/* Informations fiscales et autres */}
                     <div className="space-y-6 border-t border-white/10 pt-6">
-                        <h2 className="text-lg font-semibold text-white">Autres informations</h2>
+                        <h2 className="text-lg font-semibold text-white">{t.suppliers.form.otherInfo}</h2>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="tax_id" className="block text-sm font-medium text-slate-200">
-                                    ICE / N° Fiscal
+                                    {t.shops.form.taxIdLabel}
                                 </label>
                                 <input
                                     type="text"
@@ -279,7 +276,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                             <div>
                                 <label htmlFor="website" className="block text-sm font-medium text-slate-200">
-                                    Site web
+                                    {t.common.form.website}
                                 </label>
                                 <input
                                     type="url"
@@ -294,7 +291,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
 
                         <div>
                             <label htmlFor="notes" className="block text-sm font-medium text-slate-200">
-                                Notes
+                                {t.common.form.notes}
                             </label>
                             <textarea
                                 id="notes"
@@ -315,7 +312,7 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
                                 className="size-4 rounded border-white/15 bg-slate-900/70 text-amber-300 focus:ring-amber-300 focus:ring-offset-slate-950"
                             />
                             <label htmlFor="is_active" className="text-sm font-medium text-slate-200">
-                                Fournisseur actif
+                                {t.suppliers.form.activeSupplier}
                             </label>
                         </div>
                     </div>
@@ -325,14 +322,14 @@ export default function SuppliersEdit({ supplier, shops }: Props) {
                             href={route('suppliers.index')}
                             className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
                         >
-                            Annuler
+                            {t.common.form.cancel}
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
                             className="rounded-lg bg-amber-300 px-6 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {processing ? 'Mise à jour...' : 'Enregistrer'}
+                            {processing ? t.common.form.updating : t.common.form.save}
                         </button>
                     </div>
                 </form>

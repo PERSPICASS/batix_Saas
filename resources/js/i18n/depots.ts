@@ -47,6 +47,14 @@ export const depots = {
         },
         deleteTitle: 'Supprimer le dépôt',
         deleteMessage: 'Êtes-vous sûr de vouloir supprimer ce dépôt ? Tout le stock associé sera perdu.',
+        form: {
+            infoTitle: 'Informations du dépôt',
+            infoHint: 'Renseignez les informations de votre nouveau dépôt',
+            nameLabel: 'Nom du dépôt *',
+            createDepot: 'Créer le dépôt',
+            editTitle: 'Modifier le dépôt',
+            editInfoHint: 'Mettez à jour les informations du dépôt',
+        },
     },
     en: {
         title: 'Warehouses',
@@ -96,5 +104,13 @@ export const depots = {
         },
         deleteTitle: 'Delete warehouse',
         deleteMessage: 'Are you sure you want to delete this warehouse? All associated stock will be lost.',
+        form: {
+            infoTitle: 'Warehouse information',
+            infoHint: 'Fill in the details for your new warehouse',
+            nameLabel: 'Warehouse name *',
+            createDepot: 'Create warehouse',
+            editTitle: 'Edit warehouse',
+            editInfoHint: 'Update the warehouse information',
+        },
     },
 } as const;

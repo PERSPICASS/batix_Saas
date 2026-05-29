@@ -36,12 +36,12 @@ export default function CustomersCreate({ shops }: Props) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Nouveau client</h1>}>
-            <Head title="Nouveau client" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.customers.actions.new}</h1>}>
+            <Head title={t.customers.actions.new} />
             <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
                 <div className="grid gap-4 md:grid-cols-2">
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Boutique *</span>
+                        <span>{t.common.form.shopField}</span>
                         <select
                             value={data.shop_id}
                             disabled
@@ -53,12 +53,12 @@ export default function CustomersCreate({ shops }: Props) {
                                 </option>
                             ))}
                         </select>
-                        <p className="text-xs text-slate-400">Boutique sélectionnée via le switcher</p>
+                        <p className="text-xs text-slate-400">{t.common.form.shopHint}</p>
                         {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Nom *</span>
+                        <span>{t.common.form.name}</span>
                         <input
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
@@ -68,7 +68,7 @@ export default function CustomersCreate({ shops }: Props) {
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Email</span>
+                        <span>{t.common.form.email}</span>
                         <input
                             type="email"
                             value={data.email}
@@ -79,7 +79,7 @@ export default function CustomersCreate({ shops }: Props) {
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Téléphone</span>
+                        <span>{t.common.form.phone}</span>
                         <input
                             value={data.phone}
                             onChange={(e) => setData('phone', e.target.value)}
@@ -89,7 +89,7 @@ export default function CustomersCreate({ shops }: Props) {
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Adresse</span>
+                        <span>{t.common.form.address}</span>
                         <input
                             value={data.address}
                             onChange={(e) => setData('address', e.target.value)}
@@ -99,7 +99,7 @@ export default function CustomersCreate({ shops }: Props) {
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Notes</span>
+                        <span>{t.common.form.notes}</span>
                         <textarea
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
@@ -116,7 +116,7 @@ export default function CustomersCreate({ shops }: Props) {
                             onChange={(e) => setData('is_active', e.target.checked)}
                             className="rounded border border-white/15 bg-slate-900/70"
                         />
-                        <span>Client actif</span>
+                        <span>{t.common.form.activeCustomer}</span>
                     </label>
                 </div>
 
@@ -125,14 +125,14 @@ export default function CustomersCreate({ shops }: Props) {
                         href={route('customers.index')}
                         className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                     >
-                        Annuler
+                        {t.common.form.cancel}
                     </Link>
                     <button
                         type="submit"
                         disabled={processing}
                         className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50"
                     >
-                        {processing ? 'Enregistrement...' : 'Enregistrer'}
+                        {processing ? t.common.form.saving : t.common.form.save}
                     </button>
                 </div>
             </form>

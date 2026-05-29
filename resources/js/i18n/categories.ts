@@ -18,6 +18,15 @@ export const categories = {
         },
         emptyMessage: 'Aucune catégorie trouvée',
         emptySubMessage: 'Aucune sous-catégorie trouvée',
+        form: {
+            newTitle: 'Nouvelle catégorie',
+            editTitle: 'Modifier la catégorie',
+            newSubTitle: 'Nouvelle sous-catégorie',
+            editSubTitle: 'Modifier la sous-catégorie',
+            displayOrder: "Ordre d'affichage",
+            shopNoChange: 'La boutique ne peut pas être modifiée',
+            parentCategory: 'Catégorie parente *',
+        },
         deleteConfirm: (name: string) => `Êtes-vous sûr de vouloir supprimer la catégorie "${name}" ?`,
     },
     en: {
@@ -39,6 +48,15 @@ export const categories = {
         },
         emptyMessage: 'No categories found',
         emptySubMessage: 'No subcategories found',
+        form: {
+            newTitle: 'New category',
+            editTitle: 'Edit category',
+            newSubTitle: 'New subcategory',
+            editSubTitle: 'Edit subcategory',
+            displayOrder: 'Display order',
+            shopNoChange: 'The shop cannot be changed',
+            parentCategory: 'Parent category *',
+        },
         deleteConfirm: (name: string) => `Are you sure you want to delete category "${name}"?`,
     },
 } as const;

@@ -23,35 +23,13 @@ interface Props {
     currentUserRole: string;
 }
 
-const MODULES = [
-    { key: 'shops', label: 'Boutiques' },
-    { key: 'products', label: 'Produits' },
-    { key: 'categories', label: 'Catégories & Sous-catégories' },
-    { key: 'stocks', label: 'Stocks' },
-    { key: 'inventory', label: 'Inventaires' },
-    { key: 'sales', label: 'Ventes' },
-    { key: 'purchases', label: 'Achats' },
-    { key: 'expenses', label: 'Dépenses' },
-    { key: 'depots', label: 'Dépôts' },
-    { key: 'suppliers', label: 'Fournisseurs' },
-    { key: 'customers', label: 'Clients' },
-    { key: 'invoices', label: 'Factures' },
-    { key: 'credits', label: 'Créances' },
-    { key: 'users', label: 'Utilisateurs' },
-    { key: 'reports', label: 'Rapports' },
-    { key: 'analytics', label: 'Analytiques' },
-    { key: 'activity_logs', label: 'Journaux d\'activité' },
-    { key: 'settings', label: 'Paramètres' },
+const MODULE_KEYS = [
+    'shops', 'products', 'categories', 'stocks', 'inventory', 'sales',
+    'purchases', 'expenses', 'depots', 'suppliers', 'customers', 'invoices',
+    'credits', 'users', 'reports', 'analytics', 'activity_logs', 'settings',
 ];
 
-const ROLES = [
-    { value: 'staff', label: 'Personnel' },
-    { value: 'cashier', label: 'Caissier' },
-    { value: 'manager', label: 'Gestionnaire' },
-    { value: 'admin', label: 'Administrateur' },
-    { value: 'super_admin', label: 'Super Admin' },
-    { value: 'admin_platforme', label: 'Admin Plateforme' },
-];
+const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
 export default function UsersCreate({ shops, currentUserRole }: Props) {
     const { t } = useLocale();
@@ -76,22 +54,10 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
         const newSelected = isSelected
             ? selectedModules.filter((m) => m !== moduleKey)
             : [...selectedModules, moduleKey];
-
         setSelectedModules(newSelected);
-
         const newPermissions = isSelected
             ? data.permissions.filter((p) => p.module !== moduleKey)
-            : [
-                  ...data.permissions,
-                  {
-                      module: moduleKey,
-                      can_view: true,
-                      can_create: false,
-                      can_edit: false,
-                      can_delete: false,
-                  },
-              ];
-
+            : [...data.permissions, { module: moduleKey, can_view: true, can_create: false, can_edit: false, can_delete: false }];
         setData('permissions', newPermissions);
     };
 
@@ -111,20 +77,22 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
         post(route('users.store'));
     };
 
+    const moduleLabels = t.users.modules as Record<string, string>;
+    const roleLabels = t.users.roles as Record<string, string>;
+
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Nouvel utilisateur</h1>}>
-            <Head title="Nouvel utilisateur" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.users.form.newTitle}</h1>}>
+            <Head title={t.users.form.newTitle} />
 
             <div className="mx-auto max-w-4xl">
                 <form onSubmit={submit} className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
-                    {/* Informations de base */}
                     <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-white">Informations générales</h2>
+                        <h2 className="text-lg font-semibold text-white">{t.common.form.generalInfo}</h2>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-slate-200">
-                                    Nom complet *
+                                    {t.common.form.fullName}
                                 </label>
                                 <input
                                     type="text"
@@ -132,7 +100,6 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    placeholder="Ex: Ahmed Benali"
                                     autoFocus
                                 />
                                 {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
@@ -140,7 +107,7 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
 
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-slate-200">
-                                    Adresse email *
+                                    {t.common.form.emailRequired}
                                 </label>
                                 <input
                                     type="email"
@@ -148,7 +115,6 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    placeholder="exemple@email.com"
                                 />
                                 {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
                             </div>
@@ -157,7 +123,7 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="password" className="block text-sm font-medium text-slate-200">
-                                    Mot de passe *
+                                    {t.common.form.password}
                                 </label>
                                 <input
                                     type="password"
@@ -165,17 +131,14 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                     value={data.password}
                                     onChange={(e) => setData('password', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    placeholder="Minimum 8 caractères"
+                                    placeholder={t.common.form.passwordMin}
                                 />
                                 {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
                             </div>
 
                             <div>
-                                <label
-                                    htmlFor="password_confirmation"
-                                    className="block text-sm font-medium text-slate-200"
-                                >
-                                    Confirmer le mot de passe *
+                                <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-200">
+                                    {t.common.form.passwordConfirm}
                                 </label>
                                 <input
                                     type="password"
@@ -183,7 +146,6 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                     value={data.password_confirmation}
                                     onChange={(e) => setData('password_confirmation', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    placeholder="Confirmer le mot de passe"
                                 />
                                 {errors.password_confirmation && (
                                     <p className="mt-1 text-sm text-red-400">{errors.password_confirmation}</p>
@@ -192,14 +154,13 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                         </div>
                     </div>
 
-                    {/* Rôle et Boutique */}
                     <div className="space-y-6 border-t border-white/10 pt-6">
-                        <h2 className="text-lg font-semibold text-white">Affectation</h2>
+                        <h2 className="text-lg font-semibold text-white">{t.common.form.assignment}</h2>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="shop_id" className={`block text-sm font-medium ${isSuperAdmin ? 'text-slate-200' : 'text-slate-400'}`}>
-                                    Boutique
+                                    {t.common.misc.shop}
                                 </label>
                                 <select
                                     id="shop_id"
@@ -212,20 +173,18 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                             : 'border-slate-600 bg-slate-800/50 text-slate-500 cursor-not-allowed'
                                     }`}
                                 >
-                                    <option value="">-- Aucune boutique --</option>
+                                    <option value="">{t.common.form.noShop}</option>
                                     {shops.map((shop) => (
-                                        <option key={shop.id} value={shop.id}>
-                                            {shop.name}
-                                        </option>
+                                        <option key={shop.id} value={shop.id}>{shop.name}</option>
                                     ))}
                                 </select>
-                                {!isSuperAdmin && <p className="mt-1 text-xs text-slate-500">Seul un super admin peut assigner une boutique</p>}
+                                {!isSuperAdmin && <p className="mt-1 text-xs text-slate-500">{t.common.form.shopAssignHint}</p>}
                                 {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
                             </div>
 
                             <div>
                                 <label htmlFor="role" className="block text-sm font-medium text-slate-200">
-                                    Rôle *
+                                    {t.common.form.role}
                                 </label>
                                 <select
                                     id="role"
@@ -233,10 +192,8 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                     onChange={(e) => setData('role', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 >
-                                    {ROLES.map((role) => (
-                                        <option key={role.value} value={role.value}>
-                                            {role.label}
-                                        </option>
+                                    {ROLE_KEYS.map((key) => (
+                                        <option key={key} value={key}>{roleLabels[key] || key}</option>
                                     ))}
                                 </select>
                                 {errors.role && <p className="mt-1 text-sm text-red-400">{errors.role}</p>}
@@ -252,73 +209,51 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                 className="size-4 rounded border-white/15 bg-slate-900/70 text-amber-300 focus:ring-amber-300 focus:ring-offset-slate-950"
                             />
                             <label htmlFor="is_active" className="text-sm font-medium text-slate-200">
-                                Utilisateur actif
+                                {t.common.form.activeUser}
                             </label>
                         </div>
                     </div>
 
-                    {/* Permissions */}
                     <div className="space-y-4 border-t border-white/10 pt-6">
                         <div className="flex items-center gap-2">
                             <Shield className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">Permissions des modules</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.common.form.modulePermissions}</h2>
                         </div>
 
                         <div className="space-y-3">
-                            {MODULES.map((module) => {
-                                const isSelected = selectedModules.includes(module.key);
-                                const permission = getPermission(module.key);
+                            {MODULE_KEYS.map((key) => {
+                                const isSelected = selectedModules.includes(key);
+                                const permission = getPermission(key);
 
                                 return (
-                                    <div
-                                        key={module.key}
-                                        className="rounded-lg border border-white/10 bg-white/5 p-4"
-                                    >
+                                    <div key={key} className="rounded-lg border border-white/10 bg-white/5 p-4">
                                         <div className="flex items-center justify-between">
                                             <button
                                                 type="button"
-                                                onClick={() => toggleModule(module.key)}
+                                                onClick={() => toggleModule(key)}
                                                 className="flex items-center gap-3"
                                             >
-                                                <div
-                                                    className={`flex size-5 items-center justify-center rounded border ${
-                                                        isSelected
-                                                            ? 'border-amber-300 bg-amber-300'
-                                                            : 'border-white/15 bg-slate-900/70'
-                                                    }`}
-                                                >
+                                                <div className={`flex size-5 items-center justify-center rounded border ${
+                                                    isSelected ? 'border-amber-300 bg-amber-300' : 'border-white/15 bg-slate-900/70'
+                                                }`}>
                                                     {isSelected && <Check className="size-3 text-slate-950" />}
                                                 </div>
-                                                <span className="font-medium text-slate-200">{module.label}</span>
+                                                <span className="font-medium text-slate-200">{moduleLabels[key] || key}</span>
                                             </button>
 
                                             {isSelected && permission && (
                                                 <div className="flex items-center gap-4">
-                                                    {(['can_view', 'can_create', 'can_edit', 'can_delete'] as const).map(
-                                                        (action) => (
-                                                            <label
-                                                                key={action}
-                                                                className="flex items-center gap-2 text-sm text-slate-300"
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={permission[action]}
-                                                                    onChange={(e) =>
-                                                                        updatePermission(
-                                                                            module.key,
-                                                                            action,
-                                                                            e.target.checked
-                                                                        )
-                                                                    }
-                                                                    className="size-4 rounded border-white/15 bg-slate-900/70 text-amber-300 focus:ring-amber-300 focus:ring-offset-slate-950"
-                                                                />
-                                                                {action === 'can_view' && 'Voir'}
-                                                                {action === 'can_create' && 'Créer'}
-                                                                {action === 'can_edit' && 'Modifier'}
-                                                                {action === 'can_delete' && 'Supprimer'}
-                                                            </label>
-                                                        )
-                                                    )}
+                                                    {(['can_view', 'can_create', 'can_edit', 'can_delete'] as const).map((action) => (
+                                                        <label key={action} className="flex items-center gap-2 text-sm text-slate-300">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={permission[action]}
+                                                                onChange={(e) => updatePermission(key, action, e.target.checked)}
+                                                                className="size-4 rounded border-white/15 bg-slate-900/70 text-amber-300 focus:ring-amber-300 focus:ring-offset-slate-950"
+                                                            />
+                                                            {t.users.permActions[action]}
+                                                        </label>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>
@@ -333,14 +268,14 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                             href={route('users.index')}
                             className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
                         >
-                            Annuler
+                            {t.common.form.cancel}
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
                             className="rounded-lg bg-amber-300 px-6 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {processing ? 'Création...' : "Créer l'utilisateur"}
+                            {processing ? t.common.form.creating : t.common.form.createUser}
                         </button>
                     </div>
                 </form>

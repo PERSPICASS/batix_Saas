@@ -19,6 +19,15 @@ export const shops = {
             description: 'Commencez par créer votre première boutique pour gérer vos produits et ventes.',
             cta: 'Créer ma première boutique',
         },
+        form: {
+            location: 'Localisation',
+            contactSection: 'Contact',
+            additionalInfo: 'Informations complémentaires',
+            fullAddress: 'Adresse complète',
+            taxIdLabel: 'ICE / N° Fiscal',
+            createShop: 'Créer la boutique',
+            editTitle: 'Modifier la boutique',
+        },
         actions: {
             new: 'Nouvelle boutique',
             edit: 'Modifier',
@@ -48,6 +57,15 @@ export const shops = {
             title: 'No shops',
             description: 'Start by creating your first shop to manage your products and sales.',
             cta: 'Create my first shop',
+        },
+        form: {
+            location: 'Location',
+            contactSection: 'Contact',
+            additionalInfo: 'Additional information',
+            fullAddress: 'Full address',
+            taxIdLabel: 'ICE / Tax ID',
+            createShop: 'Create shop',
+            editTitle: 'Edit shop',
         },
         actions: {
             new: 'New shop',
