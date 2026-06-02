@@ -38,6 +38,14 @@ class SubscriptionPlan extends Model
     ];
 
     /**
+     * Get the route key for model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    /**
      * Get the subscriptions for the plan.
      */
     public function subscriptions(): HasMany
