@@ -7,6 +7,7 @@ use App\Models\InventoryItem;
 use App\Models\Shop;
 use App\Models\Product;
 use App\Services\StockMovementService;
+use App\Services\InventoryAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -44,7 +45,7 @@ class InventoryController extends Controller
     public function create(): Response
     {
         $activeShopId = get_active_shop_id();
-        
+
         $products = Product::with('shop')
             ->where('is_active', true)
             ->whereNull('parent_id')
@@ -56,9 +57,12 @@ class InventoryController extends Controller
             })
             ->get();
 
+        // Enrich products with movement data
+        $enrichedProducts = InventoryAnalysisService::enrichProductsWithMovements($products, $activeShopId);
+
         return Inertia::render('Inventory/Create', [
             'shops' => Auth::user()->accessibleShops(),
-            'products' => $products,
+            'products' => $enrichedProducts,
         ]);
     }
 
@@ -120,10 +124,18 @@ class InventoryController extends Controller
     {
         $inventory->load(['items.product']);
 
+        $products = Product::with('shop')
+            ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->get();
+
+        // Enrich products with movement data
+        $enrichedProducts = InventoryAnalysisService::enrichProductsWithMovements($products, $inventory->shop_id);
+
         return Inertia::render('Inventory/Edit', [
             'inventory' => $inventory,
             'shops' => Shop::select('id', 'name')->get(),
-            'products' => Product::with('shop')->where('is_active', true)->whereNull('parent_id')->get(),
+            'products' => $enrichedProducts,
         ]);
     }
 

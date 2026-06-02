@@ -15,6 +15,10 @@ interface Product {
     name: string;
     sku: string | null;
     stock_quantity: number;
+    defective_stock_quantity: number;
+    purchase_price: number;
+    sold_since_last_inventory: number;
+    purchased_since_last_inventory: number;
     shop: Shop;
 }
 
@@ -357,7 +361,7 @@ export default function InventoryCreate({ shops, products }: Props) {
 
                                         {selectedProduct && (
                                             <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
-                                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                                <div className="grid grid-cols-2 gap-4 md:grid-cols-5 text-sm">
                                                     <div>
                                                         <p className="text-xs text-slate-400 mb-0.5">Stock système</p>
                                                         <p className="font-semibold text-blue-300">
@@ -365,24 +369,36 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-0.5">Compté</p>
+                                                        <p className="text-xs text-slate-400 mb-0.5">Défectueux</p>
                                                         <p className="font-semibold text-blue-300">
-                                                            {item.counted_quantity || 0}
+                                                            {selectedProduct.defective_stock_quantity}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-400 mb-0.5">Vendu</p>
+                                                        <p className="font-semibold text-orange-300">
+                                                            {selectedProduct.sold_since_last_inventory}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-400 mb-0.5">Acheté</p>
+                                                        <p className="font-semibold text-green-300">
+                                                            {selectedProduct.purchased_since_last_inventory}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <p className="text-xs text-slate-400 mb-0.5">Écart</p>
                                                         <p
                                                             className={`font-semibold ${
-                                                                Number(item.counted_quantity || 0) - selectedProduct.stock_quantity > 0
+                                                                ((Number(item.counted_quantity || 0) + Number(item.defective_quantity || 0)) - selectedProduct.stock_quantity) > 0
                                                                     ? 'text-green-400'
-                                                                    : Number(item.counted_quantity || 0) - selectedProduct.stock_quantity < 0
+                                                                    : ((Number(item.counted_quantity || 0) + Number(item.defective_quantity || 0)) - selectedProduct.stock_quantity) < 0
                                                                     ? 'text-red-400'
                                                                     : 'text-slate-400'
                                                             }`}
                                                         >
-                                                            {Number(item.counted_quantity || 0) - selectedProduct.stock_quantity > 0 ? '+' : ''}
-                                                            {Number(item.counted_quantity || 0) - selectedProduct.stock_quantity}
+                                                            {((Number(item.counted_quantity || 0) + Number(item.defective_quantity || 0)) - selectedProduct.stock_quantity) > 0 ? '+' : ''}
+                                                            {(Number(item.counted_quantity || 0) + Number(item.defective_quantity || 0)) - selectedProduct.stock_quantity}
                                                         </p>
                                                     </div>
                                                 </div>

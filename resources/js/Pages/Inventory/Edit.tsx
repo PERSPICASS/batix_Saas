@@ -18,7 +18,10 @@ interface Product {
     sku: string;
     barcode: string | null;
     stock_quantity: number;
+    defective_stock_quantity: number;
     purchase_price: number;
+    sold_since_last_inventory: number;
+    purchased_since_last_inventory: number;
     shop: Shop;
 }
 
@@ -349,6 +352,19 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                     <div>
                                                         <p className="font-medium text-white">{item.product_name}</p>
                                                         <p className="text-xs text-slate-400">SKU: {item.product_sku}</p>
+                                                        {(() => {
+                                                            const product = products.find((p) => p.id === item.product_id);
+                                                            if (product?.sold_since_last_inventory || product?.purchased_since_last_inventory) {
+                                                                return (
+                                                                    <p className="text-xs text-amber-300 mt-1">
+                                                                        {product?.sold_since_last_inventory > 0 && `↓ ${product.sold_since_last_inventory} vendus`}
+                                                                        {product?.sold_since_last_inventory > 0 && product?.purchased_since_last_inventory > 0 && ' • '}
+                                                                        {product?.purchased_since_last_inventory > 0 && `↑ ${product.purchased_since_last_inventory} achetés`}
+                                                                    </p>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
                                                     </div>
                                                 </td>
                                                 <td className="py-3 pr-4 text-right text-slate-300">
