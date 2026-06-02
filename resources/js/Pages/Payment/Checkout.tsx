@@ -230,7 +230,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
         setPawaPayError('');
 
         try {
-            const res = await axios.post(`/pawapay/initiate/${plan.id}`, {
+            const res = await axios.post(`/pawapay/initiate/${plan.slug}`, {
                 billing_cycle:  billingCycle,
                 correspondent,
                 msisdn,
@@ -286,7 +286,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
         setJekoError('');
 
         try {
-            const res = await axios.post(`/jeko/initiate/${plan.id}`, {
+            const res = await axios.post(`/jeko/initiate/${plan.slug}`, {
                 billing_cycle: billingCycle,
                 payment_method: jekoMethod,
             }, {
