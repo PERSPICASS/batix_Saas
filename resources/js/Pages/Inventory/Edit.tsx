@@ -28,6 +28,7 @@ interface InventoryItem {
     product: Product;
     expected_quantity: number;
     counted_quantity: number | null;
+    defective_quantity: number;
 }
 
 interface Inventory {
@@ -49,6 +50,7 @@ interface Props {
 interface FormItem {
     product_id: number;
     counted_quantity: number | null;
+    defective_quantity: number;
     product_name: string;
     product_sku: string;
     expected_quantity: number;
@@ -73,6 +75,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
         items: inventory.items.map(item => ({
             product_id: item.product_id,
             counted_quantity: item.counted_quantity,
+            defective_quantity: item.defective_quantity,
             product_name: item.product.name,
             product_sku: item.product.sku,
             expected_quantity: item.expected_quantity,
@@ -93,6 +96,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
             {
                 product_id: product.id,
                 counted_quantity: null,
+                defective_quantity: 0,
                 product_name: product.name,
                 product_sku: product.sku,
                 expected_quantity: product.stock_quantity,
@@ -110,6 +114,15 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
             'items',
             data.items.map((item) =>
                 item.product_id === productId ? { ...item, counted_quantity: quantity } : item
+            )
+        );
+    };
+
+    const updateDefectiveQuantity = (productId: number, quantity: number) => {
+        setData(
+            'items',
+            data.items.map((item) =>
+                item.product_id === productId ? { ...item, defective_quantity: quantity } : item
             )
         );
     };
@@ -316,14 +329,15 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                     <tr className="border-b border-white/10 text-left text-sm text-slate-400">
                                         <th className="pb-3 pr-4">Produit</th>
                                         <th className="pb-3 pr-4 text-right">Stock théorique</th>
-                                        <th className="pb-3 pr-4 text-right">Stock réel</th>
+                                        <th className="pb-3 pr-4 text-right">Bons</th>
+                                        <th className="pb-3 pr-4 text-right">Défectueuses</th>
                                         <th className="pb-3 pr-4 text-right">Écart</th>
                                         <th className="pb-3"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {data.items.map((item) => {
-                                        const difference = (item.counted_quantity ?? 0) - item.expected_quantity;
+                                        const difference = ((item.counted_quantity ?? 0) + item.defective_quantity) - item.expected_quantity;
                                         const isHighlighted = highlightedId === item.product_id;
                                         return (
                                             <tr
@@ -351,8 +365,24 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                                 e.target.value ? parseInt(e.target.value) : null
                                                             )
                                                         }
-                                                        className="w-24 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-1 text-right text-white"
+                                                        className="w-20 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-1 text-right text-white"
                                                         placeholder="-"
+                                                        disabled={inventory.status === 'completed'}
+                                                    />
+                                                </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={item.defective_quantity}
+                                                        onChange={(e) =>
+                                                            updateDefectiveQuantity(
+                                                                item.product_id,
+                                                                parseInt(e.target.value) || 0
+                                                            )
+                                                        }
+                                                        className="w-20 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-1 text-right text-white"
+                                                        placeholder="0"
                                                         disabled={inventory.status === 'completed'}
                                                     />
                                                 </td>

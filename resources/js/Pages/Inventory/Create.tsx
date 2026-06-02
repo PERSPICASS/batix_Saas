@@ -21,6 +21,7 @@ interface Product {
 interface InventoryItem {
     product_id: number | string;
     counted_quantity: number | string;
+    defective_quantity: number | string;
 }
 
 interface Props {
@@ -180,7 +181,7 @@ export default function InventoryCreate({ shops, products }: Props) {
     const activeShop = props.activeShop as { id: number; name: string } | null;
     
     const [items, setItems] = useState<InventoryItem[]>([
-        { product_id: '', counted_quantity: '' },
+        { product_id: '', counted_quantity: '', defective_quantity: '' },
     ]);
 
     const { data, setData, post, processing, errors } = useForm({
@@ -191,7 +192,7 @@ export default function InventoryCreate({ shops, products }: Props) {
     });
 
     const addItem = () => {
-        setItems([...items, { product_id: '', counted_quantity: '' }]);
+        setItems([...items, { product_id: '', counted_quantity: '', defective_quantity: '' }]);
     };
 
     const removeItem = (index: number) => {
@@ -301,7 +302,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                         className="rounded-xl border border-white/10 bg-slate-900/60 p-4 space-y-3"
                                     >
                                         <div className="grid gap-3 md:grid-cols-12 items-end">
-                            <div className="md:col-span-6">
+                            <div className="md:col-span-5">
                                                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
                                                     Produit #{index + 1} *
                                                 </label>
@@ -313,15 +314,29 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                 />
                                             </div>
 
-                                            <div className="md:col-span-5">
+                                            <div className="md:col-span-3">
                                                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                                                    Quantité comptée *
+                                                    Bons comptés *
                                                 </label>
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     value={item.counted_quantity}
                                                     onChange={(e) => updateItem(index, 'counted_quantity', e.target.value)}
+                                                    className="block w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+
+                                            <div className="md:col-span-3">
+                                                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                                                    Défectueuses
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={item.defective_quantity}
+                                                    onChange={(e) => updateItem(index, 'defective_quantity', e.target.value)}
                                                     className="block w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                                     placeholder="0"
                                                 />

@@ -31,6 +31,7 @@ interface InventoryItem {
     product: Product;
     expected_quantity: number;
     counted_quantity: number | null;
+    defective_quantity: number;
     difference: number;
     unit_cost: number;
 }
@@ -91,7 +92,8 @@ export default function InventoryShow({ inventory }: Props) {
     };
 
     const totalExpected = inventory.items.reduce((sum, item) => sum + item.expected_quantity, 0);
-    const totalCounted = inventory.items.reduce((sum, item) => sum + (item.counted_quantity || 0), 0);
+    const totalCounted = inventory.items.reduce((sum, item) => sum + ((item.counted_quantity || 0) + item.defective_quantity), 0);
+    const totalDefective = inventory.items.reduce((sum, item) => sum + item.defective_quantity, 0);
     const totalDifference = totalCounted - totalExpected;
     const totalValue = inventory.items.reduce((sum, item) => sum + (item.difference * item.unit_cost), 0);
 
@@ -164,7 +166,7 @@ export default function InventoryShow({ inventory }: Props) {
                 </div>
 
                 {/* Statistiques */}
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-blue-500/20 p-2">
@@ -184,6 +186,17 @@ export default function InventoryShow({ inventory }: Props) {
                             <div>
                                 <p className="text-sm text-slate-400">Écarts</p>
                                 <p className="text-xl font-bold text-white">{inventory.total_discrepancies}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="rounded-lg bg-red-500/20 p-2">
+                                <AlertTriangle className="size-5 text-red-300" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-400">Défectueuses</p>
+                                <p className="text-xl font-bold text-white">{totalDefective}</p>
                             </div>
                         </div>
                     </div>
@@ -232,7 +245,8 @@ export default function InventoryShow({ inventory }: Props) {
                                 <tr className="border-b border-white/10 text-left text-sm text-slate-400">
                                     <th className="pb-3 pr-4">Produit</th>
                                     <th className="pb-3 pr-4 text-right">Stock théorique</th>
-                                    <th className="pb-3 pr-4 text-right">Stock réel</th>
+                                    <th className="pb-3 pr-4 text-right">Bons</th>
+                                    <th className="pb-3 pr-4 text-right">Défectueuses</th>
                                     <th className="pb-3 pr-4 text-right">Écart</th>
                                     <th className="pb-3 text-right">Valeur écart</th>
                                 </tr>
@@ -255,12 +269,15 @@ export default function InventoryShow({ inventory }: Props) {
                                         <td className="py-3 pr-4 text-right text-white">
                                             {item.counted_quantity ?? '-'}
                                         </td>
+                                        <td className="py-3 pr-4 text-right text-white">
+                                            {item.defective_quantity > 0 ? item.defective_quantity : '-'}
+                                        </td>
                                         <td className="py-3 pr-4 text-right">
                                             <span className={`font-medium ${
-                                                item.difference === 0 
-                                                    ? 'text-slate-400' 
-                                                    : item.difference > 0 
-                                                        ? 'text-green-300' 
+                                                item.difference === 0
+                                                    ? 'text-slate-400'
+                                                    : item.difference > 0
+                                                        ? 'text-green-300'
                                                         : 'text-red-300'
                                             }`}>
                                                 {item.difference > 0 ? '+' : ''}{item.difference}
@@ -268,10 +285,10 @@ export default function InventoryShow({ inventory }: Props) {
                                         </td>
                                         <td className="py-3 text-right">
                                             <span className={`font-medium ${
-                                                item.difference === 0 
-                                                    ? 'text-slate-400' 
-                                                    : item.difference > 0 
-                                                        ? 'text-green-300' 
+                                                item.difference === 0
+                                                    ? 'text-slate-400'
+                                                    : item.difference > 0
+                                                        ? 'text-green-300'
                                                         : 'text-red-300'
                                             }`}>
                                                 <Currency amount={Math.abs(item.difference * item.unit_cost)} />

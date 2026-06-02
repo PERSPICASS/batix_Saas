@@ -12,6 +12,7 @@ class InventoryItem extends Model
         'product_id',
         'expected_quantity',
         'counted_quantity',
+        'defective_quantity',
         'difference',
         'unit_cost',
         'notes',
@@ -20,6 +21,7 @@ class InventoryItem extends Model
     protected $casts = [
         'expected_quantity' => 'integer',
         'counted_quantity' => 'integer',
+        'defective_quantity' => 'integer',
         'difference' => 'integer',
         'unit_cost' => 'decimal:2',
     ];
@@ -29,9 +31,8 @@ class InventoryItem extends Model
         parent::boot();
 
         static::saving(function ($item) {
-            if ($item->counted_quantity !== null) {
-                $item->difference = $item->counted_quantity - $item->expected_quantity;
-            }
+            $totalCounted = ($item->counted_quantity ?? 0) + ($item->defective_quantity ?? 0);
+            $item->difference = $totalCounted - $item->expected_quantity;
         });
     }
 

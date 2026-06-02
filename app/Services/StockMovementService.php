@@ -374,6 +374,62 @@ class StockMovementService
     }
 
     /**
+     * Adjust both stock_quantity and defective_stock_quantity from inventory count.
+     *
+     * @param Product       $product
+     * @param int           $countedGoodQty      Good items counted
+     * @param int           $countedDefectiveQty Defective items found
+     * @param int           $shopId
+     * @param Model         $reference           The Inventory model
+     * @param float|null    $unitCost
+     */
+    public static function recordInventoryAdjustmentWithDefective(
+        Product $product,
+        int $countedGoodQty,
+        int $countedDefectiveQty,
+        int $shopId,
+        Model $reference,
+        ?float $unitCost = null
+    ): void {
+        $goodDifference = $countedGoodQty - $product->stock_quantity;
+        $defectiveDifference = $countedDefectiveQty - $product->defective_stock_quantity;
+
+        // Adjust good stock
+        if ($goodDifference !== 0) {
+            $product->update(['stock_quantity' => $countedGoodQty]);
+            self::writeMovement([
+                'shop_id'        => $shopId,
+                'product_id'     => $product->id,
+                'user_id'        => Auth::id(),
+                'type'           => 'adjustment',
+                'quantity'       => $goodDifference,
+                'unit_cost'      => $unitCost,
+                'reference_id'   => $reference->getKey(),
+                'reference_type' => class_basename($reference),
+                'notes'          => "Inventaire {$reference->inventory_number} - Articles bons (attendu: " . ($countedGoodQty - $goodDifference) . ", compté: {$countedGoodQty})",
+                'movement_date'  => $reference->inventory_date->toDateString(),
+            ]);
+        }
+
+        // Adjust defective stock
+        if ($countedDefectiveQty > 0 || $defectiveDifference !== 0) {
+            $product->update(['defective_stock_quantity' => $countedDefectiveQty]);
+            self::writeMovement([
+                'shop_id'        => $shopId,
+                'product_id'     => $product->id,
+                'user_id'        => Auth::id(),
+                'type'           => 'return_defective',
+                'quantity'       => $defectiveDifference,
+                'unit_cost'      => $unitCost,
+                'reference_id'   => $reference->getKey(),
+                'reference_type' => class_basename($reference),
+                'notes'          => "Inventaire {$reference->inventory_number} - Pièces défectueuses (attendu: " . ($countedDefectiveQty - $defectiveDifference) . ", trouvé: {$countedDefectiveQty})",
+                'movement_date'  => $reference->inventory_date->toDateString(),
+            ]);
+        }
+    }
+
+    /**
      * Reverse a previously written StockMovement.
      */
     public static function reverseMovement(StockMovement $movement): StockMovement

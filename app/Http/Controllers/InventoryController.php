@@ -70,7 +70,8 @@ class InventoryController extends Controller
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.counted_quantity' => 'required|integer|min:0',
+            'items.*.counted_quantity' => 'nullable|integer|min:0',
+            'items.*.defective_quantity' => 'nullable|integer|min:0',
         ]);
 
         DB::transaction(function () use ($validated, $request) {
@@ -84,12 +85,13 @@ class InventoryController extends Controller
 
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                
+
                 InventoryItem::create([
                     'inventory_id' => $inventory->id,
                     'product_id' => $item['product_id'],
                     'expected_quantity' => $product->stock_quantity,
-                    'counted_quantity' => $item['counted_quantity'],
+                    'counted_quantity' => $item['counted_quantity'] ?? 0,
+                    'defective_quantity' => $item['defective_quantity'] ?? 0,
                     'unit_cost' => $product->purchase_price,
                 ]);
             }
@@ -139,6 +141,7 @@ class InventoryController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.counted_quantity' => 'nullable|integer|min:0',
+            'items.*.defective_quantity' => 'nullable|integer|min:0',
         ]);
 
         DB::transaction(function () use ($validated, $inventory) {
@@ -155,12 +158,13 @@ class InventoryController extends Controller
             // Create new items
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
-                
+
                 InventoryItem::create([
                     'inventory_id' => $inventory->id,
                     'product_id' => $item['product_id'],
                     'expected_quantity' => $product->stock_quantity,
-                    'counted_quantity' => $item['counted_quantity'] ?? null,
+                    'counted_quantity' => $item['counted_quantity'] ?? 0,
+                    'defective_quantity' => $item['defective_quantity'] ?? 0,
                     'unit_cost' => $product->purchase_price,
                 ]);
             }
@@ -184,9 +188,10 @@ class InventoryController extends Controller
 
         DB::transaction(function () use ($inventory) {
             foreach ($inventory->items as $item) {
-                StockMovementService::recordInventoryAdjustment(
+                StockMovementService::recordInventoryAdjustmentWithDefective(
                     $item->product,
                     $item->counted_quantity,
+                    $item->defective_quantity,
                     $inventory->shop_id,
                     $inventory,
                     $item->unit_cost

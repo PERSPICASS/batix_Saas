@@ -15,8 +15,8 @@
             font-size: 12px;
         }
         .container {
-            max-width: 200mm;
-            padding: 20px;
+            max-width: 88mm;
+            padding: 8px;
         }
         .header {
             text-align: center;

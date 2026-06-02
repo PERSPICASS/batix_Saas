@@ -274,9 +274,13 @@ export default function SalesShow({ sale, auth }: Props) {
             <Head title={`Ticket ${displayedSale.ticket_number}`} />
 
             <style>{`
+                @page {
+                    size: 88mm auto;
+                    margin: 5mm;
+                }
                 @media print {
                     #ticket-print * { color: #000 !important; background: #fff !important; }
-                    #ticket-print { max-width: 520px; margin: 0 auto; }
+                    #ticket-print { max-width: 78mm; margin: 0 auto; }
                     #ticket-print table th,
                     #ticket-print table td { border-color: #ccc !important; }
                     #ticket-print .border-white\\/10,

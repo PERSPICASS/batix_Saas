@@ -13,11 +13,11 @@ class PdfExporter
         $html = view('pdfs.sale-receipt', ['sale' => $sale])->render();
 
         return Pdf::loadHTML($html)
-            ->setPaper('a4')
-            ->setOption('margin-top', 10)
-            ->setOption('margin-bottom', 10)
-            ->setOption('margin-left', 10)
-            ->setOption('margin-right', 10)
+            ->setPaper([0, 0, 249.45, 841.89])
+            ->setOption('margin-top', 5)
+            ->setOption('margin-bottom', 5)
+            ->setOption('margin-left', 5)
+            ->setOption('margin-right', 5)
             ->setOption('isHtml5ParserEnabled', true);
     }
 
