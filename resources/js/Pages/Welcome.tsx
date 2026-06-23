@@ -221,18 +221,18 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                 <meta name="twitter:image" content={ogImage} />
 
                 {/* hreflang for multilingual SEO */}
-                <link rel="alternate" hreflang="fr" href="https://batixpro.com/" />
-                <link rel="alternate" hreflang="en" href="https://batixpro.com/en/" />
-                <link rel="alternate" hreflang="x-default" href="https://batixpro.com/" />
+                <link rel="alternate" hrefLang="fr" href="https://batixpro.com/" />
+                <link rel="alternate" hrefLang="en" href="https://batixpro.com/en/" />
+                <link rel="alternate" hrefLang="x-default" href="https://batixpro.com/" />
 
                 {/* JSON-LD - Organization & WebSite & SoftwareApplication */}
                 <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
 
                 {/* JSON-LD - LocalBusiness for local SEO */}
-                <script type="application/ld+json">{JSON.stringify(localBusinessData[locale])}</script>
+                <script type="application/ld+json">{JSON.stringify((localBusinessData as any)[locale] || (localBusinessData as any).fr)}</script>
 
                 {/* JSON-LD - FAQ Schema for rich snippets */}
-                <script type="application/ld+json">{JSON.stringify(faqSchemaData[locale])}</script>
+                <script type="application/ld+json">{JSON.stringify((faqSchemaData as any)[locale] || (faqSchemaData as any).fr)}</script>
             </Head>
             <div className="relative min-h-screen overflow-x-clip bg-[#f9f5ef] text-slate-900 selection:bg-amber-300 selection:text-slate-900">
                 {/* H1 for SEO - visually hidden but accessible */}

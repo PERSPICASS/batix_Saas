@@ -24,7 +24,7 @@ export default function AiChatWidget({ codeUser, hasAccess }: AiChatWidgetProps)
     const [isRecording, setIsRecording] = useState(false);
     const [recordingStatus, setRecordingStatus] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    const recognitionRef = useRef<any>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,7 +47,7 @@ export default function AiChatWidget({ codeUser, hasAccess }: AiChatWidgetProps)
                 setRecordingStatus('Écoute en cours...');
             };
 
-            recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            recognitionRef.current.onresult = (event: any) => {
                 let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const transcript = event.results[i][0].transcript;
@@ -62,7 +62,7 @@ export default function AiChatWidget({ codeUser, hasAccess }: AiChatWidgetProps)
                 }
             };
 
-            recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+            recognitionRef.current.onerror = (event: any) => {
                 setRecordingStatus(`Erreur: ${event.error}`);
             };
 
