@@ -4,9 +4,11 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link } from '@inertiajs/react';
+import { useLocale } from '@/contexts/LocaleContext';
 import axios from 'axios';
 import { ClipboardEvent, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff, MailCheck, ShieldCheck, Store, User } from 'lucide-react';
+import { countriesI18n } from '@/i18n/countries';
 
 interface Props {
     initialStep?: number;
@@ -14,11 +16,13 @@ interface Props {
 }
 
 export default function Register({ initialStep = 1, initialEmail = '' }: Props) {
+    const { locale } = useLocale();
     const [step, setStep] = useState(initialStep);
 
     // Étape 1
     const [name, setName] = useState('');
     const [email, setEmail] = useState(initialEmail);
+    const [country, setCountry] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +58,7 @@ export default function Register({ initialStep = 1, initialEmail = '' }: Props) 
         setStep1Processing(true);
         setStep1Errors({});
         try {
-            await axios.post(route('register'), { name, email, password, password_confirmation: passwordConfirmation });
+            await axios.post(route('register'), { name, email, country, password, password_confirmation: passwordConfirmation });
             setStep(2);
         } catch (error: any) {
             if (error?.response?.status === 422) {
@@ -196,6 +200,21 @@ export default function Register({ initialStep = 1, initialEmail = '' }: Props) 
                             <InputLabel htmlFor="email" value="Email" className="text-slate-700" />
                             <TextInput id="email" type="email" value={email} className="mt-1 block w-full border border-[#cfc3ac] bg-white text-slate-900 placeholder-slate-400" autoComplete="username" onChange={(e) => setEmail(e.target.value)} required placeholder="jean@exemple.com" />
                             <InputError message={step1Errors.email} className="mt-2" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="country" value={countriesI18n[locale].label} className="text-slate-700" />
+                            <select
+                                id="country"
+                                value={country}
+                                onChange={(e) => setCountry(e.target.value)}
+                                className="mt-1 block w-full rounded-md border border-[#cfc3ac] bg-white px-3 py-2 text-slate-900 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            >
+                                <option value="">{countriesI18n[locale].placeholder}</option>
+                                {countriesI18n[locale].list.map((countryName) => (
+                                    <option key={countryName} value={countryName}>{countryName}</option>
+                                ))}
+                            </select>
+                            <InputError message={step1Errors.country} className="mt-2" />
                         </div>
                         <div>
                             <InputLabel htmlFor="password" value="Mot de passe" className="text-slate-700" />
