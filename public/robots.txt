@@ -1,38 +1,33 @@
+# Robots.txt for BATIX PRO
+
 User-agent: *
 Allow: /
-Disallow: /login
-Disallow: /register
-Disallow: /verify-email
-Disallow: /verify-email-code
-Disallow: /forgot-password
-Disallow: /reset-password
-Disallow: /lock-screen
-Disallow: /platform-admin/
-Disallow: /pawapay/
-Disallow: /invitation/
+Allow: /plans
+Allow: /blog
+Allow: /login
+Allow: /register
+Disallow: /admin
+Disallow: /api/
+Disallow: /storage/
+Disallow: /uploads/
+Disallow: *?lang=
+Disallow: *?page=
+Disallow: /search
+Disallow: /cart
+Disallow: /checkout
 
-# App routes (prefixed by user code)
-Disallow: /*/dashboard
-Disallow: /*/boutiques
-Disallow: /*/produits
-Disallow: /*/ventes
-Disallow: /*/factures
-Disallow: /*/clients
-Disallow: /*/stocks
-Disallow: /*/inventory
-Disallow: /*/analytics
-Disallow: /*/billing
-Disallow: /*/parametres
-Disallow: /*/profile
-Disallow: /*/users
-Disallow: /*/suppliers
-Disallow: /*/purchases
-Disallow: /*/depots
-Disallow: /*/creances
-Disallow: /*/depenses
-Disallow: /*/historique
-Disallow: /*/abonnements
-Disallow: /*/categories
-Disallow: /*/sous-categories
+# Crawler-specific rules
+User-agent: Googlebot
+Allow: /
 
+User-agent: Bingbot
+Allow: /
+
+# Sitemap
 Sitemap: https://batixpro.com/sitemap.xml
+
+# Crawl-delay in seconds
+Crawl-delay: 1
+
+# Request-rate (requests per second)
+Request-rate: 10/10s

@@ -1,7 +1,7 @@
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { copy, fallbackPlansByLocale, faqsByLocale, featuresByLocale, heroSlides, trustMarksByLocale } from '@/types/data';
+import { copy, fallbackPlansByLocale, faqsByLocale, featuresByLocale, heroSlides, trustMarksByLocale, localBusinessData, faqSchemaData } from '@/types/data';
 import type { Locale, PlanView, SubscriptionPlan } from '@/types/types';
 import BlogSection from '@/Components/Welcome/BlogSection';
 import ContactSection from '@/Components/Welcome/ContactSection';
@@ -115,13 +115,20 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
             const extraFeatures = Array.isArray(plan.features)
                 ? plan.features.filter((f) => f && f.trim().length > 0).slice(0, 2)
                 : [];
+
+            // Add AI Agent for Growth, Pro, and Enterprise plans
+            const allFeatures = [shopsLabel, usersLabel, productsLabel, depotsLabel, ...baseFeatures, ...extraFeatures];
+            if (['growth', 'pro', 'enterprise'].includes(plan.slug)) {
+                allFeatures.push(isFr ? 'Agent IA' : 'AI Agent');
+            }
+
             return {
                 name: plan.name,
                 price_eur: rawEur || `${plan.price} EUR`,
                 price_fcfa: plan.price_fcfa,
                 subtitle,
                 badge,
-                points: [shopsLabel, usersLabel, productsLabel, depotsLabel, ...baseFeatures, ...extraFeatures],
+                points: allFeatures,
                 highlighted: plan.slug === 'growth',
             };
         });
@@ -213,10 +220,26 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                 <meta name="twitter:description" content={t.seo.description} />
                 <meta name="twitter:image" content={ogImage} />
 
-                {/* JSON-LD */}
+                {/* hreflang for multilingual SEO */}
+                <link rel="alternate" hreflang="fr" href="https://batixpro.com/" />
+                <link rel="alternate" hreflang="en" href="https://batixpro.com/en/" />
+                <link rel="alternate" hreflang="x-default" href="https://batixpro.com/" />
+
+                {/* JSON-LD - Organization & WebSite & SoftwareApplication */}
                 <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+
+                {/* JSON-LD - LocalBusiness for local SEO */}
+                <script type="application/ld+json">{JSON.stringify(localBusinessData[locale])}</script>
+
+                {/* JSON-LD - FAQ Schema for rich snippets */}
+                <script type="application/ld+json">{JSON.stringify(faqSchemaData[locale])}</script>
             </Head>
             <div className="relative min-h-screen overflow-x-clip bg-[#f9f5ef] text-slate-900 selection:bg-amber-300 selection:text-slate-900">
+                {/* H1 for SEO - visually hidden but accessible */}
+                <h1 className="sr-only">
+                    BATIX PRO - Logiciel de gestion de quincaillerie avec ventes, stock et caisse en temps réel
+                </h1>
+
                 <div className="pointer-events-none absolute inset-0 -z-10">
                     <div className="h-full w-full bg-gradient-to-br from-[#fdf8f0] via-[#f9f5ef] to-[#f2ebe0]" />
                 </div>

@@ -148,4 +148,18 @@ class Subscription extends Model
                      ->whereNotNull('expires_at')
                      ->whereBetween('expires_at', [now(), now()->addDays($days)]);
     }
+
+    /**
+     * Check if subscription has access to AI Assistant.
+     */
+    public function hasAiAssistant(): bool
+    {
+        if (!$this->isActive()) {
+            return false;
+        }
+
+        // AI Assistant is available on Growth, Pro, and Enterprise plans
+        $allowedPlans = ['growth', 'pro', 'enterprise'];
+        return in_array($this->plan->slug, $allowedPlans);
+    }
 }

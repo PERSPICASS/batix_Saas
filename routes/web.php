@@ -37,6 +37,7 @@ use App\Http\Controllers\BlogAdminController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ReturnsController;
 use App\Http\Controllers\ReturnedInventoryController;
+use App\Http\Controllers\AiChatController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -274,6 +275,9 @@ Route::prefix('{code_user}')
     Route::get('/billing/invoices/{subscriptionInvoice}/download', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
 
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+
+    // AI Chat
+    Route::post('ai-chat', [AiChatController::class, 'chat'])->name('ai.chat');
 
     // Dépenses
     Route::get('depenses', [ExpenseController::class, 'index'])->name('expenses.index');

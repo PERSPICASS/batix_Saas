@@ -581,6 +581,7 @@ class User extends Authenticatable
                 'remaining_users' => 0,
                 'remaining_products' => 0,
                 'remaining_depots' => 0,
+                'has_ai_assistant' => false,
             ];
         }
 
@@ -620,6 +621,7 @@ class User extends Authenticatable
             'remaining_depots' => $this->remainingDepotSlots(),
             'expires_at' => $subscription->expires_at,
             'status' => $subscription->status,
+            'has_ai_assistant' => $subscription->hasAiAssistant(),
         ];
     }
 }

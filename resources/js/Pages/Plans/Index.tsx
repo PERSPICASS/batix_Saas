@@ -60,7 +60,7 @@ export default function Index({ plans, auth }: PlansProps) {
                 ? 'Dépôts illimités'
                 : `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}`;
 
-        return [
+        const baseFeatures = [
             shopsLabel,
             usersLabel,
             productsLabel,
@@ -69,6 +69,13 @@ export default function Index({ plans, auth }: PlansProps) {
             'Gestion des achats',
             'Rapports & statistiques',
         ];
+
+        // Add AI Assistant for Growth, Pro, and Enterprise plans
+        if (['growth', 'pro', 'enterprise'].includes(plan.slug)) {
+            baseFeatures.push('Agent IA');
+        }
+
+        return baseFeatures;
     };
 
     const isCurrentPlan = (planSlug: string) => {

@@ -29,11 +29,11 @@ export const stagger = {
 // ─── Textes par locale ─────────────────────────────────────────────────────
 export const copy = {
     fr: {
-        title: 'BATIX PRO – Logiciel de gestion de quincaillerie | Stock, Ventes & Caisse',
+        title: 'BATIX PRO - Logiciel gestion quincaillerie (Essai gratuit 14j)',
         brandSubtitle: 'Gestion moderne des quincailleries',
         seo: {
-            description: 'BATIX PRO est le logiciel de gestion de quincaillerie pensé pour les équipes terrain. Ventes, stock, achats fournisseurs et rapports en temps réel. Essai gratuit 14 jours, sans carte bancaire.',
-            keywords: 'logiciel quincaillerie, gestion stock quincaillerie, caisse quincaillerie, logiciel vente comptoir, gestion boutique, BATIX PRO, SaaS quincaillerie, gestion multi-boutiques',
+            description: 'Logiciel de gestion quincaillerie: ventes, stock, caisse. Essai gratuit 14j sans CB. Support WhatsApp inclus. 500+ quincailliers nous font confiance.',
+            keywords: 'logiciel quincaillerie, gestion stock quincaillerie, caisse quincaillerie, logiciel POS quincaillerie, gestion boutique, SaaS quincaillerie, gestion multi-boutiques, caisse enregistreuse quincaillerie',
             ogImage: '/og-image.jpg',
         },
         nav: {
@@ -321,6 +321,79 @@ export const copy = {
         },
         footerText: 'BATIX PRO, simpler and more human hardware management.',
         langLabel: 'Language',
+    },
+};
+
+// ─── Données structurées SEO ───────────────────────────────────────────────
+export const localBusinessData = {
+    fr: {
+        '@type': 'LocalBusiness',
+        '@id': 'https://batixpro.com/#localbusiness',
+        'name': 'BATIX PRO',
+        'url': 'https://batixpro.com/',
+        'description': 'Logiciel de gestion quincaillerie avec ventes, stock et caisse en temps réel',
+        'telephone': '+221787654321', // À remplacer par votre numéro
+        'email': 'support@batixpro.com',
+        'address': {
+            '@type': 'PostalAddress',
+            'streetAddress': 'Dakar',
+            'addressCountry': 'SN',
+        },
+        'priceRange': '€€',
+        'sameAs': [
+            'https://www.facebook.com/batixpro',
+            'https://www.linkedin.com/company/batix',
+            'https://www.instagram.com/batixpro',
+        ],
+    },
+};
+
+export const faqSchemaData = {
+    fr: {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        'mainEntity': [
+            {
+                '@type': 'Question',
+                'name': 'Combien coûte BATIX PRO ?',
+                'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'BATIX PRO propose 4 plans : Free (gratuit), Growth, Pro, et Enterprise. Consultez notre page tarifs pour les détails complets.',
+                },
+            },
+            {
+                '@type': 'Question',
+                'name': 'Puis-je essayer BATIX PRO gratuitement ?',
+                'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'Oui ! Vous pouvez profiter de 14 jours d\'essai gratuit sans avoir besoin de carte bancaire.',
+                },
+            },
+            {
+                '@type': 'Question',
+                'name': 'Quel support propose BATIX PRO ?',
+                'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'Nous proposons un support humain par WhatsApp et email, avec un temps de réponse moyen inférieur à 2 heures.',
+                },
+            },
+            {
+                '@type': 'Question',
+                'name': 'Combien de boutiques puis-je gérer avec BATIX PRO ?',
+                'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'Cela dépend de votre plan. Le plan Free permet 1 boutique, Growth 3 boutiques, Pro 6 boutiques, et Enterprise illimité.',
+                },
+            },
+            {
+                '@type': 'Question',
+                'name': 'Mes données sont-elles sécurisées ?',
+                'acceptedAnswer': {
+                    '@type': 'Answer',
+                    'text': 'Oui, vos données vous appartiennent et sont 100% exportables à tout moment. Nous utilisons le chiffrement HTTPS et nous conformons aux standards de sécurité internationaux.',
+                },
+            },
+        ],
     },
 };
 

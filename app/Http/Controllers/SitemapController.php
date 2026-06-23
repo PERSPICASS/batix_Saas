@@ -14,17 +14,39 @@ class SitemapController extends Controller
         $blogLastmod = Post::published()->max('published_at');
 
         $staticUrls = [
+            // Home
             [
                 'loc'        => $baseUrl . '/',
                 'lastmod'    => now()->format('Y-m-d'),
                 'changefreq' => 'weekly',
                 'priority'   => '1.0',
             ],
+            // Plans/Pricing
+            [
+                'loc'        => $baseUrl . '/plans',
+                'lastmod'    => now()->format('Y-m-d'),
+                'changefreq' => 'monthly',
+                'priority'   => '0.9',
+            ],
+            // Blog
             [
                 'loc'        => $baseUrl . '/blog',
                 'lastmod'    => $blogLastmod ? substr($blogLastmod, 0, 10) : now()->format('Y-m-d'),
                 'changefreq' => 'daily',
                 'priority'   => '0.8',
+            ],
+            // Auth pages (low priority)
+            [
+                'loc'        => $baseUrl . '/login',
+                'lastmod'    => now()->format('Y-m-d'),
+                'changefreq' => 'never',
+                'priority'   => '0.5',
+            ],
+            [
+                'loc'        => $baseUrl . '/register',
+                'lastmod'    => now()->format('Y-m-d'),
+                'changefreq' => 'never',
+                'priority'   => '0.5',
             ],
         ];
 

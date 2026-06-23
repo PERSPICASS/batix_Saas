@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import ToastContainer from '@/Components/ToastContainer';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import AiChatWidget from '@/Components/AiChatWidget';
 import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Authenticated({
@@ -63,6 +64,7 @@ export default function Authenticated({
         has_subscription: boolean;
         expires_at: string | null;
         status: string | null;
+        has_ai_assistant: boolean;
     } | null;
 
     const daysUntilExpiry = subscription?.expires_at
@@ -744,6 +746,12 @@ export default function Authenticated({
 
             <div className="print:hidden">
                 <ToastContainer />
+                {!isPlatformAdmin && (
+                    <AiChatWidget
+                        codeUser={routeParams.code_user ?? ''}
+                        hasAccess={subscription?.has_ai_assistant ?? false}
+                    />
+                )}
             </div>
         </div>
     );
