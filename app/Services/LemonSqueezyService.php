@@ -42,7 +42,7 @@ class LemonSqueezyService
 
             $response = Http::withHeaders($this->getHeaders())
                 ->timeout(30)
-                ->post("{$this->baseUrl}/stores/{$this->storeId}/products", $payload);
+                ->post("{$this->baseUrl}/products", $payload);
 
             return $response->json() ?? [];
         } catch (\Throwable $e) {
