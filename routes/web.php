@@ -49,6 +49,11 @@ Route::get('/', [WelcomeController::class, 'index']);
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
+// Routes des politiques (pages statiques)
+Route::get('/policies/terms', fn() => Inertia::render('Policies/Show', ['policyType' => 'terms']))->name('policies.terms');
+Route::get('/policies/privacy', fn() => Inertia::render('Policies/Show', ['policyType' => 'privacy']))->name('policies.privacy');
+Route::get('/policies/refund', fn() => Inertia::render('Policies/Show', ['policyType' => 'refund']))->name('policies.refund');
+
 // Routes publiques blog
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
