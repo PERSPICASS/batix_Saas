@@ -80,4 +80,15 @@ return [
         'key' => env('ANTHROPIC_API_KEY'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | LemonSqueezy Payment Platform
+    |--------------------------------------------------------------------------
+    */
+    'lemonsqueezy' => [
+        'api_key'   => env('LEMONSQUEEZY_API_KEY', ''),
+        'store_id'  => env('LEMONSQUEEZY_STORE_ID', ''),
+        'webhook_secret' => env('LEMONSQUEEZY_WEBHOOK_SECRET', ''),
+    ],
+
 ];

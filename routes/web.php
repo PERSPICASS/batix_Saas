@@ -38,6 +38,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ReturnsController;
 use App\Http\Controllers\ReturnedInventoryController;
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\LemonSqueezyController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -94,6 +95,20 @@ Route::get('/jeko/error', [JekoController::class, 'error'])->name('jeko.error');
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/jeko/initiate/{plan}', [JekoController::class, 'initiate'])->name('jeko.initiate');
+});
+
+// Routes LemonSqueezy (webhook public, checkout with auth)
+Route::post('/lemonsqueezy/webhook', [LemonSqueezyController::class, 'webhook'])
+    ->name('lemonsqueezy.webhook')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/lemonsqueezy/checkout/{plan}', [LemonSqueezyController::class, 'checkout'])->name('lemonsqueezy.checkout');
+});
+
+// Route admin pour synchroniser les produits LemonSqueezy
+Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
+    Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
 });
 
 // Routes publiques pour les invitations (avant auth)
