@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import LemonSqueezyPayment from '@/Components/LemonSqueezyPayment';
 
 import logoWave   from '../../../images/logo-wave.jpg';
 import logoOrange from '../../../images/logo_orange_money.png';
@@ -43,7 +44,7 @@ interface Props extends PageProps {
     isSandbox: boolean;
 }
 
-type PaymentMode = 'pawapay' | 'jeko' | 'manual';
+type PaymentMode = 'pawapay' | 'jeko' | 'lemonsqueezy' | 'manual';
 type PawaPayStatus = 'idle' | 'pending' | 'completed' | 'failed';
 type JekoStatus = 'idle' | 'redirecting' | 'failed';
 
@@ -456,7 +457,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                     <div className="lg:col-span-3 space-y-4">
 
                         {/* Mode selector */}
-                        <div className="flex gap-2 rounded-xl border border-white/10 bg-white/5 p-1">
+                        <div className="grid gap-2 rounded-xl border border-white/10 bg-white/5 p-1 grid-cols-2 md:grid-cols-4">
                             <button
                                 type="button"
                                 onClick={() => { setPaymentMode('pawapay'); setPawaPayError(''); }}
@@ -472,6 +473,14 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             >
                                 <Zap className="size-4" />
                                 Jèko
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMode('lemonsqueezy')}
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'lemonsqueezy' ? 'bg-green-500 text-white' : 'text-slate-300 hover:bg-white/5'}`}
+                            >
+                                <CreditCard className="size-4" />
+                                Lemon
                             </button>
                             <button
                                 type="button"
@@ -745,6 +754,11 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                     </div>
                                 )}
                             </div>
+                        )}
+
+                        {/* ══════════════════ LEMONSQUEEZY FLOW ══════════════════ */}
+                        {paymentMode === 'lemonsqueezy' && (
+                            <LemonSqueezyPayment plan={plan} />
                         )}
 
                         {/* ══════════════════ MANUAL FLOW ══════════════════ */}
