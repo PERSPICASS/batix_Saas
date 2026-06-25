@@ -88,13 +88,16 @@ Cela va :
 
 URL: `https://votre-domaine.com/lemonsqueezy/webhook`
 
-Événements à activer:
-- ✅ `order_created`
-- ✅ `order_completed`
-- ✅ `order_refunded`
-- ✅ `subscription_created`
-- ✅ `subscription_cancelled`
-- ✅ `subscription_expired`
+**Événements essentiels à activer:**
+- ✅ `order_created` - Initialise la commande
+- ✅ `order_refunded` - Gère les remboursements
+- ✅ `subscription_created` - Crée l'abonnement utilisateur
+- ✅ `subscription_payment_success` - Renouvelle l'abonnement (paiements récurrents)
+- ✅ `subscription_payment_failed` - Enregistre les échecs
+- ✅ `subscription_cancelled` - Annule l'abonnement
+- ✅ `subscription_expired` - Marque comme expiré
+
+**Note:** Ne cochez que ces événements pour optimiser les webhooks reçus
 
 ### 3. Tester le flux complet
 
@@ -127,10 +130,11 @@ Activation automatique de l'abonnement
 
 | Événement | Action |
 |-----------|--------|
-| `order_created` | Enregistrement de la commande |
-| `order_completed` | ✅ Active l'abonnement |
+| `order_created` | Enregistrement initial de la commande |
 | `order_refunded` | Marque comme remboursée |
-| `subscription_created` | Log de création |
+| `subscription_created` | ✅ Active l'abonnement utilisateur |
+| `subscription_payment_success` | ✅ Renouvelle l'abonnement (paiements récurrents) |
+| `subscription_payment_failed` | ⚠️ Enregistre l'échec de paiement |
 | `subscription_cancelled` | ❌ Annule l'abonnement |
 | `subscription_expired` | ⏱️ Marque comme expiré |
 

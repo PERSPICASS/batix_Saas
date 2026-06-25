@@ -86,12 +86,13 @@ class LemonSqueezyController extends Controller
 
         match($eventType) {
             'order_created' => $this->handleOrderCreated($objectData),
-            'order_completed' => $this->handleOrderCompleted($objectData),
             'order_refunded' => $this->handleOrderRefunded($objectData),
             'subscription_created' => $this->handleSubscriptionCreated($objectData),
+            'subscription_payment_success' => $this->handleSubscriptionPaymentSuccess($objectData),
+            'subscription_payment_failed' => $this->handleSubscriptionPaymentFailed($objectData),
             'subscription_cancelled' => $this->handleSubscriptionCancelled($objectData),
             'subscription_expired' => $this->handleSubscriptionExpired($objectData),
-            default => Log::info('Unhandled LemonSqueezy event', ['event' => $eventType])
+            default => null
         };
 
         return response()->json(['success' => true]);
@@ -100,76 +101,82 @@ class LemonSqueezyController extends Controller
     private function handleOrderCreated(array $data): void
     {
         $orderId = $data['id'] ?? null;
-        $customData = $data['attributes']['user_defined_json'] ?? [];
-
-        $order = LemonSqueezyOrder::where('lemon_order_id', $orderId)->first();
-
-        if ($order) {
-            $order->update(['order_data' => $data]);
-        }
-    }
-
-    private function handleOrderCompleted(array $data): void
-    {
-        $orderId = $data['id'] ?? null;
-        $customData = $data['attributes']['user_defined_json'] ?? [];
-
-        $order = LemonSqueezyOrder::where('lemon_order_id', $orderId)->firstOrFail();
-        $order->update(['status' => 'paid']);
-
-        if ($order->subscription_plan_id && $order->user_id) {
-            Subscription::where('user_id', $order->user_id)
-                ->where('subscription_plan_id', $order->subscription_plan_id)
-                ->update(['status' => 'active']);
+        if ($orderId) {
+            LemonSqueezyOrder::updateOrCreate(
+                ['lemon_order_id' => $orderId],
+                ['order_data' => $data]
+            );
         }
     }
 
     private function handleOrderRefunded(array $data): void
     {
         $orderId = $data['id'] ?? null;
-
-        LemonSqueezyOrder::where('lemon_order_id', $orderId)->update([
-            'status' => 'refunded'
-        ]);
+        if ($orderId) {
+            LemonSqueezyOrder::where('lemon_order_id', $orderId)->update([
+                'status' => 'refunded'
+            ]);
+        }
     }
 
     private function handleSubscriptionCreated(array $data): void
     {
         $subscriptionId = $data['id'] ?? null;
-        $customData = $data['attributes']['user_defined_json'] ?? [];
-
         if ($subscriptionId) {
-            Log::info('LemonSqueezy subscription created', ['subscription_id' => $subscriptionId]);
+            $order = LemonSqueezyOrder::where('lemon_subscription_id', $subscriptionId)->first();
+            if ($order) {
+                $order->update(['status' => 'paid']);
+                if ($order->subscription_plan_id && $order->user_id) {
+                    Subscription::where('user_id', $order->user_id)
+                        ->where('subscription_plan_id', $order->subscription_plan_id)
+                        ->where('status', '!=', 'active')
+                        ->update(['status' => 'active']);
+                }
+            }
+        }
+    }
+
+    private function handleSubscriptionPaymentSuccess(array $data): void
+    {
+        $subscriptionId = $data['id'] ?? null;
+        if ($subscriptionId) {
+            $order = LemonSqueezyOrder::where('lemon_subscription_id', $subscriptionId)->first();
+            if ($order && $order->subscription_id) {
+                $order->subscription->update(['status' => 'active']);
+            }
+        }
+    }
+
+    private function handleSubscriptionPaymentFailed(array $data): void
+    {
+        $subscriptionId = $data['id'] ?? null;
+        if ($subscriptionId) {
+            Log::warning('LemonSqueezy subscription payment failed', [
+                'subscription_id' => $subscriptionId,
+                'data' => $data
+            ]);
         }
     }
 
     private function handleSubscriptionCancelled(array $data): void
     {
         $subscriptionId = $data['id'] ?? null;
-
         if ($subscriptionId) {
             $order = LemonSqueezyOrder::where('lemon_subscription_id', $subscriptionId)->first();
-
             if ($order && $order->subscription_id) {
                 $order->subscription->cancel();
             }
-
-            Log::info('LemonSqueezy subscription cancelled', ['subscription_id' => $subscriptionId]);
         }
     }
 
     private function handleSubscriptionExpired(array $data): void
     {
         $subscriptionId = $data['id'] ?? null;
-
         if ($subscriptionId) {
             $order = LemonSqueezyOrder::where('lemon_subscription_id', $subscriptionId)->first();
-
             if ($order && $order->subscription_id) {
                 $order->subscription->update(['status' => 'expired']);
             }
-
-            Log::info('LemonSqueezy subscription expired', ['subscription_id' => $subscriptionId]);
         }
     }
 
