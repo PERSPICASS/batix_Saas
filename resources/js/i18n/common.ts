@@ -163,6 +163,11 @@ export const common = {
             companyName: 'Nom de la société',
             color: 'Couleur',
         },
+        policies: {
+            terms: 'Conditions d\'utilisation',
+            privacy: 'Politique de confidentialité',
+            refund: 'Politique de remboursement',
+        },
     },
     en: {
         actions: {
@@ -327,6 +332,11 @@ export const common = {
             postalCode: 'Postal code',
             companyName: 'Company name',
             color: 'Color',
+        },
+        policies: {
+            terms: 'Terms of Service',
+            privacy: 'Privacy Policy',
+            refund: 'Refund Policy',
         },
     },
 } as const;
