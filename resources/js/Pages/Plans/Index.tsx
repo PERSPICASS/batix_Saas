@@ -199,7 +199,7 @@ export default function Index({ plans, auth }: PlansProps) {
                                         </button>
                                     ) : (
                                         <a
-                                            href={`/plans/${plan.id}/checkout`}
+                                            href={`/plans/${plan.slug}/checkout`}
                                             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
                                         >
                                             {plan.slug === 'free' ? 'Commencer' : 'Choisir ce plan'}
