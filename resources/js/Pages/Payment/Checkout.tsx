@@ -9,6 +9,7 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import LemonSqueezyPayment from '@/Components/LemonSqueezyPayment';
+import PaddlePayment from '@/Components/PaddlePayment';
 
 import logoWave   from '../../../images/logo-wave.jpg';
 import logoOrange from '../../../images/logo_orange_money.png';
@@ -44,7 +45,7 @@ interface Props extends PageProps {
     isSandbox: boolean;
 }
 
-type PaymentMode = 'pawapay' | 'jeko' | 'lemonsqueezy' | 'manual';
+type PaymentMode = 'pawapay' | 'jeko' | 'lemonsqueezy' | 'paddle' | 'manual';
 type PawaPayStatus = 'idle' | 'pending' | 'completed' | 'failed';
 type JekoStatus = 'idle' | 'redirecting' | 'failed';
 
@@ -457,7 +458,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                     <div className="lg:col-span-3 space-y-4">
 
                         {/* Mode selector */}
-                        <div className="grid gap-2 rounded-xl border border-white/10 bg-white/5 p-1 grid-cols-2 md:grid-cols-4">
+                        <div className="grid gap-2 rounded-xl border border-white/10 bg-white/5 p-1 grid-cols-2 md:grid-cols-5">
                             <button
                                 type="button"
                                 onClick={() => { setPaymentMode('pawapay'); setPawaPayError(''); }}
@@ -481,6 +482,14 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             >
                                 <CreditCard className="size-4" />
                                 Lemon
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setPaymentMode('paddle')}
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'paddle' ? 'bg-blue-500 text-white' : 'text-slate-300 hover:bg-white/5'}`}
+                            >
+                                <CreditCard className="size-4" />
+                                Paddle
                             </button>
                             <button
                                 type="button"
@@ -759,6 +768,11 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                         {/* ══════════════════ LEMONSQUEEZY FLOW ══════════════════ */}
                         {paymentMode === 'lemonsqueezy' && (
                             <LemonSqueezyPayment plan={plan} />
+                        )}
+
+                        {/* ══════════════════ PADDLE FLOW ══════════════════ */}
+                        {paymentMode === 'paddle' && (
+                            <PaddlePayment plan={plan} />
                         )}
 
                         {/* ══════════════════ MANUAL FLOW ══════════════════ */}

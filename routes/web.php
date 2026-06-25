@@ -39,6 +39,7 @@ use App\Http\Controllers\ReturnsController;
 use App\Http\Controllers\ReturnedInventoryController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\LemonSqueezyController;
+use App\Http\Controllers\PaddleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -115,6 +116,18 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
     Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
 });
+
+// Routes Paddle (webhook public, checkout with auth)
+Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])
+    ->name('paddle.webhook')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('/paddle/checkout/{plan}', [PaddleController::class, 'checkout'])->name('paddle.checkout');
+});
+
+Route::get('/paddle/success', [PaddleController::class, 'success'])->name('paddle.success');
+Route::get('/paddle/cancel', [PaddleController::class, 'cancel'])->name('paddle.cancel');
 
 // Routes publiques pour les invitations (avant auth)
 Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
