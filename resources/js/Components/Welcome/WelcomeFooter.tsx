@@ -8,13 +8,17 @@ interface WelcomeFooterProps {
 }
 
 export default function WelcomeFooter({ footerText }: WelcomeFooterProps) {
-    const [locale, setLocale] = useState('en');
+    const [locale, setLocale] = useState('fr');
 
     useEffect(() => {
-        setLocale(document.documentElement.lang || 'en');
+        // Détect locale depuis l'attribut lang du HTML ou le localStorage
+        const htmlLang = document.documentElement.lang;
+        const storedLocale = localStorage.getItem('locale');
+        const detectedLocale = storedLocale || htmlLang || 'fr';
+        setLocale(detectedLocale.startsWith('fr') ? 'fr' : 'en');
     }, []);
 
-    const policies = common[locale as keyof typeof common]?.policies || common.en.policies;
+    const policies = common[locale as keyof typeof common]?.policies || common.fr.policies;
 
     return (
         <motion.footer
