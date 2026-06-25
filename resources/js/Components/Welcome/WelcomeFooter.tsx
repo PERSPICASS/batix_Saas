@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { common } from '@/i18n/common';
-import { useEffect, useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface WelcomeFooterProps {
     footerText: string;
@@ -8,15 +8,7 @@ interface WelcomeFooterProps {
 }
 
 export default function WelcomeFooter({ footerText }: WelcomeFooterProps) {
-    const [locale, setLocale] = useState('fr');
-
-    useEffect(() => {
-        // Détect locale depuis l'attribut lang du HTML ou le localStorage
-        const htmlLang = document.documentElement.lang;
-        const storedLocale = localStorage.getItem('locale');
-        const detectedLocale = storedLocale || htmlLang || 'fr';
-        setLocale(detectedLocale.startsWith('fr') ? 'fr' : 'en');
-    }, []);
+    const { locale } = useLocale();
 
     const policies = common[locale as keyof typeof common]?.policies || common.fr.policies;
 
