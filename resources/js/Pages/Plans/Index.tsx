@@ -197,6 +197,14 @@ export default function Index({ plans, auth }: PlansProps) {
                                         >
                                             Plan actuel
                                         </button>
+                                    ) : plan.slug === 'enterprise' ? (
+                                        <a
+                                            href="mailto:contact@batixpro.com"
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
+                                        >
+                                            Nous contacter
+                                            <ArrowRight className="size-4" />
+                                        </a>
                                     ) : (
                                         <a
                                             href={`/plans/${plan.slug}/checkout`}
