@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine AS base
+FROM php:8.4-fpm-alpine AS base
 
 WORKDIR /var/www/html
 
@@ -56,7 +56,7 @@ RUN php artisan config:cache && \
     php artisan view:cache
 
 # Production stage
-FROM php:8.3-fpm-alpine AS production
+FROM php:8.4-fpm-alpine AS production
 
 WORKDIR /var/www/html
 
