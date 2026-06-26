@@ -76,7 +76,8 @@ RUN apk add --no-cache \
 
 COPY --from=base /var/www/html /var/www/html
 
-RUN chown -R www-data:www-data /var/www/html && \
+# Only change ownership of writable directories to avoid timeout
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 755 /var/www/html/storage && \
     chmod -R 755 /var/www/html/bootstrap/cache
 
