@@ -11,6 +11,7 @@ RUN apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
+    libzip-dev \
     mysql-client \
     postgresql-client \
     postgresql-dev \
