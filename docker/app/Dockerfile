@@ -13,6 +13,7 @@ RUN apk add --no-cache \
     freetype-dev \
     mysql-client \
     postgresql-client \
+    postgresql-dev \
     supervisor \
     nginx \
     nodejs \
