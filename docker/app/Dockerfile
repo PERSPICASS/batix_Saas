@@ -90,9 +90,9 @@ COPY docker/app/www.conf /usr/local/etc/php-fpm.d/www.conf
 # Create log directories and files with proper permissions
 RUN mkdir -p /var/log/nginx /var/log/supervisor /var/log/php && \
     chmod 755 /var/log/nginx /var/log/supervisor /var/log/php && \
-    touch /var/log/php/fpm-error.log && \
-    chmod 644 /var/log/php/fpm-error.log && \
-    chown www-data:www-data /var/log/php /var/log/php/fpm-error.log
+    touch /var/log/php/error.log /var/log/php/fpm-error.log && \
+    chmod 644 /var/log/php/error.log /var/log/php/fpm-error.log && \
+    chown www-data:www-data /var/log/php /var/log/php/error.log /var/log/php/fpm-error.log
 
 EXPOSE 80
 
