@@ -63,9 +63,7 @@ WORKDIR /var/www/html
 RUN apk add --no-cache \
     mysql-client \
     postgresql-client \
-    postgresql-dev \
-    nginx \
-    supervisor && \
+    postgresql-dev && \
     docker-php-ext-install \
     pdo \
     pdo_mysql \
@@ -81,19 +79,16 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
     chmod -R 755 /var/www/html/storage && \
     chmod -R 755 /var/www/html/bootstrap/cache
 
-COPY docker/app/nginx.conf /etc/nginx/nginx.conf
-COPY docker/app/default.conf /etc/nginx/conf.d/default.conf
-COPY docker/app/supervisor.conf /etc/supervisord.conf
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/laravel.ini
 COPY docker/app/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 # Create log directories and files with proper permissions
-RUN mkdir -p /var/log/nginx /var/log/supervisor /var/log/php && \
-    chmod 755 /var/log/nginx /var/log/supervisor /var/log/php && \
-    touch /var/log/php/error.log /var/log/php/fpm-error.log && \
-    chmod 644 /var/log/php/error.log /var/log/php/fpm-error.log && \
-    chown www-data:www-data /var/log/php /var/log/php/error.log /var/log/php/fpm-error.log
+RUN mkdir -p /var/log/php && \
+    chmod 755 /var/log/php && \
+    touch /var/log/php/error.log && \
+    chmod 644 /var/log/php/error.log && \
+    chown www-data:www-data /var/log/php /var/log/php/error.log
 
-EXPOSE 80
+EXPOSE 9000
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/usr/local/sbin/php-fpm", "--nodaemonize"]
