@@ -61,15 +61,16 @@ WORKDIR /var/www/html
 RUN apk add --no-cache \
     mysql-client \
     postgresql-client \
+    postgresql-dev \
     nginx \
-    supervisor
-
-RUN docker-php-ext-install \
+    supervisor && \
+    docker-php-ext-install \
     pdo \
     pdo_mysql \
     pdo_pgsql \
     bcmath \
-    pcntl
+    pcntl && \
+    apk del postgresql-dev
 
 COPY --from=base /var/www/html /var/www/html
 
