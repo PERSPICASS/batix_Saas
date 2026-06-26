@@ -86,8 +86,8 @@ COPY docker/app/supervisor.conf /etc/supervisord.conf
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/laravel.ini
 COPY docker/app/www.conf /usr/local/etc/php-fpm.d/www.conf
 
-# Create nginx log directories
-RUN mkdir -p /var/log/nginx && chmod -R 755 /var/log/nginx
+# Create log directories
+RUN mkdir -p /var/log/nginx /var/log/supervisor && chmod -R 755 /var/log/nginx /var/log/supervisor
 
 EXPOSE 80
 
