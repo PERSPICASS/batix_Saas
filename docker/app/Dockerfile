@@ -77,10 +77,10 @@ RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 755 /var/www/html/storage && \
     chmod -R 755 /var/www/html/bootstrap/cache
 
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
-COPY docker/supervisor.conf /etc/supervisord.conf
-COPY docker/php.ini /usr/local/etc/php/conf.d/laravel.ini
-COPY docker/www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/app/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/app/supervisor.conf /etc/supervisord.conf
+COPY docker/app/php.ini /usr/local/etc/php/conf.d/laravel.ini
+COPY docker/app/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 EXPOSE 80
 
