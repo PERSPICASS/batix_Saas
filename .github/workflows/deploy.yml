@@ -34,7 +34,8 @@ jobs:
             docker volume rm batix_prod_batix_public || true
 
             echo "=== 4. Rebuild containers ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
 
             echo "=== 5. Laravel migrate ==="
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan migrate --force
