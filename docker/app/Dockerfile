@@ -87,10 +87,12 @@ COPY docker/app/supervisor.conf /etc/supervisord.conf
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/laravel.ini
 COPY docker/app/www.conf /usr/local/etc/php-fpm.d/www.conf
 
-# Create log directories
+# Create log directories and files with proper permissions
 RUN mkdir -p /var/log/nginx /var/log/supervisor /var/log/php && \
-    chmod -R 755 /var/log/nginx /var/log/supervisor /var/log/php && \
-    chown -R www-data:www-data /var/log/php
+    chmod 755 /var/log/nginx /var/log/supervisor /var/log/php && \
+    touch /var/log/php/fpm-error.log && \
+    chmod 644 /var/log/php/fpm-error.log && \
+    chown www-data:www-data /var/log/php /var/log/php/fpm-error.log
 
 EXPOSE 80
 
