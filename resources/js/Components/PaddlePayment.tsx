@@ -34,6 +34,7 @@ declare global {
             Checkout: {
                 open: (config: any) => void;
             };
+            Initialize?: (config: any) => void;
         };
     }
 }
