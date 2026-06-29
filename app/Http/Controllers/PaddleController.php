@@ -16,8 +16,7 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
-            // Paddle Checkout v2 handles everything client-side
-            // We just provide the configuration data
+            // Paddle Checkout v2 configuration
             $checkoutData = [
                 'items' => [
                     [
@@ -25,13 +24,14 @@ class PaddleController extends Controller
                         'quantity' => 1,
                     ]
                 ],
-                'customer' => [
-                    'email' => $user->email,
-                    'name' => $user->name,
-                ],
                 'successUrl' => route('paddle.success') . '?plan_slug=' . $plan->slug,
                 'cancelUrl' => route('paddle.cancel'),
             ];
+
+            // Add customer ID if user has one, otherwise let Paddle create a new customer
+            if ($user->paddle_id) {
+                $checkoutData['customerId'] = $user->paddle_id;
+            }
 
             return response()->json([
                 'checkout' => $checkoutData,
