@@ -51,8 +51,8 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
             script.async = true;
             script.onload = () => {
                 if (window.Paddle) {
-                    // Initialize Paddle
-                    window.Paddle.Environment.set('sandbox');
+                    // Initialize Paddle - use production since API key is live
+                    window.Paddle.Initialize({ token: 'live_4c9d45d3dd09feb9d7fb25fd29c' });
                     setPaddleReady(true);
                 }
             };

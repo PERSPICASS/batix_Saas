@@ -16,29 +16,67 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
+            $paddleApiKey = config('services.paddle.secret');
+
+            if (!$paddleApiKey) {
+                throw new \Exception('Paddle API key not configured');
+            }
+
+            // Ensure user has a Paddle customer ID
+            if (!$user->paddle_id) {
+                $this->createPaddleCustomer($user, $paddleApiKey);
+            }
+
             $successUrl = route('paddle.success') . '?plan_slug=' . $plan->slug;
             $cancelUrl = route('paddle.cancel');
 
-            // Return the checkout session data for Paddle Checkout JS
-            // Paddle Checkout v2 will handle the actual payment processing
-            $checkoutData = [
-                'customerId' => $user->paddle_id ?? 'guest_' . uniqid(),
+            // Create a checkout transaction with Paddle API v2
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . $paddleApiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.paddle.com/transactions', [
                 'items' => [
                     [
-                        'priceId' => $plan->paddle_price_id,
+                        'price_id' => $plan->paddle_price_id,
                         'quantity' => 1,
                     ]
                 ],
-                'successUrl' => $successUrl,
-                'cancelUrl' => $cancelUrl,
-            ];
+                'customer_id' => $user->paddle_id,
+            ]);
+
+            if ($response->failed()) {
+                \Log::error('Paddle API error: ' . $response->body());
+                throw new \Exception('Paddle API error');
+            }
+
+            $transaction = $response->json();
 
             return response()->json([
-                'checkout' => $checkoutData,
+                'checkout' => $transaction['data'] ?? $transaction,
             ]);
         } catch (\Exception $e) {
             \Log::error('Paddle checkout error: ' . $e->getMessage());
-            return response()->json(['error' => 'Checkout creation failed: ' . $e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function createPaddleCustomer($user, $apiKey)
+    {
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->post('https://api.paddle.com/customers', [
+                'email' => $user->email,
+                'name' => $user->name ?? $user->email,
+            ]);
+
+            if ($response->successful()) {
+                $customer = $response->json();
+                $user->update(['paddle_id' => $customer['data']['id'] ?? null]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to create Paddle customer: ' . $e->getMessage());
         }
     }
 
