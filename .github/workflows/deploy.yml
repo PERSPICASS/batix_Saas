@@ -48,4 +48,8 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app ls -la public/build
             docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T nginx ls -la /var/www/html/public/build
 
+            echo "=== 8. Docker cleanup ==="
+            docker system prune -af
+            docker builder prune -af
+            
             echo "=== Deploy SUCCESS ==="
