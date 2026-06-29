@@ -82,21 +82,25 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
             if (response.data.checkout && window.Paddle?.Checkout) {
                 const checkoutData = response.data.checkout;
 
-                console.log('Checkout config:', checkoutData);
+                console.log('Checkout response:', checkoutData);
 
-                // Open Paddle Checkout with the returned configuration
-                const checkoutConfig: any = {
-                    items: checkoutData.items,
-                    successUrl: checkoutData.successUrl,
-                    cancelUrl: checkoutData.cancelUrl,
-                };
-
-                // Add customer ID if provided
-                if (checkoutData.customerId) {
-                    checkoutConfig.customerId = checkoutData.customerId;
+                // The response is a Paddle checkout session
+                // Open the checkout with the session/ID if available
+                if (checkoutData.id) {
+                    // If we have a checkout ID, use it directly
+                    window.Paddle.Checkout.open(checkoutData.id);
+                } else if (checkoutData.items) {
+                    // Fallback: open with items configuration
+                    const config: any = {
+                        items: checkoutData.items,
+                    };
+                    if (checkoutData.customer_id || checkoutData.customerId) {
+                        config.customerId = checkoutData.customer_id || checkoutData.customerId;
+                    }
+                    window.Paddle.Checkout.open(config);
+                } else {
+                    setError('Invalid checkout response');
                 }
-
-                window.Paddle.Checkout.open(checkoutConfig);
             } else {
                 setError('Paddle checkout not available');
             }
