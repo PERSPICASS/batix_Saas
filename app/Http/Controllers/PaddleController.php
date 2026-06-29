@@ -22,6 +22,8 @@ class PaddleController extends Controller
                 throw new \Exception('Paddle API key not configured');
             }
 
+            \Log::info('Creating Paddle checkout for plan: ' . $plan->slug);
+
             // Create checkout session via Paddle API
             $response = \Illuminate\Support\Facades\Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
@@ -39,13 +41,21 @@ class PaddleController extends Controller
                 ],
             ]);
 
+            \Log::info('Paddle API response status: ' . $response->status());
+            \Log::info('Paddle API response: ' . $response->body());
+
             if ($response->failed()) {
                 $error = $response->json();
                 $message = $error['errors'][0]['details'] ?? $error['errors'][0]['code'] ?? 'Unknown error';
-                throw new \Exception($message);
+                throw new \Exception('Paddle API: ' . $message);
             }
 
-            $checkout = $response->json('data');
+            $data = $response->json();
+            $checkout = $data['data'] ?? $data;
+
+            if (!isset($checkout['id'])) {
+                throw new \Exception('No checkout ID in response: ' . json_encode($checkout));
+            }
 
             return response()->json([
                 'checkout' => [
@@ -54,7 +64,9 @@ class PaddleController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('Paddle checkout error: ' . $e->getMessage());
+            \Log::error('Paddle checkout error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
