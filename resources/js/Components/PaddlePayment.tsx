@@ -31,6 +31,7 @@ interface PaddleCheckoutData {
 declare global {
     interface Window {
         Paddle?: {
+            Initialize: (config: any) => void;
             Checkout: {
                 open: (config: any) => void;
             };
@@ -44,14 +45,20 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
     const [paddleReady, setPaddleReady] = useState(false);
 
     useEffect(() => {
-        // Load Paddle script
+        // Load and initialize Paddle script
         if (!window.Paddle) {
             const script = document.createElement('script');
             script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
             script.async = true;
             script.onload = () => {
-                if (window.Paddle?.Checkout) {
-                    // Paddle SDK is loaded and ready
+                if (window.Paddle) {
+                    // IMPORTANT: Must initialize Paddle with the public token
+                    window.Paddle.Initialize({
+                        token: 'live_4c9d45d3dd09feb9d7fb25fd29c',
+                        pwCustomer: {
+                            pwEmail: plan.email,
+                        }
+                    });
                     setPaddleReady(true);
                 }
             };
@@ -60,11 +67,17 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
                 setError('Failed to load payment system');
             };
             document.body.appendChild(script);
-        } else {
-            // Paddle already loaded
+        } else if (window.Paddle) {
+            // Paddle already loaded, ensure it's initialized
+            window.Paddle.Initialize({
+                token: 'live_4c9d45d3dd09feb9d7fb25fd29c',
+                pwCustomer: {
+                    pwEmail: plan.email,
+                }
+            });
             setPaddleReady(true);
         }
-    }, []);
+    }, [plan]);
 
     const handleCheckout = async () => {
         setLoading(true);
