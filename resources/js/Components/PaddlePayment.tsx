@@ -55,9 +55,6 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
                     // IMPORTANT: Must initialize Paddle with the public token
                     window.Paddle.Initialize({
                         token: 'live_4c9d45d3dd09feb9d7fb25fd29c',
-                        pwCustomer: {
-                            pwEmail: plan.email,
-                        }
                     });
                     setPaddleReady(true);
                 }
@@ -71,13 +68,10 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
             // Paddle already loaded, ensure it's initialized
             window.Paddle.Initialize({
                 token: 'live_4c9d45d3dd09feb9d7fb25fd29c',
-                pwCustomer: {
-                    pwEmail: plan.email,
-                }
             });
             setPaddleReady(true);
         }
-    }, [plan]);
+    }, []);
 
     const handleCheckout = async () => {
         setLoading(true);
