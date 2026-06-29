@@ -16,82 +16,31 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
-            $paddleApiKey = config('services.paddle.secret');
-
-            if (!$paddleApiKey) {
-                throw new \Exception('Paddle API key not configured');
-            }
-
-            // Ensure user has a Paddle customer ID
-            if (!$user->paddle_id) {
-                $this->createPaddleCustomer($user, $paddleApiKey);
-            }
-
-            $successUrl = route('paddle.success') . '?plan_slug=' . $plan->slug;
-            $cancelUrl = route('paddle.cancel');
-
-            // Create a checkout transaction with Paddle API v2
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . $paddleApiKey,
-                'Content-Type' => 'application/json',
-            ])->post('https://api.paddle.com/transactions', [
+            // Paddle Checkout v2 handles everything client-side
+            // We just provide the configuration data
+            $checkoutData = [
                 'items' => [
                     [
-                        'price_id' => $plan->paddle_price_id,
+                        'priceId' => $plan->paddle_price_id,
                         'quantity' => 1,
                     ]
                 ],
-                'customer_id' => $user->paddle_id,
-            ]);
-
-            if ($response->failed()) {
-                $errorBody = $response->body();
-                \Log::error('Paddle API error: ' . $errorBody);
-
-                // Extract error details for better debugging
-                $errorData = $response->json();
-                $errorMsg = $errorData['error']['detail'] ?? 'Unknown error';
-                if (isset($errorData['error']['errors'])) {
-                    $details = array_map(function($e) {
-                        return $e['field'] . ': ' . $e['message'];
-                    }, $errorData['error']['errors']);
-                    $errorMsg .= ' (' . implode(', ', array_slice($details, 0, 2)) . ')';
-                }
-
-                throw new \Exception($errorMsg);
-            }
-
-            $transaction = $response->json();
+                'customer' => [
+                    'email' => $user->email,
+                    'name' => $user->name,
+                ],
+                'successUrl' => route('paddle.success') . '?plan_slug=' . $plan->slug,
+                'cancelUrl' => route('paddle.cancel'),
+            ];
 
             return response()->json([
-                'checkout' => $transaction['data'] ?? $transaction,
+                'checkout' => $checkoutData,
             ]);
         } catch (\Exception $e) {
             \Log::error('Paddle checkout error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
-    private function createPaddleCustomer($user, $apiKey)
-    {
-        try {
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-                'Content-Type' => 'application/json',
-            ])->post('https://api.paddle.com/customers', [
-                'email' => $user->email,
-                'name' => $user->name ?? $user->email,
-            ]);
-
-            if ($response->successful()) {
-                $customer = $response->json();
-                $user->update(['paddle_id' => $customer['data']['id'] ?? null]);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Failed to create Paddle customer: ' . $e->getMessage());
-        }
-    }
-
     public function webhook(Request $request): JsonResponse
     {
         // Paddle will send webhook notifications to this endpoint

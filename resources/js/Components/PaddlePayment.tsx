@@ -82,10 +82,10 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
             if (response.data.checkout && window.Paddle?.Checkout) {
                 const checkoutData = response.data.checkout;
 
-                // Open Paddle Checkout
+                // Open Paddle Checkout with the returned configuration
                 window.Paddle.Checkout.open({
-                    items: checkoutData.items || [],
-                    customerId: checkoutData.customerId,
+                    items: checkoutData.items,
+                    customer: checkoutData.customer,
                     successUrl: checkoutData.successUrl,
                     cancelUrl: checkoutData.cancelUrl,
                 });
