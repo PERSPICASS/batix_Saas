@@ -16,14 +16,41 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
-            // Paddle Checkout v2 - Just return the price ID and URLs
-            // Paddle handles everything else (customer creation, payment processing, etc.)
+            $apiKey = config('services.paddle.secret');
+
+            if (!$apiKey) {
+                throw new \Exception('Paddle API key not configured');
+            }
+
+            // Create checkout session via Paddle API
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+            ])->post('https://api.paddle.com/checkouts', [
+                'items' => [
+                    [
+                        'price_id' => $plan->paddle_price_id,
+                        'quantity' => 1,
+                    ]
+                ],
+                'customer_email' => $user->email,
+                'custom_data' => [
+                    'user_id' => (string)$user->id,
+                    'plan_slug' => $plan->slug,
+                ],
+            ]);
+
+            if ($response->failed()) {
+                $error = $response->json();
+                $message = $error['errors'][0]['details'] ?? $error['errors'][0]['code'] ?? 'Unknown error';
+                throw new \Exception($message);
+            }
+
+            $checkout = $response->json('data');
+
             return response()->json([
                 'checkout' => [
-                    'priceId' => $plan->paddle_price_id,
+                    'id' => $checkout['id'],
                     'email' => $user->email,
-                    'successUrl' => route('paddle.success') . '?plan_slug=' . $plan->slug,
-                    'cancelUrl' => route('paddle.cancel'),
                 ],
             ]);
         } catch (\Exception $e) {

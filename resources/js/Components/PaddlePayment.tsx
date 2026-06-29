@@ -94,20 +94,14 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
             if (response.data.checkout && window.Paddle?.Checkout) {
                 const checkout = response.data.checkout;
 
-                console.log('Opening Paddle Checkout with:', checkout);
+                console.log('Opening Paddle Checkout with session ID:', checkout.id);
 
-                // Paddle Checkout v2 - use snake_case field names
-                window.Paddle.Checkout.open({
-                    items: [
-                        {
-                            price_id: checkout.priceId,
-                            quantity: 1,
-                        }
-                    ],
-                    customer_email: checkout.email,
-                    success_url: checkout.successUrl,
-                    cancel_url: checkout.cancelUrl,
-                });
+                // Open Paddle Checkout with the session ID from backend
+                if (checkout.id) {
+                    window.Paddle.Checkout.open(checkout.id);
+                } else {
+                    setError('No checkout session created');
+                }
             } else {
                 setError('Paddle checkout not available');
             }
