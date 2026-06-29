@@ -12,9 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::table('subscription_plans')->where('slug', 'pro')->update(['paddle_price_id' => 'pro_01kw0bp7rzy8a9r8mndpg6g6fe']);
-        DB::table('subscription_plans')->where('slug', 'growth')->update(['paddle_price_id' => 'pro_01kw0bp06s4ajfsvw9xe3wskz6']);
-        DB::table('subscription_plans')->where('slug', 'starter')->update(['paddle_price_id' => 'pro_01kw0bnny7yqa7a3275k42d8y3']);
+        // Use Paddle Price IDs (pri_*), not Product IDs (pro_*)
+        DB::table('subscription_plans')->where('slug', 'pro')->update(['paddle_price_id' => 'pri_01kw2hybzhy9dvpzm9nvm851p8']);
+        DB::table('subscription_plans')->where('slug', 'growth')->update(['paddle_price_id' => 'pri_01kw2hzxvs5zmag2xngcs2wkbw']);
+        DB::table('subscription_plans')->where('slug', 'starter')->update(['paddle_price_id' => 'pri_01kw2j14wsvbxxpcsdxgmk9r6c']);
     }
 
     /**
