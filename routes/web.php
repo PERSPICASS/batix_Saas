@@ -123,7 +123,7 @@ Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
 
 Route::middleware(['auth'])->group(function () {
-    Route::post('/paddle/checkout/{plan}', [PaddleController::class, 'checkout'])->name('paddle.checkout');
+    Route::post('/paddle/checkout/{plan:slug}', [PaddleController::class, 'checkout'])->name('paddle.checkout');
 });
 
 Route::get('/paddle/success', [PaddleController::class, 'success'])->name('paddle.success');

@@ -91,4 +91,14 @@ return [
         'webhook_secret' => env('LEMONSQUEEZY_WEBHOOK_SECRET', ''),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Paddle Payment Platform
+    |--------------------------------------------------------------------------
+    */
+    'paddle' => [
+        'secret' => env('PADDLE_API_KEY', ''),
+        'public' => env('PADDLE_PUBLIC_KEY', ''),
+    ],
+
 ];

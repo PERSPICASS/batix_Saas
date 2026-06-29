@@ -1,5 +1,5 @@
 import { CreditCard, Loader2, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface Plan {
@@ -14,9 +14,53 @@ interface PaddlePaymentProps {
     plan: Plan;
 }
 
+interface PaddleCheckoutData {
+    customer: {
+        id: string;
+    };
+    items: Array<{
+        priceId: string;
+        quantity: number;
+    }>;
+    settings: {
+        displayMode: string;
+        frameStyle: string;
+    };
+}
+
+declare global {
+    interface Window {
+        Paddle?: {
+            Checkout: {
+                open: (config: any) => void;
+            };
+        };
+    }
+}
+
 export default function PaddlePayment({ plan }: PaddlePaymentProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [checkoutOpen, setCheckoutOpen] = useState(false);
+
+    useEffect(() => {
+        // Load Paddle script
+        if (!window.Paddle) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+            script.async = true;
+            script.onload = () => {
+                if (window.Paddle) {
+                    // Initialize Paddle
+                    window.Paddle.Environment.set('sandbox');
+                }
+            };
+            script.onerror = () => {
+                console.error('Failed to load Paddle script');
+            };
+            document.body.appendChild(script);
+        }
+    }, []);
 
     const handleCheckout = async () => {
         setLoading(true);
@@ -30,10 +74,18 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
                 }
             );
 
-            if (response.data.checkout_url) {
-                window.location.href = response.data.checkout_url;
+            if (response.data.checkout && window.Paddle?.Checkout) {
+                const checkoutData = response.data.checkout;
+
+                // Open Paddle Checkout
+                window.Paddle.Checkout.open({
+                    items: checkoutData.items || [],
+                    customerId: checkoutData.customerId,
+                    successUrl: checkoutData.successUrl,
+                    cancelUrl: checkoutData.cancelUrl,
+                });
             } else {
-                setError('Checkout URL not provided');
+                setError('Paddle checkout not available');
             }
         } catch (err: any) {
             setError(
