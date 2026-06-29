@@ -83,19 +83,17 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
 
                 console.log('Opening Paddle Checkout with:', checkout);
 
-                // Paddle Checkout v2 - Pass the configuration directly
+                // Paddle Checkout v2 - use snake_case field names
                 window.Paddle.Checkout.open({
                     items: [
                         {
-                            priceId: checkout.priceId,
+                            price_id: checkout.priceId,
                             quantity: 1,
                         }
                     ],
-                    customer: {
-                        email: checkout.email,
-                    },
-                    successUrl: checkout.successUrl,
-                    cancelUrl: checkout.cancelUrl,
+                    customer_email: checkout.email,
+                    success_url: checkout.successUrl,
+                    cancel_url: checkout.cancelUrl,
                 });
             } else {
                 setError('Paddle checkout not available');
