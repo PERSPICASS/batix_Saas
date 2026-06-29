@@ -34,7 +34,6 @@ declare global {
             Checkout: {
                 open: (config: any) => void;
             };
-            Initialize?: (config: any) => void;
         };
     }
 }
@@ -51,9 +50,8 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
             script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
             script.async = true;
             script.onload = () => {
-                if (window.Paddle) {
-                    // Initialize Paddle - use production since API key is live
-                    window.Paddle.Initialize({ token: 'live_4c9d45d3dd09feb9d7fb25fd29c' });
+                if (window.Paddle?.Checkout) {
+                    // Paddle SDK is loaded and ready
                     setPaddleReady(true);
                 }
             };
