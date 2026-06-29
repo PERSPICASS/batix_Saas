@@ -16,34 +16,22 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
-            $paddleKey = config('services.paddle.secret');
             $successUrl = route('paddle.success') . '?plan_slug=' . $plan->slug;
             $cancelUrl = route('paddle.cancel');
 
-            // Create checkout session with Paddle API
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . $paddleKey,
-                'Content-Type' => 'application/json',
-            ])->post('https://api.paddle.com/checkouts', [
+            // Return the checkout session data for Paddle Checkout JS
+            // Paddle Checkout v2 will handle the actual payment processing
+            $checkoutData = [
+                'customerId' => $user->paddle_id ?? 'guest_' . uniqid(),
                 'items' => [
                     [
                         'priceId' => $plan->paddle_price_id,
                         'quantity' => 1,
                     ]
                 ],
-                'customData' => [
-                    'user_id' => $user->id,
-                    'plan_slug' => $plan->slug,
-                ],
                 'successUrl' => $successUrl,
                 'cancelUrl' => $cancelUrl,
-            ]);
-
-            if ($response->failed()) {
-                throw new \Exception('Paddle API error: ' . $response->body());
-            }
-
-            $checkoutData = $response->json();
+            ];
 
             return response()->json([
                 'checkout' => $checkoutData,
