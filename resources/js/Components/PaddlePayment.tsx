@@ -41,7 +41,7 @@ declare global {
 export default function PaddlePayment({ plan }: PaddlePaymentProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [checkoutOpen, setCheckoutOpen] = useState(false);
+    const [paddleReady, setPaddleReady] = useState(false);
 
     useEffect(() => {
         // Load Paddle script
@@ -53,12 +53,17 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
                 if (window.Paddle) {
                     // Initialize Paddle
                     window.Paddle.Environment.set('sandbox');
+                    setPaddleReady(true);
                 }
             };
             script.onerror = () => {
                 console.error('Failed to load Paddle script');
+                setError('Failed to load payment system');
             };
             document.body.appendChild(script);
+        } else {
+            // Paddle already loaded
+            setPaddleReady(true);
         }
     }, []);
 
@@ -125,13 +130,18 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
 
             <button
                 onClick={handleCheckout}
-                disabled={loading}
+                disabled={loading || !paddleReady}
                 className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
             >
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        Redirecting...
+                        Opening checkout...
+                    </span>
+                ) : !paddleReady ? (
+                    <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Loading Paddle...
                     </span>
                 ) : (
                     'Pay with Paddle'
