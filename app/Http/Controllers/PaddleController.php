@@ -16,57 +16,26 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
-            $apiKey = config('services.paddle.secret');
+            \Log::info('Checkout request for plan: ' . $plan->slug);
 
-            if (!$apiKey) {
-                throw new \Exception('Paddle API key not configured');
-            }
-
-            \Log::info('Creating Paddle checkout for plan: ' . $plan->slug);
-
-            // Create checkout session via Paddle API
-            $response = \Illuminate\Support\Facades\Http::withHeaders([
-                'Authorization' => 'Bearer ' . $apiKey,
-            ])->post('https://api.paddle.com/checkouts', [
-                'items' => [
-                    [
-                        'price_id' => $plan->paddle_price_id,
-                        'quantity' => 1,
-                    ]
-                ],
-                'customer_email' => $user->email,
-                'custom_data' => [
-                    'user_id' => (string)$user->id,
-                    'plan_slug' => $plan->slug,
-                ],
-            ]);
-
-            \Log::info('Paddle API response status: ' . $response->status());
-            \Log::info('Paddle API response: ' . $response->body());
-
-            if ($response->failed()) {
-                $error = $response->json();
-                $message = $error['errors'][0]['details'] ?? $error['errors'][0]['code'] ?? 'Unknown error';
-                throw new \Exception('Paddle API: ' . $message);
-            }
-
-            $data = $response->json();
-            $checkout = $data['data'] ?? $data;
-
-            if (!isset($checkout['id'])) {
-                throw new \Exception('No checkout ID in response: ' . json_encode($checkout));
-            }
+            // Paddle Checkout v2 handles everything on the frontend
+            // No need to create a session via API
+            // Just return the price ID and customer info
 
             return response()->json([
                 'checkout' => [
-                    'id' => $checkout['id'],
-                    'email' => $user->email,
+                    'priceId' => $plan->paddle_price_id,
+                    'customerEmail' => $user->email,
+                    'successUrl' => route('paddle.success') . '?plan_slug=' . $plan->slug,
+                    'cancelUrl' => route('paddle.cancel'),
+                    'customData' => [
+                        'userId' => $user->id,
+                        'planSlug' => $plan->slug,
+                    ]
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('Paddle checkout error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
+            \Log::error('Paddle checkout error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
