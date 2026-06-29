@@ -45,8 +45,20 @@ class PaddleController extends Controller
             ]);
 
             if ($response->failed()) {
-                \Log::error('Paddle API error: ' . $response->body());
-                throw new \Exception('Paddle API error');
+                $errorBody = $response->body();
+                \Log::error('Paddle API error: ' . $errorBody);
+
+                // Extract error details for better debugging
+                $errorData = $response->json();
+                $errorMsg = $errorData['error']['detail'] ?? 'Unknown error';
+                if (isset($errorData['error']['errors'])) {
+                    $details = array_map(function($e) {
+                        return $e['field'] . ': ' . $e['message'];
+                    }, $errorData['error']['errors']);
+                    $errorMsg .= ' (' . implode(', ', array_slice($details, 0, 2)) . ')';
+                }
+
+                throw new \Exception($errorMsg);
             }
 
             $transaction = $response->json();
