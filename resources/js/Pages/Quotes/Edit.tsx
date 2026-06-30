@@ -6,8 +6,7 @@ import { useRoute } from '@/utils/route';
 
 interface Customer {
     id: number;
-    first_name: string;
-    last_name: string;
+    name: string;
 }
 
 interface Product {
@@ -93,7 +92,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Client */}
                     <div className="bg-slate-800/50 p-6 rounded-lg space-y-4">
-                        <h2 className="text-lg font-semibold text-white">Client: {quote.customer.first_name} {quote.customer.last_name}</h2>
+                        <h2 className="text-lg font-semibold text-white">Client: {quote.customer.name}</h2>
                     </div>
 
                     {/* Dates */}

@@ -70,7 +70,7 @@ export default function ShowQuote({ quote }: { quote: any }) {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-800/50 p-4 rounded-lg">
                         <p className="text-slate-400 text-sm mb-2">Client</p>
-                        <p className="text-white font-medium">{quote.customer.first_name} {quote.customer.last_name}</p>
+                        <p className="text-white font-medium">{quote.customer.name}</p>
                         <p className="text-slate-400 text-sm">{quote.customer.email}</p>
                     </div>
                     <div className="bg-slate-800/50 p-4 rounded-lg">

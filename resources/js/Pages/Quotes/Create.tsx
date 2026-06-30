@@ -6,8 +6,8 @@ import { useRoute } from '@/utils/route';
 
 interface Customer {
     id: number;
-    first_name: string;
-    last_name: string;
+    name: string;
+    email?: string;
 }
 
 interface Product {
@@ -94,7 +94,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 <option value="">Sélectionner un client</option>
                                 {customers.map((c: any) => (
                                     <option key={c.id} value={c.id}>
-                                        {c.first_name} {c.last_name}
+                                        {c.name}
                                     </option>
                                 ))}
                             </select>

@@ -12,8 +12,7 @@ interface Quote {
     quote_number: string;
     customer: {
         id: number;
-        first_name: string;
-        last_name: string;
+        name: string;
         email: string;
     };
     status: 'draft' | 'sent' | 'accepted' | 'expired' | 'rejected';
@@ -68,7 +67,7 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
             label: 'Client',
             render: (quote: Quote) => (
                 <div>
-                    <p className="font-medium text-white">{quote.customer.first_name} {quote.customer.last_name}</p>
+                    <p className="font-medium text-white">{quote.customer.name}</p>
                     <p className="text-xs text-slate-400">{quote.customer.email}</p>
                 </div>
             ),

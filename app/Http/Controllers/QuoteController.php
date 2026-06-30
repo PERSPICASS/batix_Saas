@@ -32,7 +32,7 @@ class QuoteController extends Controller
         $shop = auth()->user()->shops->first();
 
         $customers = Customer::where('shop_id', $shop->id)
-            ->get(['id', 'first_name', 'last_name', 'email']);
+            ->get(['id', 'name', 'email']);
 
         $products = Product::where('shop_id', $shop->id)
             ->get(['id', 'name', 'price']);
@@ -114,7 +114,7 @@ class QuoteController extends Controller
         }
 
         $customers = Customer::where('shop_id', $shop->id)
-            ->get(['id', 'first_name', 'last_name']);
+            ->get(['id', 'name']);
 
         $products = Product::where('shop_id', $shop->id)
             ->get(['id', 'name', 'price']);
