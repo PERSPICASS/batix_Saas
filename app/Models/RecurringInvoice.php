@@ -75,6 +75,7 @@ class RecurringInvoice extends Model
             'tax_amount' => $this->tax_amount,
             'total' => $this->total,
             'notes' => $this->notes,
+            'recurring_invoice_id' => $this->id,
         ]);
 
         foreach ($this->items as $item) {

@@ -25,6 +25,7 @@ class Invoice extends Model
         'discount_amount',
         'total',
         'notes',
+        'recurring_invoice_id',
     ];
 
     protected $casts = [
@@ -87,6 +88,11 @@ class Invoice extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function recurringInvoice(): BelongsTo
+    {
+        return $this->belongsTo(RecurringInvoice::class);
     }
 
     public function items(): HasMany
