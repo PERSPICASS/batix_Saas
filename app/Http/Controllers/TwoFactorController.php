@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Response;
 use PragmaRX\Google2FA\Google2FA;
+use chillerlan\QRCode\QRCode;
 
 class TwoFactorController extends Controller
 {
@@ -37,15 +38,19 @@ class TwoFactorController extends Controller
 
         session(['pending_2fa_secret' => $secret]);
 
-        // Generate QR code as inline SVG data URI
-        $qrCodeUrl = $this->google2fa->getQRCodeInline(
+        // Generate QR code string
+        $otpauthUrl = $this->google2fa->getQRCodeUrl(
             config('app.name'),
             $user->email,
             $secret
         );
 
+        // Generate QR code SVG
+        $qrCode = new QRCode();
+        $qrCodeSvg = $qrCode->render($otpauthUrl);
+
         return response()->json([
-            'qrCodeUrl' => $qrCodeUrl,
+            'qrCodeUrl' => 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvg),
             'secret' => $secret,
         ]);
     }
