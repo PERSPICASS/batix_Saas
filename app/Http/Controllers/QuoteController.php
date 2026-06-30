@@ -119,8 +119,14 @@ class QuoteController extends Controller
         $products = Product::where('shop_id', $shop->id)
             ->get(['id', 'name', 'selling_price']);
 
+        $quote->load('customer', 'items.product');
+
+        // Format dates for input type="date" (YYYY-MM-DD)
+        $quote->quote_date = $quote->quote_date->format('Y-m-d');
+        $quote->expiry_date = $quote->expiry_date->format('Y-m-d');
+
         return Inertia::render('Quotes/Edit', [
-            'quote' => $quote->load('customer', 'items.product'),
+            'quote' => $quote,
             'customers' => $customers,
             'products' => $products,
         ]);
