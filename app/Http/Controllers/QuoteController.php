@@ -13,7 +13,7 @@ use Illuminate\Http\RedirectResponse;
 
 class QuoteController extends Controller
 {
-    public function index(): Response
+    public function index(string $code_user): Response
     {
         $shop = auth()->user()->shops->first();
 
@@ -27,7 +27,7 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(string $code_user): Response
     {
         $shop = auth()->user()->shops->first();
 
@@ -43,7 +43,7 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, string $code_user): RedirectResponse
     {
         $shop = auth()->user()->shops->first();
 
@@ -93,7 +93,7 @@ class QuoteController extends Controller
         return redirect()->route('quotes.show', $quote)->with('success', 'Devis créé avec succès');
     }
 
-    public function show(Quote $quote): Response
+    public function show(string $code_user, Quote $quote): Response
     {
         // Vérifier que le devis appartient à la boutique de l'utilisateur
         $shop = auth()->user()->shops->first();
@@ -106,7 +106,7 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function edit(Quote $quote): Response
+    public function edit(string $code_user, Quote $quote): Response
     {
         $shop = auth()->user()->shops->first();
         if ($quote->shop_id !== $shop->id) {
@@ -126,7 +126,7 @@ class QuoteController extends Controller
         ]);
     }
 
-    public function update(Request $request, Quote $quote): RedirectResponse
+    public function update(Request $request, string $code_user, Quote $quote): RedirectResponse
     {
         $shop = auth()->user()->shops->first();
         if ($quote->shop_id !== $shop->id) {
@@ -179,7 +179,7 @@ class QuoteController extends Controller
         return redirect()->route('quotes.show', $quote)->with('success', 'Devis mis à jour');
     }
 
-    public function send(Quote $quote): RedirectResponse
+    public function send(string $code_user, Quote $quote): RedirectResponse
     {
         $shop = auth()->user()->shops->first();
         if ($quote->shop_id !== $shop->id) {
@@ -196,7 +196,7 @@ class QuoteController extends Controller
         return redirect()->back()->with('success', 'Devis envoyé au client');
     }
 
-    public function accept(Quote $quote): RedirectResponse
+    public function accept(string $code_user, Quote $quote): RedirectResponse
     {
         $shop = auth()->user()->shops->first();
         if ($quote->shop_id !== $shop->id) {
@@ -208,7 +208,7 @@ class QuoteController extends Controller
         return redirect()->back()->with('success', 'Devis accepté');
     }
 
-    public function convertToInvoice(Quote $quote): RedirectResponse
+    public function convertToInvoice(string $code_user, Quote $quote): RedirectResponse
     {
         $shop = auth()->user()->shops->first();
         if ($quote->shop_id !== $shop->id) {
@@ -224,7 +224,7 @@ class QuoteController extends Controller
         return redirect()->route('invoices.show', $invoice)->with('success', 'Facture créée depuis le devis');
     }
 
-    public function destroy(Quote $quote): RedirectResponse
+    public function destroy(string $code_user, Quote $quote): RedirectResponse
     {
         $shop = auth()->user()->shops->first();
         if ($quote->shop_id !== $shop->id) {
