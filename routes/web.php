@@ -366,8 +366,9 @@ Route::prefix('{code_user}')
 
     // 2FA Routes
     Route::get('/two-factor', [TwoFactorController::class, 'index'])->name('two-factor.index');
+    Route::get('/two-factor/verify', [TwoFactorController::class, 'showVerification'])->name('two-factor.verify');
     Route::post('/two-factor/generate-secret', [TwoFactorController::class, 'generateSecret'])->name('two-factor.generate');
-    Route::post('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
+    Route::post('/two-factor/verify-code', [TwoFactorController::class, 'verify'])->name('two-factor.verify.post');
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
     Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->name('two-factor.check');
 });
