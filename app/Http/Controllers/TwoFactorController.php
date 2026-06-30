@@ -37,7 +37,8 @@ class TwoFactorController extends Controller
 
         session(['pending_2fa_secret' => $secret]);
 
-        $qrCodeUrl = $this->google2fa->getQRCodeUrl(
+        // Generate QR code as inline SVG data URI
+        $qrCodeUrl = $this->google2fa->getQRCodeInline(
             config('app.name'),
             $user->email,
             $secret
