@@ -41,6 +41,7 @@ use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\LemonSqueezyController;
 use App\Http\Controllers\PaddleController;
 use App\Http\Controllers\FixedCostController;
+use App\Http\Controllers\QuoteController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -240,6 +241,12 @@ Route::prefix('{code_user}')
 
     // Routes pour les clients
     Route::resource('clients', CustomerController::class)->names('customers')->parameters(['clients' => 'customer']);
+
+    // Routes pour les devis
+    Route::resource('devis', QuoteController::class)->names('quotes')->parameters(['devis' => 'quote']);
+    Route::post('devis/{quote}/envoyer', [QuoteController::class, 'send'])->name('quotes.send');
+    Route::post('devis/{quote}/accepter', [QuoteController::class, 'accept'])->name('quotes.accept');
+    Route::post('devis/{quote}/convertir-facture', [QuoteController::class, 'convertToInvoice'])->name('quotes.convert');
 
     // Routes pour les factures
     Route::resource('factures', InvoiceController::class)->names('invoices')->parameters(['factures' => 'invoice']);
