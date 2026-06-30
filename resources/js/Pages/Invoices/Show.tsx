@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Currency from '@/Components/Currency';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Printer, Repeat2, X } from 'lucide-react';
+import { ArrowLeft, Pencil, Printer, Repeat2, X, Send } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useState } from 'react';
@@ -98,6 +98,12 @@ export default function InvoicesShow({ invoice }: Props) {
         });
     };
 
+    const handleSend = () => {
+        if (confirm('Envoyer cette facture par email à ' + invoice.customer.name + ' ?')) {
+            router.post(route('invoices.send', { invoice: invoice.id }));
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={<h1 className="text-xl font-semibold text-white">Facture {invoice.invoice_number}</h1>}
@@ -114,6 +120,13 @@ export default function InvoicesShow({ invoice }: Props) {
                     </Link>
 
                     <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleSend}
+                            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                        >
+                            <Send className="size-4" /> Envoyer
+                        </button>
                         <button
                             type="button"
                             onClick={() => setShowRecurringModal(true)}

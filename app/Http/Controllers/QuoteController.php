@@ -221,7 +221,7 @@ class QuoteController extends Controller
             'sent_at' => now(),
         ]);
 
-        // TODO: Envoyer email au client
+        \Mail::to($quote->customer->email)->send(new \App\Mail\QuoteMail($quote));
 
         return redirect()->back()->with('success', 'Devis envoyé au client');
     }

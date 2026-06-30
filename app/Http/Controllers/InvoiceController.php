@@ -289,6 +289,22 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture supprimée avec succès.');
     }
 
+    public function send(string $code_user, Invoice $invoice)
+    {
+        $shop = auth()->user()->shops->first();
+        if ($invoice->shop_id !== $shop->id) {
+            abort(403);
+        }
+
+        $invoice->update([
+            'status' => 'sent',
+        ]);
+
+        \Mail::to($invoice->customer->email)->send(new \App\Mail\InvoiceMail($invoice));
+
+        return redirect()->back()->with('success', 'Facture envoyée au client');
+    }
+
     public function createRecurring(Request $request, string $code_user, Invoice $invoice)
     {
         $shop = auth()->user()->shops->first();
