@@ -43,7 +43,6 @@ class PaddleController extends Controller
                 ]
             ],
             'customer_email' => $user->email,
-            'checkout_url' => route('paddle.pay'),
             'custom_data' => [
                 'user_id' => $user->id,
                 'plan_slug' => $plan->slug,
