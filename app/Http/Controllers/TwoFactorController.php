@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Response;
 use PragmaRX\Google2FA\Google2FA;
-use chillerlan\QRCode\QRCode;
+use Illuminate\Support\Str;
 
 class TwoFactorController extends Controller
 {
@@ -38,21 +38,37 @@ class TwoFactorController extends Controller
 
         session(['pending_2fa_secret' => $secret]);
 
-        // Generate QR code string
-        $otpauthUrl = $this->google2fa->getQRCodeUrl(
+        // Get OTPAUTH URL for authenticator apps
+        $otpauthUrl = $this->getOTPAuthUrl(
             config('app.name'),
             $user->email,
             $secret
         );
 
-        // Generate QR code SVG
-        $qrCode = new QRCode();
-        $qrCodeSvg = $qrCode->render($otpauthUrl);
+        // Generate QR code URL using external service
+        $qrCodeUrl = $this->generateQRCodeUrl($otpauthUrl);
 
         return response()->json([
-            'qrCodeUrl' => 'data:image/svg+xml;base64,' . base64_encode($qrCodeSvg),
+            'qrCodeUrl' => $qrCodeUrl,
             'secret' => $secret,
         ]);
+    }
+
+    private function getOTPAuthUrl(string $appName, string $email, string $secret): string
+    {
+        return sprintf(
+            'otpauth://totp/%s:%s?secret=%s&issuer=%s',
+            rawurlencode($appName),
+            rawurlencode($email),
+            $secret,
+            rawurlencode($appName)
+        );
+    }
+
+    private function generateQRCodeUrl(string $otpauthUrl): string
+    {
+        // Use QR Server API (free, no installation required)
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . urlencode($otpauthUrl);
     }
 
     public function verify(Request $request)
