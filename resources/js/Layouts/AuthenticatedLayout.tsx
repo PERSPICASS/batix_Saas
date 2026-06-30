@@ -32,6 +32,7 @@ import {
     Receipt,
     ShoppingCart,
     Settings,
+    Shield,
     Store,
     Truck,
     User,
@@ -692,6 +693,14 @@ export default function Authenticated({
                                                         >
                                                             <Settings className="size-4" />
                                                             <span>{t.layout.userMenu.settings}</span>
+                                                        </Link>
+                                                        <Link
+                                                            href={buildRoute('two-factor.index')}
+                                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                            onClick={() => setUserMenuOpen(false)}
+                                                        >
+                                                            <Shield className="size-4" />
+                                                            <span>Authentification 2FA</span>
                                                         </Link>
                                                         <div className="my-1 border-t border-slate-300 dark:border-white/10"></div>
                                                     </>
