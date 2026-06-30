@@ -37,6 +37,9 @@ class User extends Authenticatable
         'invitation_accepted_at',
         'email_verification_code',
         'email_verification_code_expires_at',
+        'two_factor_enabled',
+        'google2fa_secret',
+        'recovery_codes',
     ];
 
     /**
