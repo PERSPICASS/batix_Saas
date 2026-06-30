@@ -120,7 +120,7 @@ function getCsrfToken(): string {
 
 export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth }: Props) {
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-    const [paymentMode, setPaymentMode] = useState<PaymentMode>('pawapay');
+    const [paymentMode, setPaymentMode] = useState<PaymentMode>('paddle');
 
     // PawaPay state — étape 1 : pays, étape 2 : opérateur
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
@@ -450,59 +450,20 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
                             <ShieldCheck className="size-4 text-emerald-400 shrink-0" />
-                            Paiement sécurisé via PawaPay ou Jèko.
+                            Paiement sécurisé via Paddle.
                         </div>
                     </aside>
 
                     {/* ── Formulaire ── */}
                     <div className="lg:col-span-3 space-y-4">
 
-                        {/* Mode selector */}
-                        <div className="grid gap-2 rounded-xl border border-white/10 bg-white/5 p-1 grid-cols-2 md:grid-cols-5">
-                            <button
-                                type="button"
-                                onClick={() => { setPaymentMode('pawapay'); setPawaPayError(''); }}
-                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'pawapay' ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
-                            >
-                                <Zap className="size-4" />
-                                PawaPay
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setPaymentMode('jeko'); setJekoError(''); setJekoStatus('idle'); }}
-                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'jeko' ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
-                            >
-                                <Zap className="size-4" />
-                                Jèko
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPaymentMode('lemonsqueezy')}
-                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'lemonsqueezy' ? 'bg-green-500 text-white' : 'text-slate-300 hover:bg-white/5'}`}
-                            >
-                                <CreditCard className="size-4" />
-                                Lemon
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPaymentMode('paddle')}
-                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'paddle' ? 'bg-blue-500 text-white' : 'text-slate-300 hover:bg-white/5'}`}
-                            >
-                                <CreditCard className="size-4" />
-                                Paddle
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPaymentMode('manual')}
-                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${paymentMode === 'manual' ? 'bg-white/15 text-white' : 'text-slate-400 hover:bg-white/5'}`}
-                            >
-                                <Building2 className="size-4" />
-                                Manuel
-                            </button>
-                        </div>
+                        {/* ══════════════════ PADDLE FLOW (ONLY) ══════════════════ */}
+                        {paymentMode === 'paddle' && (
+                            <PaddlePayment plan={plan} />
+                        )}
 
-                        {/* ══════════════════ PAWAPAY FLOW ══════════════════ */}
-                        {paymentMode === 'pawapay' && (
+                        {/* ══════════════════ PAWAPAY FLOW (HIDDEN) ══════════════════ */}
+                        {false && paymentMode === 'pawapay' && (
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
                                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                     <Zap className="size-5 text-amber-300" />
@@ -680,8 +641,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             </div>
                         )}
 
-                        {/* ══════════════════ JÈKO FLOW ══════════════════ */}
-                        {paymentMode === 'jeko' && (
+                        {/* ══════════════════ JÈKO FLOW (HIDDEN) ══════════════════ */}
+                        {false && paymentMode === 'jeko' && (
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
                                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                     <Zap className="size-5 text-amber-300" />
@@ -765,18 +726,13 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             </div>
                         )}
 
-                        {/* ══════════════════ LEMONSQUEEZY FLOW ══════════════════ */}
-                        {paymentMode === 'lemonsqueezy' && (
+                        {/* ══════════════════ LEMONSQUEEZY FLOW (HIDDEN) ══════════════════ */}
+                        {false && paymentMode === 'lemonsqueezy' && (
                             <LemonSqueezyPayment plan={plan} />
                         )}
 
-                        {/* ══════════════════ PADDLE FLOW ══════════════════ */}
-                        {paymentMode === 'paddle' && (
-                            <PaddlePayment plan={plan} />
-                        )}
-
-                        {/* ══════════════════ MANUAL FLOW ══════════════════ */}
-                        {paymentMode === 'manual' && (
+                        {/* ══════════════════ MANUAL FLOW (HIDDEN) ══════════════════ */}
+                        {false && paymentMode === 'manual' && (
                             <form onSubmit={handleManualSubmit} className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
                                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                     <CreditCard className="size-5 text-amber-200" />
