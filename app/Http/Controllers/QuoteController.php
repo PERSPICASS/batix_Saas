@@ -90,7 +90,7 @@ class QuoteController extends Controller
             ]);
         }
 
-        return redirect()->route('quotes.show', $quote)->with('success', 'Devis créé avec succès');
+        return redirect()->route('quotes.show', ['code_user' => $code_user, 'quote' => $quote])->with('success', 'Devis créé avec succès');
     }
 
     public function show(string $code_user, Quote $quote): Response
@@ -176,7 +176,7 @@ class QuoteController extends Controller
             ]);
         }
 
-        return redirect()->route('quotes.show', $quote)->with('success', 'Devis mis à jour');
+        return redirect()->route('quotes.show', ['code_user' => $code_user, 'quote' => $quote])->with('success', 'Devis mis à jour');
     }
 
     public function send(string $code_user, Quote $quote): RedirectResponse
@@ -221,7 +221,7 @@ class QuoteController extends Controller
 
         $invoice = $quote->convertToInvoice();
 
-        return redirect()->route('invoices.show', $invoice)->with('success', 'Facture créée depuis le devis');
+        return redirect()->route('invoices.show', ['code_user' => $code_user, 'invoice' => $invoice])->with('success', 'Facture créée depuis le devis');
     }
 
     public function destroy(string $code_user, Quote $quote): RedirectResponse
@@ -233,6 +233,6 @@ class QuoteController extends Controller
 
         $quote->delete();
 
-        return redirect()->route('quotes.index')->with('success', 'Devis supprimé');
+        return redirect()->route('quotes.index', ['code_user' => $code_user])->with('success', 'Devis supprimé');
     }
 }
