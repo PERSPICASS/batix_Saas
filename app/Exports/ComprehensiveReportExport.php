@@ -509,31 +509,34 @@ class CommerciauxSheet implements FromArray, WithHeadings, WithColumnWidths, Wit
         $data = [];
         $rank = 1;
 
-        // Get all invoices for the period
-        $allInvoices = Invoice::where('shop_id', $this->shopId)
-            ->whereBetween('invoice_date', [$this->startDate, $this->endDate])
-            ->get();
+        $users = User::where('shop_id', $this->shopId)->get();
 
-        // Get all quotes for the period
-        $allQuotes = Quote::where('shop_id', $this->shopId)
-            ->whereBetween('quote_date', [$this->startDate, $this->endDate])
-            ->get();
+        foreach ($users as $user) {
+            $invoices = Invoice::where('user_id', $user->id)
+                ->whereBetween('invoice_date', [$this->startDate, $this->endDate])
+                ->get();
 
-        // Summary statistics
-        $totalCA = $allInvoices->sum('total');
-        $conversionRate = count($allQuotes) > 0 ? round(($allQuotes->where('status', 'accepted')->count() / count($allQuotes) * 100), 2) : 0;
+            $quotes = Quote::where('user_id', $user->id)
+                ->whereBetween('quote_date', [$this->startDate, $this->endDate])
+                ->get();
 
-        $data[] = [
-            '1',
-            'TOTAL BOUTIQUE',
-            count($allInvoices),
-            number_format($totalCA, 0) . ' ' . $symbol,
-            number_format($allInvoices->where('status', 'paid')->sum('total'), 0) . ' ' . $symbol,
-            count($allQuotes),
-            $conversionRate . '%',
-            number_format($allInvoices->avg('total') ?? 0, 0) . ' ' . $symbol,
-            '📊 Global',
-        ];
+            $totalCA = $invoices->sum('total');
+            $conversionRate = count($quotes) > 0 ? round(($quotes->where('status', 'accepted')->count() / count($quotes) * 100), 2) : 0;
+
+            if ($totalCA > 0 || count($quotes) > 0) {
+                $data[] = [
+                    $rank++,
+                    $user->name,
+                    count($invoices),
+                    number_format($totalCA, 0) . ' ' . $symbol,
+                    number_format($invoices->where('status', 'paid')->sum('total'), 0) . ' ' . $symbol,
+                    count($quotes),
+                    $conversionRate . '%',
+                    number_format($invoices->avg('total') ?? 0, 0) . ' ' . $symbol,
+                    $totalCA > 10000000 ? '⭐ Excellent' : ($totalCA > 5000000 ? '👍 Bon' : '📊 Correct'),
+                ];
+            }
+        }
 
         return $data;
     }

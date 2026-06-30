@@ -11,6 +11,7 @@ class Quote extends Model
     protected $fillable = [
         'shop_id',
         'customer_id',
+        'user_id',
         'quote_number',
         'status',
         'quote_date',
@@ -42,6 +43,11 @@ class Quote extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function items(): HasMany
