@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { Plus, Trash2, Edit2, DollarSign } from 'lucide-react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 interface FixedCost {
     id: number;
@@ -77,17 +78,12 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
     }, {} as Record<string, FixedCost[]>);
 
     return (
-        <>
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">Charges Fixes</h2>}>
             <Head title="Charges Fixes" />
 
-            <div className="min-h-screen bg-slate-950 p-6">
-            <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold text-white">Charges Fixes</h1>
-                        <p className="text-slate-400 mt-1">Gérez les coûts récurrents (serveur, API, etc.)</p>
-                    </div>
+            <div className="mx-auto max-w-6xl space-y-6">
+                {/* Add Button */}
+                <div className="flex items-center justify-end">
                     <button
                         onClick={() => { setShowForm(!showForm); if (showForm) resetForm(); }}
                         className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
@@ -264,7 +260,6 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                     </div>
                 )}
             </div>
-            </div>
-        </>
+        </AuthenticatedLayout>
     );
 }
