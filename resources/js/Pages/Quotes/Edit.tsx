@@ -1,8 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { FileText, Plus, Trash2, ArrowLeft, Calculator } from 'lucide-react';
-import { useState } from 'react';
+import { FileText, Plus, Trash2, ArrowLeft, Calculator, Search, X } from 'lucide-react';
+import { useState, useMemo, useEffect, KeyboardEvent as ReactKeyboardEvent, FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
+import Modal from '@/Components/Modal';
 
 interface Customer {
     id: number;
@@ -16,7 +17,8 @@ interface Product {
 }
 
 interface QuoteItem {
-    product_id: number;
+    product_id: string | number;
+    product_name: string;
     quantity: number;
     unit_price: number;
 }
@@ -24,13 +26,23 @@ interface QuoteItem {
 export default function EditQuote({ quote, customers, products }: { quote: any; customers: Customer[]; products: Product[] }) {
     const route = useRoute();
     const [loading, setLoading] = useState(false);
-    const [items, setItems] = useState(
+
+    // Modal states
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [productSearch, setProductSearch] = useState('');
+    const [activeProductIndex, setActiveProductIndex] = useState(-1);
+    const [productTargetLine, setProductTargetLine] = useState<number | null>(null);
+
+    // Form states
+    const [items, setItems] = useState<QuoteItem[]>(
         quote.items.map((item: any) => ({
             product_id: item.product_id,
+            product_name: item.product.name,
             quantity: item.quantity,
             unit_price: parseFloat(item.unit_price),
         }))
     );
+
     const [formData, setFormData] = useState({
         quote_date: quote.quote_date,
         expiry_date: quote.expiry_date,
@@ -38,40 +50,88 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
         terms: quote.terms || '',
     });
 
+    const filteredProducts = useMemo(() => {
+        const term = productSearch.trim().toLowerCase();
+        if (!term) return products;
+        return products.filter((p) => p.name.toLowerCase().includes(term));
+    }, [products, productSearch]);
+
+    // Modal navigation
+    useEffect(() => {
+        if (!showProductModal) {
+            setActiveProductIndex(-1);
+            return;
+        }
+        setActiveProductIndex(filteredProducts.length > 0 ? 0 : -1);
+    }, [showProductModal, filteredProducts.length, productSearch]);
+
+    const selectProduct = (product: Product) => {
+        if (productTargetLine === null) return;
+        const newItems = [...items];
+        newItems[productTargetLine] = {
+            ...newItems[productTargetLine],
+            product_id: product.id,
+            product_name: product.name,
+            unit_price: parseFloat(String(product.selling_price)),
+        };
+        setItems(newItems);
+        setShowProductModal(false);
+    };
+
+    const handleProductSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+        if (!showProductModal || filteredProducts.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveProductIndex((prev) => (prev < filteredProducts.length - 1 ? prev + 1 : 0));
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveProductIndex((prev) => (prev > 0 ? prev - 1 : filteredProducts.length - 1));
+            return;
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeProductIndex >= 0) {
+                selectProduct(filteredProducts[activeProductIndex]);
+            }
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            setShowProductModal(false);
+        }
+    };
+
     const handleAddItem = () => {
-        setItems([...items, { product_id: '', quantity: 1, unit_price: 0 }]);
+        setItems([...items, { product_id: '', product_name: '', quantity: 1, unit_price: 0 }]);
     };
 
     const handleRemoveItem = (index: number) => {
-        setItems(items.filter((_: any, i: number) => i !== index));
+        setItems(items.filter((_, i) => i !== index));
     };
 
     const handleItemChange = (index: number, field: string, value: any) => {
-        const newItems: any[] = [...items];
+        const newItems = [...items];
         newItems[index] = { ...newItems[index], [field]: value };
         setItems(newItems);
     };
 
-    const handleProductChange = (index: number, productId: string) => {
-        const product = products.find((p: any) => p.id === parseInt(productId));
-        if (product) {
-            handleItemChange(index, 'product_id', parseInt(productId));
-            handleItemChange(index, 'unit_price', product.selling_price);
-        }
-    };
-
-    const subtotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.unit_price), 0);
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
     const tax = subtotal * 0.18;
     const total = subtotal + tax;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
         setLoading(true);
 
-        router.put(route('quotes.update', { quote: quote.id }), {
+        const submitData: any = {
             ...formData,
-            items: items.filter((item: any) => item.product_id),
-        });
+            items: items.filter((item) => item.product_id),
+        };
+
+        router.put(route('quotes.update', { quote: quote.id }), submitData);
     };
 
     return (
@@ -80,7 +140,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
 
             <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
-                    {/* Client et Dates */}
+                    {/* Informations */}
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                         <div className="mb-4 flex items-center gap-2 text-white">
                             <FileText className="size-5 text-amber-300" />
@@ -137,27 +197,24 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                         </div>
 
                         <div className="space-y-3">
-                            {items.map((item: any, index: number) => (
+                            {items.map((item, index) => (
                                 <div key={index} className="flex gap-2 items-end">
-                                    <select
-                                        value={item.product_id}
-                                        onChange={(e) => handleProductChange(index, e.target.value)}
-                                        className="flex-1 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setProductTargetLine(index);
+                                            setShowProductModal(true);
+                                        }}
+                                        className="flex-1 rounded-lg border border-white/15 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-2 text-left text-slate-200 text-sm transition hover:border-amber-300/40"
                                     >
-                                        <option value="">Sélectionner produit</option>
-                                        {products.map((p: any) => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        {item.product_name || 'Choisir un produit'}
+                                    </button>
 
                                     <input
                                         type="number"
                                         min="1"
                                         value={item.quantity}
                                         onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
-                                        placeholder="Qté"
                                         className="w-20 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
 
@@ -166,7 +223,6 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                                         step="0.01"
                                         value={item.unit_price}
                                         onChange={(e) => handleItemChange(index, 'unit_price', parseFloat(e.target.value))}
-                                        placeholder="Prix"
                                         className="w-24 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
 
@@ -190,7 +246,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                         </div>
                     </div>
 
-                    {/* Notes et Conditions */}
+                    {/* Notes */}
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                         <h2 className="mb-4 text-lg font-semibold text-white">Notes et conditions</h2>
 
@@ -206,7 +262,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Conditions de paiement</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">Conditions</label>
                                 <textarea
                                     value={formData.terms}
                                     onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
@@ -219,7 +275,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                     </div>
                 </section>
 
-                {/* Résumé */}
+                {/* Sidebar */}
                 <aside className="xl:col-span-1">
                     <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
                         <div className="mb-4 flex items-center gap-2 text-white">
@@ -246,7 +302,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                         <div className="space-y-3">
                             <button
                                 type="submit"
-                                disabled={loading || items.every((i: any) => !i.product_id)}
+                                disabled={loading || items.every((i) => !i.product_id)}
                                 className="w-full rounded-lg bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Mise à jour...' : 'Mettre à jour'}
@@ -262,6 +318,71 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                     </div>
                 </aside>
             </form>
+
+            {/* Modal Produit */}
+            <Modal show={showProductModal} onClose={() => setShowProductModal(false)} maxWidth="md">
+                <div className="h-[560px] bg-slate-950 p-5 text-slate-100">
+                    <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-base font-semibold">Choisir un produit</h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowProductModal(false)}
+                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                        >
+                            <X className="size-4" />
+                        </button>
+                    </div>
+
+                    <div className="mb-3 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
+                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2">
+                            <Search className="size-4 text-amber-300" />
+                            <input
+                                value={productSearch}
+                                onChange={(e) => setProductSearch(e.target.value)}
+                                onKeyDown={handleProductSearchKeyDown}
+                                placeholder="Rechercher un produit..."
+                                className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
+                                autoFocus
+                            />
+                            {productSearch && (
+                                <button
+                                    type="button"
+                                    onClick={() => setProductSearch('')}
+                                    className="rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                                >
+                                    <X className="size-3.5" />
+                                </button>
+                            )}
+                        </div>
+                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
+                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
+                            <span>{filteredProducts.length} résultat(s)</span>
+                        </div>
+                    </div>
+
+                    <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-slate-900/40 p-2">
+                        {filteredProducts.length > 0 ? (
+                            filteredProducts.map((product, index) => (
+                                <button
+                                    key={product.id}
+                                    type="button"
+                                    onClick={() => selectProduct(product)}
+                                    className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
+                                        activeProductIndex === index
+                                            ? 'bg-amber-300/25 text-amber-100 ring-1 ring-amber-300/40'
+                                            : 'text-slate-200 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <span>{product.name}</span>
+                                    <span className="text-xs text-amber-300">{product.selling_price}€</span>
+                                </button>
+                            ))
+                        ) : (
+                            <p className="px-3 py-2 text-sm text-slate-400">Aucun produit trouvé.</p>
+                        )}
+                    </div>
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     );
 }
