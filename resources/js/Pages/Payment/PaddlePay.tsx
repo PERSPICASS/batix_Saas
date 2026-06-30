@@ -29,14 +29,19 @@ export default function PaddlePay() {
                     return;
                 }
 
-                window.Paddle.Initialize({
-                    token: token,
-                    eventCallback: function (event: any) {
-                        if (event.name === 'checkout.completed') {
-                            window.location.href = '/paddle/success';
-                        }
-                    },
-                });
+                try {
+                    window.Paddle.Initialize({
+                        token: token,
+                        eventCallback: function (event: any) {
+                            if (event.name === 'checkout.completed') {
+                                window.location.href = '/paddle/success';
+                            }
+                        },
+                    });
+                    console.log('Paddle initialized successfully');
+                } catch (e) {
+                    console.error('Paddle initialization failed:', e);
+                }
             }
         };
 
