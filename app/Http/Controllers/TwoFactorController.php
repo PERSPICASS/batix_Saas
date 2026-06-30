@@ -28,7 +28,11 @@ class TwoFactorController extends Controller
 
     public function showVerification(): Response
     {
-        return inertia('Auth/VerifyTwoFactor');
+        $user = auth()->user();
+
+        return inertia('Auth/VerifyTwoFactor', [
+            'codeUser' => $user->code_user,
+        ]);
     }
 
     public function generateSecret()

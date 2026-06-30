@@ -3,7 +3,11 @@ import { Lock } from 'lucide-react';
 import { useState } from 'react';
 import axios from 'axios';
 
-export default function VerifyTwoFactor() {
+interface Props {
+    codeUser: string;
+}
+
+export default function VerifyTwoFactor({ codeUser }: Props) {
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -25,8 +29,8 @@ export default function VerifyTwoFactor() {
             });
 
             if (response.data.verified) {
-                // Redirection au dashboard
-                window.location.href = '/dashboard';
+                // Redirection au dashboard avec code_user
+                window.location.href = `/${codeUser}/dashboard`;
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Code invalide. Réessayez.');
