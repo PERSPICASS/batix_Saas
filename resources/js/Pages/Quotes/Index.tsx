@@ -7,6 +7,7 @@ import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { router } from '@inertiajs/react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import Currency from '@/Components/Currency';
 
 interface Quote {
     id: number;
@@ -77,7 +78,7 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
         {
             key: 'total',
             label: 'Montant',
-            render: (quote: Quote) => <span className="font-semibold text-green-400">{quote.total.toFixed(2)}€</span>,
+            render: (quote: Quote) => <span className="font-semibold text-green-400"><Currency amount={parseFloat(String(quote.total))} /></span>,
         },
         {
             key: 'status',
