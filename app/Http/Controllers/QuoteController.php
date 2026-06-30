@@ -121,12 +121,19 @@ class QuoteController extends Controller
 
         $quote->load('customer', 'items.product');
 
-        // Format dates for input type="date" (YYYY-MM-DD)
-        $quote->quote_date = $quote->quote_date->format('Y-m-d');
-        $quote->expiry_date = $quote->expiry_date->format('Y-m-d');
+        // Format quote data with dates in YYYY-MM-DD format
+        $quoteData = $quote->toArray();
+        $quoteData['quote_date'] = $quote->quote_date->format('Y-m-d');
+        $quoteData['expiry_date'] = $quote->expiry_date->format('Y-m-d');
+        // Ensure customer is included
+        $quoteData['customer'] = $quote->customer->toArray();
+        // Ensure items with products are included
+        $quoteData['items'] = $quote->items->map(fn($item) => array_merge($item->toArray(), [
+            'product' => $item->product->toArray(),
+        ]))->toArray();
 
         return Inertia::render('Quotes/Edit', [
-            'quote' => $quote,
+            'quote' => $quoteData,
             'customers' => $customers,
             'products' => $products,
         ]);
