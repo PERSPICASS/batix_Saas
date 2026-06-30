@@ -73,9 +73,16 @@ class TwoFactorController extends Controller
 
     public function verify(Request $request)
     {
-        $validated = $request->validate([
-            'code' => 'required|numeric|digits:6',
-        ]);
+        try {
+            $validated = $request->validate([
+                'code' => 'required|string|digits:6',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Code invalide. Veuillez entrer 6 chiffres.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
 
         $secret = session('pending_2fa_secret');
 
@@ -91,6 +98,11 @@ class TwoFactorController extends Controller
         if (!$isValid) {
             return response()->json([
                 'message' => 'Code invalide. Veuillez réessayer.',
+                'debug' => [
+                    'code_received' => $validated['code'],
+                    'code_length' => strlen($validated['code']),
+                    'secret_exists' => !empty($secret),
+                ],
             ], 422);
         }
 
