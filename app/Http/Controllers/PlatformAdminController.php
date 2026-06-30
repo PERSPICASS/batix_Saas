@@ -41,9 +41,11 @@ class PlatformAdminController extends Controller
         $monthlyRevenue = Subscription::whereIn('status', ['active', 'trial'])
             ->sum('amount');
 
-        // Charges fixes mensuelles
+        // Charges fixes mensuelles (en EUR uniquement)
         $monthlyFixedCosts = FixedCost::where('is_active', true)
-            ->sum('amount_monthly');
+            ->where('currency', 'EUR')
+            ->where('billing_cycle', 'monthly')
+            ->sum('amount_monthly') ?? 0;
 
         // Profit net (Revenus - Charges fixes)
         $monthlyProfit = $monthlyRevenue - $monthlyFixedCosts;
