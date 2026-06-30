@@ -97,8 +97,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'paddle' => [
-        'secret' => env('PADDLE_API_KEY', ''),
-        'public' => env('PADDLE_PUBLIC_KEY', ''),
+        'env' => env('PADDLE_ENV', 'sandbox'),
+        'secret' => env('PADDLE_API_KEY'),
+        'webhook_secret' => env('PADDLE_WEBHOOK_SECRET'),
     ],
 
 ];
