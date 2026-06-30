@@ -186,8 +186,8 @@ class CustomersSheet implements FromArray, WithHeadings, WithColumnWidths, WithS
     public function array(): array
     {
         $customers = DB::table('invoices')
-            ->where('shop_id', $this->shopId)
-            ->whereBetween('invoice_date', [$this->startDate, $this->endDate])
+            ->where('invoices.shop_id', $this->shopId)
+            ->whereBetween('invoices.invoice_date', [$this->startDate, $this->endDate])
             ->join('customers', 'invoices.customer_id', '=', 'customers.id')
             ->where('invoices.status', 'paid')
             ->groupBy('customers.id', 'customers.name')
