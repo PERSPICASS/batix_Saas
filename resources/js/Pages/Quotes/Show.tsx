@@ -3,9 +3,11 @@ import { Head, Link, router } from '@inertiajs/react';
 import { FileText, Send, CheckCircle, Download, Edit, Trash2, ArrowLeft, Calculator } from 'lucide-react';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
+import Currency, { useShopSettings } from '@/Components/Currency';
 
 export default function ShowQuote({ quote }: { quote: any }) {
     const route = useRoute();
+    const { currencySymbol } = useShopSettings();
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     const handleDelete = () => {
@@ -96,8 +98,8 @@ export default function ShowQuote({ quote }: { quote: any }) {
                                         <tr key={index} className="hover:bg-white/5">
                                             <td className="px-4 py-3 text-white">{item.product.name}</td>
                                             <td className="px-4 py-3 text-right text-white">{item.quantity}</td>
-                                            <td className="px-4 py-3 text-right text-white">{parseFloat(item.unit_price).toFixed(2)}€</td>
-                                            <td className="px-4 py-3 text-right text-white font-medium">{parseFloat(item.line_total).toFixed(2)}€</td>
+                                            <td className="px-4 py-3 text-right text-white"><Currency amount={parseFloat(item.unit_price)} /></td>
+                                            <td className="px-4 py-3 text-right text-white font-medium"><Currency amount={parseFloat(item.line_total)} /></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -108,15 +110,15 @@ export default function ShowQuote({ quote }: { quote: any }) {
                         <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
                             <div className="flex justify-end gap-8">
                                 <span className="text-slate-300">Sous-total:</span>
-                                <span className="w-24 text-right text-white font-medium">{parseFloat(quote.subtotal).toFixed(2)}€</span>
+                                <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(quote.subtotal)} /></span>
                             </div>
                             <div className="flex justify-end gap-8">
                                 <span className="text-slate-300">TVA (18%):</span>
-                                <span className="w-24 text-right text-white font-medium">{parseFloat(quote.tax_amount).toFixed(2)}€</span>
+                                <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(quote.tax_amount)} /></span>
                             </div>
                             <div className="flex justify-end gap-8 border-t border-white/10 pt-2">
                                 <span className="text-white font-bold">Total:</span>
-                                <span className="w-24 text-right text-xl font-bold text-amber-300">{parseFloat(quote.total).toFixed(2)}€</span>
+                                <span className="w-24 text-right text-xl font-bold text-amber-300"><Currency amount={parseFloat(quote.total)} /></span>
                             </div>
                         </div>
                     </div>
@@ -144,7 +146,13 @@ export default function ShowQuote({ quote }: { quote: any }) {
                 {/* Actions */}
                 <aside className="xl:col-span-1">
                     <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Actions</h2>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-white">Total:</h2>
+                            <span className="text-2xl font-bold text-amber-300"><Currency amount={parseFloat(quote.total)} /></span>
+                        </div>
+                        <div className="border-b border-white/10 mb-4 pb-4">
+                            <h2 className="text-base font-semibold text-slate-300">Actions</h2>
+                        </div>
 
                         <div className="space-y-3">
                             {quote.status === 'draft' && (

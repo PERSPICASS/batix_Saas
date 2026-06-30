@@ -4,6 +4,7 @@ import { FileText, Plus, Trash2, ArrowLeft, Calculator, Search, X, UserRound } f
 import { useState, useMemo, useEffect, KeyboardEvent as ReactKeyboardEvent, FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import Modal from '@/Components/Modal';
+import Currency, { useShopSettings } from '@/Components/Currency';
 
 interface Customer {
     id: number;
@@ -26,6 +27,7 @@ interface QuoteItem {
 
 export default function CreateQuote({ customers, products }: { customers: Customer[]; products: Product[] }) {
     const route = useRoute();
+    const { currencySymbol } = useShopSettings();
     const [loading, setLoading] = useState(false);
 
     // Modal states
@@ -297,7 +299,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
 
                                     <div className="text-right w-28">
                                         <p className="font-semibold text-slate-200 text-sm">
-                                            {(item.quantity * item.unit_price).toFixed(2)}€
+                                            <Currency amount={item.quantity * item.unit_price} />
                                         </p>
                                     </div>
 
@@ -355,17 +357,17 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         <div className="space-y-3 border-b border-white/10 pb-4 mb-4">
                             <div className="flex justify-between text-slate-200">
                                 <span className="text-sm">Sous-total:</span>
-                                <span className="font-semibold">{subtotal.toFixed(2)}€</span>
+                                <span className="font-semibold"><Currency amount={subtotal} /></span>
                             </div>
                             <div className="flex justify-between text-slate-200">
                                 <span className="text-sm">TVA (18%):</span>
-                                <span className="font-semibold">{tax.toFixed(2)}€</span>
+                                <span className="font-semibold"><Currency amount={tax} /></span>
                             </div>
                         </div>
 
                         <div className="flex justify-between mb-6">
                             <span className="font-semibold text-white">Total:</span>
-                            <span className="text-2xl font-bold text-amber-300">{total.toFixed(2)}€</span>
+                            <span className="text-2xl font-bold text-amber-300"><Currency amount={total} /></span>
                         </div>
 
                         <div className="space-y-3">
@@ -510,7 +512,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                     }`}
                                 >
                                     <span>{product.name}</span>
-                                    <span className="text-xs text-amber-300">{product.selling_price}€</span>
+                                    <span className="text-xs text-amber-300"><Currency amount={product.selling_price} /></span>
                                 </button>
                             ))
                         ) : (
