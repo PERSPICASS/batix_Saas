@@ -10,7 +10,9 @@ class QuoteItem extends Model
     protected $fillable = [
         'quote_id',
         'product_id',
+        'product_article_id',
         'description',
+        'article_name',
         'quantity',
         'unit_price',
         'line_total',
@@ -31,5 +33,10 @@ class QuoteItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function productArticle(): BelongsTo
+    {
+        return $this->belongsTo(ProductArticle::class);
     }
 }

@@ -144,7 +144,12 @@ class Product extends Model
         if ($this->purchase_price == 0) {
             return 0;
         }
-        
+
         return (($this->selling_price - $this->purchase_price) / $this->purchase_price) * 100;
+    }
+
+    public function articles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProductArticle::class);
     }
 }
