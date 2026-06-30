@@ -356,6 +356,13 @@ export default function Authenticated({
                 module: 'customers',
             },
             {
+                label: 'Devis',
+                href: buildRoute('quotes.index'),
+                active: route().current('quotes.*'),
+                icon: Receipt,
+                module: 'invoices',
+            },
+            {
                 label: t.nav.invoices,
                 href: buildRoute('invoices.index'),
                 active: route().current('invoices.*'),
