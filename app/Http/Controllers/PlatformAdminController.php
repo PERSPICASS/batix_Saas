@@ -41,11 +41,19 @@ class PlatformAdminController extends Controller
         $monthlyRevenue = Subscription::whereIn('status', ['active', 'trial'])
             ->sum('amount');
 
-        // Charges fixes mensuelles (en EUR uniquement)
+        // Charges fixes mensuelles (toutes devises, conversion approximative)
         $monthlyFixedCosts = FixedCost::where('is_active', true)
-            ->where('currency', 'EUR')
             ->where('billing_cycle', 'monthly')
-            ->sum('amount_monthly') ?? 0;
+            ->get()
+            ->reduce(function($total, $cost) {
+                $rate = match($cost->currency) {
+                    'EUR' => 1.0,
+                    'USD' => 0.92,  // 1 USD ≈ 0.92 EUR
+                    'FCFA' => 0.00152,  // 1 FCFA ≈ 0.00152 EUR
+                    default => 1.0,
+                };
+                return $total + ($cost->amount_monthly * $rate);
+            }, 0);
 
         // Profit net (Revenus - Charges fixes)
         $monthlyProfit = $monthlyRevenue - $monthlyFixedCosts;
