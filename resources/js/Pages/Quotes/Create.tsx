@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
 
 interface Customer {
     id: number;
@@ -16,6 +17,7 @@ interface Product {
 }
 
 export default function CreateQuote({ customers, products }: { customers: Customer[]; products: Product[] }) {
+    const route = useRoute();
     const [loading, setLoading] = useState(false);
     const [items, setItems] = useState([{ product_id: '', quantity: 1, unit_price: 0 }]);
     const [formData, setFormData] = useState({

@@ -5,6 +5,7 @@ import { Plus, Eye, Edit, Trash2, Send, CheckCircle, Download } from 'lucide-rea
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { router } from '@inertiajs/react';
+import { useRoute } from '@/utils/route';
 
 interface Quote {
     id: number;
@@ -23,20 +24,21 @@ interface Quote {
 }
 
 export default function QuotesIndex({ quotes }: { quotes: any }) {
+    const route = useRoute();
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
     const handleDelete = (id: number) => {
-        router.delete(route('quotes.destroy', id), {
+        router.delete(route('quotes.destroy', { quote: id }), {
             onSuccess: () => setConfirmDelete(null),
         });
     };
 
     const handleSend = (id: number) => {
-        router.post(route('quotes.send', id), {});
+        router.post(route('quotes.send', { quote: id }), {});
     };
 
     const handleAccept = (id: number) => {
-        router.post(route('quotes.accept', id), {});
+        router.post(route('quotes.accept', { quote: id }), {});
     };
 
     const statusColors = {
@@ -98,7 +100,7 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
             render: (quote: Quote) => (
                 <div className="flex gap-2">
                     <Link
-                        href={route('quotes.show', quote.id)}
+                        href={route('quotes.show', { quote: quote.id })}
                         className="p-2 text-blue-400 hover:bg-blue-500/10 rounded"
                         title="Voir"
                     >
@@ -106,7 +108,7 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
                     </Link>
                     {quote.status === 'draft' && (
                         <Link
-                            href={route('quotes.edit', quote.id)}
+                            href={route('quotes.edit', { quote: quote.id })}
                             className="p-2 text-amber-400 hover:bg-amber-500/10 rounded"
                             title="Modifier"
                         >
@@ -133,7 +135,7 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
                     )}
                     {quote.status === 'accepted' && (
                         <Link
-                            href={route('quotes.convert', quote.id)}
+                            href={route('quotes.convert', { quote: quote.id })}
                             method="post"
                             className="p-2 text-green-400 hover:bg-green-500/10 rounded"
                             title="Convertir en facture"

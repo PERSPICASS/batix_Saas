@@ -2,8 +2,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Send, CheckCircle, Download, Edit, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
 
 export default function ShowQuote({ quote }: { quote: any }) {
+    const route = useRoute();
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     const handleDelete = () => {

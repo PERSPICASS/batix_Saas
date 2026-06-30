@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
 
 interface Customer {
     id: number;
@@ -22,6 +23,7 @@ interface QuoteItem {
 }
 
 export default function EditQuote({ quote, customers, products }: { quote: any; customers: Customer[]; products: Product[] }) {
+    const route = useRoute();
     const [loading, setLoading] = useState(false);
     const [items, setItems] = useState(
         quote.items.map((item: any) => ({
