@@ -468,7 +468,38 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                     {/* ── Formulaire ── */}
                     <div className="lg:col-span-3 space-y-4">
 
-                        {/* ══════════════════ PADDLE FLOW (ONLY) ══════════════════ */}
+                        {/* ── Sélection du mode de paiement ── */}
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
+                            <p className="text-sm font-medium text-slate-300">Mode de paiement</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setPaymentMode('paddle')}
+                                    className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                        paymentMode === 'paddle'
+                                            ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                            : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <CreditCard className="inline size-4 mr-2" />
+                                    Paddle (Carte)
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPaymentMode('manual')}
+                                    className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                        paymentMode === 'manual'
+                                            ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                            : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <Building2 className="inline size-4 mr-2" />
+                                    Paiement Manuel
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ══════════════════ PADDLE FLOW ══════════════════ */}
                         {paymentMode === 'paddle' && (
                             <PaddlePayment plan={plan} billingCycle={billingCycle} />
                         )}
@@ -742,8 +773,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             <LemonSqueezyPayment plan={plan} />
                         )}
 
-                        {/* ══════════════════ MANUAL FLOW (HIDDEN) ══════════════════ */}
-                        {false && paymentMode === 'manual' && (
+                        {/* ══════════════════ MANUAL FLOW ══════════════════ */}
+                        {paymentMode === 'manual' && (
                             <form onSubmit={handleManualSubmit} className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
                                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                     <CreditCard className="size-5 text-amber-200" />
