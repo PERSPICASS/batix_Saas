@@ -435,6 +435,19 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                 {billingCycle === 'yearly' && (
                                     <p className="text-xs text-right text-slate-500 line-through">{formatPrice(basePrice * 12)} {currencyLabel}</p>
                                 )}
+                                <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+                                    <span className="text-sm text-slate-400">En euros</span>
+                                    <span className="text-lg font-bold text-amber-300">
+                                        €{isLocalCurrency
+                                            ? (billingCycle === 'yearly'
+                                                ? (parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || '0') * 10).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                                : plan.price_eur)
+                                            : (billingCycle === 'yearly'
+                                                ? (basePrice * 10).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                                : basePrice.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+                                        }
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Inclus */}
