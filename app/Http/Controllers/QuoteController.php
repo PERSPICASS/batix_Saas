@@ -70,6 +70,8 @@ class QuoteController extends Controller
             'expiry_date' => 'required|date|after:quote_date',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_article_id' => 'nullable|exists:product_articles,id',
+            'items.*.article_name' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
@@ -98,8 +100,15 @@ class QuoteController extends Controller
         ]);
 
         foreach ($validated['items'] as $item) {
+            // Marquer l'article comme vendu si fourni
+            if (!empty($item['product_article_id'])) {
+                \App\Models\ProductArticle::find($item['product_article_id'])?->markAsSold();
+            }
+
             $quote->items()->create([
                 'product_id' => $item['product_id'],
+                'product_article_id' => $item['product_article_id'] ?? null,
+                'article_name' => $item['article_name'] ?? null,
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
                 'line_total' => $item['quantity'] * $item['unit_price'],
@@ -197,8 +206,15 @@ class QuoteController extends Controller
 
         $quote->items()->delete();
         foreach ($validated['items'] as $item) {
+            // Marquer l'article comme vendu si fourni
+            if (!empty($item['product_article_id'])) {
+                \App\Models\ProductArticle::find($item['product_article_id'])?->markAsSold();
+            }
+
             $quote->items()->create([
                 'product_id' => $item['product_id'],
+                'product_article_id' => $item['product_article_id'] ?? null,
+                'article_name' => $item['article_name'] ?? null,
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
                 'line_total' => $item['quantity'] * $item['unit_price'],
