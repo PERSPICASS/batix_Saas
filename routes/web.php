@@ -40,6 +40,7 @@ use App\Http\Controllers\ReturnedInventoryController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\LemonSqueezyController;
 use App\Http\Controllers\PaddleController;
+use App\Http\Controllers\FixedCostController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -178,6 +179,12 @@ Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
     Route::put('/blog/{post}', [BlogAdminController::class, 'update'])->name('platform.blog.update');
     Route::delete('/blog/{post}', [BlogAdminController::class, 'destroy'])->name('platform.blog.destroy');
     Route::post('/blog/{post}/toggle', [BlogAdminController::class, 'togglePublished'])->name('platform.blog.toggle');
+
+    // Fixed Costs Management
+    Route::get('/fixed-costs', [FixedCostController::class, 'index'])->name('platform.fixed-costs.index');
+    Route::post('/fixed-costs', [FixedCostController::class, 'store'])->name('platform.fixed-costs.store');
+    Route::put('/fixed-costs/{cost}', [FixedCostController::class, 'update'])->name('platform.fixed-costs.update');
+    Route::delete('/fixed-costs/{cost}', [FixedCostController::class, 'destroy'])->name('platform.fixed-costs.destroy');
 });
 
 // Routes avec préfixe code_user (pour tout le compte)
