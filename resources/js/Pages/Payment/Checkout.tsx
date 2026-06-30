@@ -35,6 +35,7 @@ interface Plan {
     has_unlimited_users: boolean;
     has_unlimited_products: boolean;
     has_unlimited_depots: boolean;
+    is_active?: boolean;
 }
 
 interface Props extends PageProps {
@@ -319,32 +320,33 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
     /* ── Manual payment submit ────────────────────────────────── */
 
-    const handleManualSubmit = (e: React.FormEvent) => {
+    const handleManualSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmittingManual(true);
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/plans/${plan.id}/process`;
+        try {
+            const response = await axios.post(`/plans/${plan.slug}/process`, {
+                payment_method:  manualMethod,
+                billing_cycle:   billingCycle,
+                phone,
+                transaction_ref: transactionRef,
+            }, {
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                },
+            });
 
-        const fields: Record<string, string> = {
-            _token:          getCsrfToken(),
-            payment_method:  manualMethod,
-            billing_cycle:   billingCycle,
-            phone,
-            transaction_ref: transactionRef,
-        };
-
-        Object.entries(fields).forEach(([name, value]) => {
-            const input = document.createElement('input');
-            input.type  = 'hidden';
-            input.name  = name;
-            input.value = value;
-            form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
+            if (response.status === 200 || response.status === 201) {
+                // Redirection au dashboard ou page de confirmation
+                window.location.href = `/${auth.user?.code_user}/dashboard`;
+            }
+        } catch (err: any) {
+            console.error('Payment error:', err);
+            alert(`Erreur: ${err.response?.data?.message || 'Une erreur est survenue'}`);
+        } finally {
+            setSubmittingManual(false);
+        }
     };
 
     /* ── Plan gratuit ─────────────────────────────────────────────────── */
