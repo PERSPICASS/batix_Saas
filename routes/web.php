@@ -43,6 +43,7 @@ use App\Http\Controllers\PaddleController;
 use App\Http\Controllers\FixedCostController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\RecurringInvoiceController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
