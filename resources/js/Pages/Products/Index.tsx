@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, AlertTriangle, Search, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw } from 'lucide-react';
+import { Pencil, Plus, Trash2, AlertTriangle, Search, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw, Tag } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import Currency from '@/Components/Currency';
@@ -9,6 +9,7 @@ import { useState, useRef, useEffect, FormEvent } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import ProductImage from '@/Components/ProductImage';
 import BarcodeScanner from '@/Components/BarcodeScanner';
+import ProductArticleModal from '@/Components/ProductArticleModal';
 import { useLocale } from '@/contexts/LocaleContext';
 
 interface Category {
@@ -76,6 +77,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
     const [removeModal, setRemoveModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
+    const [articleModal, setArticleModal] = useState<{ isOpen: boolean; product: Product | null }>({ isOpen: false, product: null });
     const [deleting, setDeleting] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
 
@@ -245,6 +247,9 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             <Layers className="size-3.5" /> {t.products.actions.variations}
                         </TableActionButton>
                     </Link>
+                    <TableActionButton onClick={() => setArticleModal({ isOpen: true, product })}>
+                        <Tag className="size-3.5" /> Gérer les articles
+                    </TableActionButton>
                     <Link href={route('products.edit', { product: product.id })}>
                         <TableActionButton>
                             <Pencil className="size-3.5" /> {t.products.actions.edit}
@@ -527,6 +532,15 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         </div>
                     </div>
                 </div>
+            )}
+
+            {articleModal.product && (
+                <ProductArticleModal
+                    productId={articleModal.product.id}
+                    productName={articleModal.product.name}
+                    isOpen={articleModal.isOpen}
+                    onClose={() => setArticleModal({ isOpen: false, product: null })}
+                />
             )}
         </AuthenticatedLayout>
     );
