@@ -124,6 +124,7 @@ Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/paddle/checkout/{plan:slug}', [PaddleController::class, 'checkout'])->name('paddle.checkout');
+    Route::get('/paddle/pay', fn() => Inertia::render('Payment/PaddlePay'))->name('paddle.pay');
 });
 
 Route::get('/paddle/success', [PaddleController::class, 'success'])->name('paddle.success');

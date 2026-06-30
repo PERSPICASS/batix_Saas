@@ -43,8 +43,7 @@ class PaddleController extends Controller
                 ]
             ],
             'customer_email' => $user->email,
-            'success_url' => route('paddle.success') . '?plan_slug=' . $plan->slug,
-            'cancel_url' => route('paddle.cancel'),
+            'checkout_url' => route('paddle.pay'),
             'custom_data' => [
                 'user_id' => $user->id,
                 'plan_slug' => $plan->slug,
