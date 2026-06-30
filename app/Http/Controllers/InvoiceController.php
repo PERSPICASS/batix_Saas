@@ -308,7 +308,10 @@ class InvoiceController extends Controller
     public function export(string $code_user)
     {
         $shop = auth()->user()->shops->first();
-        return (new \App\Exports\InvoicesExport($shop->id))->download('Factures-' . now()->format('Y-m-d') . '.xlsx');
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\InvoicesExport($shop->id),
+            'Factures-' . now()->format('Y-m-d') . '.xlsx'
+        );
     }
 
     public function createRecurring(Request $request, string $code_user, Invoice $invoice)

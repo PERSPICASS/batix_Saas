@@ -28,7 +28,9 @@ class ReportController extends Controller
             'end_date' => 'required|date|after:start_date',
         ]);
 
-        return (new AnalyticsExport($shop->id, $validated['start_date'], $validated['end_date']))
-            ->download('Rapport-Analytique-' . now()->format('Y-m-d') . '.xlsx');
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new AnalyticsExport($shop->id, $validated['start_date'], $validated['end_date']),
+            'Rapport-Analytique-' . now()->format('Y-m-d') . '.xlsx'
+        );
     }
 }

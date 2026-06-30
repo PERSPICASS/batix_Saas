@@ -241,7 +241,10 @@ class QuoteController extends Controller
     public function export(string $code_user)
     {
         $shop = auth()->user()->shops->first();
-        return (new \App\Exports\QuotesExport($shop->id))->download('Devis-' . now()->format('Y-m-d') . '.xlsx');
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\QuotesExport($shop->id),
+            'Devis-' . now()->format('Y-m-d') . '.xlsx'
+        );
     }
 
     public function convertToInvoice(string $code_user, Quote $quote): RedirectResponse
