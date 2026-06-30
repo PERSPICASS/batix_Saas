@@ -29,9 +29,9 @@ class CheckTwoFactorAuthentication
                 'logout',
                 'lock-screen.lock',
                 'two-factor.index',
+                'two-factor.verify.get',
                 'two-factor.verify',
                 'two-factor.generate',
-                'two-factor.verify.post',
                 'two-factor.disable',
                 'two-factor.check',
             ];
@@ -41,7 +41,7 @@ class CheckTwoFactorAuthentication
             }
 
             // Rediriger vers la page de vérification 2FA
-            return redirect()->route('two-factor.verify');
+            return redirect()->route('two-factor.verify.get');
         }
 
         return $next($request);
