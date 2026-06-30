@@ -120,7 +120,7 @@ class QuoteController extends Controller
             ->get(['id', 'name', 'selling_price']);
 
         return Inertia::render('Quotes/Edit', [
-            'quote' => $quote->load('items'),
+            'quote' => $quote->load('items.product'),
             'customers' => $customers,
             'products' => $products,
         ]);
