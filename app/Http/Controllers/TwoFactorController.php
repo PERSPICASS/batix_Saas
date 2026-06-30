@@ -143,17 +143,19 @@ class TwoFactorController extends Controller
         }
 
         $user = auth()->user();
+        $recoveryCodes = $this->generateRecoveryCodes();
+
         $user->update([
             'google2fa_secret' => $secret,
             'two_factor_enabled' => true,
-            'recovery_codes' => $this->generateRecoveryCodes(),
+            'recovery_codes' => $recoveryCodes,
         ]);
 
         session()->forget('pending_2fa_secret');
 
         return response()->json([
             'message' => '2FA activée avec succès!',
-            'recoveryCodes' => $user->recovery_codes,
+            'recoveryCodes' => $recoveryCodes,
         ]);
     }
 
