@@ -9,6 +9,7 @@ interface FixedCost {
     category: string;
     amount_monthly: number;
     currency: string;
+    billing_cycle: string;
     description: string | null;
     is_active: boolean;
 }
@@ -28,10 +29,12 @@ const CATEGORIES = [
 const CURRENCIES = [
     { code: 'EUR', label: 'Euro (€)' },
     { code: 'USD', label: 'Dollar US ($)' },
-    { code: 'GBP', label: 'Livre Sterling (£)' },
-    { code: 'CHF', label: 'Franc Suisse (CHF)' },
-    { code: 'CAD', label: 'Dollar Canadien (C$)' },
-    { code: 'AUD', label: 'Dollar Australien (A$)' },
+    { code: 'FCFA', label: 'Franc CFA (FCFA)' },
+];
+
+const BILLING_CYCLES = [
+    { value: 'monthly', label: 'Mensuel' },
+    { value: 'annual', label: 'Annuel' },
 ];
 
 export default function EditFixedCost({ cost }: Props) {
@@ -41,6 +44,7 @@ export default function EditFixedCost({ cost }: Props) {
         category: cost.category,
         amount_monthly: cost.amount_monthly.toString(),
         currency: cost.currency,
+        billing_cycle: cost.billing_cycle,
         description: cost.description || '',
         is_active: cost.is_active,
     });
@@ -97,9 +101,9 @@ export default function EditFixedCost({ cost }: Props) {
                         </select>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-sm font-medium text-slate-300">Montant mensuel *</label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300">Montant *</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -119,11 +123,26 @@ export default function EditFixedCost({ cost }: Props) {
                             >
                                 {CURRENCIES.map((curr) => (
                                     <option key={curr.code} value={curr.code}>
-                                        {curr.code}
+                                        {curr.label}
                                     </option>
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300">Cycle de facturation *</label>
+                        <select
+                            value={formData.billing_cycle}
+                            onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
+                            className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                        >
+                            {BILLING_CYCLES.map((cycle) => (
+                                <option key={cycle.value} value={cycle.value}>
+                                    {cycle.label}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>

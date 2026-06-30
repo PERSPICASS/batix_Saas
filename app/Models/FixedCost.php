@@ -11,6 +11,7 @@ class FixedCost extends Model
         'category',
         'amount_monthly',
         'currency',
+        'billing_cycle',
         'description',
         'is_active',
         'start_date',

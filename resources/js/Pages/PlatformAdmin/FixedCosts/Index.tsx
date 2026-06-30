@@ -11,6 +11,7 @@ interface FixedCost {
     category: string;
     amount_monthly: number;
     currency: string;
+    billing_cycle: string;
     description: string | null;
     is_active: boolean;
     created_at: string;
@@ -65,13 +66,15 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
         },
         {
             key: 'amount_monthly',
-            label: 'Montant mensuel',
+            label: 'Montant',
             render: (cost: FixedCost) => (
                 <div className="flex items-center gap-2 font-semibold text-amber-300">
                     <DollarSign className="size-4" />
                     <div>
-                        <div>{parseFloat(cost.amount_monthly.toString()).toFixed(2)}</div>
-                        <div className="text-xs text-slate-400">{cost.currency}</div>
+                        <div>{parseFloat(cost.amount_monthly.toString()).toFixed(2)} {cost.currency}</div>
+                        <div className="text-xs text-slate-400">
+                            {cost.billing_cycle === 'monthly' ? 'Mensuel' : 'Annuel'}
+                        </div>
                     </div>
                 </div>
             ),
