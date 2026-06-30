@@ -304,8 +304,8 @@ class InvoiceController extends Controller
 
         $recurringInvoice = $invoice->toRecurringInvoice(
             $validated['frequency'],
-            new \DateTime($validated['start_date']),
-            $validated['end_date'] ? new \DateTime($validated['end_date']) : null
+            \Carbon\Carbon::parse($validated['start_date']),
+            $validated['end_date'] ? \Carbon\Carbon::parse($validated['end_date']) : null
         );
 
         return redirect()->route('recurring-invoices.show', ['code_user' => $code_user, 'recurring_invoice' => $recurringInvoice])
