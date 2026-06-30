@@ -45,6 +45,7 @@ use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\RecurringInvoiceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TwoFactorController;
+use App\Http\Controllers\ProductArticleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -236,6 +237,13 @@ Route::prefix('{code_user}')
     
     // Routes pour les variations de produits
     Route::get('produits/{product}/variations', [ProductVariationController::class, 'index'])->name('products.variations.index');
+
+    // Routes pour les articles/lots
+    Route::get('produits/{productId}/articles', [ProductArticleController::class, 'listByProduct'])->name('articles.list');
+    Route::get('produits/{productId}/articles-disponibles', [ProductArticleController::class, 'getAvailableByProduct'])->name('articles.available');
+    Route::post('articles', [ProductArticleController::class, 'store'])->name('articles.store');
+    Route::patch('articles/{productArticle}/status', [ProductArticleController::class, 'updateStatus'])->name('articles.update-status');
+    Route::delete('articles/{productArticle}', [ProductArticleController::class, 'destroy'])->name('articles.destroy');
     Route::post('produits/{product}/variations', [ProductVariationController::class, 'store'])->name('products.variations.store');
     Route::patch('produits/{product}/variations/{variation}', [ProductVariationController::class, 'update'])->name('products.variations.update');
     Route::delete('produits/{product}/variations/{variation}', [ProductVariationController::class, 'destroy'])->name('products.variations.destroy');
