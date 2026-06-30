@@ -23,6 +23,15 @@ class FixedCostController extends Controller
         ]);
     }
 
+    public function create()
+    {
+        if (auth()->user()->role !== 'admin_platforme') {
+            abort(403);
+        }
+
+        return Inertia::render('PlatformAdmin/FixedCosts/Create');
+    }
+
     public function store(Request $request)
     {
         if (auth()->user()->role !== 'admin_platforme') {
@@ -41,7 +50,18 @@ class FixedCostController extends Controller
 
         FixedCost::create($validated);
 
-        return redirect()->back()->with('success', 'Charge ajoutée avec succès.');
+        return redirect()->route('platform.fixed-costs.index')->with('success', 'Charge ajoutée avec succès.');
+    }
+
+    public function edit(FixedCost $cost)
+    {
+        if (auth()->user()->role !== 'admin_platforme') {
+            abort(403);
+        }
+
+        return Inertia::render('PlatformAdmin/FixedCosts/Edit', [
+            'cost' => $cost,
+        ]);
     }
 
     public function update(Request $request, FixedCost $cost)
@@ -62,7 +82,7 @@ class FixedCostController extends Controller
 
         $cost->update($validated);
 
-        return redirect()->back()->with('success', 'Charge mise à jour.');
+        return redirect()->route('platform.fixed-costs.index')->with('success', 'Charge mise à jour.');
     }
 
     public function destroy(FixedCost $cost)
@@ -73,6 +93,6 @@ class FixedCostController extends Controller
 
         $cost->delete();
 
-        return redirect()->back()->with('success', 'Charge supprimée.');
+        return redirect()->route('platform.fixed-costs.index')->with('success', 'Charge supprimée.');
     }
 }

@@ -182,7 +182,9 @@ Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
 
     // Fixed Costs Management
     Route::get('/fixed-costs', [FixedCostController::class, 'index'])->name('platform.fixed-costs.index');
+    Route::get('/fixed-costs/create', [FixedCostController::class, 'create'])->name('platform.fixed-costs.create');
     Route::post('/fixed-costs', [FixedCostController::class, 'store'])->name('platform.fixed-costs.store');
+    Route::get('/fixed-costs/{cost}/edit', [FixedCostController::class, 'edit'])->name('platform.fixed-costs.edit');
     Route::put('/fixed-costs/{cost}', [FixedCostController::class, 'update'])->name('platform.fixed-costs.update');
     Route::delete('/fixed-costs/{cost}', [FixedCostController::class, 'destroy'])->name('platform.fixed-costs.destroy');
 });
