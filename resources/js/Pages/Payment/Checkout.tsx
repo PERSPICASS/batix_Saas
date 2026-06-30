@@ -459,7 +459,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         {/* ══════════════════ PADDLE FLOW (ONLY) ══════════════════ */}
                         {paymentMode === 'paddle' && (
-                            <PaddlePayment plan={plan} />
+                            <PaddlePayment plan={plan} billingCycle={billingCycle} />
                         )}
 
                         {/* ══════════════════ PAWAPAY FLOW (HIDDEN) ══════════════════ */}

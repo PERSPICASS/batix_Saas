@@ -12,18 +12,27 @@ interface Plan {
 
 interface PaddlePaymentProps {
     plan: Plan;
+    billingCycle?: 'monthly' | 'yearly';
 }
 
-export default function PaddlePayment({ plan }: PaddlePaymentProps) {
+export default function PaddlePayment({ plan, billingCycle = 'monthly' }: PaddlePaymentProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Calculate annual price (10 months of payment, 2 free)
+    const monthlyPrice = parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || '0');
+    const annualPrice = Math.round(monthlyPrice * 10 * 100) / 100;
+    const displayPrice = billingCycle === 'yearly' ? annualPrice : monthlyPrice;
+    const formatPrice = (val: number) => val.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     const handleCheckout = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await axios.post(`/paddle/checkout/${plan.slug}`);
+            const response = await axios.post(`/paddle/checkout/${plan.slug}`, {
+                billing_cycle: billingCycle,
+            });
 
             if (response.data.checkout_url) {
                 // Redirect to Paddle checkout
@@ -62,9 +71,16 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
 
             <div className="rounded-md bg-white p-3">
                 <p className="text-sm font-medium text-gray-900">
-                    {plan.price_eur}
+                    €{formatPrice(displayPrice)}
                 </p>
-                <p className="text-xs text-gray-500">Monthly subscription</p>
+                <p className="text-xs text-gray-500">
+                    {billingCycle === 'yearly' ? 'Annual subscription (2 months free)' : 'Monthly subscription'}
+                </p>
+                {billingCycle === 'yearly' && monthlyPrice > 0 && (
+                    <p className="text-xs text-gray-400 line-through">
+                        €{formatPrice(monthlyPrice * 12)}
+                    </p>
+                )}
             </div>
 
             <button
@@ -78,7 +94,7 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
                         Redirecting to checkout...
                     </span>
                 ) : (
-                    'Pay with Paddle'
+                    `Pay €${formatPrice(displayPrice)}`
                 )}
             </button>
 
