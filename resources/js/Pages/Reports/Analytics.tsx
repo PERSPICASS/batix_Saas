@@ -22,10 +22,37 @@ export default function Analytics({ shop }: Props) {
     const handleExport = (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        router.post(route('reports.analytics.export', {}), {
-            start_date: startDate,
-            end_date: endDate,
-        });
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = route('reports.analytics.export', {});
+
+        const token = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement;
+        if (token) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = '_token';
+            input.value = token.content;
+            form.appendChild(input);
+        }
+
+        const startInput = document.createElement('input');
+        startInput.type = 'hidden';
+        startInput.name = 'start_date';
+        startInput.value = startDate;
+        form.appendChild(startInput);
+
+        const endInput = document.createElement('input');
+        endInput.type = 'hidden';
+        endInput.name = 'end_date';
+        endInput.value = endDate;
+        form.appendChild(endInput);
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+
+        setTimeout(() => setLoading(false), 1000);
     };
 
     return (
