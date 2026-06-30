@@ -168,4 +168,34 @@ class TwoFactorController extends Controller
         }
         return $codes;
     }
+
+    // Debug route - remove in production
+    public function debugSecret()
+    {
+        $secret = session('pending_2fa_secret');
+
+        if (!$secret) {
+            return response()->json([
+                'error' => 'No secret in session',
+            ], 404);
+        }
+
+        $currentCode = $this->google2fa->getCurrentOtp($secret);
+        $testCode1 = $this->google2fa->getAcceptableCode($secret, 0);
+        $testCode2 = $this->google2fa->getAcceptableCode($secret, 1);
+        $testCode3 = $this->google2fa->getAcceptableCode($secret, -1);
+
+        return response()->json([
+            'secret' => $secret,
+            'current_code' => $currentCode,
+            'test_codes' => [
+                'now' => $testCode1,
+                'next_period' => $testCode2,
+                'prev_period' => $testCode3,
+            ],
+            'verify_current' => $this->google2fa->verifyKey($secret, $currentCode, 1),
+            'timestamp' => now()->timestamp,
+            'period' => (int)(now()->timestamp / 30),
+        ]);
+    }
 }

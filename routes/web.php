@@ -140,6 +140,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
     Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->name('two-factor.check');
+
+    // Debug only - remove in production
+    Route::get('/two-factor/debug/secret', [TwoFactorController::class, 'debugSecret'])->name('two-factor.debug.secret');
 });
 
 Route::get('/paddle/success', [PaddleController::class, 'success'])->name('paddle.success');
