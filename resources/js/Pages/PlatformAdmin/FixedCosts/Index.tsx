@@ -10,6 +10,7 @@ interface FixedCost {
     name: string;
     category: string;
     amount_monthly: number;
+    currency: string;
     description: string | null;
     is_active: boolean;
     created_at: string;
@@ -68,7 +69,10 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
             render: (cost: FixedCost) => (
                 <div className="flex items-center gap-2 font-semibold text-amber-300">
                     <DollarSign className="size-4" />
-                    €{parseFloat(cost.amount_monthly.toString()).toFixed(2)}
+                    <div>
+                        <div>{parseFloat(cost.amount_monthly.toString()).toFixed(2)}</div>
+                        <div className="text-xs text-slate-400">{cost.currency}</div>
+                    </div>
                 </div>
             ),
         },

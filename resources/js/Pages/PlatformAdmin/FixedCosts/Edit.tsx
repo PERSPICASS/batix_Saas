@@ -8,6 +8,7 @@ interface FixedCost {
     name: string;
     category: string;
     amount_monthly: number;
+    currency: string;
     description: string | null;
     is_active: boolean;
 }
@@ -24,12 +25,22 @@ const CATEGORIES = [
     { value: 'other', label: 'Autre' },
 ];
 
+const CURRENCIES = [
+    { code: 'EUR', label: 'Euro (€)' },
+    { code: 'USD', label: 'Dollar US ($)' },
+    { code: 'GBP', label: 'Livre Sterling (£)' },
+    { code: 'CHF', label: 'Franc Suisse (CHF)' },
+    { code: 'CAD', label: 'Dollar Canadien (C$)' },
+    { code: 'AUD', label: 'Dollar Australien (A$)' },
+];
+
 export default function EditFixedCost({ cost }: Props) {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: cost.name,
         category: cost.category,
         amount_monthly: cost.amount_monthly.toString(),
+        currency: cost.currency,
         description: cost.description || '',
         is_active: cost.is_active,
     });
@@ -86,17 +97,33 @@ export default function EditFixedCost({ cost }: Props) {
                         </select>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300">Montant mensuel (€) *</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value={formData.amount_monthly}
-                            onChange={(e) => setFormData({ ...formData, amount_monthly: e.target.value })}
-                            className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
-                            placeholder="0.00"
-                            required
-                        />
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-300">Montant mensuel *</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.amount_monthly}
+                                onChange={(e) => setFormData({ ...formData, amount_monthly: e.target.value })}
+                                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                                placeholder="0.00"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300">Devise *</label>
+                            <select
+                                value={formData.currency}
+                                onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                            >
+                                {CURRENCIES.map((curr) => (
+                                    <option key={curr.code} value={curr.code}>
+                                        {curr.code}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div>
