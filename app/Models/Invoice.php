@@ -111,4 +111,39 @@ class Invoice extends Model
     {
         return $this->status === 'draft';
     }
+
+    public function toRecurringInvoice(string $frequency = 'monthly', ?\DateTime $startDate = null, ?\DateTime $endDate = null): RecurringInvoice
+    {
+        $this->load('items');
+
+        $recurringInvoice = RecurringInvoice::create([
+            'shop_id' => $this->shop_id,
+            'customer_id' => $this->customer_id,
+            'user_id' => $this->user_id,
+            'invoice_prefix' => 'REC-' . now()->format('Ym'),
+            'start_date' => ($startDate ?? now())->toDateString(),
+            'end_date' => $endDate?->toDateString(),
+            'frequency' => $frequency,
+            'next_invoice_date' => ($startDate ?? now())->toDateString(),
+            'subtotal' => $this->subtotal,
+            'tax_amount' => $this->tax_amount,
+            'total' => $this->total,
+            'notes' => $this->notes,
+            'is_active' => true,
+        ]);
+
+        foreach ($this->items as $item) {
+            $recurringInvoice->items()->create([
+                'product_id' => $item->product_id,
+                'product_name' => $item->product_name,
+                'description' => $item->description,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'tax_rate' => $item->tax_rate,
+                'discount_amount' => $item->discount_amount,
+            ]);
+        }
+
+        return $recurringInvoice;
+    }
 }

@@ -1,9 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Currency from '@/Components/Currency';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Printer } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, Pencil, Printer, Repeat2, X } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useState } from 'react';
+import Modal from '@/Components/Modal';
 
 interface Customer {
     id: number;
@@ -78,7 +80,23 @@ const paymentLabels: Record<string, string> = {
 export default function InvoicesShow({ invoice }: Props) {
     const { t } = useLocale();
     const route = useRoute();
+    const [showRecurringModal, setShowRecurringModal] = useState(false);
+    const [frequency, setFrequency] = useState('monthly');
+    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [endDate, setEndDate] = useState('');
+    const [loading, setLoading] = useState(false);
+
     const handlePrint = () => window.print();
+
+    const handleCreateRecurring = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        router.post(route('invoices.create-recurring', { invoice: invoice.id }), {
+            frequency,
+            start_date: startDate,
+            end_date: endDate,
+        });
+    };
 
     return (
         <AuthenticatedLayout
@@ -86,6 +104,13 @@ export default function InvoicesShow({ invoice }: Props) {
                 <div className="flex items-center justify-between">
                     <h1 className="text-xl font-semibold text-white">Facture {invoice.invoice_number}</h1>
                     <div className="print:hidden flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setShowRecurringModal(true)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                        >
+                            <Repeat2 className="size-4" /> Créer un cycle
+                        </button>
                         <button
                             type="button"
                             onClick={handlePrint}
@@ -233,6 +258,77 @@ export default function InvoicesShow({ invoice }: Props) {
                     )}
                 </div>
             </div>
+
+            {/* Modal Créer Cycle Récurrent */}
+            <Modal show={showRecurringModal} onClose={() => setShowRecurringModal(false)} maxWidth="md">
+                <div className="bg-slate-950 p-6 text-slate-100">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold">Créer un cycle de facturation</h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowRecurringModal(false)}
+                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                        >
+                            <X className="size-4" />
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleCreateRecurring} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200 mb-2">Fréquence *</label>
+                            <select
+                                value={frequency}
+                                onChange={(e) => setFrequency(e.target.value)}
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                required
+                            >
+                                <option value="monthly">Mensuel</option>
+                                <option value="quarterly">Trimestriel</option>
+                                <option value="semi-annual">Semestriel</option>
+                                <option value="annual">Annuel</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200 mb-2">Date de début *</label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-200 mb-2">Date de fin (optionnel)</label>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowRecurringModal(false)}
+                                className="flex-1 rounded-lg border border-white/15 px-4 py-2 text-slate-200 transition-colors hover:bg-white/5"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="flex-1 rounded-lg bg-amber-300 px-4 py-2 font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? 'Création...' : 'Créer le cycle'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
 
             <style>{`
                 @media print {

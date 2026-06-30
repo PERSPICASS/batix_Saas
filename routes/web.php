@@ -256,6 +256,7 @@ Route::prefix('{code_user}')
 
     // Routes pour les factures
     Route::resource('factures', InvoiceController::class)->names('invoices')->parameters(['factures' => 'invoice']);
+    Route::post('factures/{invoice}/creer-cycle-recurrent', [InvoiceController::class, 'createRecurring'])->name('invoices.create-recurring');
 
     // Routes pour les ventes
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale']);

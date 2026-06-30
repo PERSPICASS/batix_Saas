@@ -288,4 +288,27 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture supprimée avec succès.');
     }
+
+    public function createRecurring(Request $request, string $code_user, Invoice $invoice)
+    {
+        $shop = auth()->user()->shops->first();
+        if ($invoice->shop_id !== $shop->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'frequency' => 'required|in:monthly,quarterly,semi-annual,annual',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after:start_date',
+        ]);
+
+        $recurringInvoice = $invoice->toRecurringInvoice(
+            $validated['frequency'],
+            new \DateTime($validated['start_date']),
+            $validated['end_date'] ? new \DateTime($validated['end_date']) : null
+        );
+
+        return redirect()->route('recurring-invoices.show', ['code_user' => $code_user, 'recurring_invoice' => $recurringInvoice])
+            ->with('success', 'Cycle de facturation créé avec succès');
+    }
 }
