@@ -208,7 +208,7 @@ Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
 
 // Routes avec préfixe code_user (pour tout le compte)
 Route::prefix('{code_user}')
-    ->middleware(['auth', 'verified:verification.code.show', \App\Http\Middleware\ValidateAccountAccess::class])
+    ->middleware(['auth', 'verified:verification.code.show', \App\Http\Middleware\ValidateAccountAccess::class, \App\Http\Middleware\CheckTwoFactorAuthentication::class])
     ->group(function () {
         
     // Dashboard
