@@ -26,7 +26,7 @@ export default function VerifyTwoFactor() {
 
             if (response.data.verified) {
                 // Redirection au dashboard
-                router.get('/dashboard');
+                window.location.href = '/dashboard';
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Code invalide. Réessayez.');
