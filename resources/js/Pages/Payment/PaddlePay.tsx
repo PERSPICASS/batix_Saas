@@ -14,14 +14,23 @@ export default function PaddlePay() {
         script.async = true;
         script.onload = () => {
             if (window.Paddle) {
-                const env = import.meta.env.VITE_PADDLE_ENV || 'sandbox';
+                const token = import.meta.env.VITE_PADDLE_CLIENT_SIDE_TOKEN;
+                const env = import.meta.env.VITE_PADDLE_ENV || 'production';
+
+                console.log('Paddle env:', env);
+                console.log('Paddle token:', token ? 'set' : 'NOT SET');
 
                 if (env === 'sandbox') {
                     window.Paddle.Environment.set('sandbox');
                 }
 
+                if (!token) {
+                    console.error('Paddle token is not configured. Check VITE_PADDLE_CLIENT_SIDE_TOKEN in .env');
+                    return;
+                }
+
                 window.Paddle.Initialize({
-                    token: import.meta.env.VITE_PADDLE_CLIENT_SIDE_TOKEN,
+                    token: token,
                     eventCallback: function (event: any) {
                         if (event.name === 'checkout.completed') {
                             window.location.href = '/paddle/success';
