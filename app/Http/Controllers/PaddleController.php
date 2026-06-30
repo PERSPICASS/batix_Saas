@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 
 class PaddleController extends Controller
@@ -16,10 +17,10 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
-            \Log::info('Creating Paddle checkout for plan: ' . $plan->slug);
+            \Log::info('Creating Paddle transaction for plan: ' . $plan->slug);
 
-            // Build the checkout URL with Paddle's URL-based approach
-            $checkoutUrl = $this->buildCheckoutUrl($plan, $user);
+            // Create a transaction via Paddle API
+            $checkoutUrl = $this->createPaddleTransaction($plan, $user);
 
             \Log::info('Checkout URL: ' . $checkoutUrl);
 
@@ -30,17 +31,38 @@ class PaddleController extends Controller
         }
     }
 
-    private function buildCheckoutUrl(SubscriptionPlan $plan, $user): string
+    private function createPaddleTransaction(SubscriptionPlan $plan, $user): string
     {
-        $baseUrl = 'https://checkout.paddle.com/checkout/price/' . $plan->paddle_price_id;
+        $apiKey = config('services.paddle.secret');
 
-        $params = [
+        $payload = [
+            'items' => [
+                [
+                    'price_id' => $plan->paddle_price_id,
+                    'quantity' => 1,
+                ]
+            ],
             'customer_email' => $user->email,
             'success_url' => route('paddle.success') . '?plan_slug=' . $plan->slug,
             'cancel_url' => route('paddle.cancel'),
+            'custom_data' => [
+                'user_id' => $user->id,
+                'plan_slug' => $plan->slug,
+            ]
         ];
 
-        return $baseUrl . '?' . http_build_query($params);
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $apiKey,
+            'Content-Type' => 'application/json',
+        ])->post('https://api.paddle.com/transactions', $payload);
+
+        if (!$response->successful()) {
+            \Log::error('Paddle API error: ' . $response->body());
+            throw new \Exception('Failed to create Paddle transaction');
+        }
+
+        $data = $response->json();
+        return $data['data']['checkout']['url'] ?? null;
     }
     public function webhook(Request $request): JsonResponse
     {
