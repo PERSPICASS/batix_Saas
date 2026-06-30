@@ -305,6 +305,12 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', 'Facture envoyée au client');
     }
 
+    public function export(string $code_user)
+    {
+        $shop = auth()->user()->shops->first();
+        return (new \App\Exports\InvoicesExport($shop->id))->download('Factures-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
     public function createRecurring(Request $request, string $code_user, Invoice $invoice)
     {
         $shop = auth()->user()->shops->first();

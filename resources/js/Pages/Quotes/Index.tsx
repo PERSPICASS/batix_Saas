@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import Table from '@/Components/Table';
-import { Plus, Eye, Edit, Trash2, Send, CheckCircle, Download, FileText, Search } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Send, CheckCircle, Download, FileText, Search, BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { router } from '@inertiajs/react';
@@ -222,13 +222,27 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                         >
                             Rechercher
                         </button>
-                        <Link
-                            href={route('quotes.create')}
-                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
-                        >
-                            <Plus className="size-4" />
-                            Nouveau devis
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href={route('quotes.create')}
+                                className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
+                            >
+                                <Plus className="size-4" />
+                                Nouveau devis
+                            </Link>
+                            <a
+                                href={route('quotes.export', {})}
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            >
+                                <Download className="size-4" /> Excel
+                            </a>
+                            <Link
+                                href={route('reports.analytics', {})}
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            >
+                                <BarChart3 className="size-4" /> Rapports
+                            </Link>
+                        </div>
                     </div>
                 </div>
 

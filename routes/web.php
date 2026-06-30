@@ -258,6 +258,14 @@ Route::prefix('{code_user}')
     Route::resource('factures', InvoiceController::class)->names('invoices')->parameters(['factures' => 'invoice']);
     Route::post('factures/{invoice}/creer-cycle-recurrent', [InvoiceController::class, 'createRecurring'])->name('invoices.create-recurring');
     Route::post('factures/{invoice}/envoyer', [InvoiceController::class, 'send'])->name('invoices.send');
+    Route::get('factures/export/excel', [InvoiceController::class, 'export'])->name('invoices.export');
+
+    // Routes pour les devis
+    Route::post('devis/export/excel', [QuoteController::class, 'export'])->name('quotes.export');
+
+    // Routes pour les rapports
+    Route::get('rapports/analytique', [ReportController::class, 'analytics'])->name('reports.analytics');
+    Route::post('rapports/analytique/export', [ReportController::class, 'exportAnalytics'])->name('reports.analytics.export');
 
     // Routes pour les ventes
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale']);

@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Plus, Trash2, Download, BarChart3 } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
@@ -194,12 +194,26 @@ export default function InvoicesIndex({ invoices }: Props) {
                     >
                         {t.common.actions.search}
                     </button>
-                    <Link
-                        href={route('invoices.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
-                    >
-                        <Plus className="size-4" /> {t.invoices.actions.new}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={route('invoices.create')}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
+                        >
+                            <Plus className="size-4" /> {t.invoices.actions.new}
+                        </Link>
+                        <a
+                            href={route('invoices.export', {})}
+                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                        >
+                            <Download className="size-4" /> Excel
+                        </a>
+                        <Link
+                            href={route('reports.analytics', {})}
+                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                        >
+                            <BarChart3 className="size-4" /> Rapports
+                        </Link>
+                    </div>
                 </div>
 
                 <Table columns={columns} data={invoices.data} />
