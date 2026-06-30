@@ -42,6 +42,7 @@ use App\Http\Controllers\LemonSqueezyController;
 use App\Http\Controllers\PaddleController;
 use App\Http\Controllers\FixedCostController;
 use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\RecurringInvoiceController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -247,6 +248,11 @@ Route::prefix('{code_user}')
     Route::post('devis/{quote}/envoyer', [QuoteController::class, 'send'])->name('quotes.send');
     Route::post('devis/{quote}/accepter', [QuoteController::class, 'accept'])->name('quotes.accept');
     Route::post('devis/{quote}/convertir-facture', [QuoteController::class, 'convertToInvoice'])->name('quotes.convert');
+
+    // Routes pour les factures récurrentes
+    Route::resource('factures-recurrentes', RecurringInvoiceController::class)->names('recurring-invoices')->parameters(['factures-recurrentes' => 'recurring_invoice']);
+    Route::post('factures-recurrentes/{recurring_invoice}/generer', [RecurringInvoiceController::class, 'generateNow'])->name('recurring-invoices.generate');
+    Route::post('factures-recurrentes/{recurring_invoice}/toggle', [RecurringInvoiceController::class, 'toggleActive'])->name('recurring-invoices.toggle');
 
     // Routes pour les factures
     Route::resource('factures', InvoiceController::class)->names('invoices')->parameters(['factures' => 'invoice']);
