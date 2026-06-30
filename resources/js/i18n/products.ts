@@ -58,6 +58,21 @@ export const products = {
         pagination: {
             page: (current: number, last: number, total: number) => `Page ${current} sur ${last} • Total: ${total} produits`,
         },
+        form: {
+            createTitle: 'Créer un produit',
+            editTitle: 'Modifier le produit',
+            name: 'Nom du produit',
+            category: 'Catégorie',
+            sku: 'SKU',
+            barcode: 'Code-barres',
+            description: 'Description',
+            sellingPrice: 'Prix de vente',
+            costPrice: 'Prix de revient',
+            stock: 'Stock',
+            active: 'Actif',
+            createButton: 'Créer le produit',
+            updateButton: 'Mettre à jour le produit',
+        },
     },
     en: {
         title: 'Products',
@@ -117,6 +132,21 @@ export const products = {
         lowStockTitle: 'Low stock',
         pagination: {
             page: (current: number, last: number, total: number) => `Page ${current} of ${last} • Total: ${total} products`,
+        },
+        form: {
+            createTitle: 'Create product',
+            editTitle: 'Edit product',
+            name: 'Product name',
+            category: 'Category',
+            sku: 'SKU',
+            barcode: 'Barcode',
+            description: 'Description',
+            sellingPrice: 'Selling price',
+            costPrice: 'Cost price',
+            stock: 'Stock',
+            active: 'Active',
+            createButton: 'Create product',
+            updateButton: 'Update product',
         },
     },
 } as const;
