@@ -363,6 +363,13 @@ export default function Authenticated({
                 module: 'invoices',
             },
             {
+                label: 'Factures Récurrentes',
+                href: buildRoute('recurring-invoices.index'),
+                active: route().current('recurring-invoices.*'),
+                icon: Receipt,
+                module: 'invoices',
+            },
+            {
                 label: t.nav.invoices,
                 href: buildRoute('invoices.index'),
                 active: route().current('invoices.*'),
