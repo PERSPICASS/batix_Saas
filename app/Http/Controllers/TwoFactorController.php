@@ -73,35 +73,71 @@ class TwoFactorController extends Controller
 
     public function verify(Request $request)
     {
+        \Log::info('2FA Verify attempt', [
+            'request_data' => $request->all(),
+            'headers' => $request->headers->all(),
+        ]);
+
         try {
             $validated = $request->validate([
-                'code' => 'required|string|digits:6',
+                'code' => 'required|string',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('2FA Validation failed', ['errors' => $e->errors()]);
+            return response()->json([
+                'message' => 'Erreur de validation.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
+
+        $code = trim($validated['code']);
+
+        // Validate it's 6 digits
+        if (!preg_match('/^\d{6}$/', $code)) {
+            \Log::warning('2FA Code format invalid', ['code' => $code, 'length' => strlen($code)]);
             return response()->json([
                 'message' => 'Code invalide. Veuillez entrer 6 chiffres.',
-                'errors' => $e->errors(),
+                'debug' => [
+                    'code_received' => $code,
+                    'code_length' => strlen($code),
+                    'is_numeric' => is_numeric($code),
+                    'matches_pattern' => preg_match('/^\d{6}$/', $code),
+                ],
             ], 422);
         }
 
         $secret = session('pending_2fa_secret');
 
         if (!$secret) {
+            \Log::error('2FA No secret in session');
             return response()->json([
                 'message' => 'Session expirée. Veuillez recommencer.',
             ], 422);
         }
 
+        \Log::info('2FA Verifying code', [
+            'code' => $code,
+            'secret' => $secret,
+            'secret_length' => strlen($secret),
+        ]);
+
         // Verify TOTP code with ±1 period tolerance (±30 seconds)
-        $isValid = $this->google2fa->verifyKey($secret, $validated['code'], $discrepancy = 1);
+        $isValid = $this->google2fa->verifyKey($secret, $code, $discrepancy = 1);
+
+        \Log::info('2FA Verification result', [
+            'is_valid' => $isValid,
+            'current_otp' => $this->google2fa->getCurrentOtp($secret),
+            'timestamp' => now()->timestamp,
+        ]);
 
         if (!$isValid) {
             return response()->json([
                 'message' => 'Code invalide. Veuillez réessayer.',
                 'debug' => [
-                    'code_received' => $validated['code'],
-                    'code_length' => strlen($validated['code']),
-                    'secret_exists' => !empty($secret),
+                    'code_received' => $code,
+                    'code_length' => strlen($code),
+                    'secret_length' => strlen($secret),
+                    'current_otp' => $this->google2fa->getCurrentOtp($secret),
                 ],
             ], 422);
         }
