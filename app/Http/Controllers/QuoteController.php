@@ -232,6 +232,8 @@ class QuoteController extends Controller
             return redirect()->back()->with('error', 'Seuls les devis acceptés peuvent être convertis en facture');
         }
 
+        // Load relationships needed for invoice item creation
+        $quote->load('items.product');
         $invoice = $quote->convertToInvoice();
 
         return redirect()->route('invoices.show', ['code_user' => $code_user, 'invoice' => $invoice])->with('success', 'Facture créée depuis le devis');

@@ -99,10 +99,12 @@ class Quote extends Model
             InvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'product_id' => $item->product_id,
+                'product_name' => $item->product->name,
                 'description' => $item->description,
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
-                'line_total' => $item->line_total,
+                'tax_rate' => $item->tax_rate,
+                'discount_amount' => 0,
             ]);
         }
 
