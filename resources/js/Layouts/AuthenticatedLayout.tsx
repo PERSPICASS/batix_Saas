@@ -235,6 +235,13 @@ export default function Authenticated({
                 module: null,
             },
             {
+                label: 'Charges Fixes',
+                href: route('platform.fixed-costs.index'),
+                active: route().current('platform.fixed-costs.*'),
+                icon: CreditCard,
+                module: null,
+            },
+            {
                 label: t.nav.blog,
                 href: route('platform.blog.index'),
                 active: route().current('platform.blog.*'),
