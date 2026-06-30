@@ -13,17 +13,34 @@ use Illuminate\Http\RedirectResponse;
 
 class QuoteController extends Controller
 {
-    public function index(string $code_user): Response
+    public function index(string $code_user, Request $request): Response
     {
         $shop = auth()->user()->shops->first();
 
-        $quotes = Quote::with('customer')
-            ->where('shop_id', $shop->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+        $query = Quote::with('customer')
+            ->where('shop_id', $shop->id);
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('quote_number', 'like', "%{$search}%")
+                  ->orWhereHas('customer', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $quotes = $query->orderBy('created_at', 'desc')->paginate(15);
 
         return Inertia::render('Quotes/Index', [
             'quotes' => $quotes,
+            'filters' => $request->only(['search', 'status']),
         ]);
     }
 

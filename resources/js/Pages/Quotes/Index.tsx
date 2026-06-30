@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import Table from '@/Components/Table';
-import { Plus, Eye, Edit, Trash2, Send, CheckCircle, Download, FileText } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Send, CheckCircle, Download, FileText, Search } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { router } from '@inertiajs/react';
@@ -24,10 +24,16 @@ interface Quote {
     created_at: string;
 }
 
-export default function QuotesIndex({ quotes }: { quotes: any }) {
+export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; filters?: any }) {
     const route = useRoute();
     const { t } = useLocale();
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
+    const [statusFilter, setStatusFilter] = useState(filters.status || '');
+
+    const handleSearch = () => {
+        router.get(route('quotes.index'), { search: searchTerm, status: statusFilter }, { preserveState: true });
+    };
 
     const handleDelete = (id: number) => {
         router.delete(route('quotes.destroy', { quote: id }), {
@@ -184,19 +190,46 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
                     </div>
                 </div>
 
-                {/* Header avec bouton */}
-                <div className="flex items-center justify-between">
-                    <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-                        <FileText className="size-5 text-amber-300" />
-                        Tous les devis
-                    </h2>
-                    <Link
-                        href={route('quotes.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
-                    >
-                        <Plus className="size-4" />
-                        Nouveau devis
-                    </Link>
+                {/* Filtres et recherche */}
+                <div className="space-y-4">
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="relative flex-1 min-w-64">
+                            <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Rechercher par N° devis ou client..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 pl-10 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            />
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                        >
+                            <option value="">Tous les statuts</option>
+                            <option value="draft">Brouillon</option>
+                            <option value="sent">Envoyé</option>
+                            <option value="accepted">Accepté</option>
+                            <option value="expired">Expiré</option>
+                            <option value="rejected">Rejeté</option>
+                        </select>
+                        <button
+                            onClick={handleSearch}
+                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+                        >
+                            Rechercher
+                        </button>
+                        <Link
+                            href={route('quotes.create')}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
+                        >
+                            <Plus className="size-4" />
+                            Nouveau devis
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Table */}
