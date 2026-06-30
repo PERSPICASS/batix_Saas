@@ -1,5 +1,5 @@
 import { CreditCard, Loader2, AlertTriangle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 
 interface Plan {
@@ -14,97 +14,22 @@ interface PaddlePaymentProps {
     plan: Plan;
 }
 
-interface PaddleCheckoutData {
-    customer: {
-        id: string;
-    };
-    items: Array<{
-        priceId: string;
-        quantity: number;
-    }>;
-    settings: {
-        displayMode: string;
-        frameStyle: string;
-    };
-}
-
-declare global {
-    interface Window {
-        Paddle?: {
-            Initialize: (config: any) => void;
-            Checkout: {
-                open: (config: any) => void;
-            };
-        };
-    }
-}
-
 export default function PaddlePayment({ plan }: PaddlePaymentProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [paddleReady, setPaddleReady] = useState(false);
-
-    useEffect(() => {
-        // Load and initialize Paddle script
-        if (!window.Paddle) {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
-            script.async = true;
-            script.onload = () => {
-                if (window.Paddle) {
-                    // IMPORTANT: Must initialize Paddle with the public token
-                    window.Paddle.Initialize({
-                        token: 'live_4c9d45d3dd09feb9d7fb25fd29c',
-                    });
-                    setPaddleReady(true);
-                }
-            };
-            script.onerror = () => {
-                console.error('Failed to load Paddle script');
-                setError('Failed to load payment system');
-            };
-            document.body.appendChild(script);
-        } else if (window.Paddle) {
-            // Paddle already loaded, ensure it's initialized
-            window.Paddle.Initialize({
-                token: 'live_4c9d45d3dd09feb9d7fb25fd29c',
-            });
-            setPaddleReady(true);
-        }
-    }, []);
 
     const handleCheckout = async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await axios.post(
-                `/paddle/checkout/${plan.slug}`,
-                {
-                    redirect_url: window.location.href,
-                }
-            );
+            const response = await axios.post(`/paddle/checkout/${plan.slug}`);
 
-            if (response.data.checkout && window.Paddle?.Checkout) {
-                const checkout = response.data.checkout;
-
-                console.log('Opening Paddle Checkout with:', checkout);
-
-                // Open Paddle Checkout with the configuration
-                window.Paddle.Checkout.open({
-                    items: [
-                        {
-                            price_id: checkout.priceId,
-                            quantity: 1,
-                        }
-                    ],
-                    customer_email: checkout.customerEmail,
-                    success_url: checkout.successUrl,
-                    cancel_url: checkout.cancelUrl,
-                    custom_data: checkout.customData,
-                });
+            if (response.data.checkout_url) {
+                // Redirect to Paddle checkout
+                window.location.href = response.data.checkout_url;
             } else {
-                setError('Paddle checkout not available');
+                setError('Failed to create checkout');
             }
         } catch (err: any) {
             setError(
@@ -144,18 +69,13 @@ export default function PaddlePayment({ plan }: PaddlePaymentProps) {
 
             <button
                 onClick={handleCheckout}
-                disabled={loading || !paddleReady}
+                disabled={loading}
                 className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400"
             >
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        Opening checkout...
-                    </span>
-                ) : !paddleReady ? (
-                    <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Loading Paddle...
+                        Redirecting to checkout...
                     </span>
                 ) : (
                     'Pay with Paddle'

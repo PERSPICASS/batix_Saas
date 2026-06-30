@@ -16,28 +16,31 @@ class PaddleController extends Controller
         $user = Auth::user();
 
         try {
-            \Log::info('Checkout request for plan: ' . $plan->slug);
+            \Log::info('Creating Paddle checkout for plan: ' . $plan->slug);
 
-            // Paddle Checkout v2 handles everything on the frontend
-            // No need to create a session via API
-            // Just return the price ID and customer info
+            // Build the checkout URL with Paddle's URL-based approach
+            $checkoutUrl = $this->buildCheckoutUrl($plan, $user);
 
-            return response()->json([
-                'checkout' => [
-                    'priceId' => $plan->paddle_price_id,
-                    'customerEmail' => $user->email,
-                    'successUrl' => route('paddle.success') . '?plan_slug=' . $plan->slug,
-                    'cancelUrl' => route('paddle.cancel'),
-                    'customData' => [
-                        'userId' => $user->id,
-                        'planSlug' => $plan->slug,
-                    ]
-                ],
-            ]);
+            \Log::info('Checkout URL: ' . $checkoutUrl);
+
+            return response()->json(['checkout_url' => $checkoutUrl]);
         } catch (\Exception $e) {
             \Log::error('Paddle checkout error: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['error' => 'Failed to initiate checkout'], 500);
         }
+    }
+
+    private function buildCheckoutUrl(SubscriptionPlan $plan, $user): string
+    {
+        $baseUrl = 'https://checkout.paddle.com/checkout/price/' . $plan->paddle_price_id;
+
+        $params = [
+            'customer_email' => $user->email,
+            'success_url' => route('paddle.success') . '?plan_slug=' . $plan->slug,
+            'cancel_url' => route('paddle.cancel'),
+        ];
+
+        return $baseUrl . '?' . http_build_query($params);
     }
     public function webhook(Request $request): JsonResponse
     {
