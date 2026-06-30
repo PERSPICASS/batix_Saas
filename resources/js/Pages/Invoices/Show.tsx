@@ -100,10 +100,20 @@ export default function InvoicesShow({ invoice }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Facture {invoice.invoice_number}</h1>
-                    <div className="print:hidden flex items-center gap-2">
+            header={<h1 className="text-xl font-semibold text-white">Facture {invoice.invoice_number}</h1>}
+        >
+            <Head title={`Facture ${invoice.invoice_number}`} />
+
+            <div className="space-y-4">
+                <div className="print:hidden space-y-4">
+                    <Link
+                        href={route('invoices.index')}
+                        className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
+                    >
+                        <ArrowLeft className="size-4" /> Retour aux factures
+                    </Link>
+
+                    <div className="flex flex-wrap items-center gap-2">
                         <button
                             type="button"
                             onClick={() => setShowRecurringModal(true)}
@@ -126,17 +136,6 @@ export default function InvoicesShow({ invoice }: Props) {
                         </Link>
                     </div>
                 </div>
-            }
-        >
-            <Head title={`Facture ${invoice.invoice_number}`} />
-
-            <div className="space-y-4">
-                <Link
-                    href={route('invoices.index')}
-                    className="print:hidden inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
-                >
-                    <ArrowLeft className="size-4" /> Retour aux factures
-                </Link>
 
                 <div className="invoice-print rounded-2xl border border-white/10 bg-white/5 p-6 print:rounded-none print:border-0 print:bg-white print:px-2 print:py-0">
                     <div className="mb-6 rounded-xl border border-white/10 bg-gradient-to-r from-slate-900/70 to-slate-800/40 p-5 print:border print:bg-transparent">
