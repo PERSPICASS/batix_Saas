@@ -188,26 +188,25 @@ class TwoFactorController extends Controller
 
         if (!$secret) {
             return response()->json([
-                'error' => 'No secret in session',
+                'error' => 'No secret in session. Please click "Commencer la configuration" first.',
+                'debug_info' => [
+                    'session_id' => session()->getId(),
+                    'timestamp' => now()->timestamp,
+                ],
             ], 404);
         }
 
         $currentCode = $this->google2fa->getCurrentOtp($secret);
-        $testCode1 = $this->google2fa->getAcceptableCode($secret, 0);
-        $testCode2 = $this->google2fa->getAcceptableCode($secret, 1);
-        $testCode3 = $this->google2fa->getAcceptableCode($secret, -1);
+        $verify = $this->google2fa->verifyKey($secret, $currentCode, 1);
 
         return response()->json([
             'secret' => $secret,
+            'secret_length' => strlen($secret),
             'current_code' => $currentCode,
-            'test_codes' => [
-                'now' => $testCode1,
-                'next_period' => $testCode2,
-                'prev_period' => $testCode3,
-            ],
-            'verify_current' => $this->google2fa->verifyKey($secret, $currentCode, 1),
+            'code_is_valid' => $verify,
             'timestamp' => now()->timestamp,
             'period' => (int)(now()->timestamp / 30),
+            'instructions' => 'Copy the current_code and paste it into the verification form within 30 seconds',
         ]);
     }
 }
