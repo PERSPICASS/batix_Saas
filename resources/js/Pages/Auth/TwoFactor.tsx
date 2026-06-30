@@ -238,7 +238,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                 </div>
 
                                 <button
-                                    onClick={() => setShowSetup(false)}
+                                    onClick={() => window.location.reload()}
                                     className="w-full rounded-lg bg-amber-300 px-4 py-2 font-semibold text-slate-950 hover:bg-amber-200"
                                 >
                                     Configuration terminée
