@@ -223,32 +223,27 @@ export default function Index({
 
     return (
         <AuthenticatedLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">{t.analytics.title}</h1>
-                    
-                    {/* Sélecteur de période */}
-                    <div className="flex gap-1">
-                        {periods.map((period) => (
-                            <button
-                                key={period.value}
-                                onClick={() => handlePeriodChange(period.value)}
-                                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                                    currentPeriod === period.value
-                                        ? 'bg-amber-300 text-slate-900'
-                                        : 'bg-white/10 text-slate-300 hover:bg-white/20'
-                                }`}
-                            >
-                                {period.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            }
+            header={<h1 className="text-xl font-semibold text-white">{t.analytics.title}</h1>}
         >
             <Head title="Analytics" />
 
             <div className="space-y-6">
+                {/* Sélecteur de période */}
+                <div className="flex flex-wrap gap-2">
+                    {periods.map((period) => (
+                        <button
+                            key={period.value}
+                            onClick={() => handlePeriodChange(period.value)}
+                            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                                currentPeriod === period.value
+                                    ? 'bg-amber-300 text-slate-900'
+                                    : 'border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                            }`}
+                        >
+                            {period.label}
+                        </button>
+                    ))}
+                </div>
                 {/* KPIs */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <KPICard
