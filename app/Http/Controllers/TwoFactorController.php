@@ -85,7 +85,10 @@ class TwoFactorController extends Controller
             ], 422);
         }
 
-        if (!$this->google2fa->verifyKey($secret, $validated['code'])) {
+        // Verify TOTP code with ±1 period tolerance (±30 seconds)
+        $isValid = $this->google2fa->verifyKey($secret, $validated['code'], $discrepancy = 1);
+
+        if (!$isValid) {
             return response()->json([
                 'message' => 'Code invalide. Veuillez réessayer.',
             ], 422);
@@ -132,8 +135,8 @@ class TwoFactorController extends Controller
 
         $user = auth()->user();
 
-        // Vérifier le code TOTP
-        if ($this->google2fa->verifyKey($user->google2fa_secret, $validated['code'])) {
+        // Vérifier le code TOTP avec tolérance ±1 period (±30 secondes)
+        if ($this->google2fa->verifyKey($user->google2fa_secret, $validated['code'], $discrepancy = 1)) {
             session(['2fa_verified' => true]);
             return response()->json(['verified' => true]);
         }
