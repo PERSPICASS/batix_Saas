@@ -10,6 +10,7 @@ import { customers } from './customers';
 import { products } from './products';
 import { sales } from './sales';
 import { invoices } from './invoices';
+import { quotes } from './quotes';
 import { purchases } from './purchases';
 import { expenses } from './expenses';
 import { suppliers } from './suppliers';
@@ -42,6 +43,7 @@ export const translations = {
         products: products.fr,
         sales: sales.fr,
         invoices: invoices.fr,
+        quotes: quotes.fr,
         purchases: purchases.fr,
         expenses: expenses.fr,
         suppliers: suppliers.fr,
@@ -73,6 +75,7 @@ export const translations = {
         products: products.en,
         sales: sales.en,
         invoices: invoices.en,
+        quotes: quotes.en,
         purchases: purchases.en,
         expenses: expenses.en,
         suppliers: suppliers.en,

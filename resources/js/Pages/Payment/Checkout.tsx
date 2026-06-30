@@ -471,7 +471,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                     <div className="lg:col-span-3 space-y-4">
 
                         {/* ── Sélection du mode de paiement ── */}
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
+                        {/* <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
                             <p className="text-sm font-medium text-slate-300">Mode de paiement</p>
                             <div className="grid grid-cols-2 gap-3">
                                 <button
@@ -499,7 +499,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                     Paiement Manuel
                                 </button>
                             </div>
-                        </div>
+                        </div> */}
 
                         {/* ══════════════════ PADDLE FLOW ══════════════════ */}
                         {paymentMode === 'paddle' && (
