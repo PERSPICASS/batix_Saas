@@ -19,6 +19,9 @@ interface Stats {
     active_shops: number;
     total_users: number;
     monthly_revenue: number;
+    monthly_fixed_costs: number;
+    monthly_profit: number;
+    profit_margin: number;
     active_subscriptions: number;
     trial_subscriptions: number;
     expired_subscriptions: number;
@@ -115,6 +118,27 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
             icon: DollarSign,
             color: 'text-purple-300',
             bgColor: 'bg-purple-500/10',
+        },
+        {
+            label: 'Charges fixes',
+            value: `€${stats.monthly_fixed_costs.toFixed(2)}`,
+            icon: DollarSign,
+            color: 'text-red-300',
+            bgColor: 'bg-red-500/10',
+        },
+        {
+            label: 'Profit net',
+            value: `€${stats.monthly_profit.toFixed(2)}`,
+            icon: DollarSign,
+            color: stats.monthly_profit >= 0 ? 'text-green-300' : 'text-red-300',
+            bgColor: stats.monthly_profit >= 0 ? 'bg-green-500/10' : 'bg-red-500/10',
+        },
+        {
+            label: 'Marge nette',
+            value: `${stats.profit_margin}%`,
+            icon: ArrowUpRight,
+            color: stats.profit_margin >= 0 ? 'text-green-300' : 'text-red-300',
+            bgColor: stats.profit_margin >= 0 ? 'bg-green-500/10' : 'bg-red-500/10',
         },
     ];
 

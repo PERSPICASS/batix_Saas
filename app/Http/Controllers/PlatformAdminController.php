@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
+use App\Models\FixedCost;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -39,6 +40,13 @@ class PlatformAdminController extends Controller
         // Revenus mensuels depuis les abonnements
         $monthlyRevenue = Subscription::whereIn('status', ['active', 'trial'])
             ->sum('amount');
+
+        // Charges fixes mensuelles
+        $monthlyFixedCosts = FixedCost::where('is_active', true)
+            ->sum('amount_monthly');
+
+        // Profit net (Revenus - Charges fixes)
+        $monthlyProfit = $monthlyRevenue - $monthlyFixedCosts;
 
         // Évolution des inscriptions sur les 6 derniers mois
         $accountsGrowth = collect(range(5, 0))->map(function ($monthsAgo) {
@@ -136,6 +144,9 @@ class PlatformAdminController extends Controller
                 'active_shops' => $activeShops,
                 'total_users' => $totalUsers,
                 'monthly_revenue' => $monthlyRevenue,
+                'monthly_fixed_costs' => $monthlyFixedCosts,
+                'monthly_profit' => $monthlyProfit,
+                'profit_margin' => $monthlyRevenue > 0 ? round(($monthlyProfit / $monthlyRevenue) * 100, 1) : 0,
                 'active_subscriptions' => $activeSubscriptions,
                 'trial_subscriptions' => $trialSubscriptions,
                 'expired_subscriptions' => $expiredSubscriptions,
