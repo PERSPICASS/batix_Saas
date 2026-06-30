@@ -70,6 +70,7 @@ class PaddleController extends Controller
 
         return 'https://buy.paddle.com/checkout/' . $transactionId;
     }
+
     public function webhook(Request $request): JsonResponse
     {
         // Paddle will send webhook notifications to this endpoint
