@@ -48,12 +48,25 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
         setError('');
         try {
             const response = await axios.post('/two-factor/verify', { code });
-            setRecoveryCodes(response.data.recoveryCodes);
-            setShowRecoveryCodes(true);
-            setSuccess('2FA activée avec succès!');
-            setCode('');
+
+            if (response.data.recoveryCodes) {
+                setRecoveryCodes(response.data.recoveryCodes);
+                setShowRecoveryCodes(true);
+                setSuccess('2FA activée avec succès!');
+                setCode('');
+            } else {
+                setError('Erreur: Codes de secours non reçus. Veuillez réessayer.');
+                console.error('Response missing recoveryCodes:', response.data);
+            }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Code invalide');
+            const errorMsg = err.response?.data?.message || 'Code invalide. Veuillez réessayer.';
+            setError(errorMsg);
+            console.error('2FA verification error:', {
+                status: err.response?.status,
+                message: err.response?.data?.message,
+                debug: err.response?.data?.debug,
+                fullError: err.response?.data,
+            });
         } finally {
             setLoading(false);
         }
@@ -196,7 +209,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                         )}
 
                         {/* Recovery Codes */}
-                        {showRecoveryCodes && (
+                        {showRecoveryCodes && recoveryCodes && recoveryCodes.length > 0 && (
                             <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
                                 <h3 className="text-lg font-semibold text-white">Codes de secours</h3>
                                 <p className="text-sm text-slate-400">
