@@ -84,6 +84,7 @@ class Quote extends Model
         $invoice = Invoice::create([
             'shop_id' => $this->shop_id,
             'customer_id' => $this->customer_id,
+            'user_id' => auth()->id(),
             'invoice_number' => Invoice::generateInvoiceNumber($this->shop_id),
             'quote_id' => $this->id,
             'subtotal' => $this->subtotal,
