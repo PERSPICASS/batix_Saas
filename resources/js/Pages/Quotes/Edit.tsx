@@ -12,7 +12,7 @@ interface Customer {
 interface Product {
     id: number;
     name: string;
-    price: number;
+    selling_price: number;
 }
 
 interface QuoteItem {
@@ -56,7 +56,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
         const product = products.find((p: any) => p.id === parseInt(productId));
         if (product) {
             handleItemChange(index, 'product_id', parseInt(productId));
-            handleItemChange(index, 'unit_price', product.price);
+            handleItemChange(index, 'unit_price', product.selling_price);
         }
     };
 

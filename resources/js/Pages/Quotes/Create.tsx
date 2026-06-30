@@ -13,7 +13,7 @@ interface Customer {
 interface Product {
     id: number;
     name: string;
-    price: number;
+    selling_price: number;
 }
 
 export default function CreateQuote({ customers, products }: { customers: Customer[]; products: Product[] }) {
@@ -46,7 +46,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
         const product = products.find((p: any) => p.id === parseInt(productId));
         if (product) {
             handleItemChange(index, 'product_id', parseInt(productId));
-            handleItemChange(index, 'unit_price', product.price);
+            handleItemChange(index, 'unit_price', product.selling_price);
         }
     };
 

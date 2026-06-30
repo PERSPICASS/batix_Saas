@@ -35,7 +35,7 @@ class QuoteController extends Controller
             ->get(['id', 'name', 'email']);
 
         $products = Product::where('shop_id', $shop->id)
-            ->get(['id', 'name', 'price']);
+            ->get(['id', 'name', 'selling_price']);
 
         return Inertia::render('Quotes/Create', [
             'customers' => $customers,
@@ -117,7 +117,7 @@ class QuoteController extends Controller
             ->get(['id', 'name']);
 
         $products = Product::where('shop_id', $shop->id)
-            ->get(['id', 'name', 'price']);
+            ->get(['id', 'name', 'selling_price']);
 
         return Inertia::render('Quotes/Edit', [
             'quote' => $quote->load('items'),
