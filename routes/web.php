@@ -44,6 +44,7 @@ use App\Http\Controllers\FixedCostController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\RecurringInvoiceController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TwoFactorController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -362,6 +363,13 @@ Route::prefix('{code_user}')
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // 2FA Routes
+    Route::get('/two-factor', [TwoFactorController::class, 'index'])->name('two-factor.index');
+    Route::post('/two-factor/generate-secret', [TwoFactorController::class, 'generateSecret'])->name('two-factor.generate');
+    Route::post('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
+    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
+    Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->name('two-factor.check');
 });
 
 require __DIR__.'/auth.php';
