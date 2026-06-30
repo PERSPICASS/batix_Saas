@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Send, CheckCircle, Download, Edit, Trash2 } from 'lucide-react';
+import { FileText, Send, CheckCircle, Download, Edit, Trash2, ArrowLeft, Calculator } from 'lucide-react';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
 
@@ -9,27 +9,27 @@ export default function ShowQuote({ quote }: { quote: any }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     const handleDelete = () => {
-        router.delete(route('quotes.destroy', quote.id));
+        router.delete(route('quotes.destroy', { quote: quote.id }));
     };
 
     const handleSend = () => {
-        router.post(route('quotes.send', quote.id), {});
+        router.post(route('quotes.send', { quote: quote.id }), {});
     };
 
     const handleAccept = () => {
-        router.post(route('quotes.accept', quote.id), {});
+        router.post(route('quotes.accept', { quote: quote.id }), {});
     };
 
     const handleConvert = () => {
-        router.post(route('quotes.convert', quote.id), {});
+        router.post(route('quotes.convert', { quote: quote.id }), {});
     };
 
     const statusColors = {
-        draft: 'bg-gray-500/20 text-gray-300',
-        sent: 'bg-blue-500/20 text-blue-300',
-        accepted: 'bg-green-500/20 text-green-300',
-        expired: 'bg-red-500/20 text-red-300',
-        rejected: 'bg-red-500/20 text-red-300',
+        draft: 'bg-slate-500/20 text-slate-300 border border-slate-500/30',
+        sent: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+        accepted: 'bg-green-500/20 text-green-300 border border-green-500/30',
+        expired: 'bg-red-500/20 text-red-300 border border-red-500/30',
+        rejected: 'bg-red-500/20 text-red-300 border border-red-500/30',
     };
 
     const statusLabels = {
@@ -41,172 +41,187 @@ export default function ShowQuote({ quote }: { quote: any }) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-white">Devis {quote.quote_number}</h1>
-                    <a href={route('quotes.index')} className="flex items-center gap-2 text-blue-400 hover:text-blue-300">
-                        <ArrowLeft size={18} />
-                        Retour
-                    </a>
-                </div>
-            }
-        >
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Devis {quote.quote_number}</h1>}>
             <Head title={`Devis ${quote.quote_number}`} />
 
-            <div className="max-w-4xl space-y-6">
-                {/* En-tête */}
-                <div className="bg-slate-800/50 p-6 rounded-lg flex justify-between items-start">
-                    <div>
-                        <p className="text-slate-400 text-sm">N° Devis</p>
-                        <p className="text-2xl font-bold text-white">{quote.quote_number}</p>
-                    </div>
-                    <span className={`px-4 py-2 rounded-full font-medium text-sm ${statusColors[quote.status as keyof typeof statusColors]}`}>
-                        {statusLabels[quote.status as keyof typeof statusLabels]}
-                    </span>
-                </div>
+            <div className="grid gap-4 xl:grid-cols-3">
+                <section className="space-y-4 xl:col-span-2">
+                    {/* En-tête */}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                        <div className="mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-white">
+                                <FileText className="size-5 text-amber-300" />
+                                <h2 className="text-lg font-semibold">{quote.quote_number}</h2>
+                            </div>
+                            <span className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${statusColors[quote.status as keyof typeof statusColors]}`}>
+                                {statusLabels[quote.status as keyof typeof statusLabels]}
+                            </span>
+                        </div>
 
-                {/* Client & Dates */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-800/50 p-4 rounded-lg">
-                        <p className="text-slate-400 text-sm mb-2">Client</p>
-                        <p className="text-white font-medium">{quote.customer.name}</p>
-                        <p className="text-slate-400 text-sm">{quote.customer.email}</p>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <p className="text-sm text-slate-400 mb-1">Client</p>
+                                <p className="text-white font-medium">{quote.customer.name}</p>
+                                {quote.customer.email && (
+                                    <p className="text-sm text-slate-400 mt-1">{quote.customer.email}</p>
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-sm text-slate-400 mb-1">Dates</p>
+                                <p className="text-white font-medium">{new Date(quote.quote_date).toLocaleDateString('fr-FR')}</p>
+                                <p className="text-sm text-slate-400 mt-1">Expire le {new Date(quote.expiry_date).toLocaleDateString('fr-FR')}</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-slate-800/50 p-4 rounded-lg">
-                        <p className="text-slate-400 text-sm mb-2">Dates</p>
-                        <p className="text-white">Du {new Date(quote.quote_date).toLocaleDateString('fr-FR')}</p>
-                        <p className="text-white">Au {new Date(quote.expiry_date).toLocaleDateString('fr-FR')}</p>
-                    </div>
-                </div>
 
-                {/* Articles */}
-                <div className="bg-slate-800/50 rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-slate-700">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-300">Article</th>
-                                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-300">Qté</th>
-                                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-300">Prix unitaire</th>
-                                    <th className="px-4 py-3 text-right text-sm font-medium text-slate-300">Montant</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-700">
-                                {quote.items.map((item: any, index: number) => (
-                                    <tr key={index} className="hover:bg-slate-700/50">
-                                        <td className="px-4 py-3 text-white">{item.product.name}</td>
-                                        <td className="px-4 py-3 text-right text-white">{item.quantity}</td>
-                                        <td className="px-4 py-3 text-right text-white">{parseFloat(item.unit_price).toFixed(2)}€</td>
-                                        <td className="px-4 py-3 text-right text-white font-medium">{parseFloat(item.line_total).toFixed(2)}€</td>
+                    {/* Articles */}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                            <FileText className="size-5 text-amber-300" />
+                            Articles
+                        </h2>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-white/10">
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Article</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Qté</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">P.U.</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Montant</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-white/10">
+                                    {quote.items.map((item: any, index: number) => (
+                                        <tr key={index} className="hover:bg-white/5">
+                                            <td className="px-4 py-3 text-white">{item.product.name}</td>
+                                            <td className="px-4 py-3 text-right text-white">{item.quantity}</td>
+                                            <td className="px-4 py-3 text-right text-white">{parseFloat(item.unit_price).toFixed(2)}€</td>
+                                            <td className="px-4 py-3 text-right text-white font-medium">{parseFloat(item.line_total).toFixed(2)}€</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Totaux */}
+                        <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
+                            <div className="flex justify-end gap-8">
+                                <span className="text-slate-300">Sous-total:</span>
+                                <span className="w-24 text-right text-white font-medium">{parseFloat(quote.subtotal).toFixed(2)}€</span>
+                            </div>
+                            <div className="flex justify-end gap-8">
+                                <span className="text-slate-300">TVA (18%):</span>
+                                <span className="w-24 text-right text-white font-medium">{parseFloat(quote.tax_amount).toFixed(2)}€</span>
+                            </div>
+                            <div className="flex justify-end gap-8 border-t border-white/10 pt-2">
+                                <span className="text-white font-bold">Total:</span>
+                                <span className="w-24 text-right text-xl font-bold text-amber-300">{parseFloat(quote.total).toFixed(2)}€</span>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Totaux */}
-                    <div className="bg-slate-700/50 px-4 py-4 space-y-2">
-                        <div className="flex justify-end gap-8">
-                            <span className="text-slate-300">Sous-total:</span>
-                            <span className="w-24 text-right text-white">{parseFloat(quote.subtotal).toFixed(2)}€</span>
+                    {/* Notes */}
+                    {(quote.notes || quote.terms) && (
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                            <h2 className="mb-4 text-lg font-semibold text-white">Notes et conditions</h2>
+                            {quote.notes && (
+                                <div className="mb-4">
+                                    <p className="text-sm text-slate-400 mb-2">Notes</p>
+                                    <p className="text-white whitespace-pre-wrap text-sm">{quote.notes}</p>
+                                </div>
+                            )}
+                            {quote.terms && (
+                                <div>
+                                    <p className="text-sm text-slate-400 mb-2">Conditions</p>
+                                    <p className="text-white whitespace-pre-wrap text-sm">{quote.terms}</p>
+                                </div>
+                            )}
                         </div>
-                        <div className="flex justify-end gap-8">
-                            <span className="text-slate-300">TVA (18%):</span>
-                            <span className="w-24 text-right text-white">{parseFloat(quote.tax_amount).toFixed(2)}€</span>
-                        </div>
-                        <div className="border-t border-slate-600 pt-2 flex justify-end gap-8">
-                            <span className="text-white font-bold">Total:</span>
-                            <span className="w-24 text-right text-lg font-bold text-green-400">{parseFloat(quote.total).toFixed(2)}€</span>
-                        </div>
-                    </div>
-                </div>
+                    )}
+                </section>
 
                 {/* Actions */}
-                <div className="flex gap-3 flex-wrap">
-                    {quote.status === 'draft' && (
-                        <>
+                <aside className="xl:col-span-1">
+                    <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+                        <h2 className="mb-4 text-lg font-semibold text-white">Actions</h2>
+
+                        <div className="space-y-3">
+                            {quote.status === 'draft' && (
+                                <>
+                                    <Link
+                                        href={route('quotes.edit', { quote: quote.id })}
+                                        className="flex items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition-colors hover:bg-amber-200 w-full"
+                                    >
+                                        <Edit className="size-4" />
+                                        Modifier
+                                    </Link>
+                                    <button
+                                        onClick={handleSend}
+                                        className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 w-full font-semibold text-white transition-colors hover:bg-blue-700"
+                                    >
+                                        <Send className="size-4" />
+                                        Envoyer
+                                    </button>
+                                </>
+                            )}
+
+                            {quote.status === 'sent' && (
+                                <button
+                                    onClick={handleAccept}
+                                    className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 w-full font-semibold text-white transition-colors hover:bg-green-700"
+                                >
+                                    <CheckCircle className="size-4" />
+                                    Accepter
+                                </button>
+                            )}
+
+                            {quote.status === 'accepted' && (
+                                <button
+                                    onClick={handleConvert}
+                                    className="flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 w-full font-semibold text-white transition-colors hover:bg-purple-700"
+                                >
+                                    <Download className="size-4" />
+                                    Convertir en facture
+                                </button>
+                            )}
+
                             <Link
-                                href={route('quotes.edit', quote.id)}
-                                className="flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
+                                href={route('quotes.index')}
+                                className="flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5 w-full"
                             >
-                                <Edit size={18} />
-                                Modifier
+                                <ArrowLeft className="size-4" />
+                                Retour à la liste
                             </Link>
+
                             <button
-                                onClick={handleSend}
-                                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                onClick={() => setConfirmDelete(true)}
+                                className="flex items-center justify-center gap-2 rounded-lg border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10 w-full"
                             >
-                                <Send size={18} />
-                                Envoyer
+                                <Trash2 className="size-4" />
+                                Supprimer
                             </button>
-                        </>
-                    )}
-
-                    {quote.status === 'sent' && (
-                        <button
-                            onClick={handleAccept}
-                            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                        >
-                            <CheckCircle size={18} />
-                            Accepter
-                        </button>
-                    )}
-
-                    {quote.status === 'accepted' && (
-                        <button
-                            onClick={handleConvert}
-                            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-                        >
-                            <Download size={18} />
-                            Convertir en facture
-                        </button>
-                    )}
-
-                    <button
-                        onClick={() => setConfirmDelete(true)}
-                        className="flex items-center gap-2 bg-red-600/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-600/30 ml-auto"
-                    >
-                        <Trash2 size={18} />
-                        Supprimer
-                    </button>
-                </div>
-
-                {/* Notes */}
-                {(quote.notes || quote.terms) && (
-                    <div className="bg-slate-800/50 p-6 rounded-lg space-y-4">
-                        {quote.notes && (
-                            <div>
-                                <p className="text-slate-400 text-sm mb-2">Notes</p>
-                                <p className="text-white whitespace-pre-wrap">{quote.notes}</p>
-                            </div>
-                        )}
-                        {quote.terms && (
-                            <div>
-                                <p className="text-slate-400 text-sm mb-2">Conditions</p>
-                                <p className="text-white whitespace-pre-wrap">{quote.terms}</p>
-                            </div>
-                        )}
+                        </div>
                     </div>
-                )}
+                </aside>
             </div>
 
             {/* Modal de suppression */}
             {confirmDelete && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-                    <div className="bg-slate-800 p-6 rounded-lg max-w-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="rounded-2xl border border-white/10 bg-slate-900 p-6 max-w-sm">
                         <h3 className="text-lg font-bold text-white mb-4">Supprimer le devis</h3>
                         <p className="text-slate-300 mb-6">Êtes-vous sûr de vouloir supprimer ce devis? Cette action est irréversible.</p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setConfirmDelete(false)}
-                                className="flex-1 px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700"
+                                className="flex-1 rounded-lg border border-white/15 px-4 py-2 text-slate-200 transition-colors hover:bg-white/5"
                             >
                                 Annuler
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                                className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700"
                             >
                                 Supprimer
                             </button>

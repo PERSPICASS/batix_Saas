@@ -1,11 +1,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import Table from '@/Components/Table';
-import { Plus, Eye, Edit, Trash2, Send, CheckCircle, Download } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Send, CheckCircle, Download, FileText } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { router } from '@inertiajs/react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Quote {
     id: number;
@@ -24,6 +25,7 @@ interface Quote {
 
 export default function QuotesIndex({ quotes }: { quotes: any }) {
     const route = useRoute();
+    const { t } = useLocale();
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
     const handleDelete = (id: number) => {
@@ -41,11 +43,11 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
     };
 
     const statusColors = {
-        draft: 'bg-gray-500/20 text-gray-300',
-        sent: 'bg-blue-500/20 text-blue-300',
-        accepted: 'bg-green-500/20 text-green-300',
-        expired: 'bg-red-500/20 text-red-300',
-        rejected: 'bg-red-500/20 text-red-300',
+        draft: 'bg-slate-500/20 text-slate-300 border border-slate-500/30',
+        sent: 'bg-blue-500/20 text-blue-300 border border-blue-500/30',
+        accepted: 'bg-green-500/20 text-green-300 border border-green-500/30',
+        expired: 'bg-red-500/20 text-red-300 border border-red-500/30',
+        rejected: 'bg-red-500/20 text-red-300 border border-red-500/30',
     };
 
     const statusLabels = {
@@ -156,32 +158,53 @@ export default function QuotesIndex({ quotes }: { quotes: any }) {
 
     return (
         <AuthenticatedLayout
-            header={
-                <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-white">Devis</h1>
-                    <Link
-                        href={route('quotes.create')}
-                        className="bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-blue-700"
-                    >
-                        <Plus size={18} />
-                        Nouveau devis
-                    </Link>
-                </div>
-            }
+            header={<h1 className="text-xl font-semibold text-white">Devis</h1>}
         >
             <Head title="Devis" />
 
-            <div className="space-y-4">
-                <div className="text-sm text-slate-400">
-                    Total devis: <span className="font-bold text-white">{quotes.total}</span>
+            <section className="space-y-6">
+                {/* Stats */}
+                <div className="grid gap-4 md:grid-cols-3">
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-sm text-slate-400">Total devis</p>
+                        <p className="mt-1 text-2xl font-bold text-white">{quotes.total}</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-sm text-slate-400">En attente</p>
+                        <p className="mt-1 text-2xl font-bold text-blue-400">
+                            {quotes.data?.filter((q: Quote) => q.status === 'sent').length || 0}
+                        </p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-sm text-slate-400">Acceptés</p>
+                        <p className="mt-1 text-2xl font-bold text-green-400">
+                            {quotes.data?.filter((q: Quote) => q.status === 'accepted').length || 0}
+                        </p>
+                    </div>
                 </div>
 
+                {/* Header avec bouton */}
+                <div className="flex items-center justify-between">
+                    <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
+                        <FileText className="size-5 text-amber-300" />
+                        Tous les devis
+                    </h2>
+                    <Link
+                        href={route('quotes.create')}
+                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
+                    >
+                        <Plus className="size-4" />
+                        Nouveau devis
+                    </Link>
+                </div>
+
+                {/* Table */}
                 <Table
                     columns={columns}
                     data={quotes.data}
                     emptyMessage="Aucun devis. Créez votre premier devis pour commencer."
                 />
-            </div>
+            </section>
 
             {confirmDelete && (
                 <ConfirmDeleteModal
