@@ -62,13 +62,13 @@ class PaddleController extends Controller
         }
 
         $data = $response->json();
-        $transactionId = $data['data']['id'] ?? null;
+        $checkoutUrl = $data['data']['checkout']['url'] ?? null;
 
-        if (!$transactionId) {
-            throw new \Exception('No transaction ID returned from Paddle');
+        if (!$checkoutUrl) {
+            throw new \Exception('No checkout URL returned from Paddle');
         }
 
-        return 'https://buy.paddle.com/checkout/' . $transactionId;
+        return $checkoutUrl;
     }
 
     public function webhook(Request $request): JsonResponse
