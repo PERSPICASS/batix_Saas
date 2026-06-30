@@ -8,8 +8,6 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Font;
-use PhpOffice\PhpSpreadsheet\Style\PatternFill;
 
 class InvoicesExport implements FromArray, WithHeadings, WithColumnWidths, WithStyles
 {
@@ -80,7 +78,7 @@ class InvoicesExport implements FromArray, WithHeadings, WithColumnWidths, WithS
                 'color' => ['rgb' => 'FFFFFF'],
             ],
             'fill' => [
-                'fillType' => PatternFill::FILL_SOLID,
+                'fillType' => 'solid',
                 'startColor' => ['rgb' => '1F2937'],
             ],
         ]);

@@ -11,7 +11,6 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\PatternFill;
 
 class AnalyticsExport implements WithMultipleSheets
 {
@@ -91,7 +90,7 @@ class SummarySheet implements FromArray, WithHeadings, WithColumnWidths, WithSty
     {
         $sheet->getStyle('1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => PatternFill::FILL_SOLID, 'startColor' => ['rgb' => '1F2937']],
+            'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '1F2937']],
         ]);
 
         return [];
@@ -159,7 +158,7 @@ class RevenueSheet implements FromArray, WithHeadings, WithColumnWidths, WithSty
     {
         $sheet->getStyle('1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => PatternFill::FILL_SOLID, 'startColor' => ['rgb' => '1F2937']],
+            'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '1F2937']],
         ]);
 
         return [];
@@ -223,7 +222,7 @@ class CustomersSheet implements FromArray, WithHeadings, WithColumnWidths, WithS
     {
         $sheet->getStyle('1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => PatternFill::FILL_SOLID, 'startColor' => ['rgb' => '1F2937']],
+            'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '1F2937']],
         ]);
 
         return [];
@@ -284,7 +283,7 @@ class ProductsSheet implements FromArray, WithHeadings, WithColumnWidths, WithSt
     {
         $sheet->getStyle('1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-            'fill' => ['fillType' => PatternFill::FILL_SOLID, 'startColor' => ['rgb' => '1F2937']],
+            'fill' => ['fillType' => 'solid', 'startColor' => ['rgb' => '1F2937']],
         ]);
 
         return [];
