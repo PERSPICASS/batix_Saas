@@ -132,6 +132,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/paddle/checkout', fn() => Inertia::render('Payment/PaddlePay'))->name('paddle.pay');
 });
 
+// 2FA Routes (auth only, no 2FA check needed)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/two-factor', [TwoFactorController::class, 'index'])->name('two-factor.index');
+    Route::get('/two-factor/verify', [TwoFactorController::class, 'showVerification'])->name('two-factor.verify');
+    Route::post('/two-factor/generate-secret', [TwoFactorController::class, 'generateSecret'])->name('two-factor.generate');
+    Route::post('/two-factor/verify-code', [TwoFactorController::class, 'verify'])->name('two-factor.verify.post');
+    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
+    Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->name('two-factor.check');
+});
+
 Route::get('/paddle/success', [PaddleController::class, 'success'])->name('paddle.success');
 Route::get('/paddle/cancel', [PaddleController::class, 'cancel'])->name('paddle.cancel');
 
@@ -364,13 +374,6 @@ Route::prefix('{code_user}')
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // 2FA Routes
-    Route::get('/two-factor', [TwoFactorController::class, 'index'])->name('two-factor.index');
-    Route::get('/two-factor/verify', [TwoFactorController::class, 'showVerification'])->name('two-factor.verify');
-    Route::post('/two-factor/generate-secret', [TwoFactorController::class, 'generateSecret'])->name('two-factor.generate');
-    Route::post('/two-factor/verify-code', [TwoFactorController::class, 'verify'])->name('two-factor.verify.post');
-    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
-    Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->name('two-factor.check');
 });
 
 require __DIR__.'/auth.php';

@@ -24,8 +24,19 @@ class CheckTwoFactorAuthentication
 
         // Si 2FA activé mais pas encore vérifié en session
         if ($user->two_factor_enabled && !session('2fa_verified')) {
-            // Laisser passer pour certaines routes
-            if ($request->routeIs('logout', 'two-factor.*')) {
+            // Laisser passer pour routes 2FA et quelques autres
+            $allowedRoutes = [
+                'logout',
+                'lock-screen.lock',
+                'two-factor.index',
+                'two-factor.verify',
+                'two-factor.generate',
+                'two-factor.verify.post',
+                'two-factor.disable',
+                'two-factor.check',
+            ];
+
+            if ($request->routeIs($allowedRoutes)) {
                 return $next($request);
             }
 
