@@ -1,30 +1,30 @@
 @component('mail::message')
-# Facture {{ $invoice->invoice_number }}
+# {{ __('mail.invoice.title', ['number' => $invoice->invoice_number]) }}
 
-Bonjour {{ $invoice->customer->name }},
+{{ __('mail.invoice.greeting', ['salutation' => __('mail.common.salutation'), 'name' => $invoice->customer->name]) }}
 
-Merci pour votre confiance. Veuillez trouver ci-joint votre facture n° **{{ $invoice->invoice_number }}** datée du {{ $invoice->invoice_date->format('d/m/Y') }}.
+{{ __('mail.common.thank_you') }} {{ __('mail.invoice.intro', ['invoiceNumber' => $invoice->invoice_number, 'invoiceDate' => $invoice->invoice_date->format('d/m/Y')]) }}
 
-## Détails de la facture
+## {{ __('mail.invoice.details_title') }}
 
-| Description | Montant |
+| {{ __('mail.invoice.description') }} | {{ __('mail.invoice.amount') }} |
 |-----------|---------|
-| Sous-total | {{ number_format($invoice->subtotal, 2, ',', ' ') }} € |
-| TVA | {{ number_format($invoice->tax_amount, 2, ',', ' ') }} € |
-| **Total** | **{{ number_format($invoice->total, 2, ',', ' ') }} €** |
+| {{ __('mail.invoice.subtotal') }} | {{ number_format($invoice->subtotal, 2, ',', ' ') }} € |
+| {{ __('mail.invoice.tax') }} | {{ number_format($invoice->tax_amount, 2, ',', ' ') }} € |
+| **{{ __('mail.invoice.total') }}** | **{{ number_format($invoice->total, 2, ',', ' ') }} €** |
 
 @if($invoice->notes)
-## Notes
+## {{ __('mail.invoice.notes_title') }}
 {{ $invoice->notes }}
 @endif
 
-## Informations de paiement
+## {{ __('mail.invoice.payment_info_title') }}
 
-Modalités de paiement: À réception de la facture
-Délai de paiement: {{ now()->diffInDays($invoice->due_date) }} jours
+{{ __('mail.invoice.payment_terms') }}
+{{ __('mail.invoice.payment_due_days', ['days' => now()->diffInDays($invoice->due_date)]) }}
 
-Si vous avez des questions, n'hésitez pas à nous contacter.
+{{ __('mail.invoice.questions') }}
 
-Cordialement,
+{{ __('mail.invoice.signature') }}
 **{{ $shopName }}**
 @endcomponent

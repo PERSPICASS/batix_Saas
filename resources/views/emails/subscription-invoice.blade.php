@@ -122,7 +122,7 @@
     <div class="header">
         <div class="header-left">
             <h1>{{ config('app.name') }}</h1>
-            <p>Reçu de paiement</p>
+            <p>{{ __('mail.subscription_invoice.header_subtitle') }}</p>
         </div>
         <div class="header-right">
             <div class="inv-num">N° {{ $invoice->invoice_number }}</div>
@@ -131,68 +131,65 @@
     </div>
 
     <div class="content">
-        <p class="greeting">Bonjour <strong>{{ $user->name }}</strong>,</p>
+        <p class="greeting">{{ __('mail.subscription_invoice.greeting', ['salutation' => __('mail.common.salutation'), 'name' => $user->name]) }}</p>
         <p class="intro">
-            Merci pour votre abonnement. Votre paiement a été reçu avec succès.
-            Voici votre facture récapitulative.
+            {{ __('mail.subscription_invoice.intro') }}
         </p>
 
-        <div class="success-badge">✓ Paiement confirmé</div>
+        <div class="success-badge">{{ __('mail.subscription_invoice.payment_confirmed') }}</div>
 
         <div class="invoice-box">
-            <div class="invoice-title">Détails de la facture</div>
+            <div class="invoice-title">{{ __('mail.subscription_invoice.invoice_details_title') }}</div>
 
             <div class="invoice-row">
-                <span class="row-label">Plan</span>
+                <span class="row-label">{{ __('mail.subscription_invoice.plan_label') }}</span>
                 <span class="row-value">{{ $subscription->plan->name }}</span>
             </div>
             <div class="invoice-row">
-                <span class="row-label">Cycle de facturation</span>
-                <span class="row-value">{{ $subscription->billing_cycle === 'yearly' ? 'Annuel' : 'Mensuel' }}</span>
+                <span class="row-label">{{ __('mail.subscription_invoice.billing_cycle_label') }}</span>
+                <span class="row-value">{{ $subscription->billing_cycle === 'yearly' ? __('mail.subscription_invoice.billing_yearly') : __('mail.subscription_invoice.billing_monthly') }}</span>
             </div>
             <div class="invoice-row">
-                <span class="row-label">Méthode de paiement</span>
+                <span class="row-label">{{ __('mail.subscription_invoice.payment_method_label') }}</span>
                 <span class="row-value">Mobile Money ({{ $invoice->payment_method === 'pawapay' ? $invoice->metadata['correspondent'] ?? 'PawaPay' : ucfirst(str_replace('_', ' ', $invoice->payment_method)) }})</span>
             </div>
             @if(!empty($invoice->metadata['msisdn']))
             <div class="invoice-row">
-                <span class="row-label">Numéro utilisé</span>
+                <span class="row-label">{{ __('mail.subscription_invoice.phone_number_label') }}</span>
                 <span class="row-value">+{{ $invoice->metadata['msisdn'] }}</span>
             </div>
             @endif
             <div class="invoice-row">
-                <span class="row-label">Date de paiement</span>
+                <span class="row-label">{{ __('mail.subscription_invoice.payment_date_label') }}</span>
                 <span class="row-value">{{ $invoice->paid_at->format('d/m/Y à H:i') }}</span>
             </div>
 
             <div class="invoice-total">
-                <span class="total-label">Total payé</span>
+                <span class="total-label">{{ __('mail.subscription_invoice.total_paid_label') }}</span>
                 <span class="total-value">{{ number_format((float) $invoice->total, 0, ',', ' ') }} {{ $subscription->plan->currency ?? 'XOF' }}</span>
             </div>
         </div>
 
         <div class="validity-box">
-            🗓️ Votre abonnement <strong>{{ $subscription->plan->name }}</strong> est actif du
-            <strong>{{ $subscription->started_at->format('d/m/Y') }}</strong>
-            @if($subscription->expires_at)
-                au <strong>{{ $subscription->expires_at->format('d/m/Y') }}</strong>.
-            @else
-                (sans date d'expiration).
-            @endif
+            {{ __('mail.subscription_invoice.subscription_active', [
+                'planName' => $subscription->plan->name,
+                'startDate' => $subscription->started_at->format('d/m/Y'),
+                'endDate' => $subscription->expires_at ? __('mail.subscription_invoice.subscription_active_end_date', ['endDate' => $subscription->expires_at->format('d/m/Y')]) : __('mail.subscription_invoice.subscription_active_no_expiry')
+            ]) }}
         </div>
 
         <div class="divider"></div>
 
         <p style="font-size: 13px; color: #64748b; line-height: 1.6;">
-            Conservez cet email comme justificatif de paiement.<br>
-            Pour toute question, contactez notre support :
+            {{ __('mail.subscription_invoice.keep_email') }}<br>
+            {{ __('mail.subscription_invoice.questions') }} :
             <a href="mailto:{{ config('mail.from.address') }}" style="color: #fcd34d; text-decoration: none;">{{ config('mail.from.address') }}</a>
         </p>
     </div>
 
     <div class="footer">
-        <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
-        <p>&copy; {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.</p>
+        <p>{{ __('mail.subscription_invoice.footer') }}</p>
+        <p>&copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('mail.common.copyright') }}</p>
     </div>
 
 </div>

@@ -153,52 +153,48 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Code de Vérification</h1>
+            <h1>{{ __('mail.verification_code.header_title') }}</h1>
             <p>{{ config('app.name') }}</p>
         </div>
-        
+
         <div class="content">
-            <p class="greeting">Bonjour <strong>{{ $userName }}</strong>,</p>
-            
+            <p class="greeting">{{ __('mail.verification_code.greeting', ['salutation' => __('mail.common.salutation'), 'name' => $userName]) }}</p>
+
             <p class="message">
-                Bienvenue sur {{ config('app.name') }} ! Pour finaliser la création de votre compte, 
-                veuillez utiliser le code de vérification ci-dessous :
+                {{ __('mail.verification_code.intro', ['appName' => config('app.name')]) }}
             </p>
             
             <div class="code-container">
-                <div class="code-label">Votre code de vérification</div>
+                <div class="code-label">{{ __('mail.verification_code.code_label') }}</div>
                 <div class="code">{{ $verificationCode }}</div>
-                <p class="expiry">⏱️ Ce code expire dans 15 minutes</p>
+                <p class="expiry">{{ __('mail.verification_code.code_expiry') }}</p>
             </div>
-            
+
             <p class="message">
-                Saisissez ce code sur la page de vérification pour activer votre compte et 
-                commencer à utiliser toutes les fonctionnalités de notre plateforme.
+                {{ __('mail.verification_code.instruction', ['appName' => config('app.name')]) }}
             </p>
             
             <div class="divider"></div>
             
             <div class="warning">
                 <p>
-                    <strong>⚠️ Important :</strong> Si vous n'avez pas créé de compte sur {{ config('app.name') }}, 
-                    veuillez ignorer cet email. Votre adresse email pourrait avoir été saisie par erreur.
+                    <strong>{{ __('mail.verification_code.warning_title') }}</strong> {{ __('mail.verification_code.warning_message', ['appName' => config('app.name')]) }}
                 </p>
             </div>
-            
+
             <p class="message" style="margin-top: 25px; font-size: 14px;">
-                Pour des raisons de sécurité, ne partagez jamais ce code avec qui que ce soit. 
-                Notre équipe ne vous demandera jamais votre code de vérification.
+                {{ __('mail.verification_code.security_note') }}
             </p>
         </div>
         
         <div class="footer">
             <p>
-                Cet email a été envoyé automatiquement, veuillez ne pas y répondre.<br>
-                Pour toute question, contactez notre support : 
+                {{ __('mail.verification_code.footer_automatic') }}<br>
+                {{ __('mail.verification_code.footer_support') }} :
                 <a href="mailto:{{ config('mail.from.address') }}">{{ config('mail.from.address') }}</a>
             </p>
             <p style="margin-top: 15px;">
-                &copy; {{ date('Y') }} {{ config('app.name') }}. Tous droits réservés.
+                &copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('mail.common.copyright') }}
             </p>
         </div>
     </div>

@@ -20,31 +20,31 @@
 <body>
     <div class="wrapper">
         <div class="header">
-            <h1>✉️ Nouveau message de contact</h1>
-            <p>Reçu via le formulaire de la landing page BATIX PRO</p>
+            <h1>{{ __('mail.contact_form.header_title') }}</h1>
+            <p>{{ __('mail.contact_form.header_subtitle') }}</p>
         </div>
         <div class="body">
             <div class="field">
-                <label>Nom</label>
+                <label>{{ __('mail.contact_form.name_label') }}</label>
                 <p>{{ $senderName }}</p>
             </div>
             <div class="field">
-                <label>Email</label>
+                <label>{{ __('mail.contact_form.email_label') }}</label>
                 <p><a href="mailto:{{ $senderEmail }}" style="color:#f59e0b;">{{ $senderEmail }}</a></p>
             </div>
             <div class="field">
-                <label>Sujet</label>
+                <label>{{ __('mail.contact_form.subject_label') }}</label>
                 <p>{{ $senderSubject }}</p>
             </div>
             <div class="field">
-                <label>Message</label>
+                <label>{{ __('mail.contact_form.message_label') }}</label>
                 <div class="message-box">
                     <p>{{ $senderMessage }}</p>
                 </div>
             </div>
         </div>
         <div class="footer">
-            Cet email a été envoyé automatiquement depuis la landing page de {{ config('app.name') }}.
+            {{ __('mail.contact_form.footer', ['appName' => config('app.name')]) }}
         </div>
     </div>
 </body>

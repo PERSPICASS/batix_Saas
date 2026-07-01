@@ -84,7 +84,7 @@
 
     <div class="header">
         <h1>{{ config('app.name') }}</h1>
-        <p>Gestion moderne des quincailleries</p>
+        <p>{{ __('mail.subscription_expiry.header_subtitle') }}</p>
     </div>
 
     <div class="body">
@@ -92,48 +92,45 @@
         <div class="alert-box">
             @if($daysLeft <= 0)
                 <div class="alert-days">!</div>
-                <div class="alert-label">Votre abonnement a expiré</div>
+                <div class="alert-label">{{ __('mail.subscription_expiry.expired') }}</div>
             @elseif($daysLeft === 1)
                 <div class="alert-days">1</div>
-                <div class="alert-label">jour restant</div>
+                <div class="alert-label">{{ __('mail.subscription_expiry.days_left_singular') }}</div>
             @else
                 <div class="alert-days">{{ $daysLeft }}</div>
-                <div class="alert-label">jours restants</div>
+                <div class="alert-label">{{ __('mail.subscription_expiry.days_left_plural') }}</div>
             @endif
         </div>
 
         <div class="info-grid">
             <div class="info-item">
-                <div class="info-label">Plan</div>
+                <div class="info-label">{{ __('mail.subscription_expiry.plan_label') }}</div>
                 <div class="info-value">{{ $subscription->plan?->name ?? '—' }}</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Expiration</div>
+                <div class="info-label">{{ __('mail.subscription_expiry.expiration_label') }}</div>
                 <div class="info-value">{{ $subscription->expires_at?->format('d/m/Y') ?? '—' }}</div>
             </div>
         </div>
 
         <p class="message">
-            Bonjour <strong style="color:#f1f5f9">{{ $user->name }}</strong>,<br><br>
+            {{ __('mail.subscription_expiry.greeting', ['salutation' => __('mail.common.salutation'), 'name' => $user->name]) }}<br><br>
             @if($daysLeft <= 1)
-                Votre abonnement <strong style="color:#fcd34d">{{ $subscription->plan?->name }}</strong> expire demain.
-                Pour continuer à utiliser Batix sans interruption, renouvelez dès maintenant.
+                {{ __('mail.subscription_expiry.expiry_today', ['planName' => $subscription->plan?->name, 'appName' => config('app.name')]) }}
             @else
-                Votre abonnement <strong style="color:#fcd34d">{{ $subscription->plan?->name }}</strong> expire
-                dans <strong style="color:#fcd34d">{{ $daysLeft }} jours</strong>.
-                Pensez à renouveler pour ne pas interrompre votre activité.
+                {{ __('mail.subscription_expiry.expiry_soon', ['planName' => $subscription->plan?->name, 'days' => $daysLeft]) }}
             @endif
         </p>
 
         <a href="{{ url('/plans') }}" class="btn">
-            Renouveler mon abonnement
+            {{ __('mail.subscription_expiry.renew_button') }}
         </a>
 
     </div>
 
     <div class="footer">
-        <p>{{ config('app.name') }} — support@batixpro.com</p>
-        <p>Vous recevez cet email car votre abonnement arrive à échéance.</p>
+        <p>{{ __('mail.subscription_expiry.footer_header', ['appName' => config('app.name')]) }}</p>
+        <p>{{ __('mail.subscription_expiry.footer_message') }}</p>
     </div>
 
 </div>

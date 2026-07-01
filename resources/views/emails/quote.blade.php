@@ -1,36 +1,36 @@
 @component('mail::message')
-# Devis {{ $quote->quote_number }}
+# {{ __('mail.quote.title', ['number' => $quote->quote_number]) }}
 
-Bonjour {{ $quote->customer->name }},
+{{ __('mail.quote.greeting', ['salutation' => __('mail.common.salutation'), 'name' => $quote->customer->name]) }}
 
-Veuillez trouver ci-joint notre devis n° **{{ $quote->quote_number }}** datée du {{ $quote->quote_date->format('d/m/Y') }}.
+{{ __('mail.quote.intro', ['quoteNumber' => $quote->quote_number, 'quoteDate' => $quote->quote_date->format('d/m/Y')]) }}
 
-## Détails du devis
+## {{ __('mail.quote.details_title') }}
 
-| Description | Montant |
+| {{ __('mail.quote.description') }} | {{ __('mail.quote.amount') }} |
 |-----------|---------|
-| Sous-total | {{ number_format($quote->subtotal, 2, ',', ' ') }} € |
-| TVA | {{ number_format($quote->tax_amount, 2, ',', ' ') }} € |
-| **Total** | **{{ number_format($quote->total, 2, ',', ' ') }} €** |
+| {{ __('mail.quote.subtotal') }} | {{ number_format($quote->subtotal, 2, ',', ' ') }} € |
+| {{ __('mail.quote.tax') }} | {{ number_format($quote->tax_amount, 2, ',', ' ') }} € |
+| **{{ __('mail.quote.total') }}** | **{{ number_format($quote->total, 2, ',', ' ') }} €** |
 
-## Validité du devis
+## {{ __('mail.quote.validity_title') }}
 
-Ce devis est valable jusqu'au **{{ $quote->expiry_date->format('d/m/Y') }}**.
+{{ __('mail.quote.validity_message', ['expiryDate' => $quote->expiry_date->format('d/m/Y')]) }}
 
 @if($quote->notes)
-## Notes
+## {{ __('mail.quote.notes_title') }}
 {{ $quote->notes }}
 @endif
 
 @if($quote->terms)
-## Conditions commerciales
+## {{ __('mail.quote.terms_title') }}
 {{ $quote->terms }}
 @endif
 
-Pour confirmer votre accord et passer commande, veuillez nous faire parvenir ce devis signé ou simplement nous le confirmer par email.
+{{ __('mail.quote.confirm_message') }}
 
-Si vous avez des questions, n'hésitez pas à nous contacter.
+{{ __('mail.quote.questions') }}
 
-Cordialement,
+{{ __('mail.quote.signature') }}
 **{{ $shopName }}**
 @endcomponent
