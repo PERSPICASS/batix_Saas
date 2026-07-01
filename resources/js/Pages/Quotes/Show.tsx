@@ -2,10 +2,12 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { FileText, Send, CheckCircle, Download, Edit, Trash2, ArrowLeft, Calculator } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 import { useRoute } from '@/utils/route';
 import Currency, { useShopSettings } from '@/Components/Currency';
 
 export default function ShowQuote({ quote }: { quote: any }) {
+    const { t } = useLocale();
     const route = useRoute();
     const { currencySymbol } = useShopSettings();
     const [confirmDelete, setConfirmDelete] = useState(false);
