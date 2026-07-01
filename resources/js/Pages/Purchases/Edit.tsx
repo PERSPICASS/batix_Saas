@@ -152,7 +152,7 @@ function PurchaseProductCombobox({
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
                         onFocus={() => setOpen(true)}
-                        placeholder="Rechercher par nom, SKU ou catégorie..."
+                        placeholder={t.purchases.form.search}
                         className="w-full rounded-lg border-slate-700 bg-slate-900 pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                         autoComplete="off"
                     />
@@ -330,7 +330,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
 
     return (
         <AuthenticatedLayout>
-            <Head title="Modifier le bon de commande" />
+            <Head title={t.purchases.form.editTitle} />
 
             <div className="space-y-6">
                 {/* En-tête */}
@@ -343,9 +343,9 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                             <ArrowLeft className="size-5 text-slate-400" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-white">Modifier le bon de commande</h1>
+                            <h1 className="text-2xl font-bold text-white">{t.purchases.form.editTitle}</h1>
                             <p className="mt-1 text-sm text-slate-400">
-                                Modifiez les informations du bon de commande
+                                {t.purchases.form.subtitle}
                             </p>
                         </div>
                     </div>
@@ -408,7 +408,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
 
                             {/* Frais de port */}
                             <div>
-                                <InputLabel htmlFor="shipping_cost" value="Frais de port" />
+                                <InputLabel htmlFor="shipping_cost" value={t.purchases.form.shippingCost} />
                                 <TextInput
                                     id="shipping_cost"
                                     type="number"
@@ -438,7 +438,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                                 className="inline-flex items-center gap-2 rounded-lg bg-amber-300/10 px-4 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-300/20"
                             >
                                 <Plus className="size-4" />
-                                Ajouter un article
+                                {t.purchases.form.addItem}
                             </button>
                         </div>
 
@@ -549,7 +549,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
 
                         <div className="space-y-4">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Sous-total:</span>
+                                <span className="text-slate-400">{t.purchases.form.subtotal}:</span>
                                 <span className="font-medium text-white">
                                     {formatCurrency(totals.subtotal)}
                                 </span>
@@ -558,7 +558,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                             {/* Remise globale */}
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <InputLabel htmlFor="discount_rate" value="Remise globale (%)" />
+                                    <InputLabel htmlFor="discount_rate" value={t.purchases.form.discountRate} />
                                     <TextInput
                                         id="discount_rate"
                                         type="number"
@@ -573,7 +573,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Montant remise:</span>
+                                <span className="text-slate-400">{t.purchases.form.discountAmount}:</span>
                                 <span className="font-medium text-white">
                                     -{formatCurrency(totals.totalDiscount)}
                                 </span>
@@ -582,7 +582,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                             {/* Taxe globale */}
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <InputLabel htmlFor="tax_rate" value="Taxe globale (%)" />
+                                    <InputLabel htmlFor="tax_rate" value={t.purchases.form.taxRate} />
                                     <TextInput
                                         id="tax_rate"
                                         type="number"
@@ -597,7 +597,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Montant taxes:</span>
+                                <span className="text-slate-400">{t.purchases.form.taxAmount}:</span>
                                 <span className="font-medium text-white">
                                     {formatCurrency(totals.totalTax)}
                                 </span>
@@ -628,7 +628,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                         <div className="space-y-6">
                             {/* Notes publiques */}
                             <div>
-                                <InputLabel htmlFor="notes" value="Notes (visibles sur le document)" />
+                                <InputLabel htmlFor="notes" value={t.purchases.form.visibleNotes} />
                                 <textarea
                                     id="notes"
                                     value={data.notes}
