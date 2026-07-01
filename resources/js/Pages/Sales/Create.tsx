@@ -420,7 +420,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
 
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
                             <label className="block space-y-1 text-sm text-slate-200">
-                                <span>Boutique *</span>
+                                <span>{t.common.form.shopField} *</span>
                                 <select
                                     value={data.shop_id}
                                     disabled
