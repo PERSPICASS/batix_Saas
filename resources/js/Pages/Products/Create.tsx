@@ -156,54 +156,54 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>SKU (généré automatiquement)</span>
+                        <span>{t.products.form.sku}</span>
                         <input
                             value={data.sku}
                             onChange={(e) => setData('sku', e.target.value)}
-                            placeholder="Sera généré automatiquement"
+                            placeholder={t.products.form.skuPlaceholder}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-400"
                         />
                         <p className="text-xs text-slate-400">
-                            Laissez vide pour générer automatiquement
+                            {t.products.form.skuHint}
                         </p>
                         {errors.sku && <span className="text-xs text-red-400">{errors.sku}</span>}
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Code-barres (généré automatiquement)</span>
+                        <span>{t.products.form.barcode}</span>
                         <div className="flex gap-2">
                             <input
                                 value={data.barcode}
                                 onChange={(e) => setData('barcode', e.target.value)}
-                                placeholder="Sera généré automatiquement"
+                                placeholder={t.products.form.barcodePlaceholder}
                                 className="flex-1 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-400"
                             />
                             <button
                                 type="button"
                                 onClick={generateTempBarcode}
                                 className="flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-amber-300 hover:bg-amber-300/20"
-                                title="Générer un aperçu"
+                                title={t.products.form.generateBarcode}
                             >
                                 <RefreshCw className="size-4" />
-                                Aperçu
+                                {t.products.form.preview}
                             </button>
                         </div>
                         <p className="text-xs text-slate-400">
                             {scannedBarcode
-                                ? 'Code scanné — complétez les informations puis enregistrez'
-                                : 'Le code-barres final sera généré automatiquement lors de la sauvegarde'}
+                                ? t.products.form.barcodeScanned
+                                : t.products.form.barcodeHint}
                         </p>
                         {errors.barcode && <span className="text-xs text-red-400">{errors.barcode}</span>}
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Catégorie</span>
+                        <span>{t.products.form.category}</span>
                         <select
                             value={data.category_id}
                             onChange={(e) => setData('category_id', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         >
-                            <option value="">Sélectionner une catégorie</option>
+                            <option value="">{t.products.form.selectCategory}</option>
                             {filteredCategories.map((category) => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
@@ -214,14 +214,14 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>"Sous-catégorie"</span>
+                        <span>{t.products.form.subcategory}</span>
                         <select
                             value={data.subcategory_id}
                             onChange={(e) => setData('subcategory_id', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             disabled={!data.category_id}
                         >
-                            <option value="">Sélectionner une sous-catégorie</option>
+                            <option value="">{t.products.form.selectSubcategory}</option>
                             {filteredSubcategories.map((subcategory) => (
                                 <option key={subcategory.id} value={subcategory.id}>
                                     {subcategory.name}
@@ -232,7 +232,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>"Marque"</span>
+                        <span>{t.products.form.brand}</span>
                         <input
                             value={data.brand}
                             onChange={(e) => setData('brand', e.target.value)}
@@ -243,7 +243,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>"Unité"</span>
+                        <span>{t.products.form.unit}</span>
                         <select
                             value={data.unit}
                             onChange={(e) => setData('unit', e.target.value)}
@@ -262,7 +262,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Prix d'achat *</span>
+                        <span>{t.products.form.costPrice} *</span>
                         <input
                             type="number"
                             step="0.01"
@@ -289,7 +289,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
 
                     {/* Indicateur de marge bénéficiaire */}
                     <div className="space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Marge bénéficiaire</span>
+                        <span>{t.products.form.profitMargin}</span>
                         <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
                             profitMargin.percentage >= 20 
                                 ? 'border-green-500/30 bg-green-500/10' 
@@ -309,11 +309,11 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                     {profitMargin.amount.toFixed(2)} FCFA ({profitMargin.percentage.toFixed(1)}%)
                                 </p>
                                 <p className="text-xs text-slate-400">
-                                    {profitMargin.percentage >= 20 
-                                        ? 'Bonne marge' 
-                                        : profitMargin.percentage >= 10 
-                                            ? 'Marge moyenne' 
-                                            : 'Marge faible - Vérifiez vos prix'}
+                                    {profitMargin.percentage >= 20
+                                        ? t.products.form.goodMargin
+                                        : profitMargin.percentage >= 10
+                                            ? t.products.form.averageMargin
+                                            : t.products.form.lowMargin}
                                 </p>
                             </div>
                         </div>
@@ -334,7 +334,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>"Stock"</span>
+                        <span>{t.products.form.stock}</span>
                         <input
                             type="number"
                             value={data.stock_quantity}
@@ -345,7 +345,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Alerte stock minimum</span>
+                        <span>{t.products.form.minStockAlert}</span>
                         <input
                             type="number"
                             value={data.min_stock_alert}
@@ -367,7 +367,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Image</span>
+                        <span>{t.products.form.image}</span>
                         <input
                             type="file"
                             accept="image/*"
@@ -376,15 +376,15 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         />
                         {imagePreview && (
                             <div className="mt-2">
-                                <img 
-                                    src={imagePreview} 
-                                    alt="Aperçu" 
+                                <img
+                                    src={imagePreview}
+                                    alt={t.products.form.preview}
                                     className="h-32 w-32 rounded-lg object-cover border border-white/15"
                                 />
                             </div>
                         )}
                         <p className="text-xs text-slate-400">
-                            Formats acceptés: JPG, PNG, GIF (max 2 Mo)
+                            {t.products.form.imageFormats}
                         </p>
                         {errors.image && <span className="text-xs text-red-400">{errors.image}</span>}
                     </label>
@@ -396,7 +396,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('track_stock', e.target.checked)}
                             className="rounded border-white/15 bg-slate-900/70"
                         />
-                        <span>Suivre le stock</span>
+                        <span>{t.products.form.trackStock}</span>
                     </label>
                 </div>
 
@@ -412,7 +412,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         disabled={processing}
                         className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
                     >
-                        {processing ? 'Enregistrement...' : 'Enregistrer'}
+                        {processing ? t.common.actions.saving : t.common.actions.save}
                     </button>
                 </div>
             </form>
