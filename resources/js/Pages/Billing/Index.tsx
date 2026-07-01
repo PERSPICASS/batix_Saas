@@ -70,15 +70,15 @@ function methodLabel(method: string, correspondent: string | null) {
     return method?.replace(/_/g, ' ') ?? '—';
 }
 
-function depositStatusBadge(status: string) {
+function depositStatusBadge(status: string, t: any) {
     const map: Record<string, { variant: 'success' | 'danger' | 'warning' | 'info' | 'default'; label: string }> = {
-        COMPLETED:         { variant: 'success',  label: 'Complété' },
-        ACCEPTED:          { variant: 'info',     label: 'Accepté' },
-        INITIATED:         { variant: 'warning',  label: 'Initié' },
-        SUBMITTED:         { variant: 'warning',  label: 'Soumis' },
-        FAILED:            { variant: 'danger',   label: 'Échoué' },
-        REJECTED:          { variant: 'danger',   label: 'Rejeté' },
-        DUPLICATE_IGNORED: { variant: 'default',  label: 'Doublon' },
+        COMPLETED:         { variant: 'success',  label: t.billing.status.completed },
+        ACCEPTED:          { variant: 'info',     label: t.billing.status.accepted },
+        INITIATED:         { variant: 'warning',  label: t.billing.status.initiated },
+        SUBMITTED:         { variant: 'warning',  label: t.billing.status.submitted },
+        FAILED:            { variant: 'danger',   label: t.billing.status.failed },
+        REJECTED:          { variant: 'danger',   label: t.billing.status.rejected },
+        DUPLICATE_IGNORED: { variant: 'default',  label: t.billing.status.duplicate },
     };
     const s = map[status] ?? { variant: 'default' as const, label: status };
     return <TableBadge variant={s.variant}>{s.label}</TableBadge>;
@@ -86,7 +86,7 @@ function depositStatusBadge(status: string) {
 
 /* ── Invoice modal ──────────────────────────────────────────────────────── */
 
-function InvoiceModal({ inv, codeUser, onClose }: { inv: Invoice; codeUser: string; onClose: () => void }) {
+function InvoiceModal({ inv, codeUser, onClose, t }: { inv: Invoice; codeUser: string; onClose: () => void; t: any }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -94,7 +94,7 @@ function InvoiceModal({ inv, codeUser, onClose }: { inv: Invoice; codeUser: stri
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                     <div>
-                        <p className="text-xs font-semibold uppercase tracking-widest text-amber-200">Facture</p>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-amber-200">{t.billing.invoice.title}</p>
                         <h3 className="text-lg font-bold text-white">{inv.invoice_number}</h3>
                     </div>
                     <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ function InvoiceModal({ inv, codeUser, onClose }: { inv: Invoice; codeUser: stri
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition"
                             >
-                                <Download className="size-3.5" /> Télécharger
+                                <Download className="size-3.5" /> {t.billing.invoice.download}
                             </a>
                         )}
                         <button
@@ -121,19 +121,19 @@ function InvoiceModal({ inv, codeUser, onClose }: { inv: Invoice; codeUser: stri
                 {/* Body */}
                 <div className="grid grid-cols-2 gap-px bg-white/5 overflow-hidden rounded-b-xl">
                     {[
-                        ['N° Facture',       inv.invoice_number],
-                        ['Plan',             inv.plan_name],
-                        ['Cycle',            cycleLabel(inv.billing_cycle)],
-                        ['Montant',          fmt(inv.amount, inv.currency)],
-                        ['Méthode',          methodLabel(inv.payment_method, inv.correspondent)],
-                        inv.msisdn ? ['Numéro', '+' + inv.msisdn] : null,
-                        ['Émise le',         inv.issued_at ?? '—'],
-                        ['Payée le',         inv.paid_at ?? '—'],
-                        inv.expires_at ? ["Valide jusqu'au", inv.expires_at] : null,
+                        [t.billing.invoice.number,       inv.invoice_number],
+                        [t.billing.invoice.plan,         inv.plan_name],
+                        [t.billing.invoice.cycle,        cycleLabel(inv.billing_cycle)],
+                        [t.billing.invoice.amount,       fmt(inv.amount, inv.currency)],
+                        [t.billing.invoice.method,       methodLabel(inv.payment_method, inv.correspondent)],
+                        inv.msisdn ? [t.billing.invoicesList.columns.msisdn, '+' + inv.msisdn] : null,
+                        [t.billing.invoice.issuedAt,     inv.issued_at ?? '—'],
+                        [t.billing.invoice.paidAt,       inv.paid_at ?? '—'],
+                        inv.expires_at ? [t.billing.invoice.expiresAt, inv.expires_at] : null,
                     ].filter(Boolean).map((row) => { const [label, value] = row as [string, string]; return (
                         <div key={label} className="bg-slate-900 px-5 py-3.5">
                             <p className="text-xs text-slate-500 mb-0.5">{label}</p>
-                            <p className={`text-sm font-medium text-white ${label === 'Montant' ? 'text-amber-300 font-bold' : ''}`}>{value}</p>
+                            <p className={`text-sm font-medium text-white ${label === t.billing.invoice.amount ? 'text-amber-300 font-bold' : ''}`}>{value}</p>
                         </div>
                     ); })}
                 </div>
@@ -158,14 +158,14 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
     const invoiceColumns = [
         {
             key: 'invoice_number',
-            label: 'N° Facture',
+            label: t.billing.invoicesList.columns.number,
             render: (inv: Invoice) => (
                 <span className="font-medium text-amber-300">{inv.invoice_number}</span>
             ),
         },
         {
             key: 'plan_name',
-            label: 'Plan',
+            label: t.billing.invoicesList.columns.plan,
             render: (inv: Invoice) => (
                 <div>
                     <p className="text-slate-200">{inv.plan_name}</p>
@@ -175,28 +175,28 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
         },
         {
             key: 'payment_method',
-            label: 'Méthode',
+            label: t.billing.invoicesList.columns.method,
             render: (inv: Invoice) => (
                 <span className="text-slate-300">{methodLabel(inv.payment_method, inv.correspondent)}</span>
             ),
         },
         {
             key: 'issued_at',
-            label: 'Date',
+            label: t.billing.invoicesList.columns.date,
             render: (inv: Invoice) => <span className="text-slate-400">{inv.issued_at ?? '—'}</span>,
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.billing.invoicesList.columns.status,
             render: (inv: Invoice) => (
                 <TableBadge variant={inv.status === 'paid' ? 'success' : 'danger'}>
-                    {inv.status === 'paid' ? 'Payée' : 'Impayée'}
+                    {inv.status === 'paid' ? t.billing.invoicesList.paid : t.billing.invoicesList.unpaid}
                 </TableBadge>
             ),
         },
         {
             key: 'amount',
-            label: 'Montant',
+            label: t.billing.invoicesList.columns.amount,
             align: 'right' as const,
             render: (inv: Invoice) => (
                 <span className="font-semibold text-white">{fmt(inv.amount, inv.currency)}</span>
@@ -209,7 +209,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
             render: (inv: Invoice) => (
                 <TableActions>
                     <TableActionButton onClick={() => setSelectedInvoice(inv)}>
-                        <Receipt className="size-3.5" /> Voir
+                        <Receipt className="size-3.5" /> {t.billing.invoicesList.view}
                     </TableActionButton>
                     {inv.status === 'paid' && (
                         <a
@@ -218,7 +218,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-white/10 hover:text-white transition"
                         >
-                            <Download className="size-3.5" /> PDF
+                            <Download className="size-3.5" /> {t.billing.invoicesList.download}
                         </a>
                     )}
                 </TableActions>
@@ -230,12 +230,12 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
     const depositColumns = [
         {
             key: 'created_at',
-            label: 'Date',
+            label: t.billing.invoicesList.columns.date,
             render: (d: Deposit) => <span className="text-slate-400">{d.created_at}</span>,
         },
         {
             key: 'plan_name',
-            label: 'Plan',
+            label: t.billing.invoicesList.columns.plan,
             render: (d: Deposit) => (
                 <div>
                     <p className="text-slate-200">{d.plan_name}</p>
@@ -245,19 +245,19 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
         },
         {
             key: 'correspondent',
-            label: 'Opérateur',
+            label: t.billing.invoicesList.columns.operator,
             render: (d: Deposit) => (
                 <span className="text-slate-300">{d.correspondent.replace(/_/g, ' ')}</span>
             ),
         },
         {
             key: 'msisdn',
-            label: 'Numéro',
+            label: t.billing.invoicesList.columns.msisdn,
             render: (d: Deposit) => <span className="text-slate-400">+{d.msisdn}</span>,
         },
         {
             key: 'amount',
-            label: 'Montant',
+            label: t.billing.invoicesList.columns.amount,
             align: 'right' as const,
             render: (d: Deposit) => (
                 <span className="font-semibold text-white">{fmt(d.amount, d.currency)}</span>
@@ -265,9 +265,9 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.billing.invoicesList.columns.status,
             align: 'right' as const,
-            render: (d: Deposit) => depositStatusBadge(d.status),
+            render: (d: Deposit) => depositStatusBadge(d.status, t),
         },
     ];
 
@@ -280,15 +280,15 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                 {/* Stats */}
                 <div className="grid gap-4 sm:grid-cols-3">
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Total factures</p>
+                        <p className="text-sm text-slate-400">{t.billing.stats.totalInvoices}</p>
                         <p className="mt-1 text-2xl font-bold text-white">{invoices.length}</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Montant total payé</p>
+                        <p className="text-sm text-slate-400">{t.billing.stats.totalPaid}</p>
                         <p className="mt-1 text-2xl font-bold text-green-400">{fmt(totalPaid, 'XOF')}</p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Paiements mobile</p>
+                        <p className="text-sm text-slate-400">{t.billing.stats.mobilePayments}</p>
                         <p className="mt-1 text-2xl font-bold text-blue-400">{deposits.length}</p>
                     </div>
                 </div>
@@ -308,7 +308,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                                     <Crown className="size-5 text-amber-300" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-400">Plan actuel</p>
+                                    <p className="text-xs text-slate-400">{t.billing.subscription.current}</p>
                                     <p className="text-lg font-bold text-white">{currentSubscription.plan_name ?? '—'}</p>
                                     <p className="text-xs text-slate-500">{cycleLabel(currentSubscription.billing_cycle)}</p>
                                 </div>
@@ -317,7 +317,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                             <div className="flex flex-wrap items-center gap-4">
                                 {currentSubscription.expires_at && (
                                     <div className="text-right">
-                                        <p className="text-xs text-slate-400">Expire le</p>
+                                        <p className="text-xs text-slate-400">{t.billing.subscription.expires}</p>
                                         <p className="font-semibold text-white">{currentSubscription.expires_at}</p>
                                         {currentSubscription.days_left !== null && currentSubscription.days_left <= 7 && (
                                             <p className={`flex items-center gap-1 text-xs font-medium ${
@@ -325,10 +325,10 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                                             }`}>
                                                 <AlertTriangle className="size-3" />
                                                 {currentSubscription.days_left <= 0
-                                                    ? 'Expiré'
+                                                    ? t.billing.subscription.expired
                                                     : currentSubscription.days_left === 1
-                                                    ? 'Expire demain'
-                                                    : `${currentSubscription.days_left} jours restants`}
+                                                    ? t.billing.subscription.expiresTomorrow
+                                                    : t.billing.subscription.daysLeft(currentSubscription.days_left)}
                                             </p>
                                         )}
                                     </div>
@@ -341,14 +341,14 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                                     className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
                                 >
                                     <RefreshCw className="size-4" />
-                                    Renouveler
+                                    {t.billing.subscription.renew}
                                 </Link>
 
                                 <Link
                                     href="/plans"
                                     className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10"
                                 >
-                                    Changer de plan
+                                    {t.billing.subscription.changePlan}
                                 </Link>
                             </div>
                         </div>
@@ -356,13 +356,13 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                 ) : (
                     <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center">
                         <Crown className="mx-auto mb-3 size-8 text-slate-500" />
-                        <p className="font-medium text-slate-300">Aucun abonnement actif</p>
-                        <p className="mt-1 text-sm text-slate-500">Choisissez un plan pour débloquer toutes les fonctionnalités.</p>
+                        <p className="font-medium text-slate-300">{t.billing.subscription.noSubscription}</p>
+                        <p className="mt-1 text-sm text-slate-500">{t.billing.subscription.noSubscriptionText}</p>
                         <Link
                             href="/plans"
                             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-amber-200"
                         >
-                            Voir les plans
+                            {t.billing.subscription.seePlans}
                         </Link>
                     </div>
                 )}
@@ -374,14 +374,14 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                         onClick={() => setTab('invoices')}
                         className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'invoices' ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
                     >
-                        <Receipt className="size-4" /> Factures
+                        <Receipt className="size-4" /> {t.billing.invoicesList.tabs.invoices}
                     </button>
                     <button
                         type="button"
                         onClick={() => setTab('deposits')}
                         className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${tab === 'deposits' ? 'bg-amber-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
                     >
-                        <CreditCard className="size-4" /> Paiements
+                        <CreditCard className="size-4" /> {t.billing.invoicesList.tabs.deposits}
                     </button>
                 </div>
 
@@ -390,7 +390,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                     <Table
                         columns={invoiceColumns}
                         data={invoices}
-                        emptyMessage="Aucune facture pour l'instant."
+                        emptyMessage={t.billing.invoicesList.empty}
                     />
                 )}
 
@@ -398,7 +398,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                     <Table
                         columns={depositColumns}
                         data={deposits}
-                        emptyMessage="Aucun paiement enregistré."
+                        emptyMessage={t.billing.deposits.emptyMessage}
                     />
                 )}
 
@@ -406,7 +406,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
 
             {/* Modal facture */}
             {selectedInvoice && (
-                <InvoiceModal inv={selectedInvoice} codeUser={codeUser} onClose={() => setSelectedInvoice(null)} />
+                <InvoiceModal inv={selectedInvoice} codeUser={codeUser} onClose={() => setSelectedInvoice(null)} t={t} />
             )}
         </AuthenticatedLayout>
     );

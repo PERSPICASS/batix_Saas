@@ -115,13 +115,7 @@ interface AnalyticsProps {
     activeShopId: number | null;
 }
 
-const periods = [
-    { value: 'today', label: "Aujourd'hui" },
-    { value: 'week', label: 'Cette semaine' },
-    { value: 'month', label: 'Ce mois' },
-    { value: 'quarter', label: 'Ce trimestre' },
-    { value: 'year', label: 'Cette année' },
-];
+// Periods array defined in component to use i18n context
 
 function formatNumber(value: number): string {
     if (value >= 1000000) {
@@ -169,20 +163,17 @@ export default function Index({
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const yearOptions = Array.from({ length: 6 }, (_, i) => currentYear - (5 - i));
-    const monthOptions = [
-        { value: 1, label: 'Janvier' },
-        { value: 2, label: 'Février' },
-        { value: 3, label: 'Mars' },
-        { value: 4, label: 'Avril' },
-        { value: 5, label: 'Mai' },
-        { value: 6, label: 'Juin' },
-        { value: 7, label: 'Juillet' },
-        { value: 8, label: 'Août' },
-        { value: 9, label: 'Septembre' },
-        { value: 10, label: 'Octobre' },
-        { value: 11, label: 'Novembre' },
-        { value: 12, label: 'Décembre' },
+
+    // Month names for comparison selectors
+    const monthNames = [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
     ];
+
+    const monthOptions = monthNames.map((label, index) => ({
+        value: index + 1,
+        label,
+    }));
 
     const [month1, setMonth1] = useState(currentMonth);
     const [monthYear1, setMonthYear1] = useState(currentYear);
@@ -221,11 +212,20 @@ export default function Index({
     // Calculer le max pour le graphique
     const maxChartValue = Math.max(...salesChart.map(item => item.value), 1);
 
+    // Periods array for selector
+    const periods = [
+        { value: 'today', label: t.analytics.periods.today },
+        { value: 'week', label: t.analytics.periods.week },
+        { value: 'month', label: t.analytics.periods.month },
+        { value: 'quarter', label: t.analytics.periods.quarter },
+        { value: 'year', label: t.analytics.periods.year },
+    ];
+
     return (
         <AuthenticatedLayout
             header={<h1 className="text-xl font-semibold text-white">{t.analytics.title}</h1>}
         >
-            <Head title="Analytics" />
+            <Head title={t.analytics.title} />
 
             <div className="space-y-6">
                 {/* Sélecteur de période */}
@@ -247,35 +247,35 @@ export default function Index({
                 {/* KPIs */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <KPICard
-                        label="Chiffre d'affaires"
+                        label={t.analytics.kpis.revenue}
                         value={formatCurrency(kpis.revenue.value, currencySymbol)}
                         growth={kpis.revenue.growth}
                         icon={Wallet}
                         color="amber"
                     />
                     <KPICard
-                        label="Nombre de ventes"
+                        label={t.analytics.kpis.salesCount}
                         value={kpis.salesCount.value.toString()}
                         growth={kpis.salesCount.growth}
                         icon={ShoppingCart}
                         color="emerald"
                     />
                     <KPICard
-                        label="Panier moyen"
+                        label={t.analytics.kpis.avgBasket}
                         value={formatCurrency(kpis.avgBasket.value, currencySymbol)}
                         growth={kpis.avgBasket.growth}
                         icon={TrendingUp}
                         color="blue"
                     />
                     <KPICard
-                        label="Taux de marge"
+                        label={t.analytics.kpis.marginRate}
                         value={`${kpis.marginRate.value}%`}
                         subValue={kpis.marginRate.margin ? formatCurrency(kpis.marginRate.margin, currencySymbol) : undefined}
                         icon={Percent}
                         color="purple"
                     />
                     <KPICard
-                        label="Nouveaux clients"
+                        label={t.analytics.kpis.newCustomers}
                         value={kpis.newCustomers.value.toString()}
                         icon={Users}
                         color="rose"
@@ -289,7 +289,7 @@ export default function Index({
                             <BarChart3 className="size-5 text-amber-300" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-white">Évolution des ventes</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.salesEvolution}</h2>
                             <p className="text-sm text-slate-400">
                                 Total: {formatCurrency(salesChart.reduce((sum, item) => sum + item.value, 0), currencySymbol)}
                             </p>
@@ -315,7 +315,7 @@ export default function Index({
                 {/* Section Comparaison */}
                 <div className="space-y-4">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="text-lg font-semibold text-white mb-4">Comparaison Années/Mois</h2>
+                        <h2 className="text-lg font-semibold text-white mb-4">{t.analytics.sections.comparison}</h2>
 
                         {/* Contrôles */}
                         <div className="space-y-4 mb-6">
@@ -329,7 +329,7 @@ export default function Index({
                                             : 'bg-white/10 text-slate-300 hover:bg-white/20'
                                     }`}
                                 >
-                                    Années
+                                    {t.analytics.comparison.year}
                                 </button>
                                 <button
                                     onClick={() => { setCompareMode('month'); }}
@@ -339,7 +339,7 @@ export default function Index({
                                             : 'bg-white/10 text-slate-300 hover:bg-white/20'
                                     }`}
                                 >
-                                    Mois
+                                    {t.analytics.comparison.month}
                                 </button>
                             </div>
 
@@ -347,7 +347,7 @@ export default function Index({
                             {compareMode === 'year' && (
                                 <div className="flex gap-4 items-end">
                                     <div className="flex-1">
-                                        <label className="block text-xs text-slate-400 mb-1">Année 1</label>
+                                        <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year1Label}</label>
                                         <select
                                             value={year1}
                                             onChange={(e) => setYear1(parseInt(e.target.value))}
@@ -359,7 +359,7 @@ export default function Index({
                                         </select>
                                     </div>
                                     <div className="flex-1">
-                                        <label className="block text-xs text-slate-400 mb-1">Année 2</label>
+                                        <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year2Label}</label>
                                         <select
                                             value={year2}
                                             onChange={(e) => setYear2(parseInt(e.target.value))}
@@ -374,7 +374,7 @@ export default function Index({
                                         onClick={handleCompareChange}
                                         className="px-4 py-2 rounded-lg bg-amber-300 text-slate-900 text-sm font-medium hover:bg-amber-200 transition"
                                     >
-                                        Comparer
+                                        {t.analytics.comparison.compareButton}
                                     </button>
                                 </div>
                             )}
@@ -383,7 +383,7 @@ export default function Index({
                                 <div className="space-y-4">
                                     <div className="grid gap-4 sm:grid-cols-4">
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Mois 1</label>
+                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.month1Label}</label>
                                             <select
                                                 value={month1}
                                                 onChange={(e) => setMonth1(parseInt(e.target.value))}
@@ -395,7 +395,7 @@ export default function Index({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Année 1</label>
+                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year1Label}</label>
                                             <select
                                                 value={monthYear1}
                                                 onChange={(e) => setMonthYear1(parseInt(e.target.value))}
@@ -407,7 +407,7 @@ export default function Index({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Mois 2</label>
+                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.month2Label}</label>
                                             <select
                                                 value={month2}
                                                 onChange={(e) => setMonth2(parseInt(e.target.value))}
@@ -419,7 +419,7 @@ export default function Index({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">Année 2</label>
+                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year2Label}</label>
                                             <select
                                                 value={monthYear2}
                                                 onChange={(e) => setMonthYear2(parseInt(e.target.value))}
@@ -435,7 +435,7 @@ export default function Index({
                                         onClick={handleCompareChange}
                                         className="px-4 py-2 rounded-lg bg-amber-300 text-slate-900 text-sm font-medium hover:bg-amber-200 transition"
                                     >
-                                        Comparer
+                                        {t.analytics.comparison.compareButton}
                                     </button>
                                 </div>
                             )}
@@ -445,7 +445,7 @@ export default function Index({
                         <div className="grid gap-4 sm:grid-cols-3 mb-6">
                             {/* CA */}
                             <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
-                                <p className="text-xs text-slate-400 mb-2">Chiffre d'affaires</p>
+                                <p className="text-xs text-slate-400 mb-2">{t.analytics.comparison.revenueLabel}</p>
                                 <div className="space-y-2">
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label1}</span>
@@ -467,7 +467,7 @@ export default function Index({
 
                             {/* Ventes */}
                             <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
-                                <p className="text-xs text-slate-400 mb-2">Nombre de ventes</p>
+                                <p className="text-xs text-slate-400 mb-2">{t.analytics.comparison.salesLabel}</p>
                                 <div className="space-y-2">
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label1}</span>
@@ -489,7 +489,7 @@ export default function Index({
 
                             {/* Bénéfice */}
                             <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
-                                <p className="text-xs text-slate-400 mb-2">Bénéfice brut</p>
+                                <p className="text-xs text-slate-400 mb-2">{t.analytics.comparison.profitLabel}</p>
                                 <div className="space-y-2">
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label1}</span>
@@ -512,7 +512,7 @@ export default function Index({
 
                         {/* Graphique recharts */}
                         <div className="mt-6">
-                            <p className="text-sm text-slate-400 mb-4">Chiffre d'affaires par {compareMode === 'year' ? 'mois' : 'jour'}</p>
+                            <p className="text-sm text-slate-400 mb-4">{t.analytics.comparison.revenueLabel} {t.analytics.comparison.byMonthOrDay(compareMode)}</p>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={comparisonData.chart} barGap={4} barSize={14}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -560,11 +560,11 @@ export default function Index({
                             <div className="rounded-lg bg-emerald-400/15 p-2">
                                 <Package className="size-5 text-emerald-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">Top 10 Produits</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.topProducts}</h2>
                         </div>
-                        
+
                         {topProducts.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">Aucune vente sur cette période</p>
+                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noSales}</p>
                         ) : (
                             <div className="space-y-3">
                                 {topProducts.map((product, index) => (
@@ -594,11 +594,11 @@ export default function Index({
                             <div className="rounded-lg bg-purple-400/15 p-2">
                                 <BarChart3 className="size-5 text-purple-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">Ventes par catégorie</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.byCategory}</h2>
                         </div>
-                        
+
                         {salesByCategory.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">Aucune vente sur cette période</p>
+                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noSales}</p>
                         ) : (
                             <div className="space-y-3">
                                 {salesByCategory.map((category, index) => (
@@ -627,11 +627,11 @@ export default function Index({
                             <div className="rounded-lg bg-blue-400/15 p-2">
                                 <Users className="size-5 text-blue-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">Meilleurs clients</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.topCustomers}</h2>
                         </div>
-                        
+
                         {topCustomers.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">Aucun client identifié sur cette période</p>
+                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noCustomers}</p>
                         ) : (
                             <div className="space-y-3">
                                 {topCustomers.slice(0, 5).map((customer, index) => (
@@ -660,11 +660,11 @@ export default function Index({
                             <div className="rounded-lg bg-rose-400/15 p-2">
                                 <CreditCard className="size-5 text-rose-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">Méthodes de paiement</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.paymentMethods}</h2>
                         </div>
-                        
+
                         {paymentMethods.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">Aucune vente sur cette période</p>
+                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noSales}</p>
                         ) : (
                             <div className="space-y-3">
                                 {paymentMethods.map((method, index) => (
@@ -695,7 +695,7 @@ export default function Index({
                             <div className="rounded-lg bg-cyan-400/15 p-2">
                                 <Store className="size-5 text-cyan-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">Performance par boutique</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.shopPerformance}</h2>
                         </div>
                         
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -773,7 +773,7 @@ function KPICard({
             {growth !== undefined && (
                 <p className={`mt-1 inline-flex items-center gap-1 text-xs ${growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {growth >= 0 ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
-                    {growth >= 0 ? '+' : ''}{growth}% vs période préc.
+                    {growth >= 0 ? '+' : ''}{growth}%
                 </p>
             )}
         </article>

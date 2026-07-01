@@ -111,7 +111,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                     <div className="rounded-2xl border border-red-500/20 bg-red-900/10 p-6">
                         <div className="flex items-center gap-3">
                             <AlertCircle className="h-6 w-6 text-red-400" />
-                            <p className="text-red-200">{error || 'Aucune boutique associée'}</p>
+                            <p className="text-red-200">{error || t.settings.error}</p>
                         </div>
                     </div>
                 </div>
@@ -133,12 +133,10 @@ export default function Settings({ shop, currencies, error }: Props) {
                             </div>
                             <div className="flex-1">
                                 <h3 className="font-semibold text-blue-200">
-                                    Configuration globale du compte
+                                    {t.settings.globalConfig.title}
                                 </h3>
                                 <p className="mt-1 text-sm text-blue-300">
-                                    En tant que super administrateur, les modifications que vous apportez ici 
-                                    seront appliquées à <strong>toutes vos boutiques</strong>. 
-                                    Cela inclut la devise, les taux de taxe, les préfixes de facture, etc.
+                                    {t.settings.globalConfig.description}
                                 </p>
                             </div>
                         </div>
@@ -156,7 +154,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-slate-200">
-                                    Nom de la boutique *
+                                    {t.settings.fields.name} {t.settings.required}
                                 </label>
                                 <input
                                     type="text"
@@ -171,7 +169,7 @@ export default function Settings({ shop, currencies, error }: Props) {
 
                             <div>
                                 <label htmlFor="description" className="block text-sm font-medium text-slate-200">
-                                    Description
+                                    {t.settings.fields.description}
                                 </label>
                                 <textarea
                                     id="description"
@@ -187,7 +185,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                 <label className="block text-sm font-medium text-slate-200 mb-2">
                                     <div className="flex items-center gap-2">
                                         <ImageIcon className="size-4" />
-                                        Logo (pour factures et tickets)
+                                        {t.settings.fields.logo}
                                     </div>
                                 </label>
                                 
@@ -215,9 +213,9 @@ export default function Settings({ shop, currencies, error }: Props) {
                                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                                 <Upload className="w-8 h-8 mb-2 text-slate-400" />
                                                 <p className="mb-1 text-sm text-slate-300">
-                                                    <span className="font-semibold">Cliquez pour uploader</span>
+                                                    <span className="font-semibold">{t.settings.hints.clickToUpload}</span>
                                                 </p>
-                                                <p className="text-xs text-slate-400">PNG, JPG, GIF ou SVG (max. 2MB)</p>
+                                                <p className="text-xs text-slate-400">{t.settings.hints.logo}</p>
                                             </div>
                                             <input
                                                 id="logo-upload"
@@ -231,7 +229,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                 )}
                                 {errors.logo && <p className="mt-1 text-sm text-red-400">{errors.logo}</p>}
                                 <p className="mt-1 text-xs text-slate-400">
-                                    Le logo sera affiché sur vos factures et tickets de vente
+                                    {t.settings.hints.logoDescription}
                                 </p>
                             </div>
                         </div>
@@ -241,13 +239,13 @@ export default function Settings({ shop, currencies, error }: Props) {
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="mb-6 flex items-center gap-2">
                             <Phone className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">Coordonnées</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.contact}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label htmlFor="phone" className="block text-sm font-medium text-slate-200">
-                                    Téléphone
+                                    {t.settings.fields.phone}
                                 </label>
                                 <input
                                     type="tel"
@@ -261,7 +259,7 @@ export default function Settings({ shop, currencies, error }: Props) {
 
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-slate-200">
-                                    Email
+                                    {t.settings.fields.email}
                                 </label>
                                 <input
                                     type="email"
@@ -275,7 +273,7 @@ export default function Settings({ shop, currencies, error }: Props) {
 
                             <div className="md:col-span-2">
                                 <label htmlFor="website" className="block text-sm font-medium text-slate-200">
-                                    Site web
+                                    {t.settings.fields.website}
                                 </label>
                                 <input
                                     type="url"
@@ -294,13 +292,13 @@ export default function Settings({ shop, currencies, error }: Props) {
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="mb-6 flex items-center gap-2">
                             <MapPin className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">Adresse</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.address}</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="address" className="block text-sm font-medium text-slate-200">
-                                    Adresse
+                                    {t.settings.fields.address}
                                 </label>
                                 <input
                                     type="text"
@@ -315,7 +313,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label htmlFor="city" className="block text-sm font-medium text-slate-200">
-                                        Ville
+                                        {t.settings.fields.city}
                                     </label>
                                     <input
                                         type="text"
@@ -329,7 +327,7 @@ export default function Settings({ shop, currencies, error }: Props) {
 
                                 <div>
                                     <label htmlFor="postal_code" className="block text-sm font-medium text-slate-200">
-                                        Code postal
+                                        {t.settings.fields.postalCode}
                                     </label>
                                     <input
                                         type="text"
@@ -348,20 +346,20 @@ export default function Settings({ shop, currencies, error }: Props) {
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="mb-6 flex items-center gap-2">
                             <DollarSign className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">Fiscalité et devise</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.fiscal}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label htmlFor="tax_id" className="block text-sm font-medium text-slate-200">
-                                    Numéro fiscal (ICE/NIF)
+                                    {t.settings.fields.taxId}
                                 </label>
                                 <input
                                     type="text"
                                     id="tax_id"
                                     value={data.tax_id}
                                     onChange={(e) => setData('tax_id', e.target.value)}
-                                    placeholder="Ex: 002345678000023"
+                                    placeholder={t.settings.hints.taxIdPlaceholder}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
                                 {errors.tax_id && <p className="mt-1 text-sm text-red-400">{errors.tax_id}</p>}
@@ -369,7 +367,7 @@ export default function Settings({ shop, currencies, error }: Props) {
 
                             <div>
                                 <label htmlFor="currency" className="block text-sm font-medium text-slate-200">
-                                    Devise *
+                                    {t.settings.fields.currency} {t.settings.required}
                                 </label>
                                 <select
                                     id="currency"
@@ -389,7 +387,7 @@ export default function Settings({ shop, currencies, error }: Props) {
 
                             <div className="md:col-span-2">
                                 <label htmlFor="default_tax_rate" className="block text-sm font-medium text-slate-200">
-                                    Taux de TVA par défaut (%)
+                                    {t.settings.fields.defaultTaxRate}
                                 </label>
                                 <div className="relative mt-1">
                                     <input
@@ -422,7 +420,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="invoice_prefix" className="block text-sm font-medium text-slate-200">
-                                    Préfixe des factures
+                                    {t.settings.fields.invoicePrefix}
                                 </label>
                                 <div className="relative mt-1">
                                     <input
@@ -430,7 +428,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         id="invoice_prefix"
                                         value={data.invoice_prefix}
                                         onChange={(e) => setData('invoice_prefix', e.target.value)}
-                                        placeholder="Ex: INV, FAC"
+                                        placeholder="INV, FAC"
                                         maxLength={10}
                                         className="block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 pl-10 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
@@ -439,21 +437,21 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     </div>
                                 </div>
                                 <p className="mt-1 text-xs text-slate-400">
-                                    Les factures seront numérotées: {data.invoice_prefix || 'INV'}-0001, {data.invoice_prefix || 'INV'}-0002, etc.
+                                    {t.settings.numbersFormat(data.invoice_prefix)}
                                 </p>
                                 {errors.invoice_prefix && <p className="mt-1 text-sm text-red-400">{errors.invoice_prefix}</p>}
                             </div>
 
                             <div>
                                 <label htmlFor="invoice_footer" className="block text-sm font-medium text-slate-200">
-                                    Pied de page des factures
+                                    {t.settings.fields.invoiceFooter}
                                 </label>
                                 <textarea
                                     id="invoice_footer"
                                     value={data.invoice_footer}
                                     onChange={(e) => setData('invoice_footer', e.target.value)}
                                     rows={3}
-                                    placeholder="Ex: Merci de votre confiance. Conditions de paiement: 30 jours"
+                                    placeholder={t.settings.hints.invoiceFooterPlaceholder}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
                                 {errors.invoice_footer && <p className="mt-1 text-sm text-red-400">{errors.invoice_footer}</p>}
