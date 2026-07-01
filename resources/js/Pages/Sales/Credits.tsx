@@ -83,6 +83,7 @@ interface PaymentModalProps {
 }
 
 function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
+    const { t } = useLocale();
     const [amount, setAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [notes, setNotes] = useState('');
@@ -96,11 +97,11 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
         e.preventDefault();
         const parsed = parseFloat(amount);
         if (!amount || isNaN(parsed) || parsed <= 0) {
-            setError('Veuillez saisir un montant valide.');
+            setError(t.credits.form.invalidAmount);
             return;
         }
         if (parsed > maxAmount) {
-            setError(`Le montant ne peut pas dépasser ${maxAmount.toLocaleString('fr-FR')} FCFA.`);
+            setError(t.credits.form.exceedsAmount(maxAmount));
             return;
         }
         setError('');
@@ -130,10 +131,10 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
                     <div>
-                        <h2 className="text-lg font-semibold text-white">Enregistrer un paiement</h2>
+                        <h2 className="text-lg font-semibold text-white">{t.credits.modals.paymentTitle}</h2>
                         <p className="text-sm text-slate-400 mt-0.5">
                             Ticket {sale.ticket_number} —{' '}
-                            {sale.customer?.name ?? <span className="italic">Client inconnu</span>}
+                            {sale.customer?.name ?? <span className="italic">{t.credits.modals.unknownCustomer}</span>}
                         </p>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
@@ -145,19 +146,19 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                     {/* Résumé */}
                     <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-800/60 p-4">
                         <div>
-                            <p className="text-xs text-slate-400">Total vente</p>
+                            <p className="text-xs text-slate-400">{t.credits.form.totalSale}</p>
                             <p className="font-semibold text-white">
                                 {Number(sale.total).toLocaleString('fr-FR')} FCFA
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs text-slate-400">Déjà payé</p>
+                            <p className="text-xs text-slate-400">{t.credits.form.alreadyPaid}</p>
                             <p className="font-semibold text-emerald-400">
                                 {Number(sale.amount_paid).toLocaleString('fr-FR')} FCFA
                             </p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-xs text-slate-400">Reste à payer</p>
+                            <p className="text-xs text-slate-400">{t.credits.form.remainingToPay}</p>
                             <p className="text-xl font-bold text-amber-400">
                                 {Number(sale.remaining_amount).toLocaleString('fr-FR')} FCFA
                             </p>
@@ -173,7 +174,7 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                     {/* Montant */}
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                            Montant du paiement (FCFA) <span className="text-red-400">*</span>
+                            {t.credits.form.paymentAmount} <span className="text-red-400">*</span>
                         </label>
                         <input
                             type="number"
@@ -191,32 +192,32 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                             onClick={() => setAmount(maxAmount.toString())}
                             className="mt-1 text-xs text-amber-400 hover:text-amber-300 transition-colors"
                         >
-                            Solder entièrement ({maxAmount.toLocaleString('fr-FR')} FCFA)
+                            {t.credits.buttons.payFully} ({maxAmount.toLocaleString('fr-FR')} FCFA)
                         </button>
                     </div>
 
                     {/* Mode de paiement */}
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                            Mode de paiement
+                            {t.credits.form.paymentMethod}
                         </label>
                         <select
                             value={paymentMethod}
                             onChange={(e) => setPaymentMethod(e.target.value)}
                             className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         >
-                            <option value="cash">Espèces</option>
-                            <option value="card">Carte bancaire</option>
-                            <option value="transfer">Virement</option>
-                            <option value="mobile">Mobile Money</option>
-                            <option value="check">Chèque</option>
+                            <option value="cash">{t.sales.payment.cash}</option>
+                            <option value="card">{t.sales.payment.card}</option>
+                            <option value="transfer">{t.sales.payment.transfer}</option>
+                            <option value="mobile">{t.sales.payment.mobile}</option>
+                            <option value="check">{t.sales.payment.check}</option>
                         </select>
                     </div>
 
                     {/* Nouvelle échéance (optionnelle) */}
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                            Nouvelle échéance <span className="text-slate-500">(optionnel)</span>
+                            {t.credits.form.newDueDate} <span className="text-slate-500">{t.credits.form.optional}</span>
                         </label>
                         <input
                             type="date"
@@ -230,13 +231,13 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                     {/* Notes */}
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                            Notes <span className="text-slate-500">(optionnel)</span>
+                            {t.credits.form.notes} <span className="text-slate-500">{t.credits.form.optional}</span>
                         </label>
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            placeholder="Observation sur ce paiement..."
+                            placeholder={t.credits.form.paymentObservation}
                             className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
                         />
                     </div>
@@ -248,7 +249,7 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                             onClick={onClose}
                             className="flex-1 rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
                         >
-                            Annuler
+                            {t.credits.buttons.cancel}
                         </button>
                         <button
                             type="submit"
@@ -260,7 +261,7 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                             ) : (
                                 <Check className="h-4 w-4" />
                             )}
-                            Valider
+                            {t.credits.buttons.validate}
                         </button>
                     </div>
                 </form>
@@ -278,6 +279,7 @@ interface DueDateModalProps {
 }
 
 function DueDateModal({ sale, onClose, routeFn }: DueDateModalProps) {
+    const { t } = useLocale();
     const [dueDate, setDueDate] = useState(sale.credit_due_date ?? '');
     const [submitting, setSubmitting] = useState(false);
 
@@ -298,7 +300,7 @@ function DueDateModal({ sale, onClose, routeFn }: DueDateModalProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
-                    <h2 className="text-lg font-semibold text-white">Modifier l'échéance</h2>
+                    <h2 className="text-lg font-semibold text-white">{t.credits.modals.dueDateTitle}</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
                         <X className="h-5 w-5" />
                     </button>
@@ -309,7 +311,7 @@ function DueDateModal({ sale, onClose, routeFn }: DueDateModalProps) {
                     </p>
                     <div>
                         <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                            Date d'échéance
+                            {t.credits.form.dueDate}
                         </label>
                         <input
                             type="date"
@@ -323,7 +325,7 @@ function DueDateModal({ sale, onClose, routeFn }: DueDateModalProps) {
                                 onClick={() => setDueDate('')}
                                 className="mt-1 text-xs text-slate-400 hover:text-slate-300 transition-colors"
                             >
-                                Supprimer l'échéance
+                                {t.credits.buttons.removeDueDate}
                             </button>
                         )}
                     </div>
@@ -333,7 +335,7 @@ function DueDateModal({ sale, onClose, routeFn }: DueDateModalProps) {
                             onClick={onClose}
                             className="flex-1 rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
                         >
-                            Annuler
+                            {t.credits.buttons.cancel}
                         </button>
                         <button
                             type="submit"
@@ -345,7 +347,7 @@ function DueDateModal({ sale, onClose, routeFn }: DueDateModalProps) {
                             ) : (
                                 <Check className="h-4 w-4" />
                             )}
-                            Enregistrer
+                            {t.credits.buttons.save}
                         </button>
                     </div>
                 </form>
@@ -394,10 +396,11 @@ function KpiCard({
 // ─── Due Badge ────────────────────────────────────────────────────────────────
 
 function DueBadge({ sale }: { sale: CreditSale }) {
+    const { t } = useLocale();
     if (!sale.credit_due_date) {
         return (
             <span className="inline-flex items-center gap-1 rounded-full bg-slate-700/60 px-2.5 py-1 text-xs text-slate-400">
-                <Clock className="h-3 w-3" /> Sans date
+                <Clock className="h-3 w-3" /> {t.credits.status.noDate}
             </span>
         );
     }
@@ -405,7 +408,7 @@ function DueBadge({ sale }: { sale: CreditSale }) {
         return (
             <span className="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
                 <AlertTriangle className="h-3 w-3" />
-                {sale.days_overdue != null ? `${sale.days_overdue}j de retard` : 'En retard'}
+                {sale.days_overdue != null ? `${sale.days_overdue}j de retard` : t.credits.status.overdue}
             </span>
         );
     }
@@ -413,7 +416,7 @@ function DueBadge({ sale }: { sale: CreditSale }) {
         return (
             <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/15 px-2.5 py-1 text-xs font-medium text-orange-400">
                 <Clock className="h-3 w-3" />
-                {sale.days_until_due != null ? `Dans ${sale.days_until_due}j` : 'Bientôt'}
+                {sale.days_until_due != null ? `Dans ${sale.days_until_due}j` : t.credits.status.soon}
             </span>
         );
     }
@@ -514,10 +517,10 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
     });
 
     const statusTabs = [
-        { value: '',         label: 'Tous',            count: safeKpis.total_count },
-        { value: 'overdue',  label: 'En retard',       count: safeKpis.overdue_count },
-        { value: 'due_soon', label: 'Échéance proche', count: safeKpis.due_soon_count },
-        { value: 'no_date',  label: 'Sans date',       count: safeKpis.no_date_count },
+        { value: '',         label: t.credits.tabs.all,     count: safeKpis.total_count },
+        { value: 'overdue',  label: t.credits.tabs.overdue, count: safeKpis.overdue_count },
+        { value: 'due_soon', label: t.credits.tabs.dueSoon, count: safeKpis.due_soon_count },
+        { value: 'no_date',  label: t.credits.tabs.noDate,  count: safeKpis.no_date_count },
     ];
 
     return (
@@ -525,41 +528,41 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
             header={
                 <div className="flex items-center gap-3">
                     <CreditCard className="h-6 w-6 text-amber-400" />
-                    <h2 className="text-xl font-bold text-white">Créances</h2>
+                    <h2 className="text-xl font-bold text-white">{t.credits.title}</h2>
                 </div>
             }
         >
-            <Head title="Créances" />
+            <Head title={t.credits.title} />
 
             <div className="space-y-6">
 
                 {/* ── KPI Cards ─────────────────────────────────────── */}
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <KpiCard
-                        label="Total à recouvrer"
+                        label={t.credits.kpis.totalRemaining}
                         value={`${safeKpis.total_remaining.toLocaleString('fr-FR')} FCFA`}
                         sub={`${safeKpis.total_count} vente${safeKpis.total_count !== 1 ? 's' : ''}`}
                         color="amber"
                         icon={CreditCard}
                     />
                     <KpiCard
-                        label="En retard"
+                        label={t.credits.kpis.overdue}
                         value={`${safeKpis.overdue_remaining.toLocaleString('fr-FR')} FCFA`}
                         sub={`${safeKpis.overdue_count} vente${safeKpis.overdue_count !== 1 ? 's' : ''}`}
                         color="red"
                         icon={AlertTriangle}
                     />
                     <KpiCard
-                        label="Échéance proche"
+                        label={t.credits.kpis.dueSoon}
                         value={safeKpis.due_soon_count}
-                        sub="dans les 7 prochains jours"
+                        sub={t.credits.kpis.dueSoonDesc}
                         color="orange"
                         icon={Clock}
                     />
                     <KpiCard
-                        label="Sans échéance"
+                        label={t.credits.kpis.noDate}
                         value={safeKpis.no_date_count}
-                        sub="pas de date fixée"
+                        sub={t.credits.kpis.noDateDesc}
                         color="slate"
                         icon={Calendar}
                     />
@@ -575,7 +578,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Rechercher ticket, client..."
+                                placeholder={t.credits.filters.searchPlaceholder}
                                 className="w-full rounded-lg border border-slate-600 bg-slate-800 pl-9 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                             />
                         </div>
@@ -587,7 +590,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                 onChange={(e) => handleShopChange(e.target.value)}
                                 className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                             >
-                                <option value="">Toutes les boutiques</option>
+                                <option value="">{t.credits.filters.allShops}</option>
                                 {safeShops.map((s) => (
                                     <option key={s.id} value={s.id}>{s.name}</option>
                                 ))}
@@ -600,12 +603,12 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                             onChange={(e) => handleSortChange(e.target.value)}
                             className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                         >
-                            <option value="overdue_first">Retards en premier</option>
-                            <option value="amount_desc">Montant ↓</option>
-                            <option value="amount_asc">Montant ↑</option>
-                            <option value="date_asc">Échéance la plus proche</option>
-                            <option value="date_desc">Échéance la plus tardive</option>
-                            <option value="oldest">Ventes les plus anciennes</option>
+                            <option value="overdue_first">{t.credits.filters.sortOverdueFirst}</option>
+                            <option value="amount_desc">{t.credits.filters.sortAmountDesc}</option>
+                            <option value="amount_asc">{t.credits.filters.sortAmountAsc}</option>
+                            <option value="date_asc">{t.credits.filters.sortDateNearest}</option>
+                            <option value="date_desc">{t.credits.filters.sortDateFarthest}</option>
+                            <option value="oldest">{t.credits.filters.sortOldestSales}</option>
                         </select>
 
                         {/* Reset */}
@@ -614,7 +617,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                 onClick={resetFilters}
                                 className="flex items-center gap-1.5 rounded-lg border border-slate-600 px-3 py-2.5 text-sm text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
                             >
-                                <X className="h-4 w-4" /> Réinitialiser
+                                <X className="h-4 w-4" /> {t.credits.filters.reset}
                             </button>
                         )}
 
@@ -655,11 +658,11 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                     {safeCredits.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
                             <CreditCard className="mb-3 h-10 w-10 opacity-30" />
-                            <p className="text-sm font-medium">Aucune créance trouvée</p>
+                            <p className="text-sm font-medium">{t.credits.empty.noCredits}</p>
                             <p className="mt-1 text-xs opacity-70">
                                 {search || statusTab || shopId
-                                    ? 'Essayez de modifier vos filtres'
-                                    : 'Toutes les ventes sont soldées'}
+                                    ? t.credits.empty.tryModifyFilters
+                                    : t.credits.empty.allSettled}
                             </p>
                         </div>
                     ) : (
@@ -668,30 +671,30 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                 <thead>
                                     <tr className="border-b border-slate-700/60 bg-slate-900/40">
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                            Client / Ticket
+                                            {t.credits.columns.customerTicket}
                                         </th>
                                         {safeShops.length > 1 && (
                                             <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                                Boutique
+                                                {t.credits.columns.shop}
                                             </th>
                                         )}
                                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                            Date vente
+                                            {t.credits.columns.saleDate}
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                            Total
+                                            {t.credits.columns.total}
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                            Payé
+                                            {t.credits.columns.paid}
                                         </th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                            Reste
+                                            {t.credits.columns.remaining}
                                         </th>
                                         <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                            Échéance
+                                            {t.credits.columns.dueDate2}
                                         </th>
                                         <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
-                                            Actions
+                                            {t.credits.columns.actions}
                                         </th>
                                     </tr>
                                 </thead>
@@ -707,7 +710,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                             <td className="px-4 py-3">
                                                 <div className="font-medium text-white">
                                                     {sale.customer?.name ?? (
-                                                        <span className="italic text-slate-500">Client de passage</span>
+                                                        <span className="italic text-slate-500">{t.credits.customer.anonymous}</span>
                                                     )}
                                                 </div>
                                                 <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
@@ -768,17 +771,17 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                                     {/* Payer */}
                                                     <button
                                                         onClick={() => setPayModal(sale)}
-                                                        title="Enregistrer un paiement"
+                                                        title={t.credits.modals.paymentTitle}
                                                         className="flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/25 transition-colors"
                                                     >
                                                         <CreditCard className="h-3.5 w-3.5" />
-                                                        Payer
+                                                        {t.credits.buttons.pay}
                                                     </button>
 
                                                     {/* Modifier échéance */}
                                                     <button
                                                         onClick={() => setDueDateModal(sale)}
-                                                        title="Modifier l'échéance"
+                                                        title={t.credits.modals.dueDateTitle}
                                                         className="rounded-lg bg-slate-700/50 p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
                                                     >
                                                         <Calendar className="h-3.5 w-3.5" />
@@ -787,7 +790,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                                     {/* Voir vente */}
                                                     <Link
                                                         href={buildRoute('sales.show', { sale: sale.id })}
-                                                        title="Voir la vente"
+                                                        title={t.credits.buttons.seeSale}
                                                         className="rounded-lg bg-slate-700/50 p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
                                                     >
                                                         <Eye className="h-3.5 w-3.5" />
