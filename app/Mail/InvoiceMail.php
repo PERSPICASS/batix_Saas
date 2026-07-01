@@ -20,9 +20,12 @@ class InvoiceMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $locale = $this->invoice->customer->user->getLocale() ?? 'fr';
+
         return new Envelope(
-            subject: "Facture {$this->invoice->invoice_number}",
+            subject: __('mail.invoice.subject', ['number' => $this->invoice->invoice_number], $locale),
             from: config('mail.from.address'),
+            locale: $locale,
         );
     }
 

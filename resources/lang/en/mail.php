@@ -13,6 +13,7 @@ return [
 
     // Invoice email
     'invoice' => [
+        'subject' => 'Invoice :number',
         'title' => 'Invoice :number',
         'greeting' => ':salutation :name,',
         'intro' => 'Thank you for your trust. Please find attached your invoice no. **:invoiceNumber** dated :invoiceDate.',
@@ -32,6 +33,7 @@ return [
 
     // Quote email
     'quote' => [
+        'subject' => 'Quote :number',
         'title' => 'Quote :number',
         'greeting' => ':salutation :name,',
         'intro' => 'Please find attached our quote no. **:quoteNumber** dated :quoteDate.',
@@ -52,6 +54,7 @@ return [
 
     // Subscription invoice
     'subscription_invoice' => [
+        'subject' => 'Your :appName Invoice — :invoiceNumber',
         'header_subtitle' => 'Receipt of Payment',
         'greeting' => ':salutation :name,',
         'intro' => 'Thank you for your subscription. Your payment has been received successfully. Here is your invoice summary.',
@@ -75,6 +78,8 @@ return [
 
     // Subscription expiry reminder
     'subscription_expiry' => [
+        'subject_expires_today' => 'Your :appName subscription expires tomorrow!',
+        'subject_expires_soon' => 'Your :appName subscription expires in :days days',
         'header_subtitle' => 'Modern hardware store management',
         'expired' => 'Your subscription has expired',
         'days_left_singular' => 'day remaining',
@@ -91,6 +96,7 @@ return [
 
     // Verification code email
     'verification_code' => [
+        'subject' => 'Verification Code - :appName',
         'header_title' => '🔐 Verification Code',
         'greeting' => ':salutation :name,',
         'intro' => 'Welcome to :appName! To complete your account creation, please use the verification code below:',
@@ -106,6 +112,7 @@ return [
 
     // Contact form email
     'contact_form' => [
+        'subject' => '[BATIX PRO] :subject — :senderName',
         'header_title' => '✉️ New Contact Message',
         'header_subtitle' => 'Received via the BATIX PRO landing page form',
         'name_label' => 'Name',

@@ -27,9 +27,16 @@ class ContactFormMail extends Mailable
 
     public function envelope(): Envelope
     {
+        // Default to 'fr' for contact form emails as sender may not be authenticated
+        $locale = 'fr';
+
         return new Envelope(
-            subject: '[BATIX PRO] ' . $this->senderSubject . ' — ' . $this->senderName,
+            subject: __('mail.contact_form.subject', [
+                'subject' => $this->senderSubject,
+                'senderName' => $this->senderName,
+            ], $locale),
             replyTo: [$this->senderEmail],
+            locale: $locale,
         );
     }
 

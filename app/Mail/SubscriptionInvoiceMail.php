@@ -23,8 +23,14 @@ class SubscriptionInvoiceMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $locale = $this->user->getLocale() ?? 'fr';
+
         return new Envelope(
-            subject: 'Votre facture Batix — ' . $this->invoice->invoice_number,
+            subject: __('mail.subscription_invoice.subject', [
+                'appName' => config('app.name'),
+                'invoiceNumber' => $this->invoice->invoice_number,
+            ], $locale),
+            locale: $locale,
         );
     }
 

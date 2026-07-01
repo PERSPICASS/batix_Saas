@@ -20,9 +20,12 @@ class QuoteMail extends Mailable
 
     public function envelope(): Envelope
     {
+        $locale = $this->quote->customer->user->getLocale() ?? 'fr';
+
         return new Envelope(
-            subject: "Devis {$this->quote->quote_number}",
+            subject: __('mail.quote.subject', ['number' => $this->quote->quote_number], $locale),
             from: config('mail.from.address'),
+            locale: $locale,
         );
     }
 

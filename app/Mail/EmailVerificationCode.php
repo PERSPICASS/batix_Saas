@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -18,7 +19,7 @@ class EmailVerificationCode extends Mailable
     /**
      * Create a new message instance.
      */
-    public function __construct(string $verificationCode, string $userName)
+    public function __construct(string $verificationCode, string $userName, public ?User $user = null)
     {
         $this->verificationCode = $verificationCode;
         $this->userName = $userName;
@@ -29,8 +30,11 @@ class EmailVerificationCode extends Mailable
      */
     public function envelope(): Envelope
     {
+        $locale = $this->user?->getLocale() ?? 'fr';
+
         return new Envelope(
-            subject: 'Code de vérification - ' . config('app.name'),
+            subject: __('mail.verification_code.subject', ['appName' => config('app.name')], $locale),
+            locale: $locale,
         );
     }
 

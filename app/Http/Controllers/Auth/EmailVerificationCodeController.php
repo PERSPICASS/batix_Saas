@@ -110,7 +110,7 @@ class EmailVerificationCodeController extends Controller
         ]);
 
         // Envoyer l'email
-        \Mail::to($user->email)->send(new \App\Mail\EmailVerificationCode($code, $user->name));
+        \Mail::to($user->email)->send(new \App\Mail\EmailVerificationCode($code, $user->name, $user));
 
         return response()->json([
             'message' => 'Un nouveau code de vérification a été envoyé à votre adresse email.',

@@ -22,11 +22,19 @@ class SubscriptionExpiryReminderMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $subject = $this->daysLeft <= 1
-            ? 'Votre abonnement Batix expire demain !'
-            : "Votre abonnement Batix expire dans {$this->daysLeft} jours";
+        $locale = $this->user->getLocale() ?? 'fr';
 
-        return new Envelope(subject: $subject);
+        $subject = $this->daysLeft <= 1
+            ? __('mail.subscription_expiry.subject_expires_today', ['appName' => config('app.name')], $locale)
+            : __('mail.subscription_expiry.subject_expires_soon', [
+                'appName' => config('app.name'),
+                'days' => $this->daysLeft,
+            ], $locale);
+
+        return new Envelope(
+            subject: $subject,
+            locale: $locale,
+        );
     }
 
     public function content(): Content

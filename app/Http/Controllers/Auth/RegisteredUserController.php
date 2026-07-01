@@ -79,7 +79,7 @@ class RegisteredUserController extends Controller
         ]);
 
         // Envoyer l'email de vérification avec le code OTP
-        Mail::to($user->email)->send(new EmailVerificationCode($verificationCode, $user->name));
+        Mail::to($user->email)->send(new EmailVerificationCode($verificationCode, $user->name, $user));
 
         event(new Registered($user));
 

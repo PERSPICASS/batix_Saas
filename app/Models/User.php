@@ -26,6 +26,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'locale',
         'country',
         'password',
         'code_user',
@@ -80,7 +81,19 @@ class User extends Authenticatable
             if (empty($user->code_user)) {
                 $user->code_user = self::generateUniqueCode();
             }
+            // Set default locale if not set
+            if (empty($user->locale)) {
+                $user->locale = config('app.locale', 'fr');
+            }
         });
+    }
+
+    /**
+     * Get the user's locale.
+     */
+    public function getLocale(): string
+    {
+        return $this->locale ?? config('app.locale', 'fr');
     }
 
     /**

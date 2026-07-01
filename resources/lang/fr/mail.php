@@ -13,6 +13,7 @@ return [
 
     // Invoice email
     'invoice' => [
+        'subject' => 'Facture :number',
         'title' => 'Facture :number',
         'greeting' => ':salutation :name,',
         'intro' => 'Merci pour votre confiance. Veuillez trouver ci-joint votre facture n° **:invoiceNumber** datée du :invoiceDate.',
@@ -32,6 +33,7 @@ return [
 
     // Quote email
     'quote' => [
+        'subject' => 'Devis :number',
         'title' => 'Devis :number',
         'greeting' => ':salutation :name,',
         'intro' => 'Veuillez trouver ci-joint notre devis n° **:quoteNumber** datée du :quoteDate.',
@@ -52,6 +54,7 @@ return [
 
     // Subscription invoice
     'subscription_invoice' => [
+        'subject' => 'Votre facture :appName — :invoiceNumber',
         'header_subtitle' => 'Reçu de paiement',
         'greeting' => ':salutation :name,',
         'intro' => 'Merci pour votre abonnement. Votre paiement a été reçu avec succès. Voici votre facture récapitulative.',
@@ -75,6 +78,8 @@ return [
 
     // Subscription expiry reminder
     'subscription_expiry' => [
+        'subject_expires_today' => 'Votre abonnement :appName expire demain !',
+        'subject_expires_soon' => 'Votre abonnement :appName expire dans :days jours',
         'header_subtitle' => 'Gestion moderne des quincailleries',
         'expired' => 'Votre abonnement a expiré',
         'days_left_singular' => 'jour restant',
@@ -91,6 +96,7 @@ return [
 
     // Verification code email
     'verification_code' => [
+        'subject' => 'Code de vérification - :appName',
         'header_title' => '🔐 Code de Vérification',
         'greeting' => ':salutation :name,',
         'intro' => 'Bienvenue sur :appName ! Pour finaliser la création de votre compte, veuillez utiliser le code de vérification ci-dessous :',
@@ -106,6 +112,7 @@ return [
 
     // Contact form email
     'contact_form' => [
+        'subject' => '[BATIX PRO] :subject — :senderName',
         'header_title' => '✉️ Nouveau message de contact',
         'header_subtitle' => 'Reçu via le formulaire de la landing page BATIX PRO',
         'name_label' => 'Nom',
