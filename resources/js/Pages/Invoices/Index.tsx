@@ -205,13 +205,13 @@ export default function InvoicesIndex({ invoices }: Props) {
                             href={route('invoices.export', {})}
                             className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                         >
-                            <Download className="size-4" /> Excel
+                            <Download className="size-4" /> {t.common.actions.export}
                         </a>
                         <Link
                             href={route('reports.analytics', {})}
                             className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                         >
-                            <BarChart3 className="size-4" /> Rapports
+                            <BarChart3 className="size-4" /> {t.invoices.actions.reports}
                         </Link>
                     </div>
                 </div>

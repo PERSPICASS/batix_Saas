@@ -25,6 +25,7 @@ export const invoices = {
             send: 'Envoyer',
             markPaid: 'Marquer payée',
             download: 'Télécharger',
+            reports: 'Rapports',
         },
         emptyMessage: 'Aucune facture trouvée',
         filters: {
@@ -104,6 +105,7 @@ export const invoices = {
             send: 'Send',
             markPaid: 'Mark as paid',
             download: 'Download',
+            reports: 'Reports',
         },
         emptyMessage: 'No invoices found',
         filters: {
