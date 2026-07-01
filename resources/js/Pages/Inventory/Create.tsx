@@ -229,7 +229,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                         <div className="grid gap-6 md:grid-cols-2">
                             <div>
                                 <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
-                                    Boutique *
+                                    {t.common.form.shopField}
                                 </label>
                                 <select
                                     id="shop_id"
@@ -251,7 +251,7 @@ export default function InventoryCreate({ shops, products }: Props) {
 
                             <div>
                                 <label htmlFor="inventory_date" className="block text-sm font-medium text-slate-200">
-                                    Date de l'inventaire *
+                                    {t.inventory.form.date}
                                 </label>
                                 <input
                                     type="date"
