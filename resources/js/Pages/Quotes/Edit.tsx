@@ -344,7 +344,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                                 onKeyDown={handleProductSearchKeyDown}
-                                placeholder="Rechercher un produit..."
+                                placeholder={t.quotes.form.searchProduct}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
@@ -359,8 +359,8 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
-                            <span>{filteredProducts.length} résultat(s)</span>
+                            <span>{t.quotes.form.useArrowKeys}</span>
+                            <span>{filteredProducts.length} {t.quotes.form.results}</span>
                         </div>
                     </div>
 
@@ -382,7 +382,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">Aucun produit trouvé.</p>
+                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noProducts}</p>
                         )}
                     </div>
                 </div>
