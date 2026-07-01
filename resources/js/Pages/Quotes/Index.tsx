@@ -58,22 +58,22 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
     };
 
     const statusLabels = {
-        draft: 'Brouillon',
-        sent: 'Envoyé',
-        accepted: 'Accepté',
-        expired: 'Expiré',
-        rejected: 'Rejeté',
+        draft: t.quotes.status.draft,
+        sent: t.quotes.status.sent,
+        accepted: t.quotes.status.accepted,
+        expired: t.quotes.status.expired,
+        rejected: t.quotes.status.rejected,
     };
 
     const columns = [
         {
             key: 'quote_number',
-            label: 'N° Devis',
+            label: t.quotes.columns.number,
             render: (quote: Quote) => <span className="font-bold text-blue-300">{quote.quote_number}</span>,
         },
         {
             key: 'customer',
-            label: 'Client',
+            label: t.quotes.columns.customer,
             render: (quote: Quote) => (
                 <div>
                     <p className="font-medium text-white">{quote.customer.name}</p>
@@ -83,12 +83,12 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
         },
         {
             key: 'total',
-            label: 'Montant',
+            label: t.quotes.columns.total,
             render: (quote: Quote) => <span className="font-semibold text-green-400"><Currency amount={parseFloat(String(quote.total))} /></span>,
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.quotes.columns.status,
             render: (quote: Quote) => (
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[quote.status]}`}>
                     {statusLabels[quote.status]}
@@ -97,7 +97,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
         },
         {
             key: 'expiry_date',
-            label: 'Expire le',
+            label: t.quotes.columns.expiryDate,
             render: (quote: Quote) => (
                 <span className="text-sm text-slate-400">{new Date(quote.expiry_date).toLocaleDateString('fr-FR')}</span>
             ),
@@ -127,7 +127,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                         <button
                             onClick={() => handleSend(quote.id)}
                             className="p-2 text-purple-400 hover:bg-purple-500/10 rounded"
-                            title="Envoyer"
+                            title={t.quotes.actions.send}
                         >
                             <Send size={16} />
                         </button>
@@ -136,7 +136,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                         <button
                             onClick={() => handleAccept(quote.id)}
                             className="p-2 text-green-400 hover:bg-green-500/10 rounded"
-                            title="Accepter"
+                            title={t.quotes.actions.accept}
                         >
                             <CheckCircle size={16} />
                         </button>
@@ -146,7 +146,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                             href={route('quotes.convert', { quote: quote.id })}
                             method="post"
                             className="p-2 text-green-400 hover:bg-green-500/10 rounded"
-                            title="Convertir en facture"
+                            title={t.quotes.actions.convert}
                         >
                             <Download size={16} />
                         </Link>
