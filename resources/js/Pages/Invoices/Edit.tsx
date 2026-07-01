@@ -171,7 +171,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
                                 <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
-                                    Boutique *
+                                    {t.invoices.form.shop} *
                                 </label>
                                 <select
                                     id="shop_id"
@@ -179,7 +179,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     onChange={(e) => setData('shop_id', Number(e.target.value))}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 >
-                                    <option value="">Sélectionner une boutique</option>
+                                    <option value="">{t.invoices.form.selectShop}</option>
                                     {shops.map((shop) => (
                                         <option key={shop.id} value={shop.id}>
                                             {shop.name}
@@ -191,7 +191,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                             <div>
                                 <label htmlFor="customer_id" className="block text-sm font-medium text-slate-200">
-                                    Client *
+                                    {t.invoices.form.customer} *
                                 </label>
                                 <select
                                     id="customer_id"
@@ -211,7 +211,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                             <div>
                                 <label htmlFor="status" className="block text-sm font-medium text-slate-200">
-                                    Statut *
+                                    {t.invoices.form.status} *
                                 </label>
                                 <select
                                     id="status"
@@ -230,7 +230,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                             <div>
                                 <label htmlFor="payment_method" className="block text-sm font-medium text-slate-200">
-                                    Mode de paiement
+                                    {t.invoices.form.paymentMethod}
                                 </label>
                                 <select
                                     id="payment_method"
@@ -249,7 +249,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                             <div>
                                 <label htmlFor="invoice_date" className="block text-sm font-medium text-slate-200">
-                                    Date de facture *
+                                    {t.invoices.form.invoiceDate} *
                                 </label>
                                 <input
                                     type="date"
@@ -263,7 +263,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                             <div>
                                 <label htmlFor="due_date" className="block text-sm font-medium text-slate-200">
-                                    Date d'échéance *
+                                    {t.invoices.form.dueDate} *
                                 </label>
                                 <input
                                     type="date"
@@ -277,7 +277,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                             <div>
                                 <label htmlFor="discount_amount" className="block text-sm font-medium text-slate-200">
-                                    Remise facture
+                                    {t.invoices.form.discount}
                                 </label>
                                 <input
                                     type="number"
@@ -391,7 +391,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                         <label htmlFor="notes" className="block text-sm font-medium text-slate-200">
-                            Notes
+                            {t.invoices.form.notes}
                         </label>
                         <textarea
                             id="notes"
