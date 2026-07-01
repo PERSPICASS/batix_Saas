@@ -200,7 +200,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title={`Bon de commande ${purchase.reference}`} />
+            <Head title={`${t.purchases.title} ${purchase.reference}`} />
 
             <div className="space-y-6">
                 {/* En-tête */}
