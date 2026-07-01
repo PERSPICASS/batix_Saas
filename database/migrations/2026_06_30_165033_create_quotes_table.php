@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,12 +12,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('quotes', function (Blueprint $table) {
+        $driver = DB::getDriverName();
+
+        Schema::create('quotes', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('shop_id')->constrained();
             $table->foreignId('customer_id')->constrained();
             $table->string('quote_number')->unique();
-            $table->enum('status', ['draft', 'sent', 'accepted', 'expired', 'rejected'])->default('draft');
+
+            if ($driver === 'sqlite') {
+                $table->text('status')->default('draft');
+            } else {
+                $table->enum('status', ['draft', 'sent', 'accepted', 'expired', 'rejected'])->default('draft');
+            }
+
             $table->date('quote_date');
             $table->date('expiry_date');
             $table->decimal('subtotal', 10, 2);

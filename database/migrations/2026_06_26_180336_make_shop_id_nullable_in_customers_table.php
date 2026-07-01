@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,9 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
-            $table->unsignedBigInteger('shop_id')->nullable()->change();
-        });
+        $driver = DB::getDriverName();
+
+        if ($driver !== 'sqlite') {
+            // SQLite doesn't support the change() method, skip for SQLite
+            Schema::table('customers', function (Blueprint $table) {
+                $table->unsignedBigInteger('shop_id')->nullable()->change();
+            });
+        }
     }
 
     /**
@@ -21,8 +27,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
-            $table->unsignedBigInteger('shop_id')->nullable(false)->change();
-        });
+        $driver = DB::getDriverName();
+
+        if ($driver !== 'sqlite') {
+            Schema::table('customers', function (Blueprint $table) {
+                $table->unsignedBigInteger('shop_id')->nullable(false)->change();
+            });
+        }
     }
 };

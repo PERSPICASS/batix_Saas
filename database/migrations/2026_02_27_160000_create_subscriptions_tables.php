@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,6 +12,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        $driver = DB::getDriverName();
+
         Schema::create('subscription_plans', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // Starter, Growth, Scale
@@ -25,11 +28,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('subscriptions', function (Blueprint $table) {
+        Schema::create('subscriptions', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Le super_admin propriétaire
             $table->foreignId('subscription_plan_id')->constrained()->onDelete('restrict');
-            $table->enum('status', ['active', 'cancelled', 'expired', 'trial'])->default('active');
+
+            if ($driver === 'sqlite') {
+                $table->text('status')->default('active');
+            } else {
+                $table->enum('status', ['active', 'cancelled', 'expired', 'trial'])->default('active');
+            }
+
             $table->timestamp('started_at');
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
@@ -38,12 +47,12 @@ return new class extends Migration
             $table->string('billing_cycle')->default('monthly'); // monthly, yearly
             $table->json('metadata')->nullable(); // Infos supplémentaires (paiement, etc.)
             $table->timestamps();
-            
+
             $table->index(['user_id', 'status']);
             $table->index('expires_at');
         });
 
-        Schema::create('subscription_invoices', function (Blueprint $table) {
+        Schema::create('subscription_invoices', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('subscription_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
@@ -51,14 +60,20 @@ return new class extends Migration
             $table->decimal('amount', 10, 2);
             $table->decimal('tax', 10, 2)->default(0);
             $table->decimal('total', 10, 2);
-            $table->enum('status', ['pending', 'paid', 'failed', 'refunded'])->default('pending');
+
+            if ($driver === 'sqlite') {
+                $table->text('status')->default('pending');
+            } else {
+                $table->enum('status', ['pending', 'paid', 'failed', 'refunded'])->default('pending');
+            }
+
             $table->timestamp('issued_at');
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('due_at')->nullable();
             $table->string('payment_method')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
-            
+
             $table->index('invoice_number');
             $table->index(['user_id', 'status']);
         });

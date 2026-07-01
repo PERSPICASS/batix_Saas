@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,13 +12,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('purchases', function (Blueprint $table) {
+        $driver = DB::getDriverName();
+
+        Schema::create('purchases', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('shop_id')->constrained()->onDelete('cascade');
             $table->foreignId('supplier_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Utilisateur qui a créé le bon de commande
             $table->string('reference')->unique(); // PO-2026-0001
-            $table->enum('status', ['draft', 'confirmed', 'received', 'partial', 'cancelled'])->default('draft');
+
+            if ($driver === 'sqlite') {
+                $table->text('status')->default('draft');
+            } else {
+                $table->enum('status', ['draft', 'confirmed', 'received', 'partial', 'cancelled'])->default('draft');
+            }
+
             $table->date('order_date');
             $table->date('expected_date')->nullable();
             $table->date('received_date')->nullable();

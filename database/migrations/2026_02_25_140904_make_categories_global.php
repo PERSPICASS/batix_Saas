@@ -2,23 +2,27 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      * Rend les catégories globales (partagées par toute la plateforme)
      * au lieu d'être liées à des boutiques spécifiques.
      */
     public function up(): void
     {
-        // 1. D'abord modifier la colonne pour permettre NULL
-        Schema::table('categories', function (Blueprint $table) {
-            $table->unsignedBigInteger('shop_id')->nullable()->change();
-        });
+        $driver = DB::getDriverName();
+
+        if ($driver !== 'sqlite') {
+            // 1. D'abord modifier la colonne pour permettre NULL (MySQL and PostgreSQL)
+            Schema::table('categories', function (Blueprint $table) {
+                $table->unsignedBigInteger('shop_id')->nullable()->change();
+            });
+        }
 
         // 2. Supprimer les doublons - garder une seule catégorie par slug
         $slugs = DB::table('categories')
@@ -32,7 +36,7 @@ return new class extends Migration
                 ->where('slug', $slug)
                 ->orderBy('id')
                 ->value('id');
-            
+
             DB::table('categories')
                 ->where('slug', $slug)
                 ->where('id', '!=', $keepId)

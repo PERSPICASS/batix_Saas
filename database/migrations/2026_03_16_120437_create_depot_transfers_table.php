@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('depot_transfers', function (Blueprint $table) {
+        $driver = DB::getDriverName();
+
+        Schema::create('depot_transfers', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->string('reference')->unique(); // ex: TRF-2026-0001
             $table->foreignId('depot_id')->constrained()->onDelete('cascade');
@@ -20,7 +23,13 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->integer('quantity');
             $table->text('notes')->nullable();
-            $table->enum('status', ['pending', 'completed', 'cancelled'])->default('completed');
+
+            if ($driver === 'sqlite') {
+                $table->text('status')->default('completed');
+            } else {
+                $table->enum('status', ['pending', 'completed', 'cancelled'])->default('completed');
+            }
+
             $table->timestamp('transferred_at')->useCurrent();
             $table->timestamps();
         });

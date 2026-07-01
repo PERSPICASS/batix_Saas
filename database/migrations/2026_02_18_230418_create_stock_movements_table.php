@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,12 +12,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('stock_movements', function (Blueprint $table) {
+        $driver = DB::getDriverName();
+
+        Schema::create('stock_movements', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('shop_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('type', ['in', 'out', 'transfer', 'adjustment', 'sale', 'return'])->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour');
+
+            if ($driver === 'sqlite') {
+                $table->text('type')->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour');
+            } else {
+                $table->enum('type', ['in', 'out', 'transfer', 'adjustment', 'sale', 'return'])->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour');
+            }
+
             $table->integer('quantity')->comment('Positive for in, negative for out');
             $table->decimal('unit_cost', 10, 2)->nullable()->comment('Cost per unit for this movement');
             $table->foreignId('reference_id')->nullable()->comment('ID of related sale, invoice, etc.');
@@ -24,7 +33,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->date('movement_date');
             $table->timestamps();
-            
+
             $table->index(['shop_id', 'product_id', 'movement_date']);
             $table->index(['reference_type', 'reference_id']);
         });

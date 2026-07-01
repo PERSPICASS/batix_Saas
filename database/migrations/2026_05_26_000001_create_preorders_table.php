@@ -2,13 +2,16 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('preorders', function (Blueprint $table) {
+        $driver = DB::getDriverName();
+
+        Schema::create('preorders', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('customer_id')->constrained()->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
@@ -18,7 +21,13 @@ return new class extends Migration
             $table->decimal('unit_price', 15, 2);
             $table->date('expected_delivery_date');
             $table->decimal('deposit_amount', 15, 2)->nullable();
-            $table->enum('status', ['pending', 'confirmed', 'ready', 'completed', 'cancelled'])->default('pending');
+
+            if ($driver === 'sqlite') {
+                $table->text('status')->default('pending');
+            } else {
+                $table->enum('status', ['pending', 'confirmed', 'ready', 'completed', 'cancelled'])->default('pending');
+            }
+
             $table->text('notes')->nullable();
             $table->timestamps();
 

@@ -12,16 +12,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // For MySQL: need to drop the column and recreate it with the new enum values
-        // This is the only way to add a value to an ENUM in MySQL
+        $driver = DB::getDriverName();
+
+        // For MySQL and SQLite: need to drop the column and recreate it with the new enum values
         Schema::table('stock_movements', function (Blueprint $table) {
             $table->dropColumn('type');
         });
 
-        Schema::table('stock_movements', function (Blueprint $table) {
-            $table->enum('type', ['in', 'out', 'transfer', 'adjustment', 'sale', 'return', 'return_defective'])
-                ->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour, return_defective=retour défectueux')
-                ->after('user_id');
+        Schema::table('stock_movements', function (Blueprint $table) use ($driver) {
+            if ($driver === 'sqlite') {
+                $table->text('type')
+                    ->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour, return_defective=retour défectueux')
+                    ->after('user_id');
+            } else {
+                $table->enum('type', ['in', 'out', 'transfer', 'adjustment', 'sale', 'return', 'return_defective'])
+                    ->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour, return_defective=retour défectueux')
+                    ->after('user_id');
+            }
         });
     }
 
@@ -30,14 +37,22 @@ return new class extends Migration
      */
     public function down(): void
     {
+        $driver = DB::getDriverName();
+
         Schema::table('stock_movements', function (Blueprint $table) {
             $table->dropColumn('type');
         });
 
-        Schema::table('stock_movements', function (Blueprint $table) {
-            $table->enum('type', ['in', 'out', 'transfer', 'adjustment', 'sale', 'return'])
-                ->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour')
-                ->after('user_id');
+        Schema::table('stock_movements', function (Blueprint $table) use ($driver) {
+            if ($driver === 'sqlite') {
+                $table->text('type')
+                    ->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour')
+                    ->after('user_id');
+            } else {
+                $table->enum('type', ['in', 'out', 'transfer', 'adjustment', 'sale', 'return'])
+                    ->comment('in=entrée, out=sortie, transfer=transfert, adjustment=ajustement, sale=vente, return=retour')
+                    ->after('user_id');
+            }
         });
     }
 };

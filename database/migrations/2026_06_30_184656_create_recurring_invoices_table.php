@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('recurring_invoices', function (Blueprint $table) {
+        $driver = DB::getDriverName();
+
+        Schema::create('recurring_invoices', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('shop_id')->constrained()->onDelete('cascade');
             $table->foreignId('customer_id')->constrained()->onDelete('cascade');
@@ -21,7 +24,13 @@ return new class extends Migration
             $table->decimal('tax_amount', 12, 2)->default(0);
             $table->decimal('total', 12, 2)->default(0);
             $table->text('notes')->nullable();
-            $table->enum('frequency', ['monthly', 'quarterly', 'semi-annual', 'annual'])->default('monthly');
+
+            if ($driver === 'sqlite') {
+                $table->text('frequency')->default('monthly');
+            } else {
+                $table->enum('frequency', ['monthly', 'quarterly', 'semi-annual', 'annual'])->default('monthly');
+            }
+
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->date('next_invoice_date');
