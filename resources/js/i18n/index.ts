@@ -29,6 +29,7 @@ import { profile } from './profile';
 import { preorders } from './preorders';
 import { returnedInventory } from './returnedInventory';
 import { platformAdmin } from './platformAdmin';
+import { recurringInvoices } from './recurringInvoices';
 
 export const translations = {
     fr: {
@@ -62,6 +63,7 @@ export const translations = {
         preorders: preorders.fr,
         returnedInventory: returnedInventory.fr,
         platformAdmin: platformAdmin.fr,
+        recurringInvoices: recurringInvoices.fr,
     },
     en: {
         common: common.en,
@@ -94,6 +96,7 @@ export const translations = {
         preorders: preorders.en,
         returnedInventory: returnedInventory.en,
         platformAdmin: platformAdmin.en,
+        recurringInvoices: recurringInvoices.en,
     },
 } as const;
 
