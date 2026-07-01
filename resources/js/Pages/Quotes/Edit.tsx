@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { FileText, Plus, Trash2, ArrowLeft, Calculator, Search, X } from 'lucide-react';
 import { useState, useMemo, useEffect, KeyboardEvent as ReactKeyboardEvent, FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 import Modal from '@/Components/Modal';
 import Currency, { useShopSettings } from '@/Components/Currency';
 
@@ -33,6 +34,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
     const [showProductModal, setShowProductModal] = useState(false);
     const [productSearch, setProductSearch] = useState('');
     const [activeProductIndex, setActiveProductIndex] = useState(-1);
+    const { t } = useLocale();
     const [productTargetLine, setProductTargetLine] = useState<number | null>(null);
 
     // Form states
@@ -151,14 +153,14 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Client</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.customer}</label>
                                 <div className="rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200">
                                     {quote.customer.name}
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Date du devis *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.quoteDate} *</label>
                                 <input
                                     type="date"
                                     value={formData.quote_date}
@@ -169,7 +171,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Date d'expiration *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.expiryDate} *</label>
                                 <input
                                     type="date"
                                     value={formData.expiry_date}
