@@ -168,7 +168,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="subcategory_id" className="block text-sm font-medium text-slate-200">
-                                Sous-catégorie
+                                {t.common.form.subcategory}
                             </label>
                             <select
                                 id="subcategory_id"
