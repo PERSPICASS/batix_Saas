@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { FileText, Plus, Trash2, ArrowLeft, Calculator, Search, X, UserRound } from 'lucide-react';
 import { useState, useMemo, useEffect, KeyboardEvent as ReactKeyboardEvent, FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 import Modal from '@/Components/Modal';
 import Currency, { useShopSettings } from '@/Components/Currency';
 
@@ -45,6 +46,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
         { product_id: '', product_name: '', quantity: 1, unit_price: 0 },
     ]);
 
+    const { t } = useLocale();
     const [formData, setFormData] = useState({
         customer_id: '',
         quote_date: new Date().toISOString().split('T')[0],
@@ -202,7 +204,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         <div className="grid gap-4 md:grid-cols-2">
                             {/* Client Modal */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Client *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.customer} *</label>
                                 <button
                                     type="button"
                                     onClick={() => setShowCustomerModal(true)}
@@ -227,7 +229,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Date du devis *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.quoteDate} *</label>
                                 <input
                                     type="date"
                                     value={formData.quote_date}
@@ -238,7 +240,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Date d'expiration *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.expiryDate} *</label>
                                 <input
                                     type="date"
                                     value={formData.expiry_date}
