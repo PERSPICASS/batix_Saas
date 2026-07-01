@@ -273,7 +273,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
 
     return (
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Facturation</h1>}>
-            <Head title="Facturation" />
+            <Head title={t.billing.title} />
 
             <section className="space-y-6">
 

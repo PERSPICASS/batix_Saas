@@ -112,7 +112,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                 </div>
             }
         >
-            <Head title="Historique" />
+            <Head title={t.activityLogs.title} />
 
             <div className="space-y-6">
                 {/* Search & Filters */}
