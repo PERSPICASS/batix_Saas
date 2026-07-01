@@ -5,9 +5,11 @@ import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function ShowRecurringInvoice({ recurringInvoice }: { recurringInvoice: any }) {
     const route = useRoute();
+    const { t, locale } = useLocale();
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     const handleDelete = () => {
@@ -22,16 +24,9 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
         router.post(route('recurring-invoices.generate', { recurring_invoice: recurringInvoice.id }), {});
     };
 
-    const frequencyLabels = {
-        monthly: 'Mensuel',
-        quarterly: 'Trimestriel',
-        'semi-annual': 'Semestriel',
-        annual: 'Annuel',
-    };
-
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Cycle: {recurringInvoice.invoice_prefix}</h1>}>
-            <Head title={`Cycle ${recurringInvoice.invoice_prefix}`} />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.recurringInvoices.columns.cycle}: {recurringInvoice.invoice_prefix}</h1>}>
+            <Head title={`${t.recurringInvoices.columns.cycle} ${recurringInvoice.invoice_prefix}`} />
 
             <div className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
@@ -47,31 +42,31 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                                     ? 'bg-green-500/20 text-green-300'
                                     : 'bg-slate-500/20 text-slate-400'
                             }`}>
-                                {recurringInvoice.is_active ? 'Actif' : 'Inactif'}
+                                {recurringInvoice.is_active ? t.recurringInvoices.status.active : t.recurringInvoices.status.inactive}
                             </span>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">Client</p>
+                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.customer}</p>
                                 <p className="text-white font-medium">{recurringInvoice.customer.name}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">Fréquence</p>
-                                <p className="text-white font-medium">{frequencyLabels[recurringInvoice.frequency as keyof typeof frequencyLabels]}</p>
+                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.frequency}</p>
+                                <p className="text-white font-medium">{t.recurringInvoices.frequency[recurringInvoice.frequency as keyof typeof t.recurringInvoices.frequency]}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">Première facture</p>
-                                <p className="text-white font-medium">{new Date(recurringInvoice.start_date).toLocaleDateString('fr-FR')}</p>
+                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.startDate}</p>
+                                <p className="text-white font-medium">{new Date(recurringInvoice.start_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">Prochaine facture</p>
-                                <p className="text-white font-medium">{new Date(recurringInvoice.next_invoice_date).toLocaleDateString('fr-FR')}</p>
+                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.nextInvoiceDate}</p>
+                                <p className="text-white font-medium">{new Date(recurringInvoice.next_invoice_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
                             </div>
                             {recurringInvoice.end_date && (
                                 <div>
-                                    <p className="text-sm text-slate-400 mb-1">Date d'expiration</p>
-                                    <p className="text-white font-medium">{new Date(recurringInvoice.end_date).toLocaleDateString('fr-FR')}</p>
+                                    <p className="text-sm text-slate-400 mb-1">{t.invoices.form.dueDate}</p>
+                                    <p className="text-white font-medium">{new Date(recurringInvoice.end_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
                                 </div>
                             )}
                         </div>
@@ -79,15 +74,15 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
 
                     {/* Articles */}
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Articles du cycle</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-white">{t.invoices.form.invoiceLines}</h2>
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-white/10">
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Article</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Qté</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">P.U.</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Montant</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">{t.invoices.form.product}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">{t.invoices.form.quantity}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">{t.invoices.form.unitPrice}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">{t.invoices.form.price}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/10">
@@ -106,15 +101,15 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                         {/* Totaux */}
                         <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
                             <div className="flex justify-end gap-8">
-                                <span className="text-slate-300">Sous-total:</span>
+                                <span className="text-slate-300">{t.invoices.form.subtotal}:</span>
                                 <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(recurringInvoice.subtotal)} /></span>
                             </div>
                             <div className="flex justify-end gap-8">
-                                <span className="text-slate-300">TVA (18%):</span>
+                                <span className="text-slate-300">{t.invoices.form.taxAmount} (18%):</span>
                                 <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(recurringInvoice.tax_amount)} /></span>
                             </div>
                             <div className="flex justify-end gap-8 border-t border-white/10 pt-2">
-                                <span className="text-white font-bold">Total:</span>
+                                <span className="text-white font-bold">{t.invoices.form.total}:</span>
                                 <span className="w-24 text-right text-xl font-bold text-amber-300"><Currency amount={parseFloat(recurringInvoice.total)} /></span>
                             </div>
                         </div>
@@ -123,7 +118,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                     {/* Notes */}
                     {recurringInvoice.notes && (
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                            <h2 className="mb-4 text-lg font-semibold text-white">Notes</h2>
+                            <h2 className="mb-4 text-lg font-semibold text-white">{t.invoices.form.notes}</h2>
                             <p className="text-white whitespace-pre-wrap text-sm">{recurringInvoice.notes}</p>
                         </div>
                     )}
@@ -133,7 +128,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                             <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
                                 <Calendar className="size-5 text-amber-300" />
-                                Factures générées
+                                {t.recurringInvoices.form.createTitle}
                             </h2>
                             <div className="space-y-2">
                                 {recurringInvoice.invoices.map((invoice: any, index: number) => (
@@ -157,7 +152,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                 {/* Actions */}
                 <aside className="xl:col-span-1">
                     <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 text-base font-semibold text-slate-300">Actions</h2>
+                        <h2 className="mb-4 text-base font-semibold text-slate-300">{t.invoices.columns.actions}</h2>
 
                         <div className="space-y-3">
                             <Link
@@ -165,7 +160,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                                 className="flex items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2.5 w-full font-semibold text-slate-950 transition-colors hover:bg-amber-200"
                             >
                                 <Edit className="size-4" />
-                                Modifier
+                                {t.recurringInvoices.actions.edit}
                             </Link>
 
                             <button
@@ -173,7 +168,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                                 className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 w-full font-semibold text-white transition-colors hover:bg-green-700"
                             >
                                 <RefreshCw className="size-4" />
-                                Générer maintenant
+                                {t.recurringInvoices.actions.generateNow}
                             </button>
 
                             <button
@@ -187,12 +182,12 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                                 {recurringInvoice.is_active ? (
                                     <>
                                         <Pause className="size-4" />
-                                        Mettre en pause
+                                        {t.recurringInvoices.actions.pause}
                                     </>
                                 ) : (
                                     <>
                                         <Play className="size-4" />
-                                        Reprendre
+                                        {t.recurringInvoices.actions.resume}
                                     </>
                                 )}
                             </button>
@@ -202,7 +197,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                                 className="flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5 w-full"
                             >
                                 <ArrowLeft className="size-4" />
-                                Retour
+                                {t.common.actions.back || 'Retour'}
                             </Link>
 
                             <button
@@ -210,7 +205,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                                 className="flex items-center justify-center gap-2 rounded-lg border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10 w-full"
                             >
                                 <Trash2 className="size-4" />
-                                Supprimer
+                                {t.recurringInvoices.actions.delete}
                             </button>
                         </div>
                     </div>
@@ -222,8 +217,8 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                     show={true}
                     onClose={() => setConfirmDelete(false)}
                     onConfirm={handleDelete}
-                    title="Supprimer le cycle"
-                    message="Êtes-vous sûr de vouloir supprimer ce cycle de facturation récurrente? Cette action est irréversible."
+                    title={t.recurringInvoices.modal.deleteTitle}
+                    message={t.recurringInvoices.modal.deleteMessage}
                 />
             )}
         </AuthenticatedLayout>
