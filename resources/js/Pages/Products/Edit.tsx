@@ -114,16 +114,16 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Modifier produit</h1>}
+            header={<h1 className="text-xl font-semibold text-white">{t.products.actions.edit}</h1>}
         >
-            <Head title="Modifier produit" />
+            <Head title={t.products.actions.edit} />
 
             <div className="mx-auto max-w-4xl">
                 <form onSubmit={submit} className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
                     <div className="grid gap-6 md:grid-cols-2">
                         <div>
                             <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
-                                Boutique *
+                                {t.common.form.shopField}
                             </label>
                             <select
                                 id="shop_id"
@@ -145,7 +145,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="category_id" className="block text-sm font-medium text-slate-200">
-                                Catégorie *
+                                {t.products.form.category}
                             </label>
                             <select
                                 id="category_id"
@@ -204,7 +204,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-slate-200">
-                                Nom du produit *
+                                {t.products.form.name}
                             </label>
                             <input
                                 type="text"
@@ -234,7 +234,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="barcode" className="block text-sm font-medium text-slate-200">
-                                Code-barres
+                                {t.products.form.barcode}
                             </label>
                             <input
                                 type="text"
@@ -286,7 +286,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="selling_price" className="block text-sm font-medium text-slate-200">
-                                Prix de vente *
+                                {t.products.form.sellingPrice}
                             </label>
                             <input
                                 type="number"
@@ -396,7 +396,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div className="md:col-span-2">
                             <label htmlFor="description" className="block text-sm font-medium text-slate-200">
-                                Description
+                                {t.products.form.description}
                             </label>
                             <textarea
                                 id="description"
