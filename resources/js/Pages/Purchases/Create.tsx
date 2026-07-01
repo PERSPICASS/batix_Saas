@@ -338,7 +338,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <InputLabel htmlFor="supplier_id" value="Fournisseur *" />
+                                <InputLabel htmlFor="supplier_id" value={t.purchases.form.supplier} />
                                 <select
                                     id="supplier_id"
                                     value={data.supplier_id}
@@ -358,7 +358,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="order_date" value="Date de commande *" />
+                                <InputLabel htmlFor="order_date" value={t.purchases.form.orderDate} />
                                 <TextInput
                                     id="order_date"
                                     type="date"
@@ -371,7 +371,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="expected_date" value="Date de livraison prévue" />
+                                <InputLabel htmlFor="expected_date" value={t.purchases.form.expectedDate} />
                                 <TextInput
                                     id="expected_date"
                                     type="date"
