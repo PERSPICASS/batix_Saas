@@ -107,7 +107,7 @@ function PurchaseProductCombobox({
                             type="button"
                             onClick={() => setOpen(true)}
                             className="rounded p-1 text-slate-400 hover:text-white transition-colors"
-                            title="Changer"
+                            title={t.purchases.form.changeProduct || 'Changer'}
                         >
                             <ChevronDown className="h-3.5 w-3.5" />
                         </button>
@@ -115,7 +115,7 @@ function PurchaseProductCombobox({
                             type="button"
                             onClick={clear}
                             className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
-                            title="Effacer"
+                            title={t.purchases.form.clearProduct || 'Effacer'}
                         >
                             <X className="h-3.5 w-3.5" />
                         </button>
@@ -130,7 +130,7 @@ function PurchaseProductCombobox({
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
                         onFocus={() => setOpen(true)}
-                        placeholder="Rechercher par nom, SKU ou catégorie..."
+                        placeholder={t.purchases.form.search}
                         className="w-full rounded-lg border-slate-700 bg-slate-900 pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                         autoComplete="off"
                     />
@@ -142,7 +142,7 @@ function PurchaseProductCombobox({
                 <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-white/10 bg-slate-900 shadow-2xl">
                     {filtered.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                            Aucun produit trouvé
+                            {t.purchases.form.noProducts}
                         </div>
                     ) : (
                         filtered.map((product) => {
@@ -172,7 +172,7 @@ function PurchaseProductCombobox({
                                             </span>
                                         )}
                                         {isUsed && (
-                                            <span className="ml-2 text-xs text-slate-500 italic">déjà ajouté</span>
+                                            <span className="ml-2 text-xs text-slate-500 italic">{t.purchases.form.alreadyAdded}</span>
                                         )}
                                     </div>
                                     <span className="ml-3 shrink-0 text-xs text-slate-400">
@@ -305,7 +305,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
     return (
         <AuthenticatedLayout>
-            <Head title="Nouveau bon de commande" />
+            <Head title={t.purchases.form.createTitle} />
 
             <div className="space-y-6">
                 {/* En-tête */}
@@ -319,9 +319,9 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                 <ArrowLeft className="size-5 text-slate-400" />
                             </Link>
                             <div>
-                                <h1 className="text-2xl font-bold text-white">Nouveau bon de commande</h1>
+                                <h1 className="text-2xl font-bold text-white">{t.purchases.form.createTitle}</h1>
                                 <p className="mt-1 text-sm text-slate-400">
-                                    Créez une commande fournisseur
+                                    {t.purchases.form.subtitle}
                                 </p>
                             </div>
                         </div>
@@ -333,7 +333,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                     <div className="rounded-xl bg-slate-800/50 p-6">
                         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
                             <ShoppingCart className="size-5" />
-                            Informations générales
+                            {t.purchases.form.generalInfo}
                         </h2>
 
                         <div className="grid gap-4 md:grid-cols-2">
@@ -346,7 +346,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     className="mt-1 block w-full rounded-lg border-slate-700 bg-slate-900/50 text-white focus:border-amber-300 focus:ring-amber-300"
                                     required
                                 >
-                                    <option value="">Sélectionner un fournisseur</option>
+                                    <option value="">{t.purchases.form.selectSupplier}</option>
                                     {suppliers.map((supplier) => (
                                         <option key={supplier.id} value={supplier.id}>
                                             {supplier.name}
@@ -383,7 +383,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             </div>
 
                             <div>
-                                <InputLabel htmlFor="shipping_cost" value="Frais de port" />
+                                <InputLabel htmlFor="shipping_cost" value={t.purchases.form.shippingCost} />
                                 <TextInput
                                     id="shipping_cost"
                                     type="number"
@@ -403,7 +403,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
                                 <Package className="size-5" />
-                                Articles
+                                {t.purchases.form.articles}
                             </h2>
                             <button
                                 type="button"
@@ -411,7 +411,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                 className="inline-flex items-center gap-2 rounded-lg bg-amber-300/10 px-3 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-300/20"
                             >
                                 <Plus className="size-4" />
-                                Ajouter un article
+                                {t.purchases.form.addItem}
                             </button>
                         </div>
 
@@ -423,7 +423,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                 >
                                     <div className="mb-3 flex items-center justify-between">
                                         <span className="text-sm font-medium text-slate-300">
-                                            Article #{index + 1}
+                                            {t.purchases.form.article} #{index + 1}
                                         </span>
                                         {items.length > 1 && (
                                             <button
@@ -438,7 +438,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
                                     <div className="grid gap-4 md:grid-cols-6">
                                         <div className="md:col-span-4">
-                                            <InputLabel value="Produit *" />
+                                            <InputLabel value={`${t.purchases.form.product} *`} />
                                             <PurchaseProductCombobox
                                                 products={products}
                                                 value={item.product_id}
@@ -452,7 +452,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                         </div>
 
                                         <div>
-                                            <InputLabel value="Quantité *" />
+                                            <InputLabel value={`${t.purchases.form.quantity} *`} />
                                             <TextInput
                                                 type="number"
                                                 min="1"
@@ -470,7 +470,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                         </div>
 
                                         <div>
-                                            <InputLabel value="Prix unitaire *" />
+                                            <InputLabel value={`${t.purchases.form.unitPrice} *`} />
                                             <TextInput
                                                 type="number"
                                                 step="0.01"
@@ -490,7 +490,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     </div>
 
                                     <div className="mt-3 flex items-center justify-between text-sm">
-                                        <span className="text-slate-400">Total de la ligne:</span>
+                                        <span className="text-slate-400">{t.purchases.form.lineTotal}:</span>
                                         <span className="font-semibold text-amber-300">
                                             {formatCurrency(calculateLineTotal(item))}
                                         </span>
@@ -502,18 +502,18 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
                     {/* Totaux */}
                     <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Récapitulatif</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-white">{t.purchases.form.summary}</h2>
 
                         <div className="space-y-4">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Sous-total:</span>
+                                <span className="text-slate-400">{t.purchases.form.subtotal}:</span>
                                 <span className="font-medium text-white">{formatCurrency(totals.subtotal)}</span>
                             </div>
 
                             {/* Remise globale */}
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <InputLabel htmlFor="discount_rate" value="Remise globale (%)" />
+                                    <InputLabel htmlFor="discount_rate" value={t.purchases.form.discountRate} />
                                     <TextInput
                                         id="discount_rate"
                                         type="number"
@@ -528,7 +528,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Montant remise:</span>
+                                <span className="text-slate-400">{t.purchases.form.discountAmount}:</span>
                                 <span className="font-medium text-white">
                                     -{formatCurrency(totals.totalDiscount)}
                                 </span>
@@ -537,7 +537,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             {/* Taxe globale */}
                             <div className="grid gap-4 md:grid-cols-2">
                                 <div>
-                                    <InputLabel htmlFor="tax_rate" value="Taxe globale (%)" />
+                                    <InputLabel htmlFor="tax_rate" value={t.purchases.form.taxRate} />
                                     <TextInput
                                         id="tax_rate"
                                         type="number"
@@ -552,12 +552,12 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Montant taxes:</span>
+                                <span className="text-slate-400">{t.purchases.form.taxAmount}:</span>
                                 <span className="font-medium text-white">{formatCurrency(totals.totalTax)}</span>
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Frais de port:</span>
+                                <span className="text-slate-400">{t.purchases.form.shippingCost}:</span>
                                 <span className="font-medium text-white">
                                     {formatCurrency(totals.shipping)}
                                 </span>
@@ -565,7 +565,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
                             <div className="border-t border-white/10 pt-3">
                                 <div className="flex justify-between">
-                                    <span className="text-lg font-semibold text-white">Total:</span>
+                                    <span className="text-lg font-semibold text-white">{t.purchases.form.total}:</span>
                                     <span className="text-2xl font-bold text-amber-300">
                                         {formatCurrency(totals.grandTotal)}
                                     </span>
@@ -576,18 +576,18 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
                     {/* Notes */}
                     <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Notes</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-white">{t.purchases.form.notes}</h2>
 
                         <div className="space-y-4">
                             <div>
-                                <InputLabel htmlFor="notes" value="Notes (visibles sur le document)" />
+                                <InputLabel htmlFor="notes" value={t.purchases.form.visibleNotes} />
                                 <textarea
                                     id="notes"
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     rows={3}
                                     className="mt-1 block w-full rounded-lg border-slate-700 bg-slate-900/50 text-white focus:border-amber-300 focus:ring-amber-300"
-                                    placeholder="Notes pour le fournisseur..."
+                                    placeholder={t.purchases.form.supplierNotes}
                                 />
                                 <InputError message={errors.notes} className="mt-2" />
                             </div>
@@ -595,7 +595,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             <div>
                                 <InputLabel
                                     htmlFor="internal_notes"
-                                    value="Notes internes (non visibles sur le document)"
+                                    value={t.purchases.form.internalNotes}
                                 />
                                 <textarea
                                     id="internal_notes"
@@ -603,7 +603,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     onChange={(e) => setData('internal_notes', e.target.value)}
                                     rows={3}
                                     className="mt-1 block w-full rounded-lg border-slate-700 bg-slate-900/50 text-white focus:border-amber-300 focus:ring-amber-300"
-                                    placeholder="Notes internes..."
+                                    placeholder={t.purchases.form.internalPlaceholder}
                                 />
                                 <InputError message={errors.internal_notes} className="mt-2" />
                             </div>
@@ -616,11 +616,11 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             href={route('purchases.index', { code_user })}
                             className="rounded-lg border border-white/10 bg-white/5 px-6 py-2.5 font-semibold text-white transition hover:bg-white/10"
                         >
-                            Annuler
+                            {t.purchases.form.cancel}
                         </Link>
                         <PrimaryButton disabled={processing} className="gap-2">
                             <Save className="size-5" />
-                            {processing ? 'Enregistrement...' : 'Créer le bon de commande'}
+                            {processing ? `${t.purchases.form.saving}...` : t.purchases.form.create}
                         </PrimaryButton>
                     </div>
                 </form>
