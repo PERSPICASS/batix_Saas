@@ -219,7 +219,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="sku" className="block text-sm font-medium text-slate-200">
-                                SKU
+                                {t.products.form.sku}
                             </label>
                             <input
                                 type="text"
@@ -269,7 +269,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="purchase_price" className="block text-sm font-medium text-slate-200">
-                                Prix d'achat *
+                                {t.products.form.costPrice} *
                             </label>
                             <input
                                 type="number"
@@ -452,7 +452,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="h-4 w-4 rounded border-white/15 bg-slate-900/70 text-amber-300 focus:ring-amber-300 focus:ring-offset-0"
                             />
                             <label htmlFor="is_active" className="ml-2 block text-sm text-slate-200">
-                                Produit actif
+                                {t.products.form.active || "Produit actif"}
                             </label>
                         </div>
                     </div>
@@ -462,14 +462,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                             href={route('products.index')}
                             className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
                         >
-                            Annuler
+                            {t.common.actions.cancel}
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
                             className="rounded-lg bg-amber-300 px-6 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {processing ? 'Enregistrement...' : 'Enregistrer'}
+                            {processing ? t.common.actions.saving : t.common.actions.save}
                         </button>
                     </div>
                 </form>
