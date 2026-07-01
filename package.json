@@ -4,7 +4,12 @@
     "type": "module",
     "scripts": {
         "build": "tsc && vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:unit": "vitest run --reporter=verbose",
+        "test:watch": "vitest --watch",
+        "test:coverage": "vitest run --coverage"
     },
     "devDependencies": {
         "@headlessui/react": "^2.0.0",
