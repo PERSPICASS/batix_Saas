@@ -621,7 +621,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 value={customerSearch}
                                 onChange={(e) => setCustomerSearch(e.target.value)}
                                 onKeyDown={handleSearchKeyDown}
-                                placeholder="Rechercher un client..."
+                                placeholder={t.invoices.form.searchCustomer}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                             />
                             {customerSearch && (
@@ -635,8 +635,8 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
-                            <span>{filteredCustomers.length} résultat(s)</span>
+                            <span>{t.invoices.form.useArrowKeys}</span>
+                            <span>{filteredCustomers.length} {t.invoices.form.results}</span>
                         </div>
                     </div>
 
@@ -656,12 +656,12 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                     }`}
                                 >
                                     <span>{customer.name}</span>
-                                    {Number(data.customer_id) === customer.id && <span className="text-xs">Sélectionné</span>}
+                                    {Number(data.customer_id) === customer.id && <span className="text-xs">{t.common.misc.selected}</span>}
                                 </button>
                             ))
                         ) : (
                             <p className="px-3 py-2 text-sm text-slate-400">
-                                Aucun client trouvé pour cette boutique.
+                                {t.invoices.form.noCustomers}
                             </p>
                         )}
                     </div>
@@ -688,7 +688,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                                 onKeyDown={handleProductSearchKeyDown}
-                                placeholder="Rechercher un produit..."
+                                placeholder={t.invoices.form.searchProduct}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                             />
                             {productSearch && (
@@ -702,8 +702,8 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
-                            <span>{filteredProductsBySearch.length} résultat(s)</span>
+                            <span>{t.invoices.form.useArrowKeys}</span>
+                            <span>{filteredProductsBySearch.length} {t.invoices.form.results}</span>
                         </div>
                     </div>
 
@@ -717,7 +717,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                             <div className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-400">
                                                 <span className="font-medium text-slate-300">{product.name}</span>
                                                 <span className="rounded-full bg-amber-300/15 px-1.5 py-0.5 text-xs text-amber-400">
-                                                    {product.variations.length} décl.
+                                                    {product.variations.length} {t.invoices.form.variations}
                                                 </span>
                                             </div>
                                             <div className="ml-3 space-y-0.5 border-l-2 border-amber-300/25 pl-2">
@@ -752,7 +752,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             ))
                         ) : (
                             <p className="px-3 py-2 text-sm text-slate-400">
-                                Aucun produit trouvé pour cette boutique.
+                                {t.invoices.form.noProducts}
                             </p>
                         )}
                     </div>
