@@ -150,14 +150,14 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Inventaire de retour</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.returnedInventory.title}</h1>
                     <div className="text-sm text-slate-400">
                         {items.data ? items.data.filter(i => i.status === 'pending').length : 0} en attente
                     </div>
                 </div>
             }
         >
-            <Head title="Inventaire de retour" />
+            <Head title={t.returnedInventory.title} />
 
             {/* Modal de confirmation */}
             {confirmModal.show && (

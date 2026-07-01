@@ -105,7 +105,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                             <History className="size-5 text-blue-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-semibold text-white">Historique des Activités</h2>
+                            <h2 className="text-xl font-semibold text-white">{t.activityLogs.title}</h2>
                             <p className="text-sm text-slate-400">Suivez toutes les actions effectuées dans vos boutiques</p>
                         </div>
                     </div>
