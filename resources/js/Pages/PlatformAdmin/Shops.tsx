@@ -250,7 +250,7 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
                     onClose={() => setConfirmToggle(null)}
                     onConfirm={() => toggleShopStatus(confirmToggle)}
                     title="Changer le statut de la boutique"
-                    message="Êtes-vous sûr de vouloir changer le statut de cette boutique ?"
+                    message={t.common.messages.confirmDelete || "Êtes-vous sûr"} de vouloir changer le statut de cette boutique ?"
                 />
             )}
         </AuthenticatedLayout>

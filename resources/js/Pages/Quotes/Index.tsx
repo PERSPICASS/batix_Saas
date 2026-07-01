@@ -110,7 +110,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                     <Link
                         href={route('quotes.show', { quote: quote.id })}
                         className="p-2 text-blue-400 hover:bg-blue-500/10 rounded"
-                        title="Voir"
+                        title={t.common.actions.view || "Voir"}
                     >
                         <Eye size={16} />
                     </Link>
@@ -118,7 +118,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                         <Link
                             href={route('quotes.edit', { quote: quote.id })}
                             className="p-2 text-amber-400 hover:bg-amber-500/10 rounded"
-                            title="Modifier"
+                            title={t.common.actions.edit || "Modifier"}
                         >
                             <Edit size={16} />
                         </Link>
@@ -154,7 +154,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                     <button
                         onClick={() => setConfirmDelete(quote.id)}
                         className="p-2 text-red-400 hover:bg-red-500/10 rounded"
-                        title="Supprimer"
+                        title={t.common.actions.delete || "Supprimer"}
                     >
                         <Trash2 size={16} />
                     </button>

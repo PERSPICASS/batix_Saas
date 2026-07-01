@@ -768,7 +768,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                                     {/* Payer */}
                                                     <button
                                                         onClick={() => setPayModal(sale)}
-                                                        title="Enregistrer un paiement"
+                                                        title={t.common.actions.save || "Enregistrer"} un paiement"
                                                         className="flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/25 transition-colors"
                                                     >
                                                         <CreditCard className="h-3.5 w-3.5" />

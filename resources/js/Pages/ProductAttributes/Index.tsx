@@ -207,14 +207,14 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                             <button
                                                 onClick={() => openEditAttribute(attribute)}
                                                 className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-700 rounded"
-                                                title="Modifier"
+                                                title={t.common.actions.edit || "Modifier"}
                                             >
                                                 <Pencil className="size-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteAttribute(attribute)}
                                                 className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded"
-                                                title="Supprimer"
+                                                title={t.common.actions.delete || "Supprimer"}
                                             >
                                                 <Trash2 className="size-4" />
                                             </button>

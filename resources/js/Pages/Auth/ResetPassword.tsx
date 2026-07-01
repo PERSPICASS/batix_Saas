@@ -84,7 +84,7 @@ export default function ResetPassword({
                     </div>
 
                     <div>
-                        <InputLabel htmlFor="password_confirmation" value="Confirmer le mot de passe" className="text-slate-700" />
+                        <InputLabel htmlFor="password_confirmation" value={t.common.actions.confirm || "Confirmer"} le mot de passe" className="text-slate-700" />
                         <div className="relative mt-1">
                             <TextInput
                                 id="password_confirmation"
