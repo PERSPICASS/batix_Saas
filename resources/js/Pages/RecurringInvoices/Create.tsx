@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect, KeyboardEvent as ReactKeyboardEvent, Form
 import { useRoute } from '@/utils/route';
 import Modal from '@/Components/Modal';
 import Currency, { useShopSettings } from '@/Components/Currency';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Customer {
     id: number;
@@ -27,6 +28,7 @@ interface RecurringItem {
 
 export default function CreateRecurringInvoice({ customers, products }: { customers: Customer[]; products: Product[] }) {
     const route = useRoute();
+    const { t } = useLocale();
     const { currencySymbol } = useShopSettings();
     const [loading, setLoading] = useState(false);
 
@@ -184,8 +186,8 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Nouveau cycle de facturation</h1>}>
-            <Head title="Créer une facture récurrente" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.recurringInvoices.form.createTitle}</h1>}>
+            <Head title={t.recurringInvoices.form.createTitle} />
 
             <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
@@ -193,13 +195,13 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                         <div className="mb-4 flex items-center gap-2 text-white">
                             <FileText className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold">Informations du cycle</h2>
+                            <h2 className="text-lg font-semibold">{t.recurringInvoices.form.createTitle}</h2>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
                             {/* Client Modal */}
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Client *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.recurringInvoices.form.customer} *</label>
                                 <button
                                     type="button"
                                     onClick={() => setShowCustomerModal(true)}
@@ -207,7 +209,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <UserRound className="size-4 text-amber-300" />
-                                        {selectedCustomer ? selectedCustomer.name : 'Choisir un client'}
+                                        {selectedCustomer ? selectedCustomer.name : t.recurringInvoices.form.selectCustomer}
                                     </span>
                                     <span className="text-xs text-slate-400">Ouvrir</span>
                                 </button>
@@ -218,13 +220,13 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                         className="mt-2 inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
                                     >
                                         <X className="size-3.5" />
-                                        Retirer
+                                        {t.common.actions.remove || 'Retirer'}
                                     </button>
                                 )}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Date de début *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.recurringInvoices.form.startDate} *</label>
                                 <input
                                     type="date"
                                     value={formData.start_date}
@@ -235,7 +237,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Date de fin (optionnel)</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.common.labels?.optional ? `${t.recurringInvoices.form.nextInvoiceDate} (${t.common.labels.optional})` : t.recurringInvoices.form.nextInvoiceDate}</label>
                                 <input
                                     type="date"
                                     value={formData.end_date}
@@ -245,17 +247,17 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Fréquence *</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.recurringInvoices.form.frequency} *</label>
                                 <select
                                     value={formData.frequency}
                                     onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     required
                                 >
-                                    <option value="monthly">Mensuel</option>
-                                    <option value="quarterly">Trimestriel</option>
-                                    <option value="semi-annual">Semestriel</option>
-                                    <option value="annual">Annuel</option>
+                                    <option value="monthly">{t.recurringInvoices.frequency.monthly}</option>
+                                    <option value="quarterly">{t.recurringInvoices.frequency.quarterly}</option>
+                                    <option value="semi-annual">{t.recurringInvoices.frequency['semi-annual']}</option>
+                                    <option value="annual">{t.recurringInvoices.frequency.annual}</option>
                                 </select>
                             </div>
                         </div>
@@ -266,7 +268,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                         <div className="mb-4 flex items-center justify-between">
                             <div className="flex items-center gap-2 text-white">
                                 <Plus className="size-5 text-amber-300" />
-                                <h2 className="text-lg font-semibold">Articles</h2>
+                                <h2 className="text-lg font-semibold">{t.invoices.form.invoiceLines}</h2>
                             </div>
                             <button
                                 type="button"
@@ -274,7 +276,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                 className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:bg-white/5"
                             >
                                 <Plus className="size-3.5" />
-                                Ajouter
+                                {t.invoices.form.addLine}
                             </button>
                         </div>
 
@@ -289,7 +291,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                         }}
                                         className="flex-1 rounded-lg border border-white/15 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-2 text-left text-slate-200 text-sm transition hover:border-amber-300/40"
                                     >
-                                        {item.product_name || 'Choisir un produit'}
+                                        {item.product_name || t.invoices.form.selectProduct}
                                     </button>
 
                                     <input
@@ -330,13 +332,13 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
 
                     {/* Notes */}
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Notes</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-white">{t.invoices.form.notes}</h2>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                             rows={3}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                            placeholder="Notes pour chaque facture générée..."
+                            placeholder={t.recurringInvoices.form.createTitle}
                         />
                     </div>
                 </section>
@@ -346,22 +348,22 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                     <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
                         <div className="mb-4 flex items-center gap-2 text-white">
                             <Calculator className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold">Résumé</h2>
+                            <h2 className="text-lg font-semibold">{t.invoices.form.summary}</h2>
                         </div>
 
                         <div className="space-y-3 border-b border-white/10 pb-4 mb-4">
                             <div className="flex justify-between text-slate-200">
-                                <span className="text-sm">Sous-total:</span>
+                                <span className="text-sm">{t.invoices.form.subtotal}:</span>
                                 <span className="font-semibold"><Currency amount={subtotal} /></span>
                             </div>
                             <div className="flex justify-between text-slate-200">
-                                <span className="text-sm">TVA (18%):</span>
+                                <span className="text-sm">{t.invoices.form.taxAmount} (18%):</span>
                                 <span className="font-semibold"><Currency amount={tax} /></span>
                             </div>
                         </div>
 
                         <div className="flex justify-between mb-6">
-                            <span className="font-semibold text-white">Total/mois:</span>
+                            <span className="font-semibold text-white">{t.invoices.form.total}:</span>
                             <span className="text-2xl font-bold text-amber-300"><Currency amount={total} /></span>
                         </div>
 
@@ -371,14 +373,14 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                 disabled={loading || !formData.customer_id || items.every((i) => !i.product_id)}
                                 className="w-full rounded-lg bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Création...' : 'Créer le cycle'}
+                                {loading ? `${t.common.misc?.loading || 'Chargement'}...` : t.recurringInvoices.form.createButton}
                             </button>
                             <a
                                 href={route('recurring-invoices.index')}
                                 className="flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
                             >
                                 <ArrowLeft className="size-4" />
-                                Annuler
+                                {t.common.actions.cancel || 'Annuler'}
                             </a>
                         </div>
                     </div>
@@ -389,7 +391,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
             <Modal show={showCustomerModal} onClose={() => setShowCustomerModal(false)} maxWidth="md">
                 <div className="flex max-h-[80vh] flex-col bg-slate-950 p-5 text-slate-100">
                     <div className="mb-4 flex shrink-0 items-center justify-between">
-                        <h3 className="text-base font-semibold">Choisir un client</h3>
+                        <h3 className="text-base font-semibold">{t.recurringInvoices.form.selectCustomer}</h3>
                         <button
                             type="button"
                             onClick={() => setShowCustomerModal(false)}
@@ -406,7 +408,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                 value={customerSearch}
                                 onChange={(e) => setCustomerSearch(e.target.value)}
                                 onKeyDown={handleSearchKeyDown}
-                                placeholder="Rechercher un client..."
+                                placeholder={t.invoices.form.searchCustomer}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
@@ -421,8 +423,8 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
-                            <span>{filteredCustomers.length} résultat(s)</span>
+                            <span>{t.invoices.form.useArrowKeys}</span>
+                            <span>{filteredCustomers.length} {t.invoices.form.results}</span>
                         </div>
                     </div>
 
@@ -442,11 +444,11 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                     }`}
                                 >
                                     <span>{customer.name}</span>
-                                    {Number(formData.customer_id) === customer.id && <span className="text-xs">Sélectionné</span>}
+                                    {Number(formData.customer_id) === customer.id && <span className="text-xs">{t.common.states?.selected || 'Sélectionné'}</span>}
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">Aucun client trouvé.</p>
+                            <p className="px-3 py-2 text-sm text-slate-400">{t.invoices.form.noCustomers}</p>
                         )}
                     </div>
                 </div>
@@ -456,7 +458,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
             <Modal show={showProductModal} onClose={() => setShowProductModal(false)} maxWidth="md">
                 <div className="h-[560px] bg-slate-950 p-5 text-slate-100">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-base font-semibold">Choisir un produit</h3>
+                        <h3 className="text-base font-semibold">{t.invoices.form.selectProduct}</h3>
                         <button
                             type="button"
                             onClick={() => setShowProductModal(false)}
@@ -473,7 +475,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                                 onKeyDown={handleProductSearchKeyDown}
-                                placeholder="Rechercher un produit..."
+                                placeholder={t.invoices.form.searchProduct}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
@@ -488,8 +490,8 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
-                            <span>{filteredProducts.length} résultat(s)</span>
+                            <span>{t.invoices.form.useArrowKeys}</span>
+                            <span>{filteredProducts.length} {t.invoices.form.results}</span>
                         </div>
                     </div>
 
@@ -511,7 +513,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">Aucun produit trouvé.</p>
+                            <p className="px-3 py-2 text-sm text-slate-400">{t.invoices.form.noProducts}</p>
                         )}
                     </div>
                 </div>
