@@ -5,6 +5,7 @@ import { FormEventHandler, KeyboardEvent, ClipboardEvent, useEffect, useRef, use
 import { MailCheck, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import axios from 'axios';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Props {
     email: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function VerifyEmail({ email, canResend }: Props) {
+    const { t } = useLocale();
     const route = useRoute();
     const [code, setCode] = useState(['', '', '', '', '', '']);
     const [isVerifying, setIsVerifying] = useState(false);
@@ -85,7 +87,7 @@ export default function VerifyEmail({ email, canResend }: Props) {
                 window.location.href = route('shop.create.initial');
             }
         } catch (error: any) {
-            const message = error?.response?.data?.message || 'Code invalide. Veuillez reessayer.';
+            const message = error?.response?.data?.message || t.auth.messages.invalidCode;
             setVerificationError(message);
             setCode(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
@@ -121,7 +123,7 @@ export default function VerifyEmail({ email, canResend }: Props) {
             inputRefs.current[0]?.focus();
             window.setTimeout(() => setResendSuccess(false), 5000);
         } catch {
-            setVerificationError('Impossible de renvoyer le code. Veuillez reessayer.');
+            setVerificationError(t.auth.messages.resendError);
             setResendCooldown(0);
         } finally {
             setIsResending(false);
@@ -130,11 +132,11 @@ export default function VerifyEmail({ email, canResend }: Props) {
 
     return (
         <>
-            <Head title="Verification email" />
+            <Head title={t.auth.pages.verifyEmail.title} />
 
             <AuthSplitLayout
-                title="Verifiez votre email"
-                description={`Un code a 6 chiffres a ete envoye a ${email}.`}
+                title={t.auth.pages.verifyEmail.heading}
+                description={t.auth.pages.verifyEmail.description.replace('{email}', email)}
                 icon={<MailCheck className="size-5" />}
                 stepper={
                     <div className="mb-4 flex items-center gap-2">
@@ -145,14 +147,14 @@ export default function VerifyEmail({ email, canResend }: Props) {
                         <div className="flex size-7 items-center justify-center rounded-full bg-[#d5c9b2] text-xs font-semibold text-slate-700">3</div>
                     </div>
                 }
-                sideStepLabel="Etape 2 sur 3"
-                sideTitle="Validez votre acces en toute securite."
-                sideDescription="Confirmez votre email pour activer votre espace et continuer la configuration."
+                sideStepLabel={t.auth.pages.verifyEmail.sideLabel}
+                sideTitle={t.auth.pages.verifyEmail.sideTitle}
+                sideDescription={t.auth.pages.verifyEmail.sideDescription}
             >
                 <form onSubmit={submit} className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
                         <ShieldCheck className="size-4 text-amber-700" />
-                        Entrez le code a 6 chiffres
+                        {t.auth.messages.enterCode}
                     </label>
 
                     <div className="flex gap-2">
@@ -187,7 +189,7 @@ export default function VerifyEmail({ email, canResend }: Props) {
                     )}
 
                     {resendSuccess && (
-                        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Un nouveau code a ete envoye.</p>
+                        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{t.auth.messages.newCodeSent}</p>
                     )}
 
                     <PrimaryButton
@@ -195,7 +197,7 @@ export default function VerifyEmail({ email, canResend }: Props) {
                         disabled={code.join('').length !== 6 || isVerifying}
                         className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800"
                     >
-                        {isVerifying ? 'Verification...' : 'Verifier'}
+                        {isVerifying ? t.auth.actions.verifying : t.auth.actions.verify}
                     </PrimaryButton>
 
                     <div className="text-center">
@@ -207,14 +209,14 @@ export default function VerifyEmail({ email, canResend }: Props) {
                                 className="inline-flex items-center gap-2 text-sm text-slate-700 underline underline-offset-4 transition hover:text-slate-900"
                             >
                                 <RefreshCw className={`size-4 ${isResending ? 'animate-spin' : ''}`} />
-                                Renvoyer le code
+                                {t.auth.actions.resendCode}
                             </button>
                         ) : resendCooldown > 0 ? (
                             <p className="text-sm text-slate-600">
-                                Nouveau code dans <span className="font-semibold text-amber-700">{resendCooldown}s</span>
+                                {t.auth.actions.resendIn.replace('{seconds}', resendCooldown.toString())}
                             </p>
                         ) : (
-                            <p className="text-sm text-slate-600">Consultez votre boite de reception</p>
+                            <p className="text-sm text-slate-600">{t.auth.messages.checkInbox}</p>
                         )}
                     </div>
                 </form>

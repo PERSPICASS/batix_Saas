@@ -7,6 +7,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Eye, EyeOff, Lock } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Login({
     status,
@@ -15,6 +16,7 @@ export default function Login({
     status?: string;
     canResetPassword: boolean;
 }) {
+    const { t } = useLocale();
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -32,16 +34,16 @@ export default function Login({
 
     return (
         <>
-            <Head title="Connexion" />
+            <Head title={t.auth.pages.login.title} />
 
             <AuthSplitLayout
-                title="Ravi de vous revoir"
-                description="Connectez-vous pour reprendre vos ventes, vos stocks et vos operations la ou vous les avez laisses."
+                title={t.auth.pages.login.heading}
+                description={t.auth.pages.login.description}
                 icon={<Lock className="size-5" />}
-                topLink={{ href: '/', label: "Retour a l'accueil" }}
-                sideStepLabel="Acces securise"
-                sideTitle="Retrouvez votre espace en un instant."
-                sideDescription="Vos donnees restent synchronisees et securisees, pour que vous puissiez continuer sans interruption."
+                topLink={{ href: '/', label: t.auth.pages.login.topLink }}
+                sideStepLabel={t.auth.pages.login.sideLabel}
+                sideTitle={t.auth.pages.login.sideTitle}
+                sideDescription={t.auth.pages.login.sideDescription}
             >
                 {status && (
                     <div className="mb-3 rounded-lg border border-emerald-300/60 bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800">
@@ -51,7 +53,7 @@ export default function Login({
 
                 <form onSubmit={submit} className="space-y-3">
                     <div>
-                        <InputLabel htmlFor="email" value="Email" className="text-slate-700" />
+                        <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
 
                         <TextInput
                             id="email"
@@ -68,7 +70,7 @@ export default function Login({
                     </div>
 
                     <div>
-                        <InputLabel htmlFor="password" value="Mot de passe" className="text-slate-700" />
+                        <InputLabel htmlFor="password" value={t.auth.form.password} className="text-slate-700" />
 
                         <div className="relative mt-1">
                             <TextInput
@@ -100,7 +102,7 @@ export default function Login({
                                 className="border-[#cfc3ac] bg-white text-amber-600 focus:ring-amber-300"
                                 onChange={(e) => setData('remember', e.target.checked)}
                             />
-                            <span className="ms-2 text-sm text-slate-700">Se souvenir de moi</span>
+                            <span className="ms-2 text-sm text-slate-700">{t.auth.form.rememberMe}</span>
                         </label>
 
                         {canResetPassword && (
@@ -108,19 +110,19 @@ export default function Login({
                                 href={route('password.request')}
                                 className="text-sm text-slate-600 underline underline-offset-4 transition hover:text-slate-900"
                             >
-                                Mot de passe oublie ?
+                                {t.auth.links.forgotPassword}
                             </Link>
                         )}
                     </div>
 
                     <div className="space-y-2 pt-1">
                         <PrimaryButton className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800" disabled={processing}>
-                            Se connecter
+                            {t.auth.actions.signIn}
                         </PrimaryButton>
 
                         <div className="text-center">
                             <Link href={route('register')} className="text-xs text-slate-600 underline underline-offset-4 transition hover:text-slate-900 sm:text-sm">
-                                Nouveau ici ? Creer un compte
+                                {t.auth.links.noAccount}
                             </Link>
                         </div>
                     </div>

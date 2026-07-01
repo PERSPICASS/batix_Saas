@@ -6,6 +6,7 @@ import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function ResetPassword({
     token,
@@ -14,6 +15,7 @@ export default function ResetPassword({
     token: string;
     email: string;
 }) {
+    const { t } = useLocale();
     const [showPassword, setShowPassword] = useState(false);
     const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
 
@@ -34,19 +36,19 @@ export default function ResetPassword({
 
     return (
         <>
-            <Head title="Nouveau mot de passe" />
+            <Head title={t.auth.pages.resetPassword.title} />
 
             <AuthSplitLayout
-                title="Choisissez un nouveau mot de passe"
-                description="Saisissez votre nouveau mot de passe pour securiser a nouveau votre compte Batix."
+                title={t.auth.pages.resetPassword.heading}
+                description={t.auth.pages.resetPassword.description}
                 icon={<KeyRound className="size-5" />}
-                sideStepLabel="Securite"
-                sideTitle="Un compte protege, une equipe tranquille."
-                sideDescription="Renforcez la securite de votre espace en quelques secondes."
+                sideStepLabel={t.auth.pages.resetPassword.sideLabel}
+                sideTitle={t.auth.pages.resetPassword.sideTitle}
+                sideDescription={t.auth.pages.resetPassword.sideDescription}
             >
                 <form onSubmit={submit} className="space-y-3">
                     <div>
-                        <InputLabel htmlFor="email" value="Email" className="text-slate-700" />
+                        <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
                         <TextInput
                             id="email"
                             type="email"
@@ -60,7 +62,7 @@ export default function ResetPassword({
                     </div>
 
                     <div>
-                        <InputLabel htmlFor="password" value="Nouveau mot de passe" className="text-slate-700" />
+                        <InputLabel htmlFor="password" value={t.auth.form.passwordNew} className="text-slate-700" />
                         <div className="relative mt-1">
                             <TextInput
                                 id="password"
@@ -84,7 +86,7 @@ export default function ResetPassword({
                     </div>
 
                     <div>
-                        <InputLabel htmlFor="password_confirmation" value="Confirmer le mot de passe" className="text-slate-700" />
+                        <InputLabel htmlFor="password_confirmation" value={t.auth.form.passwordConfirm} className="text-slate-700" />
                         <div className="relative mt-1">
                             <TextInput
                                 id="password_confirmation"
@@ -108,12 +110,12 @@ export default function ResetPassword({
 
                     <div className="space-y-2 pt-1">
                         <PrimaryButton className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800" disabled={processing}>
-                            Reinitialiser le mot de passe
+                            {t.auth.actions.resetPassword}
                         </PrimaryButton>
 
                         <div className="text-center">
                             <Link href={route('login')} className="text-xs text-slate-600 underline underline-offset-4 transition hover:text-slate-900 sm:text-sm">
-                                Retour a la connexion
+                                {t.auth.links.backToLogin}
                             </Link>
                         </div>
                     </div>

@@ -2,12 +2,14 @@ import { Head, router } from '@inertiajs/react';
 import { Lock } from 'lucide-react';
 import { useState } from 'react';
 import axios from 'axios';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Props {
     codeUser: string;
 }
 
 export default function VerifyTwoFactor({ codeUser }: Props) {
+    const { t } = useLocale();
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,7 +18,7 @@ export default function VerifyTwoFactor({ codeUser }: Props) {
         e.preventDefault();
 
         if (!code.trim()) {
-            setError('Veuillez entrer un code');
+            setError(t.auth.messages.enterCodeRequired);
             return;
         }
 
@@ -33,7 +35,7 @@ export default function VerifyTwoFactor({ codeUser }: Props) {
                 window.location.href = `/${codeUser}/dashboard`;
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Code invalide. Réessayez.');
+            setError(err.response?.data?.message || t.auth.messages.invalidCodeRetry);
         } finally {
             setLoading(false);
         }
@@ -41,7 +43,7 @@ export default function VerifyTwoFactor({ codeUser }: Props) {
 
     return (
         <>
-            <Head title="Vérification 2FA" />
+            <Head title={t.auth.pages.verifyTwoFactor.title} />
 
             <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 px-4">
                 <div className="w-full max-w-md">
@@ -56,10 +58,10 @@ export default function VerifyTwoFactor({ codeUser }: Props) {
 
                         {/* Title */}
                         <h1 className="mb-2 text-center text-2xl font-bold text-white">
-                            Vérification 2FA
+                            {t.auth.pages.verifyTwoFactor.heading}
                         </h1>
                         <p className="mb-6 text-center text-sm text-slate-400">
-                            Entrez le code à 6 chiffres de votre application authenticateur
+                            {t.auth.pages.verifyTwoFactor.description}
                         </p>
 
                         {/* Form */}
@@ -94,19 +96,19 @@ export default function VerifyTwoFactor({ codeUser }: Props) {
                                 disabled={loading || code.length !== 6}
                                 className="w-full rounded-lg bg-amber-300 py-2 font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Vérification...' : 'Vérifier'}
+                                {loading ? t.auth.actions.verifying : t.auth.actions.verify}
                             </button>
                         </form>
 
                         {/* Recovery Code Option */}
                         <p className="mt-6 text-center text-xs text-slate-500">
-                            Vous pouvez aussi entrer un code de secours
+                            {t.auth.pages.verifyTwoFactor.recoveryOption}
                         </p>
                     </div>
 
                     {/* Footer */}
                     <p className="mt-8 text-center text-xs text-slate-600">
-                        © 2026 BATIXPRO. Tous droits réservés.
+                        {t.auth.pages.verifyTwoFactor.footer}
                     </p>
                 </div>
             </div>

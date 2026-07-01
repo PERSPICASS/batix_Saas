@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { Lock, Shield, Copy, Check, X } from 'lucide-react';
 import axios from 'axios';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Props {
     twoFactorEnabled: boolean;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
+    const { t } = useLocale();
     const [showSetup, setShowSetup] = useState(false);
     const [qrCode, setQrCode] = useState('');
     const [secret, setSecret] = useState('');
@@ -32,7 +34,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
             setSecret(response.data.secret);
             setShowSetup(true);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Erreur lors de la génération du secret');
+            setError(err.response?.data?.message || t.auth.messages.secretGenerationError);
         } finally {
             setLoading(false);
         }
@@ -40,7 +42,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
 
     const verifyCode = async () => {
         if (code.length !== 6) {
-            setError('Veuillez entrer un code à 6 chiffres');
+            setError(t.auth.messages.enterSixDigitCode);
             return;
         }
 
@@ -52,14 +54,14 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
             if (response.data.recoveryCodes) {
                 setRecoveryCodes(response.data.recoveryCodes);
                 setShowRecoveryCodes(true);
-                setSuccess('2FA activée avec succès!');
+                setSuccess(t.auth.messages.twoFactorEnabled);
                 setCode('');
             } else {
-                setError('Erreur: Codes de secours non reçus. Veuillez réessayer.');
+                setError(t.auth.messages.recoveryCodesError);
                 console.error('Response missing recoveryCodes:', response.data);
             }
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'Code invalide. Veuillez réessayer.';
+            const errorMsg = err.response?.data?.message || t.auth.messages.invalidCode;
             setError(errorMsg);
             console.error('2FA verification error:', {
                 status: err.response?.status,
@@ -77,13 +79,13 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
         setError('');
         try {
             await axios.post('/two-factor/disable', { password: disablePassword });
-            setSuccess('2FA désactivée');
+            setSuccess(t.auth.messages.twoFactorDisabled);
             setShowDisableModal(false);
             setDisablePassword('');
             // Reload page
             window.location.reload();
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Erreur lors de la désactivation');
+            setError(err.response?.data?.message || t.auth.messages.disableError);
         } finally {
             setLoading(false);
         }
@@ -97,9 +99,9 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Authentification 2FA</h1>}
+            header={<h1 className="text-xl font-semibold text-white">{t.auth.pages.twoFactor.heading}</h1>}
         >
-            <Head title="Authentification 2FA" />
+            <Head title={t.auth.pages.twoFactor.title} />
 
             <div className="max-w-2xl space-y-6">
                 {/* Status Card */}
@@ -108,11 +110,11 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                         <div className="flex items-center gap-4">
                             <Shield className={`size-8 ${twoFactorEnabled ? 'text-green-500' : 'text-slate-400'}`} />
                             <div>
-                                <h2 className="text-lg font-semibold text-white">Authentification 2FA</h2>
+                                <h2 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.heading}</h2>
                                 <p className="text-sm text-slate-400">
                                     {twoFactorEnabled
-                                        ? '✅ Activée - Votre compte est protégé'
-                                        : '❌ Désactivée - Activez-la pour plus de sécurité'}
+                                        ? t.auth.pages.twoFactor.statusEnabled
+                                        : t.auth.pages.twoFactor.statusDisabled}
                                 </p>
                             </div>
                         </div>
@@ -121,7 +123,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                 onClick={() => setShowDisableModal(true)}
                                 className="rounded-lg border border-red-500/30 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
                             >
-                                Désactiver
+                                {t.auth.actions.disableTwoFactor}
                             </button>
                         )}
                     </div>
@@ -143,15 +145,15 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                     <>
                         {/* Setup Instructions */}
                         <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                            <h3 className="text-lg font-semibold text-white">Configurer l'authentification 2FA</h3>
+                            <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.setupSection}</h3>
 
                             <div className="space-y-3 text-sm text-slate-300">
-                                <p>L'authentification 2FA ajoute une couche de sécurité supplémentaire à votre compte.</p>
-                                <p>Vous aurez besoin d'une application authenticateur comme:</p>
+                                <p>{t.auth.pages.twoFactor.setupDescription}</p>
+                                <p>{t.auth.pages.twoFactor.authenticatorAppLabel}</p>
                                 <ul className="ml-4 space-y-2">
-                                    <li>🔹 Google Authenticator</li>
-                                    <li>🔹 Microsoft Authenticator</li>
-                                    <li>🔹 Authy</li>
+                                    <li>🔹 {t.auth.pages.twoFactor.authenticatorApps.googleAuth}</li>
+                                    <li>🔹 {t.auth.pages.twoFactor.authenticatorApps.microsoftAuth}</li>
+                                    <li>🔹 {t.auth.pages.twoFactor.authenticatorApps.authy}</li>
                                 </ul>
                             </div>
 
@@ -161,7 +163,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                     disabled={loading}
                                     className="mt-4 rounded-lg bg-amber-300 px-6 py-2 font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50"
                                 >
-                                    {loading ? 'Génération...' : 'Commencer la configuration'}
+                                    {loading ? t.auth.actions.generating : t.auth.actions.startSetup}
                                 </button>
                             )}
                         </div>
@@ -169,7 +171,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                         {/* QR Code Setup */}
                         {showSetup && !showRecoveryCodes && (
                             <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                                <h3 className="text-lg font-semibold text-white">Étape 1: Scanner le QR Code</h3>
+                                <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.step1Title}</h3>
 
                                 {qrCode && (
                                     <div className="flex flex-col items-center gap-4">
@@ -179,14 +181,14 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                             className="rounded-lg border border-white/10 p-2"
                                         />
                                         <p className="text-sm text-slate-400">
-                                            Ou entrez manuellement: <code className="font-mono text-amber-300">{secret}</code>
+                                            {t.auth.pages.twoFactor.manualSecretLabel} <code className="font-mono text-amber-300">{secret}</code>
                                         </p>
                                     </div>
                                 )}
 
                                 <div className="space-y-3">
                                     <label className="block text-sm font-medium text-slate-200">
-                                        Étape 2: Entrez le code 6 chiffres
+                                        {t.auth.pages.twoFactor.step2Title}
                                     </label>
                                     <input
                                         type="text"
@@ -203,7 +205,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                     disabled={loading || code.length !== 6}
                                     className="w-full rounded-lg bg-amber-300 px-4 py-2 font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50"
                                 >
-                                    {loading ? 'Vérification...' : 'Vérifier et activer'}
+                                    {loading ? t.auth.actions.verifying : t.auth.actions.verifyAndActivate}
                                 </button>
                             </div>
                         )}
@@ -211,9 +213,9 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                         {/* Recovery Codes */}
                         {showRecoveryCodes && recoveryCodes && recoveryCodes.length > 0 && (
                             <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                                <h3 className="text-lg font-semibold text-white">Codes de secours</h3>
+                                <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.recoveryCodes}</h3>
                                 <p className="text-sm text-slate-400">
-                                    Sauvegardez ces codes dans un endroit sûr. Vous pouvez les utiliser pour accéder à votre compte si vous perdez votre appareil.
+                                    {t.auth.pages.twoFactor.recoveryCodesDescription}
                                 </p>
 
                                 <div className="space-y-2">
@@ -241,7 +243,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                     onClick={() => window.location.reload()}
                                     className="w-full rounded-lg bg-amber-300 px-4 py-2 font-semibold text-slate-950 hover:bg-amber-200"
                                 >
-                                    Configuration terminée
+                                    {t.auth.actions.finishSetup}
                                 </button>
                             </div>
                         )}
@@ -251,8 +253,8 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                         <div className="flex items-center gap-3">
                             <Check className="size-5 text-green-400" />
                             <div>
-                                <h3 className="font-semibold text-green-400">2FA activée</h3>
-                                <p className="text-sm text-green-300">Votre compte est sécurisé avec l'authentification 2FA</p>
+                                <h3 className="font-semibold text-green-400">{t.auth.pages.twoFactor.enabledMessage}</h3>
+                                <p className="text-sm text-green-300">{t.auth.pages.twoFactor.enabledDescription}</p>
                             </div>
                         </div>
                     </div>
@@ -262,16 +264,16 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                 {showDisableModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                         <div className="rounded-2xl border border-white/10 bg-slate-950 p-6 max-w-md">
-                            <h3 className="text-lg font-semibold text-white">Désactiver 2FA?</h3>
+                            <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.disableModalTitle}</h3>
                             <p className="mt-2 text-sm text-slate-400">
-                                Entrez votre mot de passe pour confirmer la désactivation de la 2FA.
+                                {t.auth.pages.twoFactor.disableModalDescription}
                             </p>
 
                             <input
                                 type="password"
                                 value={disablePassword}
                                 onChange={(e) => setDisablePassword(e.target.value)}
-                                placeholder="Mot de passe"
+                                placeholder={t.auth.form.password}
                                 className="mt-4 w-full rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-slate-200 focus:border-red-500 focus:outline-none"
                             />
 
@@ -280,14 +282,14 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                     onClick={() => setShowDisableModal(false)}
                                     className="flex-1 rounded-lg border border-white/15 px-4 py-2 text-slate-200 hover:bg-white/5"
                                 >
-                                    Annuler
+                                    {t.auth.actions.cancel}
                                 </button>
                                 <button
                                     onClick={handleDisable}
                                     disabled={loading || !disablePassword}
                                     className="flex-1 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600 disabled:opacity-50"
                                 >
-                                    {loading ? 'Désactivation...' : 'Désactiver'}
+                                    {loading ? t.auth.actions.disabling : t.auth.actions.disableTwoFactor}
                                 </button>
                             </div>
                         </div>

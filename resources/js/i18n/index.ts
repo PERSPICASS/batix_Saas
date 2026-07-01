@@ -36,6 +36,7 @@ import { locations } from './locations';
 import { paymentMethods } from './paymentMethods';
 import { taxRates } from './taxRates';
 import { credits } from './credits';
+import { auth } from './auth';
 
 export const translations = {
     fr: {
@@ -76,6 +77,7 @@ export const translations = {
         paymentMethods: paymentMethods.fr,
         taxRates: taxRates.fr,
         credits: credits.fr,
+        auth: auth.fr,
     },
     en: {
         common: common.en,
@@ -115,6 +117,7 @@ export const translations = {
         paymentMethods: paymentMethods.en,
         taxRates: taxRates.en,
         credits: credits.en,
+        auth: auth.en,
     },
 } as const;
 

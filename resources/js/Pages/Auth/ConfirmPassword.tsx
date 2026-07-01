@@ -6,8 +6,10 @@ import TextInput from '@/Components/TextInput';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function ConfirmPassword() {
+    const { t } = useLocale();
     const { data, setData, post, processing, errors, reset } = useForm({
         password: '',
     });
@@ -22,19 +24,19 @@ export default function ConfirmPassword() {
 
     return (
         <>
-            <Head title="Confirmation" />
+            <Head title={t.auth.pages.confirmPassword.title} />
 
             <AuthSplitLayout
-                title="Confirmez votre identite"
-                description="Cette zone est protegee. Entrez votre mot de passe pour continuer en toute securite."
+                title={t.auth.pages.confirmPassword.heading}
+                description={t.auth.pages.confirmPassword.description}
                 icon={<ShieldCheck className="size-5" />}
-                sideStepLabel="Verification"
-                sideTitle="Un dernier controle avant d'avancer."
-                sideDescription="Cette verification protege vos operations sensibles et vos donnees metier."
+                sideStepLabel={t.auth.pages.confirmPassword.sideLabel}
+                sideTitle={t.auth.pages.confirmPassword.sideTitle}
+                sideDescription={t.auth.pages.confirmPassword.sideDescription}
             >
                 <form onSubmit={submit} className="space-y-3">
                     <div>
-                        <InputLabel htmlFor="password" value="Mot de passe" className="text-slate-700" />
+                        <InputLabel htmlFor="password" value={t.auth.form.password} className="text-slate-700" />
                         <TextInput
                             id="password"
                             type="password"
@@ -48,7 +50,7 @@ export default function ConfirmPassword() {
                     </div>
 
                     <PrimaryButton className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800" disabled={processing}>
-                        Confirmer
+                        {t.auth.actions.confirm}
                     </PrimaryButton>
                 </form>
             </AuthSplitLayout>

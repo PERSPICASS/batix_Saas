@@ -3,6 +3,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Props {
     user: {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function LockScreen({ user }: Props) {
+    const { t } = useLocale();
     const [showPassword, setShowPassword] = useState(false);
     const { data, setData, post, processing, errors, reset } = useForm({
         password: '',
@@ -32,15 +34,15 @@ export default function LockScreen({ user }: Props) {
 
     return (
         <>
-            <Head title="Ecran verrouille" />
+            <Head title={t.auth.pages.lockScreen.title} />
 
             <AuthSplitLayout
-                title="Session verrouillee"
-                description="Entrez votre mot de passe pour reprendre exactement la ou vous vous etiez arrete."
+                title={t.auth.pages.lockScreen.heading}
+                description={t.auth.pages.lockScreen.description}
                 icon={<Lock className="size-5" />}
-                sideStepLabel="Session securisee"
-                sideTitle="Vos donnees restent protegees."
-                sideDescription="Deverrouillez votre session pour continuer vos operations sans perdre votre progression."
+                sideStepLabel={t.auth.pages.lockScreen.sideLabel}
+                sideTitle={t.auth.pages.lockScreen.sideTitle}
+                sideDescription={t.auth.pages.lockScreen.sideDescription}
             >
                 <div className="mb-4 rounded-2xl border border-[#d8cfbe] bg-[#f5efe4] p-4">
                     <div className="flex items-center gap-3">
@@ -61,7 +63,7 @@ export default function LockScreen({ user }: Props) {
                 <form onSubmit={submit} className="space-y-3">
                     <div>
                         <label htmlFor="password" className="text-sm font-medium text-slate-700">
-                            Mot de passe
+                            {t.auth.form.password}
                         </label>
                         <div className="relative mt-1">
                             <input
@@ -72,7 +74,7 @@ export default function LockScreen({ user }: Props) {
                                 className={`block w-full rounded-md border px-3 py-2 pr-10 text-slate-900 placeholder-slate-400 ${
                                     errors.password ? 'border-red-300 bg-red-50' : 'border-[#cfc3ac] bg-white'
                                 }`}
-                                placeholder="Entrez votre mot de passe"
+                                placeholder={t.auth.form.passwordInput}
                                 onChange={(e) => setData('password', e.target.value)}
                                 autoComplete="current-password"
                                 disabled={processing}
@@ -94,7 +96,7 @@ export default function LockScreen({ user }: Props) {
                         disabled={processing || !data.password}
                         className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800"
                     >
-                        {processing ? 'Deverrouillage...' : 'Deverrouiller'}
+                        {processing ? t.auth.actions.unlocking : t.auth.actions.unlock}
                     </PrimaryButton>
 
                     <div className="text-center">
@@ -103,7 +105,7 @@ export default function LockScreen({ user }: Props) {
                             onClick={() => router.post(route('logout'))}
                             className="text-xs text-slate-600 underline underline-offset-4 transition hover:text-slate-900 sm:text-sm"
                         >
-                            Se connecter avec un autre compte
+                            {t.auth.actions.loginWithAnotherAccount}
                         </button>
                     </div>
                 </form>
