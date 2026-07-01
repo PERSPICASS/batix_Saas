@@ -71,11 +71,11 @@ class ShopHelperTest extends TestCase
     public function accessible_shops_returns_user_shops(): void
     {
         $user = User::factory()->create(['role' => 'super_admin']);
-        $shop1 = Shop::factory()->create(['name' => 'Shop A']);
-        $shop2 = Shop::factory()->create(['name' => 'Shop B']);
-        $user->shops()->attach([$shop1->id, $shop2->id]);
-        
-        $otherShop = Shop::factory()->create(['name' => 'Other Shop']);
+        $shop1 = Shop::factory()->create(['user_id' => $user->id, 'name' => 'Shop A']);
+        $shop2 = Shop::factory()->create(['user_id' => $user->id, 'name' => 'Shop B']);
+
+        $otherUser = User::factory()->create(['role' => 'super_admin']);
+        $otherShop = Shop::factory()->create(['user_id' => $otherUser->id, 'name' => 'Other Shop']);
 
         $accessibleShops = $user->accessibleShops();
 

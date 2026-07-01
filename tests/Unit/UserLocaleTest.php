@@ -15,7 +15,7 @@ class UserLocaleTest extends TestCase
         $user = User::factory()->create();
 
         $this->assertNotNull($user->locale);
-        $this->assertIn($user->locale, ['en', 'fr']);
+        $this->assertContains($user->locale, ['en', 'fr']);
     }
 
     /**
@@ -67,6 +67,6 @@ class UserLocaleTest extends TestCase
 
         // This depends on your validation rules
         // Adjust based on your actual validation implementation
-        $this->assertIn($user->locale, ['en', 'fr']);
+        $this->assertContains($user->locale, ['en', 'fr']);
     }
 }
