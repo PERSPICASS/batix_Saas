@@ -57,12 +57,11 @@ export default function DeleteUserForm({
             <header className="mb-6">
                 <h2 className="text-lg font-semibold text-red-400 flex items-center gap-2">
                     <Trash2 className="h-5 w-5" />
-                    Supprimer le Compte
+                    {t.profile.form.delete.title}
                 </h2>
 
                 <p className="mt-2 text-sm text-slate-300">
-                    Une fois votre compte supprimé, toutes ses ressources et données seront définitivement supprimées. 
-                    Avant de supprimer votre compte, veuillez télécharger toutes les données ou informations que vous souhaitez conserver.
+                    {t.profile.form.delete.description}
                 </p>
             </header>
 
@@ -70,7 +69,7 @@ export default function DeleteUserForm({
                 onClick={confirmUserDeletion}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
-                Supprimer le Compte
+                {t.profile.form.delete.button}
             </button>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
@@ -80,21 +79,19 @@ export default function DeleteUserForm({
                             <AlertTriangle className="h-6 w-6 text-red-400" />
                         </div>
                         <h2 className="text-lg font-semibold text-white">
-                            Êtes-vous sûr de vouloir supprimer votre compte ?
+                            {t.profile.form.delete.modalTitle}
                         </h2>
                     </div>
 
                     <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
                         <p className="text-sm text-red-200">
-                            ⚠️ <strong>Cette action est irréversible.</strong> Une fois votre compte supprimé, toutes ses ressources et 
-                            données seront définitivement supprimées. Veuillez entrer votre mot de passe pour confirmer 
-                            que vous souhaitez supprimer définitivement votre compte.
+                            ⚠️ {t.profile.form.delete.modalDescription}
                         </p>
                     </div>
 
                     <div className="mt-6">
                         <label htmlFor="password" className="sr-only">
-                            Mot de passe
+                            {t.profile.form.delete.passwordLabel}
                         </label>
 
                         <input
@@ -106,7 +103,7 @@ export default function DeleteUserForm({
                             onChange={(e) => setData('password', e.target.value)}
                             className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                             autoFocus
-                            placeholder="Entrez votre mot de passe"
+                            placeholder={t.profile.form.delete.passwordPlaceholder}
                         />
 
                         {errors.password && <p className="mt-2 text-sm text-red-400">{errors.password}</p>}
@@ -118,7 +115,7 @@ export default function DeleteUserForm({
                             onClick={closeModal}
                             className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-900"
                         >
-                            Annuler
+                            {t.profile.form.delete.cancel}
                         </button>
 
                         <button
@@ -126,7 +123,7 @@ export default function DeleteUserForm({
                             disabled={processing}
                             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
                         >
-                            Supprimer le Compte
+                            {t.profile.form.delete.confirm}
                         </button>
                     </div>
                 </form>
