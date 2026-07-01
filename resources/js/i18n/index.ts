@@ -30,6 +30,11 @@ import { preorders } from './preorders';
 import { returnedInventory } from './returnedInventory';
 import { platformAdmin } from './platformAdmin';
 import { recurringInvoices } from './recurringInvoices';
+import { blog } from './blog';
+import { subcategories } from './subcategories';
+import { locations } from './locations';
+import { paymentMethods } from './paymentMethods';
+import { taxRates } from './taxRates';
 
 export const translations = {
     fr: {
@@ -64,6 +69,11 @@ export const translations = {
         returnedInventory: returnedInventory.fr,
         platformAdmin: platformAdmin.fr,
         recurringInvoices: recurringInvoices.fr,
+        blog: blog.fr,
+        subcategories: subcategories.fr,
+        locations: locations.fr,
+        paymentMethods: paymentMethods.fr,
+        taxRates: taxRates.fr,
     },
     en: {
         common: common.en,
@@ -97,6 +107,11 @@ export const translations = {
         returnedInventory: returnedInventory.en,
         platformAdmin: platformAdmin.en,
         recurringInvoices: recurringInvoices.en,
+        blog: blog.en,
+        subcategories: subcategories.en,
+        locations: locations.en,
+        paymentMethods: paymentMethods.en,
+        taxRates: taxRates.en,
     },
 } as const;
 
