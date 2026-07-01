@@ -85,7 +85,7 @@ export default function Edit({
                 </h2>
             }
         >
-            <Head title="Profil" />
+            <Head title={t.profile.title || "Profil"} />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
