@@ -302,7 +302,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                 className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
                             >
                                 <Plus className="size-3.5" />
-                                Ajouter ligne
+                                {t.invoices.form.addLine}
                             </button>
                         </div>
 
@@ -446,13 +446,13 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                             disabled={processing}
                             className="w-full rounded-lg bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {processing ? 'Enregistrement...' : 'Enregistrer'}
+                            {processing ? t.common.actions.saving : t.invoices.form.updateButton}
                         </button>
                         <Link
                             href={route('invoices.index')}
                             className="block w-full rounded-lg border border-white/15 px-4 py-2.5 text-center text-sm text-slate-200 transition hover:bg-white/10"
                         >
-                            Retour
+                            {t.common.actions.back}
                         </Link>
                     </div>
                 </aside>
