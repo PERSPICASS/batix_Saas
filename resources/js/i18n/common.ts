@@ -26,6 +26,7 @@ export const common = {
             new: 'Nouveau',
             update: 'Mettre à jour',
             open: 'Ouvrir',
+            print: 'Imprimer',
         },
         status: {
             active: 'Actif',
@@ -98,6 +99,7 @@ export const common = {
             noResults: 'Aucun résultat trouvé',
             optional: '(optionnel)',
             selected: 'Sélectionné',
+            sendEmailTo: 'par email à',
         },
         form: {
             requiredNote: 'Les champs marqués * sont obligatoires',
@@ -199,6 +201,7 @@ export const common = {
             new: 'New',
             update: 'Update',
             open: 'Open',
+            print: 'Print',
         },
         status: {
             active: 'Active',
@@ -271,6 +274,7 @@ export const common = {
             noResults: 'No results found',
             optional: '(optional)',
             selected: 'Selected',
+            sendEmailTo: 'by email to',
         },
         form: {
             requiredNote: 'Fields marked * are required',

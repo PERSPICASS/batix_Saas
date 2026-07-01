@@ -99,16 +99,17 @@ export default function InvoicesShow({ invoice }: Props) {
     };
 
     const handleSend = () => {
-        if (confirm('Envoyer cette facture par email à ' + invoice.customer.name + ' ?')) {
+        const message = `${t.invoices.actions.send} ${t.common.misc.sendEmailTo || 'par email à'} ${invoice.customer.name} ?`;
+        if (confirm(message)) {
             router.post(route('invoices.send', { invoice: invoice.id }));
         }
     };
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Facture {invoice.invoice_number}</h1>}
+            header={<h1 className="text-xl font-semibold text-white">{t.invoices.form.editTitle} {invoice.invoice_number}</h1>}
         >
-            <Head title={`Facture ${invoice.invoice_number}`} />
+            <Head title={`${t.invoices.form.editTitle} ${invoice.invoice_number}`} />
 
             <div className="space-y-4">
                 <div className="print:hidden space-y-4">
@@ -116,7 +117,7 @@ export default function InvoicesShow({ invoice }: Props) {
                         href={route('invoices.index')}
                         className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
                     >
-                        <ArrowLeft className="size-4" /> Retour aux factures
+                        <ArrowLeft className="size-4" /> {t.common.actions.back}
                     </Link>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -125,27 +126,27 @@ export default function InvoicesShow({ invoice }: Props) {
                             onClick={handleSend}
                             className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                         >
-                            <Send className="size-4" /> Envoyer
+                            <Send className="size-4" /> {t.invoices.actions.send}
                         </button>
                         <button
                             type="button"
                             onClick={() => setShowRecurringModal(true)}
                             className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                         >
-                            <Repeat2 className="size-4" /> Créer un cycle
+                            <Repeat2 className="size-4" /> {t.invoices.actions.createRecurring || "Créer un cycle"}
                         </button>
                         <button
                             type="button"
                             onClick={handlePrint}
                             className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                         >
-                            <Printer className="size-4" /> Imprimer
+                            <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
                         <Link
                             href={route('invoices.edit', { invoice: invoice.id })}
                             className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                         >
-                            <Pencil className="size-4" /> Modifier
+                            <Pencil className="size-4" /> {t.invoices.actions.edit}
                         </Link>
                     </div>
                 </div>

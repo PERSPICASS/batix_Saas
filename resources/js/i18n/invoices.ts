@@ -26,6 +26,7 @@ export const invoices = {
             markPaid: 'Marquer payée',
             download: 'Télécharger',
             reports: 'Rapports',
+            createRecurring: 'Créer un cycle',
         },
         emptyMessage: 'Aucune facture trouvée',
         filters: {
@@ -106,6 +107,7 @@ export const invoices = {
             markPaid: 'Mark as paid',
             download: 'Download',
             reports: 'Reports',
+            createRecurring: 'Create recurring',
         },
         emptyMessage: 'No invoices found',
         filters: {
