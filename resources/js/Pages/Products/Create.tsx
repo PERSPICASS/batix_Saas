@@ -117,9 +117,9 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Nouveau produit</h1>}
+            header={<h1 className="text-xl font-semibold text-white">{t.products.actions.new}</h1>}
         >
-            <Head title="Nouveau produit" />
+            <Head title={t.products.actions.new} />
 
             <form
                 onSubmit={onSubmit}
