@@ -413,7 +413,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 value={customerSearch}
                                 onChange={(e) => setCustomerSearch(e.target.value)}
                                 onKeyDown={handleSearchKeyDown}
-                                placeholder="Rechercher un client..."
+                                placeholder={t.quotes.form.searchCustomer || "Rechercher un client..."}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
@@ -428,8 +428,8 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
-                            <span>{filteredCustomers.length} résultat(s)</span>
+                            <span>{t.quotes.form.useArrowKeys || "Utilise ↑ ↓ puis Entrée pour sélectionner"}</span>
+                            <span>{filteredCustomers.length} {t.quotes.form.results || "résultat(s)"}</span>
                         </div>
                     </div>
 
@@ -449,11 +449,11 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                     }`}
                                 >
                                     <span>{customer.name}</span>
-                                    {Number(formData.customer_id) === customer.id && <span className="text-xs">Sélectionné</span>}
+                                    {Number(formData.customer_id) === customer.id && <span className="text-xs">{t.common.misc.selected}</span>}
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">Aucun client trouvé.</p>
+                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noCustomers || "Aucun client trouvé."}</p>
                         )}
                     </div>
                 </div>
@@ -480,7 +480,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                                 onKeyDown={handleProductSearchKeyDown}
-                                placeholder="Rechercher un produit..."
+                                placeholder={t.quotes.form.searchProduct || "Rechercher un produit..."}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
@@ -495,8 +495,8 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>Utilise ↑ ↓ puis Entrée pour sélectionner</span>
-                            <span>{filteredProducts.length} résultat(s)</span>
+                            <span>{t.quotes.form.useArrowKeys || "Utilise ↑ ↓ puis Entrée pour sélectionner"}</span>
+                            <span>{filteredProducts.length} {t.quotes.form.results || "résultat(s)"}</span>
                         </div>
                     </div>
 
@@ -518,7 +518,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">Aucun produit trouvé.</p>
+                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noProducts || "Aucun produit trouvé."}</p>
                         )}
                     </div>
                 </div>
