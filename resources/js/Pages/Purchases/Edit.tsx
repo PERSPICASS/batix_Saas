@@ -76,6 +76,7 @@ function PurchaseProductCombobox({
     onChange: (id: string) => void;
     usedIds?: (number | string)[];
 }) {
+    const { t } = useLocale();
     const [search, setSearch] = useState('');
     const [open, setOpen]     = useState(false);
     const ref                 = useRef<HTMLDivElement>(null);

@@ -323,7 +323,7 @@ export default function SalesShow({ sale, auth }: Props) {
                             onClick={() => setShowReturnModal(true)}
                             className="inline-flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-400/20"
                         >
-                            <RotateCcw className="size-4" /> {t.sales.actions.return || "Retourner"}
+                            <RotateCcw className="size-4" /> Retourner
                         </button>
                     </div>
                 </div>

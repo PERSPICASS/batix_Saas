@@ -130,14 +130,14 @@ export default function BlogAdminIndex({ posts }: Props) {
                                                     </a>
                                                     <Link
                                                         href={route('platform.blog.edit', post.id)}
-                                                        title={t.common.actions.edit || "Modifier"}
+                                                        title="Modifier"
                                                         className="rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-amber-400"
                                                     >
                                                         <Pencil className="size-4" />
                                                     </Link>
                                                     <button
                                                         onClick={() => setDeleteId(post.id)}
-                                                        title={t.common.actions.delete || "Supprimer"}
+                                                        title="Supprimer"
                                                         className="rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-red-400"
                                                     >
                                                         <Trash2 className="size-4" />

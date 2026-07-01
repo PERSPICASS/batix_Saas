@@ -92,7 +92,6 @@ export const purchases = {
             saving: 'Enregistrement...',
             create: 'Créer le bon de commande',
             update: 'Mettre à jour le bon',
-            updateButton: 'Mettre à jour',
         },
     },
     en: {
@@ -188,7 +187,6 @@ export const purchases = {
             saving: 'Saving...',
             create: 'Create purchase order',
             update: 'Update purchase order',
-            updateButton: 'Update',
         },
     },
 } as const;

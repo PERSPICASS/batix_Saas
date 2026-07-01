@@ -241,7 +241,7 @@ export default function PlatformAdminAccounts({ accounts, filters }: Props) {
                     onClose={() => setConfirmToggle(null)}
                     onConfirm={() => toggleAccountStatus(confirmToggle)}
                     title="Changer le statut du compte"
-                    message={t.common.messages.confirmDelete || "Êtes-vous sûr"} de vouloir changer le statut de ce compte ? Cela affectera l'accès à toutes ses boutiques."
+                    message="Êtes-vous sûr de vouloir changer le statut de ce compte ? Cela affectera l'accès à toutes ses boutiques."
                 />
             )}
         </AuthenticatedLayout>

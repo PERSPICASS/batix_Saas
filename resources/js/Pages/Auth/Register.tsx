@@ -227,7 +227,7 @@ export default function Register({ initialStep = 1, initialEmail = '' }: Props) 
                             <InputError message={step1Errors.password} className="mt-2" />
                         </div>
                         <div>
-                            <InputLabel htmlFor="password_confirmation" value={t.common.actions.confirm || "Confirmer"} le mot de passe" className="text-slate-700" />
+                            <InputLabel htmlFor="password_confirmation" value="Confirmer le mot de passe" className="text-slate-700" />
                             <div className="relative mt-1">
                                 <TextInput id="password_confirmation" type={showPasswordConfirmation ? 'text' : 'password'} value={passwordConfirmation} className="block w-full border border-[#cfc3ac] bg-white pr-10 text-slate-900 placeholder-slate-400" autoComplete="new-password" onChange={(e) => setPasswordConfirmation(e.target.value)} required placeholder="••••••••" />
                                 <button type="button" onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
