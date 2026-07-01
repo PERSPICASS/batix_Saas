@@ -38,7 +38,7 @@ export default function SubcategoriesCreate({ categories }: PageProps<{ categori
                         <option value="">{t.common.form.selectOption}</option>
                         {categories.map((category) => (
                             <option key={category.id} value={category.id}>
-                                {category.name} ({category.shop.name})
+                                {category.name} {category.shop ? `(${category.shop.name})` : ''}
                             </option>
                         ))}
                     </select>
