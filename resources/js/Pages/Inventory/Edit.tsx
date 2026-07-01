@@ -192,7 +192,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">Boutique</label>
+                            <label className="block text-sm font-medium text-slate-200">{t.common.form.shopField}</label>
                             <select
                                 value={data.shop_id}
                                 onChange={(e) => {
@@ -212,7 +212,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">Date de l'inventaire</label>
+                            <label className="block text-sm font-medium text-slate-200">{t.inventory.form.date}</label>
                             <input
                                 type="date"
                                 value={data.inventory_date}
