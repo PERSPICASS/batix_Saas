@@ -304,7 +304,7 @@ export default function EditRecurringInvoice({ recurringInvoice, customers, prod
                                 disabled={loading || items.every((i) => !i.product_id)}
                                 className="w-full rounded-lg bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? `${t.common.misc?.updating || 'Mise à jour'} ...` : t.recurringInvoices.form.updateButton}
+                                {loading ? 'Mise à jour ...' : t.recurringInvoices.form.updateButton}
                             </button>
                             <a
                                 href={route('recurring-invoices.index')}

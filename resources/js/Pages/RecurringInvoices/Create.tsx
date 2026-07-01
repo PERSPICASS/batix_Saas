@@ -220,7 +220,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                         className="mt-2 inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
                                     >
                                         <X className="size-3.5" />
-                                        {t.common.actions.remove || 'Retirer'}
+                                        Retirer
                                     </button>
                                 )}
                             </div>
@@ -237,7 +237,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.common.labels?.optional ? `${t.recurringInvoices.form.nextInvoiceDate} (${t.common.labels.optional})` : t.recurringInvoices.form.nextInvoiceDate}</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.recurringInvoices.form.nextInvoiceDate} <span className="text-xs text-slate-400">(optional)</span></label>
                                 <input
                                     type="date"
                                     value={formData.end_date}
@@ -444,7 +444,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                     }`}
                                 >
                                     <span>{customer.name}</span>
-                                    {Number(formData.customer_id) === customer.id && <span className="text-xs">{t.common.states?.selected || 'Sélectionné'}</span>}
+                                    {Number(formData.customer_id) === customer.id && <span className="text-xs text-green-400">✓ {t.common.misc?.selected || 'Sélectionné'}</span>}
                                 </button>
                             ))
                         ) : (
