@@ -173,7 +173,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
         e.preventDefault();
 
         if (cart.length === 0) {
-            alert('Veuillez ajouter au moins un produit au panier');
+            alert(t.sales.form.addProductValidation);
             return;
         }
 
@@ -205,20 +205,20 @@ export default function SalesCreate({ shops, customers, products }: Props) {
     );
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Caisse</h1>}>
-            <Head title={"Nouvelle vente"} />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.sales.checkout}</h1>}>
+            <Head title={t.sales.form.createTitle} />
 
             <form onSubmit={onSubmit} className="space-y-4">
                 <div className="grid gap-4 lg:grid-cols-3">
                     {/* Sélection des produits */}
                     <div className="lg:col-span-2 space-y-4">
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                            <h2 className="mb-4 text-lg font-semibold text-white">Produits</h2>
+                            <h2 className="mb-4 text-lg font-semibold text-white">{t.common.misc.products}</h2>
 
                             <div className="mb-4">
                                 <input
                                     type="text"
-                                    placeholder="Rechercher un produit (nom, SKU)..."
+                                    placeholder={t.sales.form.productSearch}
                                     value={searchProduct}
                                     onChange={(e) => setSearchProduct(e.target.value)}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-white"
@@ -236,7 +236,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                                     <div>
                                                         <p className="font-medium text-white">{product.name}</p>
                                                         <p className="text-xs text-slate-400">
-                                                            SKU: {product.sku} • <span className="text-amber-400">{product.variations.length} déclinaison{product.variations.length > 1 ? 's' : ''}</span>
+                                                            SKU: {product.sku} • <span className="text-amber-400">{product.variations.length} {product.variations.length > 1 ? t.sales.form.variationsPlural : t.sales.form.variation}</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -296,10 +296,10 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                     {/* Panier et paiement */}
                     <div className="space-y-4">
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                            <h2 className="mb-4 text-lg font-semibold text-white">Panier</h2>
+                            <h2 className="mb-4 text-lg font-semibold text-white">{t.sales.form.cart}</h2>
 
                             {cart.length === 0 ? (
-                                <p className="py-8 text-center text-slate-400">Panier vide</p>
+                                <p className="py-8 text-center text-slate-400">{t.sales.form.emptyCart}</p>
                             ) : (
                                 <div className="space-y-2">
                                     {cart.map((item) => (
@@ -324,7 +324,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
 
                                             <div className="grid grid-cols-2 gap-2 items-center mb-3">
                                                 <div>
-                                                    <label className="block text-xs text-slate-400 mb-1">Prix unitaire</label>
+                                                    <label className="block text-xs text-slate-400 mb-1">{t.common.form.unitPrice}</label>
                                                     <input
                                                         type="number"
                                                         min="0"
@@ -340,7 +340,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-xs text-slate-400 mb-1">Quantité</label>
+                                                    <label className="block text-xs text-slate-400 mb-1">{t.common.form.quantity}</label>
                                                     <div className="flex items-center gap-2">
                                                         <button
                                                             type="button"
@@ -383,7 +383,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                                 
                                             </div>
                                             <div>
-                                                <label className="block text-xs text-slate-400 ">Total</label>
+                                                <label className="block text-xs text-slate-400 ">{t.common.form.total}</label>
                                                 <p className="text-sm font-semibold text-amber-300 py-1.5">
                                                     <Currency amount={item.subtotal} />
                                                 </p>
@@ -395,13 +395,13 @@ export default function SalesCreate({ shops, customers, products }: Props) {
 
                             <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
                                 <div className="flex justify-between text-sm text-slate-300">
-                                    <span>Sous-total</span>
+                                    <span>{t.common.form.subtotal}</span>
                                     <span>
                                         <Currency amount={cart.reduce((sum, item) => sum + item.subtotal, 0)} />
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm text-slate-300">
-                                    <span>TVA</span>
+                                    <span>{t.sales.form.tax}</span>
                                     <span>
                                         <Currency amount={cart
                                             .reduce(
@@ -412,7 +412,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-lg font-bold text-amber-300">
-                                    <span>Total</span>
+                                    <span>{t.common.form.total}</span>
                                     <span><Currency amount={calculateTotal()} /></span>
                                 </div>
                             </div>
@@ -433,7 +433,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                     ))}
                                 </select>
                                 <p className="text-xs text-slate-400">
-                                    Boutique sélectionnée via le switcher
+                                    {t.common.form.shopHint}
                                 </p>
                                 {errors.shop_id && (
                                     <span className="text-xs text-red-400">{errors.shop_id}</span>
@@ -441,11 +441,11 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                             </label>
 
                             <label className="block space-y-1 text-sm text-slate-200">
-                                <span>Client</span>
+                                <span>{t.sales.form.customer}</span>
                                 <div className="relative">
                                     <input
                                         type="text"
-                                        placeholder="Rechercher ou sélectionner un client..."
+                                        placeholder={t.sales.form.searchCustomer}
                                         value={searchCustomer}
                                         onChange={(e) => {
                                             setSearchCustomer(e.target.value);
@@ -465,7 +465,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                                     setShowCustomerDropdown(false);
                                                 }}
                                             >
-                                                Anonyme
+                                                {t.common.misc.anonymous}
                                             </button>
                                             {customers
                                                 .filter((customer) =>
@@ -494,24 +494,24 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                             </label>
 
                             <label className="block space-y-1 text-sm text-slate-200">
-                                <span>Mode de paiement *</span>
+                                <span>{t.sales.form.paymentMethod} *</span>
                                 <select
                                     value={data.payment_method}
                                     onChange={(e) => setData('payment_method', e.target.value)}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 >
-                                    <option value="cash">Espèces</option>
-                                    <option value="card">Carte</option>
-                                    <option value="transfer">Virement</option>
-                                    <option value="check">Chèque</option>
-                                    <option value="mobile">Mobile</option>
-                                    <option value="multiple">Multiple</option>
-                                    <option value="credit">Crédit (avec acompte)</option>
+                                    <option value="cash">{t.common.payment.cash}</option>
+                                    <option value="card">{t.common.payment.card}</option>
+                                    <option value="transfer">{t.common.payment.transfer}</option>
+                                    <option value="check">{t.common.payment.check}</option>
+                                    <option value="mobile">{t.common.payment.mobile}</option>
+                                    <option value="multiple">{t.common.payment.multiple}</option>
+                                    <option value="credit">{t.sales.form.creditWithDeposit}</option>
                                 </select>
                             </label>
 
                             <label className="block space-y-1 text-sm text-slate-200">
-                                <span>{isCredit() ? 'Acompte versé *' : 'Montant payé *'}</span>
+                                <span>{isCredit() ? t.sales.form.depositPaid : t.sales.form.amountPaid} *</span>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -530,13 +530,13 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                             {isCredit() && data.amount_paid !== '' && (
                                 <div className="rounded-lg bg-amber-500/15 border border-amber-400/30 p-3 space-y-1">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-slate-300">Acompte</span>
+                                        <span className="text-slate-300">{t.sales.form.deposit}</span>
                                         <span className="font-semibold text-amber-300">
                                             <Currency amount={parseFloat(data.amount_paid || '0')} />
                                         </span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-rose-300 font-medium">Reste à payer</span>
+                                        <span className="text-rose-300 font-medium">{t.sales.form.amountRemaining}</span>
                                         <span className="font-bold text-rose-300">
                                             <Currency amount={calculateRemaining()} />
                                         </span>
@@ -549,7 +549,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                 <label className="block space-y-1 text-sm text-slate-200">
                                     <span className="flex items-center gap-1.5">
                                         <CreditCard className="size-3.5" />
-                                        Date d'échéance (optionnel)
+                                        {t.common.form.dueDate} {t.common.misc.optional}
                                     </span>
                                     <input
                                         type="date"
@@ -567,7 +567,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                             {/* Monnaie rendue — vente comptant */}
                             {!isCredit() && data.amount_paid && (
                                 <div className="rounded-lg bg-emerald-500/20 p-3 text-center">
-                                    <p className="text-sm text-slate-300">Monnaie à rendre</p>
+                                    <p className="text-sm text-slate-300">{t.sales.form.changeDisplay}</p>
                                     <p className="text-2xl font-bold text-emerald-300">
                                         <Currency amount={calculateChange()} />
                                     </p>
@@ -579,14 +579,14 @@ export default function SalesCreate({ shops, customers, products }: Props) {
                                     href={route('sales.index')}
                                     className="flex-1 rounded-lg border border-white/15 px-4 py-3 text-center text-sm text-slate-200 hover:bg-white/10"
                                 >
-                                    Annuler
+                                    {t.common.actions.cancel}
                                 </Link>
                                 <button
                                     type="submit"
                                     disabled={processing || cart.length === 0}
                                     className="flex-1 rounded-lg bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50"
                                 >
-                                    {processing ? 'Traitement...' : 'Valider la vente'}
+                                    {processing ? t.common.actions.processing : t.sales.form.validateSale}
                                 </button>
                             </div>
                         </div>

@@ -189,8 +189,8 @@ export default function CreateQuote({ customers, products }: { customers: Custom
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Nouveau devis</h1>}>
-            <Head title="Créer un devis" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.quotes.actions.new}</h1>}>
+            <Head title={t.quotes.form.createTitle} />
 
             <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
@@ -198,7 +198,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                         <div className="mb-4 flex items-center gap-2 text-white">
                             <FileText className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold">Informations devis</h2>
+                            <h2 className="text-lg font-semibold">{t.quotes.form.quoteInfo}</h2>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
@@ -212,9 +212,9 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <UserRound className="size-4 text-amber-300" />
-                                        {selectedCustomer ? selectedCustomer.name : 'Choisir un client'}
+                                        {selectedCustomer ? selectedCustomer.name : t.quotes.form.selectCustomer}
                                     </span>
-                                    <span className="text-xs text-slate-400">Ouvrir</span>
+                                    <span className="text-xs text-slate-400">{t.common.actions.open}</span>
                                 </button>
                                 {selectedCustomer && (
                                     <button
@@ -223,7 +223,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                         className="mt-2 inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
                                     >
                                         <X className="size-3.5" />
-                                        Retirer
+                                        {t.quotes.form.removeCustomer}
                                     </button>
                                 )}
                             </div>
@@ -257,7 +257,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         <div className="mb-4 flex items-center justify-between">
                             <div className="flex items-center gap-2 text-white">
                                 <Plus className="size-5 text-amber-300" />
-                                <h2 className="text-lg font-semibold">Articles</h2>
+                                <h2 className="text-lg font-semibold">{t.quotes.form.items}</h2>
                             </div>
                             <button
                                 type="button"
@@ -265,7 +265,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:bg-white/5"
                             >
                                 <Plus className="size-3.5" />
-                                Ajouter
+                                {t.common.actions.add}
                             </button>
                         </div>
 
@@ -280,7 +280,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                         }}
                                         className="flex-1 rounded-lg border border-white/15 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-2 text-left text-slate-200 text-sm transition hover:border-amber-300/40"
                                     >
-                                        {item.product_name || 'Choisir un produit'}
+                                        {item.product_name || t.quotes.form.selectProduct}
                                     </button>
 
                                     <input
@@ -321,27 +321,27 @@ export default function CreateQuote({ customers, products }: { customers: Custom
 
                     {/* Notes */}
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Notes et conditions</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-white">{t.quotes.form.notesAndTerms}</h2>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Notes</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.notes}</label>
                                 <textarea
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     rows={2}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    placeholder="Notes internes..."
+                                    placeholder={t.quotes.form.notesPlaceholder}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">Conditions</label>
+                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.terms}</label>
                                 <textarea
                                     value={formData.terms}
                                     onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
                                     rows={2}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                    placeholder="Conditions commerciales..."
+                                    placeholder={t.quotes.form.termsPlaceholder}
                                 />
                             </div>
                         </div>
@@ -353,22 +353,22 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                     <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
                         <div className="mb-4 flex items-center gap-2 text-white">
                             <Calculator className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold">Résumé</h2>
+                            <h2 className="text-lg font-semibold">{t.quotes.form.summary}</h2>
                         </div>
 
                         <div className="space-y-3 border-b border-white/10 pb-4 mb-4">
                             <div className="flex justify-between text-slate-200">
-                                <span className="text-sm">Sous-total:</span>
+                                <span className="text-sm">{t.common.form.subtotal}:</span>
                                 <span className="font-semibold"><Currency amount={subtotal} /></span>
                             </div>
                             <div className="flex justify-between text-slate-200">
-                                <span className="text-sm">TVA (18%):</span>
+                                <span className="text-sm">{t.quotes.form.taxLabel}:</span>
                                 <span className="font-semibold"><Currency amount={tax} /></span>
                             </div>
                         </div>
 
                         <div className="flex justify-between mb-6">
-                            <span className="font-semibold text-white">Total:</span>
+                            <span className="font-semibold text-white">{t.common.form.total}:</span>
                             <span className="text-2xl font-bold text-amber-300"><Currency amount={total} /></span>
                         </div>
 
@@ -378,14 +378,14 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 disabled={loading || !formData.customer_id || items.every((i) => !i.product_id)}
                                 className="w-full rounded-lg bg-amber-300 px-4 py-2.5 font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {loading ? 'Création...' : 'Créer le devis'}
+                                {loading ? t.quotes.form.creating : t.quotes.form.createButton}
                             </button>
                             <a
                                 href={route('quotes.index')}
                                 className="flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
                             >
                                 <ArrowLeft className="size-4" />
-                                Annuler
+                                {t.common.actions.cancel}
                             </a>
                         </div>
                     </div>
@@ -396,7 +396,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
             <Modal show={showCustomerModal} onClose={() => setShowCustomerModal(false)} maxWidth="md">
                 <div className="flex max-h-[80vh] flex-col bg-slate-950 p-5 text-slate-100">
                     <div className="mb-4 flex shrink-0 items-center justify-between">
-                        <h3 className="text-base font-semibold">Choisir un client</h3>
+                        <h3 className="text-base font-semibold">{t.quotes.form.selectCustomer}</h3>
                         <button
                             type="button"
                             onClick={() => setShowCustomerModal(false)}
@@ -413,7 +413,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 value={customerSearch}
                                 onChange={(e) => setCustomerSearch(e.target.value)}
                                 onKeyDown={handleSearchKeyDown}
-                                placeholder={t.quotes.form.searchCustomer || "Rechercher un client..."}
+                                placeholder={t.quotes.form.searchCustomer}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
@@ -428,8 +428,8 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>{t.quotes.form.useArrowKeys || "Utilise ↑ ↓ puis Entrée pour sélectionner"}</span>
-                            <span>{filteredCustomers.length} {t.quotes.form.results || "résultat(s)"}</span>
+                            <span>{t.quotes.form.useArrowKeys}</span>
+                            <span>{filteredCustomers.length} {t.quotes.form.results}</span>
                         </div>
                     </div>
 
@@ -453,7 +453,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noCustomers || "Aucun client trouvé."}</p>
+                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noCustomers}</p>
                         )}
                     </div>
                 </div>
@@ -463,7 +463,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
             <Modal show={showProductModal} onClose={() => setShowProductModal(false)} maxWidth="md">
                 <div className="h-[560px] bg-slate-950 p-5 text-slate-100">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-base font-semibold">Choisir un produit</h3>
+                        <h3 className="text-base font-semibold">{t.quotes.form.selectProduct}</h3>
                         <button
                             type="button"
                             onClick={() => setShowProductModal(false)}
@@ -480,7 +480,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
                                 onKeyDown={handleProductSearchKeyDown}
-                                placeholder={t.quotes.form.searchProduct || "Rechercher un produit..."}
+                                placeholder={t.quotes.form.searchProduct}
                                 className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
@@ -495,8 +495,8 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             )}
                         </div>
                         <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
-                            <span>{t.quotes.form.useArrowKeys || "Utilise ↑ ↓ puis Entrée pour sélectionner"}</span>
-                            <span>{filteredProducts.length} {t.quotes.form.results || "résultat(s)"}</span>
+                            <span>{t.quotes.form.useArrowKeys}</span>
+                            <span>{filteredProducts.length} {t.quotes.form.results}</span>
                         </div>
                     </div>
 
@@ -518,7 +518,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noProducts || "Aucun produit trouvé."}</p>
+                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noProducts}</p>
                         )}
                     </div>
                 </div>

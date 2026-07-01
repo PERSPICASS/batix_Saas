@@ -100,6 +100,7 @@ export const common = {
             optional: '(optionnel)',
             selected: 'Sélectionné',
             sendEmailTo: 'par email à',
+            products: 'Produits',
         },
         form: {
             requiredNote: 'Les champs marqués * sont obligatoires',
@@ -275,6 +276,7 @@ export const common = {
             optional: '(optional)',
             selected: 'Selected',
             sendEmailTo: 'by email to',
+            products: 'Products',
         },
         form: {
             requiredNote: 'Fields marked * are required',
