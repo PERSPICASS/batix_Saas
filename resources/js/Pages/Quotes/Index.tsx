@@ -228,19 +228,19 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                                 className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
                             >
                                 <Plus className="size-4" />
-                                Nouveau devis
+                                {t.quotes.actions.new}
                             </Link>
                             <a
                                 href={route('quotes.export', {})}
                                 className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                             >
-                                <Download className="size-4" /> Excel
+                                <Download className="size-4" /> {t.common.actions.export}
                             </a>
                             <Link
                                 href={route('reports.analytics', {})}
                                 className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                             >
-                                <BarChart3 className="size-4" /> Rapports
+                                <BarChart3 className="size-4" /> {t.quotes.actions.reports}
                             </Link>
                         </div>
                     </div>
