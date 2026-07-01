@@ -25,6 +25,7 @@ export const common = {
             add: 'Ajouter',
             new: 'Nouveau',
             update: 'Mettre à jour',
+            open: 'Ouvrir',
         },
         status: {
             active: 'Actif',
@@ -95,6 +96,8 @@ export const common = {
             shop: 'Boutique',
             allShops: 'Toutes les boutiques',
             noResults: 'Aucun résultat trouvé',
+            optional: '(optionnel)',
+            selected: 'Sélectionné',
         },
         form: {
             requiredNote: 'Les champs marqués * sont obligatoires',
@@ -195,6 +198,7 @@ export const common = {
             add: 'Add',
             new: 'New',
             update: 'Update',
+            open: 'Open',
         },
         status: {
             active: 'Active',
@@ -265,6 +269,8 @@ export const common = {
             shop: 'Shop',
             allShops: 'All shops',
             noResults: 'No results found',
+            optional: '(optional)',
+            selected: 'Selected',
         },
         form: {
             requiredNote: 'Fields marked * are required',
