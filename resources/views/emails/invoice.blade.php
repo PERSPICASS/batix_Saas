@@ -3,7 +3,7 @@
 
 {{ __('mail.invoice.greeting', ['salutation' => __('mail.common.salutation'), 'name' => $invoice->customer->name]) }}
 
-{{ __('mail.common.thank_you') }} {{ __('mail.invoice.intro', ['invoiceNumber' => $invoice->invoice_number, 'invoiceDate' => $invoice->invoice_date->format('d/m/Y')]) }}
+{{ __('mail.invoice.intro', ['invoiceNumber' => $invoice->invoice_number, 'invoiceDate' => $invoice->invoice_date->format('d/m/Y')]) }}
 
 ## {{ __('mail.invoice.details_title') }}
 

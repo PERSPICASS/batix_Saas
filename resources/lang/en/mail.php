@@ -15,8 +15,7 @@ return [
     'invoice' => [
         'title' => 'Invoice :number',
         'greeting' => ':salutation :name,',
-        'thank_you' => 'Thank you for your trust.',
-        'intro' => 'Please find attached your invoice no. **:invoiceNumber** dated :invoiceDate.',
+        'intro' => 'Thank you for your trust. Please find attached your invoice no. **:invoiceNumber** dated :invoiceDate.',
         'details_title' => 'Invoice Details',
         'description' => 'Description',
         'amount' => 'Amount',

@@ -15,8 +15,7 @@ return [
     'invoice' => [
         'title' => 'Facture :number',
         'greeting' => ':salutation :name,',
-        'thank_you' => 'Merci pour votre confiance.',
-        'intro' => 'Veuillez trouver ci-joint votre facture n° **:invoiceNumber** datée du :invoiceDate.',
+        'intro' => 'Merci pour votre confiance. Veuillez trouver ci-joint votre facture n° **:invoiceNumber** datée du :invoiceDate.',
         'details_title' => 'Détails de la facture',
         'description' => 'Description',
         'amount' => 'Montant',
