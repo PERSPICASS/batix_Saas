@@ -257,14 +257,14 @@ export default function SalesShow({ sale, auth }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="print:hidden flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Ticket {displayedSale.ticket_number}</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.sales.title} {displayedSale.ticket_number}</h1>
                     <div className="flex items-center gap-2">
 
                         <button
                             onClick={handlePrint}
                             className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
                         >
-                            <Printer className="size-4" /> Imprimer
+                            <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
 
                     </div>
@@ -299,7 +299,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         href={route('sales.index')}
                         className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
                     >
-                        <ArrowLeft className="size-4" /> Retour aux ventes
+                        <ArrowLeft className="size-4" /> {t.sales.title}
                     </Link>
                     <div className='flex items-center gap-2'>
                         {canCancel && (
@@ -317,13 +317,13 @@ export default function SalesShow({ sale, auth }: Props) {
                             }}
                             className="inline-flex items-center gap-2 rounded-lg border border-blue-400/40 bg-blue-400/10 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-400/20"
                         >
-                            <Download className="size-4" /> Télécharger PDF
+                            <Download className="size-4" /> {t.common.actions.download || "Télécharger"}
                         </button>
                         <button
                             onClick={() => setShowReturnModal(true)}
                             className="inline-flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-400/20"
                         >
-                            <RotateCcw className="size-4" /> Retourner
+                            <RotateCcw className="size-4" /> {t.sales.actions.return || "Retourner"}
                         </button>
                     </div>
                 </div>
@@ -346,13 +346,13 @@ export default function SalesShow({ sale, auth }: Props) {
 
                     <div className="mb-6 space-y-2 border-y border-white/10 py-4">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">N° Ticket:</span>
+                            <span className="text-slate-400">{t.sales.title}:</span>
                             <span className="font-mono font-semibold text-white">
                                 {displayedSale.ticket_number}
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Date:</span>
+                            <span className="text-slate-400">{t.sales.columns.date}:</span>
                             <span className="text-white">
                                 {new Date(displayedSale.sale_date).toLocaleString('fr-FR')}
                             </span>
@@ -363,12 +363,12 @@ export default function SalesShow({ sale, auth }: Props) {
                         </div>
                         {displayedSale.customer && (
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Client:</span>
+                                <span className="text-slate-400">{t.sales.columns.customer || "Client"}:</span>
                                 <span className="text-white">{displayedSale.customer?.name}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Statut:</span>
+                            <span className="text-slate-400">{t.sales.columns.status}:</span>
                             <span
                                 className={`font-semibold ${
                                     displayedSale.status === 'completed'
