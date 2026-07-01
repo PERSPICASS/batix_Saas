@@ -357,9 +357,9 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                     >
                                         <span className="inline-flex items-center gap-2">
                                             <UserRound className="size-4 text-amber-300" />
-                                            {selectedCustomer ? selectedCustomer.name : 'Choisir un client'}
+                                            {selectedCustomer ? selectedCustomer.name : t.invoices.form.selectCustomer}
                                         </span>
-                                        <span className="text-xs text-slate-400">Ouvrir</span>
+                                        <span className="text-xs text-slate-400">{t.common.actions.open}</span>
                                     </button>
 
                                     {selectedCustomer && (
@@ -369,7 +369,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                             className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
                                         >
                                             <X className="size-3.5" />
-                                            Retirer le client sélectionné
+                                            {t.invoices.form.removeCustomer}
                                         </button>
                                     )}
                                 </div>
@@ -462,14 +462,14 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">Lignes de facture</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.invoices.form.invoiceLines}</h2>
                             <button
                                 type="button"
                                 onClick={addItem}
                                 className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
                             >
                                 <Plus className="size-3.5" />
-                                Ajouter ligne
+                                {t.invoices.form.addLine}
                             </button>
                         </div>
 
@@ -478,14 +478,14 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 <div key={index} className="rounded-xl border border-white/10 bg-slate-900/60 p-3 space-y-3">
                                     <div className="grid items-end gap-2 md:grid-cols-12">
                                         <div className="md:col-span-7 space-y-1">
-                                            <label className="text-xs text-slate-300">Produit #{index + 1}</label>
+                                            <label className="text-xs text-slate-300">{t.invoices.form.product} #{index + 1}</label>
                                             <button
                                                 type="button"
                                                 onClick={() => openProductModal(index)}
                                                 className="flex h-10 w-full items-center justify-between rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-left text-sm text-slate-200 transition hover:border-amber-300/40"
                                             >
-                                                <span>{item.product_name || 'Choisir un produit'}</span>
-                                                <span className="text-xs text-slate-400">Ouvrir</span>
+                                                <span>{item.product_name || t.invoices.form.selectProduct}</span>
+                                                <span className="text-xs text-slate-400">{t.common.actions.open}</span>
                                             </button>
                                         </div>
 
@@ -589,13 +589,13 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             disabled={processing}
                             className="w-full rounded-lg bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {processing ? 'Enregistrement...' : '{t.invoices.form.createButton}'}
+                            {processing ? t.common.actions.saving : t.invoices.form.createButton}
                         </button>
                         <Link
                             href={route('invoices.index')}
                             className="block w-full rounded-lg border border-white/15 px-4 py-2.5 text-center text-sm text-slate-200 transition hover:bg-white/10"
                         >
-                            Annuler
+                            {t.common.actions.cancel}
                         </Link>
                     </div>
                 </aside>
@@ -604,7 +604,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
             <Modal show={showCustomerModal} onClose={() => setShowCustomerModal(false)} maxWidth="md">
                 <div className="flex max-h-[80vh] flex-col bg-slate-950 p-5 text-slate-100">
                     <div className="mb-4 flex shrink-0 items-center justify-between">
-                        <h3 className="text-base font-semibold">Choisir un client</h3>
+                        <h3 className="text-base font-semibold">{t.invoices.form.selectCustomer}</h3>
                         <button
                             type="button"
                             onClick={() => setShowCustomerModal(false)}
@@ -671,7 +671,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
             <Modal show={showProductModal} onClose={() => setShowProductModal(false)} maxWidth="md">
                 <div className="h-[560px] bg-slate-950 p-5 text-slate-100">
                     <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-base font-semibold">Choisir un produit</h3>
+                        <h3 className="text-base font-semibold">{t.invoices.form.selectProduct}</h3>
                         <button
                             type="button"
                             onClick={() => setShowProductModal(false)}
