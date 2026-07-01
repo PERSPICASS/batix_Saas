@@ -362,7 +362,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                         <div className="grid gap-6 md:grid-cols-2">
                             {/* Fournisseur */}
                             <div>
-                                <InputLabel htmlFor="supplier_id" value="Fournisseur *" />
+                                <InputLabel htmlFor="supplier_id" value={t.purchases.form.supplier} />
                                 <select
                                     id="supplier_id"
                                     value={data.supplier_id}
@@ -382,7 +382,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
 
                             {/* Date de commande */}
                             <div>
-                                <InputLabel htmlFor="order_date" value="Date de commande *" />
+                                <InputLabel htmlFor="order_date" value={t.purchases.form.orderDate} />
                                 <TextInput
                                     id="order_date"
                                     type="date"
@@ -395,7 +395,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
 
                             {/* Date de livraison prévue */}
                             <div>
-                                <InputLabel htmlFor="expected_date" value="Date de livraison prévue" />
+                                <InputLabel htmlFor="expected_date" value={t.purchases.form.expectedDate} />
                                 <TextInput
                                     id="expected_date"
                                     type="date"
