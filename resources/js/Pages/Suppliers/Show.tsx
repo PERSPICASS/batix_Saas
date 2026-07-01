@@ -56,7 +56,7 @@ export default function SuppliersShow({ supplier }: Props) {
                 </div>
             }
         >
-            <Head title={`Fournisseur - ${supplier.name}`} />
+            <Head title={`{t.suppliers.title || "Fournisseur"} - ${supplier.name}`} />
 
             <div className="space-y-6">
                 {/* Bouton retour */}
