@@ -62,7 +62,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
         post(route('products.store'));
     };
 
-    // Générer un code-barres temporaire (sera régénéré côté serveur)
+    // "Générer un code-barres" temporaire (sera régénéré côté serveur)
     const generateTempBarcode = () => {
         const prefix = '2';
         const company = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
@@ -127,7 +127,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
             >
                 <div className="grid gap-4 md:grid-cols-2">
                     <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Boutique *</span>
+                        <span>{t.common.form.shopField} *</span>
                         <select
                             value={data.shop_id}
                             disabled
@@ -140,13 +140,13 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             ))}
                         </select>
                         <p className="text-xs text-slate-400">
-                            Boutique sélectionnée via le switcher
+                            {t.common.form.shopHint}
                         </p>
                         {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Nom *</span>
+                        <span>{t.products.form.name} *</span>
                         <input
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
@@ -214,7 +214,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Sous-catégorie</span>
+                        <span>"Sous-catégorie"</span>
                         <select
                             value={data.subcategory_id}
                             onChange={(e) => setData('subcategory_id', e.target.value)}
@@ -232,7 +232,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Marque</span>
+                        <span>"Marque"</span>
                         <input
                             value={data.brand}
                             onChange={(e) => setData('brand', e.target.value)}
@@ -243,7 +243,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Unité</span>
+                        <span>"Unité"</span>
                         <select
                             value={data.unit}
                             onChange={(e) => setData('unit', e.target.value)}
@@ -275,7 +275,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Prix de vente *</span>
+                        <span>{t.products.form.sellingPrice} *</span>
                         <input
                             type="number"
                             step="0.01"
@@ -334,7 +334,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
-                        <span>Stock initial</span>
+                        <span>"Stock"</span>
                         <input
                             type="number"
                             value={data.stock_quantity}
@@ -356,7 +356,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Description</span>
+                        <span>{t.products.form.description}</span>
                         <textarea
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
@@ -405,7 +405,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         href={route('products.index')}
                         className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
                     >
-                        Annuler
+                        {t.common.actions.cancel}
                     </Link>
                     <button
                         type="submit"
