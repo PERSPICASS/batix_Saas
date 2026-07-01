@@ -129,7 +129,7 @@ function PurchaseProductCombobox({
                             type="button"
                             onClick={() => setOpen(true)}
                             className="rounded p-1 text-slate-400 hover:text-white transition-colors"
-                            title="Changer"
+                            title={t.purchases.form.changeProduct || 'Changer'}
                         >
                             <ChevronDown className="h-3.5 w-3.5" />
                         </button>
@@ -137,7 +137,7 @@ function PurchaseProductCombobox({
                             type="button"
                             onClick={clear}
                             className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
-                            title="Effacer"
+                            title={t.purchases.form.clearProduct || 'Effacer'}
                         >
                             <X className="h-3.5 w-3.5" />
                         </button>
@@ -164,7 +164,7 @@ function PurchaseProductCombobox({
                 <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-white/10 bg-slate-900 shadow-2xl">
                     {filtered.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-slate-500 text-center">
-                            Aucun produit trouvé
+                            {t.purchases.form.noProducts}
                         </div>
                     ) : (
                         filtered.map((product) => {
@@ -194,7 +194,7 @@ function PurchaseProductCombobox({
                                             </span>
                                         )}
                                         {isUsed && (
-                                            <span className="ml-2 text-xs text-slate-500 italic">déjà ajouté</span>
+                                            <span className="ml-2 text-xs text-slate-500 italic">{t.purchases.form.alreadyAdded}</span>
                                         )}
                                     </div>
                                     <span className="ml-3 shrink-0 text-xs text-slate-400">
