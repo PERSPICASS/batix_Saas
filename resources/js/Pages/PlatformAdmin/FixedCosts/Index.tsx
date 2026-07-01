@@ -96,7 +96,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                     <Link
                         href={route('platform.fixed-costs.edit', cost.id)}
                         className="rounded-lg p-2 text-blue-300 transition hover:bg-blue-500/10"
-                        title="Modifier"
+                        title={t.common.actions.edit || "Modifier"}
                     >
                         <Edit2 className="size-4" />
                     </Link>
@@ -104,7 +104,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                         type="button"
                         onClick={() => setConfirmDelete(cost.id)}
                         className="rounded-lg p-2 text-red-300 transition hover:bg-red-500/10"
-                        title="Supprimer"
+                        title={t.common.actions.delete || "Supprimer"}
                     >
                         <Trash2 className="size-4" />
                     </button>

@@ -70,14 +70,14 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
                 <TableActions>
                     <Link href={route('subcategories.edit', { sous_category: subcategory.id })}>
                         <TableActionButton>
-                            <Pencil className="size-3.5" /> Modifier
+                            <Pencil className="size-3.5" /> {t.common.actions.edit}
                         </TableActionButton>
                     </Link>
                     <TableActionButton
                         variant="danger"
                         onClick={() => handleDelete(subcategory.id)}
                     >
-                        <Trash2 className="size-3.5" /> Supprimer
+                        <Trash2 className="size-3.5" /> {t.common.actions.delete}
                     </TableActionButton>
                 </TableActions>
             ),

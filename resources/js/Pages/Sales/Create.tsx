@@ -206,7 +206,7 @@ export default function SalesCreate({ shops, customers, products }: Props) {
 
     return (
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Caisse</h1>}>
-            <Head title="Nouvelle vente" />
+            <Head title={t.sales.form.createTitle} />
 
             <form onSubmit={onSubmit} className="space-y-4">
                 <div className="grid gap-4 lg:grid-cols-3">
