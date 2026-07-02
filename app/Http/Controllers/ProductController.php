@@ -178,7 +178,7 @@ class ProductController extends Controller
         }
 
         // Log activity
-        ActivityLogger::created($product, "Produit créé: {$product->name}");
+        ActivityLogger::created($product, $product->name);
 
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit créé avec succès.');
     }
@@ -282,7 +282,7 @@ class ProductController extends Controller
         });
 
         // Log activity
-        ActivityLogger::updated($product, [], "Produit mis à jour: {$product->name}");
+        ActivityLogger::updated($product, [], $product->name);
 
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit mis à jour avec succès.');
     }
@@ -307,7 +307,7 @@ class ProductController extends Controller
             'stock_quantity' => 0,
         ]);
 
-        ActivityLogger::updated($product, [], "Produit retiré de la boutique: {$product->name}");
+        ActivityLogger::message('update', 'product_removed_from_shop', ['name' => $product->name], $product);
 
         $message = "Produit \"{$product->name}\" retiré de la boutique.";
         if ($depotCount > 0) {
@@ -326,7 +326,7 @@ class ProductController extends Controller
 
         $product->update(['is_active' => true]);
 
-        ActivityLogger::updated($product, [], "Produit remis en boutique: {$product->name}");
+        ActivityLogger::message('update', 'product_restored_to_shop', ['name' => $product->name], $product);
 
         return back()->with('success', "Produit \"{$product->name}\" remis en vente dans la boutique.");
     }
@@ -357,7 +357,7 @@ class ProductController extends Controller
         $product->delete();
 
         // Log activity
-        ActivityLogger::deleted($product, "Produit supprimé: {$productName}");
+        ActivityLogger::deleted($product, $productName);
 
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit supprimé avec succès.');
     }

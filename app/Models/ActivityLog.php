@@ -111,29 +111,23 @@ class ActivityLog extends Model
     }
 
     /**
-     * Get a human-readable action label
+     * Translate a lang key, or return $fallback if no translation exists for it.
      */
-    public function getActionLabelAttribute(): string
+    public static function translateOrFallback(string $key, string $fallback): string
     {
-        $labels = [
-            'create' => 'Création',
-            'update' => 'Modification',
-            'delete' => 'Suppression',
-            'view' => 'Consultation',
-            'export' => 'Exportation',
-            'import' => 'Importation',
-            'login' => 'Connexion',
-            'logout' => 'Déconnexion',
-            'lock' => 'Verrouillage',
-            'unlock' => 'Déverrouillage',
-            'restore' => 'Restauration',
-        ];
-
-        return $labels[$this->action] ?? ucfirst($this->action);
+        return __($key) !== $key ? __($key) : $fallback;
     }
 
     /**
-     * Get a human-readable subject label
+     * Get a human-readable, locale-aware action label
+     */
+    public function getActionLabelAttribute(): string
+    {
+        return self::translateOrFallback('activity.actions.' . $this->action, ucfirst($this->action));
+    }
+
+    /**
+     * Get a human-readable, locale-aware subject label
      */
     public function getSubjectLabelAttribute(): string
     {
@@ -141,22 +135,54 @@ class ActivityLog extends Model
             return '-';
         }
 
-        $labels = [
-            'App\Models\Product' => 'Produit',
-            'App\Models\Category' => 'Catégorie',
-            'App\Models\Customer' => 'Client',
-            'App\Models\Supplier' => 'Fournisseur',
-            'App\Models\Invoice' => 'Facture',
-            'App\Models\Sale' => 'Vente',
-            'App\Models\Shop' => 'Boutique',
-            'App\Models\User' => 'Utilisateur',
-        ];
-
-        return $labels[$this->subject_type] ?? class_basename($this->subject_type);
+        return self::translateOrFallback('activity.subjects.' . $this->subject_type, class_basename($this->subject_type));
     }
 
     /**
-     * Get changes summary
+     * Get a locale-aware, human-readable description.
+     *
+     * If the log was written with a structured description_key/description_params
+     * (see ActivityLogger), it's rendered fresh in the current locale. Otherwise,
+     * falls back to whatever plain-text description was stored at write time
+     * (older entries, always in the language they were originally logged in).
+     */
+    public function getTranslatedDescriptionAttribute(): ?string
+    {
+        $key = $this->properties['description_key'] ?? null;
+
+        if ($key) {
+            $params = $this->properties['description_params'] ?? [];
+
+            // Certains messages référencent des valeurs elles-mêmes traduisibles
+            // (ex. un statut) : on les traduit ici, à la lecture, plutôt qu'à
+            // l'écriture, pour respecter la langue du lecteur et non celle de l'auteur.
+            if ($key === 'preorder_status_changed') {
+                $params['old'] = self::translateOrFallback('activity.preorder_statuses.' . ($params['old'] ?? ''), $params['old'] ?? '');
+                $params['new'] = self::translateOrFallback('activity.preorder_statuses.' . ($params['new'] ?? ''), $params['new'] ?? '');
+            }
+
+            return __('activity.messages.' . $key, $params);
+        }
+
+        // Only treat this as a "generic" entry if it actually went through
+        // ActivityLogger::created()/updated()/deleted()/viewed() (subject present,
+        // 'identifier' key set even if null) — otherwise fall back to the raw
+        // stored description (legacy entries written before this system existed).
+        if ($this->subject_type && array_key_exists('identifier', (array) $this->properties)) {
+            $identifier = $this->properties['identifier'];
+
+            return __($identifier !== null ? 'activity.generic_with_identifier' : 'activity.generic_without_identifier', [
+                'action' => $this->action_label,
+                'subject' => $this->subject_label,
+                'identifier' => $identifier,
+            ]);
+        }
+
+        return $this->description;
+    }
+
+    /**
+     * Get changes summary, with translated field names when known.
      */
     public function getChangesSummary(): ?string
     {
@@ -169,7 +195,9 @@ class ActivityLog extends Model
 
         foreach ($changes as $field => $values) {
             if (isset($values['old']) && isset($values['new'])) {
-                $summary[] = "{$field}: \"{$values['old']}\" → \"{$values['new']}\"";
+                $fieldKey = 'activity.fields.' . $field;
+                $label = __($fieldKey) !== $fieldKey ? __($fieldKey) : $field;
+                $summary[] = "{$label}: \"{$values['old']}\" → \"{$values['new']}\"";
             }
         }
 

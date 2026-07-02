@@ -38,6 +38,7 @@ import { taxRates } from './taxRates';
 import { credits } from './credits';
 import { auth } from './auth';
 import { plans } from './plans';
+import { apiTokens } from './apiTokens';
 
 export const translations = {
     fr: {
@@ -80,6 +81,7 @@ export const translations = {
         credits: credits.fr,
         auth: auth.fr,
         plans: plans.fr,
+        apiTokens: apiTokens.fr,
     },
     en: {
         common: common.en,
@@ -121,6 +123,7 @@ export const translations = {
         credits: credits.en,
         auth: auth.en,
         plans: plans.en,
+        apiTokens: apiTokens.en,
     },
 } as const;
 

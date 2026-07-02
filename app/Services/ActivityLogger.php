@@ -12,7 +12,12 @@ use Illuminate\Support\Facades\Request;
 class ActivityLogger
 {
     /**
-     * Log an activity
+     * Log an activity.
+     *
+     * $description is a plain-text fallback, stored as-is (only used when no
+     * translation key is available at read time — see ActivityLog::getTranslatedDescriptionAttribute()).
+     * Pass 'description_key' / 'description_params' inside $properties to make the
+     * log message translate itself in the viewer's own language instead.
      */
     public static function log(
         string $action,
@@ -71,124 +76,91 @@ class ActivityLogger
     }
 
     /**
-     * Log a creation action
+     * Log a creation action.
+     * $identifier is a short display value (name, number…) shown in the log — it gets
+     * translated into "{Création} · {Produit}: {identifier}" in the viewer's language.
      */
-    public static function created(Model $model, ?string $description = null): ?ActivityLog
+    public static function created(Model $model, ?string $identifier = null): ?ActivityLog
     {
-        return self::log(
-            'create',
-            $description ?? "Création d'un(e) " . class_basename($model),
-            $model,
-            ['attributes' => $model->getAttributes()]
-        );
+        return self::log('create', null, $model, [
+            'attributes' => $model->getAttributes(),
+            'identifier' => $identifier,
+        ]);
     }
 
     /**
-     * Log an update action
+     * Log an update action. See created() for $identifier.
      */
-    public static function updated(Model $model, array $changes = [], ?string $description = null): ?ActivityLog
+    public static function updated(Model $model, array $changes = [], ?string $identifier = null): ?ActivityLog
     {
-        return self::log(
-            'update',
-            $description ?? "Modification d'un(e) " . class_basename($model),
-            $model,
-            ['changes' => $changes]
-        );
+        return self::log('update', null, $model, [
+            'changes' => $changes,
+            'identifier' => $identifier,
+        ]);
     }
 
     /**
-     * Log a deletion action
+     * Log a deletion action. See created() for $identifier.
      */
-    public static function deleted(Model $model, ?string $description = null): ?ActivityLog
+    public static function deleted(Model $model, ?string $identifier = null): ?ActivityLog
     {
-        return self::log(
-            'delete',
-            $description ?? "Suppression d'un(e) " . class_basename($model),
-            $model,
-            ['attributes' => $model->getAttributes()]
-        );
+        return self::log('delete', null, $model, [
+            'attributes' => $model->getAttributes(),
+            'identifier' => $identifier,
+        ]);
     }
 
     /**
-     * Log a view action
+     * Log a view action. See created() for $identifier.
      */
-    public static function viewed(Model $model, ?string $description = null): ?ActivityLog
+    public static function viewed(Model $model, ?string $identifier = null): ?ActivityLog
     {
-        return self::log(
-            'view',
-            $description ?? "Consultation d'un(e) " . class_basename($model),
-            $model
-        );
+        return self::log('view', null, $model, ['identifier' => $identifier]);
     }
 
     /**
-     * Log an export action
+     * Log a message that doesn't fit the generic create/update/delete template
+     * (e.g. a status change, a conversion, a payment). $key must exist in
+     * resources/lang/{locale}/activity.php under 'messages'.
      */
-    public static function exported(string $type, int $count, ?string $description = null): ?ActivityLog
+    public static function message(string $action, string $key, array $params = [], ?Model $subject = null, array $extraProperties = []): ?ActivityLog
     {
-        return self::log(
-            'export',
-            $description ?? "Exportation de {$count} {$type}",
-            null,
-            ['type' => $type, 'count' => $count]
-        );
-    }
-
-    /**
-     * Log an import action
-     */
-    public static function imported(string $type, int $count, ?string $description = null): ?ActivityLog
-    {
-        return self::log(
-            'import',
-            $description ?? "Importation de {$count} {$type}",
-            null,
-            ['type' => $type, 'count' => $count]
-        );
+        return self::log($action, null, $subject, array_merge($extraProperties, [
+            'description_key' => $key,
+            'description_params' => $params,
+        ]));
     }
 
     /**
      * Log a login action
      */
-    public static function login(?string $description = null): ?ActivityLog
+    public static function login(): ?ActivityLog
     {
-        return self::log(
-            'login',
-            $description ?? "Connexion à la plateforme"
-        );
+        return self::message('login', 'login');
     }
 
     /**
      * Log a logout action
      */
-    public static function logout(?string $description = null): ?ActivityLog
+    public static function logout(): ?ActivityLog
     {
-        return self::log(
-            'logout',
-            $description ?? "Déconnexion de la plateforme"
-        );
+        return self::message('logout', 'logout');
     }
 
     /**
      * Log a lock screen action
      */
-    public static function lockScreen(?string $description = null): ?ActivityLog
+    public static function lockScreen(): ?ActivityLog
     {
-        return self::log(
-            'lock',
-            $description ?? "Verrouillage de l'écran"
-        );
+        return self::message('lock', 'lock');
     }
 
     /**
      * Log an unlock screen action
      */
-    public static function unlockScreen(?string $description = null): ?ActivityLog
+    public static function unlockScreen(): ?ActivityLog
     {
-        return self::log(
-            'unlock',
-            $description ?? "Déverrouillage de l'écran"
-        );
+        return self::message('unlock', 'unlock');
     }
 
     /**

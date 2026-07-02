@@ -148,6 +148,9 @@ class HandleInertiaRequests extends Middleware
                 'error'   => fn () => $request->session()->get('error'),
                 'warning' => fn () => $request->session()->get('warning'),
                 'info'    => fn () => $request->session()->get('info'),
+                // Uniquement présent juste après la création d'un token API — affiché une seule fois,
+                // jamais persisté en clair (Sanctum ne stocke qu'un hash).
+                'plainTextToken' => fn () => $request->session()->get('plainTextToken'),
             ],
             'csrf_token' => csrf_token(),
             'whatsapp_number' => config('app.whatsapp_number'),

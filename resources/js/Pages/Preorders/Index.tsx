@@ -10,9 +10,9 @@ interface Preorder {
     customer: { id: number; name: string };
     shop: { id: number; name: string };
     quantity_ordered: number;
-    unit_price: number;
+    unit_price: string;
     expected_delivery_date: string;
-    deposit_amount: number | null;
+    deposit_amount: string | null;
     status: string;
     created_at: string;
 }
@@ -37,7 +37,8 @@ interface Props {
 }
 
 export default function Index({ preorders, shops, filters }: Props) {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
+    const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-GB';
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
     const [shopFilter, setShopFilter] = useState(filters.shop_id || '');
@@ -73,11 +74,11 @@ export default function Index({ preorders, shops, filters }: Props) {
 
     const getStatusLabel = (status: string) => {
         const labels: Record<string, string> = {
-            'pending': 'En attente',
-            'confirmed': 'Confirmée',
-            'ready': 'Prête',
-            'completed': 'Complétée',
-            'cancelled': 'Annulée',
+            'pending': t.preorders.status.pending,
+            'confirmed': t.preorders.status.confirmed,
+            'ready': t.preorders.status.ready,
+            'completed': t.preorders.status.completed,
+            'cancelled': t.preorders.status.cancelled,
         };
         return labels[status] || status;
     };
@@ -86,39 +87,31 @@ export default function Index({ preorders, shops, filters }: Props) {
         return new Date(date) < new Date() && date;
     };
 
-    const getTotalPrice = (unitPrice: number, quantity: number) => {
-        return unitPrice * quantity;
+    const getTotalPrice = (unitPrice: string, quantity: number) => {
+        return (parseFloat(unitPrice) || 0) * quantity;
     };
 
-    const getRemainingBalance = (total: number, deposit: number | null) => {
-        return total - (deposit || 0);
+    const getRemainingBalance = (total: number, deposit: string | null) => {
+        return total - (parseFloat(deposit || '0') || 0);
     };
 
     return (
         <AuthenticatedLayout
-            header={
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-500/10">
-                            <Package className="size-5 text-purple-400" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-semibold text-white">Pré-commandes</h2>
-                            <p className="text-sm text-slate-400">Gérez vos pré-commandes et réservations</p>
-                        </div>
-                    </div>
-                    <Link
-                        href={route('preorders.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
-                    >
-                        <Plus className="size-4" /> Nouvelle pré-commande
-                    </Link>
-                </div>
-            }
+            header={<h1 className="text-xl font-semibold text-white">{t.preorders.title}</h1>}
         >
-            <Head title="Pré-commandes" />
+            <Head title={t.preorders.title} />
 
             <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-300">{t.preorders.subtitle}</p>
+                    <Link
+                        href={route('preorders.create')}
+                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 transition"
+                    >
+                        <Plus className="size-4" /> {t.preorders.actions.new}
+                    </Link>
+                </div>
+
                 {/* Filtres */}
                 <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -126,20 +119,20 @@ export default function Index({ preorders, shops, filters }: Props) {
                             <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Rechercher par produit, client..."
+                                placeholder={t.preorders.index.searchPlaceholder}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 py-2 pl-10 pr-4 text-white placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 py-2 pl-10 pr-4 text-white placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                             />
                         </div>
 
                         <div className="flex gap-2">
                             <button
                                 onClick={handleSearch}
-                                className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 transition"
+                                className="flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/10 transition"
                             >
-                                <Search className="size-4" /> Rechercher
+                                <Search className="size-4" /> {t.preorders.index.search}
                             </button>
                         </div>
                     </div>
@@ -147,13 +140,13 @@ export default function Index({ preorders, shops, filters }: Props) {
                     {/* Filtres avancés */}
                     <div className="mt-4 grid gap-4 sm:grid-cols-3 border-t border-white/10 pt-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Boutique</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">{t.preorders.index.shopLabel}</label>
                             <select
                                 value={shopFilter}
                                 onChange={(e) => setShopFilter(e.target.value)}
-                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                             >
-                                <option value="">Toutes les boutiques</option>
+                                <option value="">{t.preorders.index.allShops}</option>
                                 {shops.map((shop) => (
                                     <option key={shop.id} value={shop.id}>
                                         {shop.name}
@@ -163,18 +156,18 @@ export default function Index({ preorders, shops, filters }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Statut</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">{t.preorders.index.statusLabel}</label>
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                             >
-                                <option value="">Tous les statuts</option>
-                                <option value="pending">En attente</option>
-                                <option value="confirmed">Confirmée</option>
-                                <option value="ready">Prête</option>
-                                <option value="completed">Complétée</option>
-                                <option value="cancelled">Annulée</option>
+                                <option value="">{t.preorders.index.allStatuses}</option>
+                                <option value="pending">{t.preorders.status.pending}</option>
+                                <option value="confirmed">{t.preorders.status.confirmed}</option>
+                                <option value="ready">{t.preorders.status.ready}</option>
+                                <option value="completed">{t.preorders.status.completed}</option>
+                                <option value="cancelled">{t.preorders.status.cancelled}</option>
                             </select>
                         </div>
 
@@ -183,7 +176,7 @@ export default function Index({ preorders, shops, filters }: Props) {
                                 onClick={clearFilters}
                                 className="text-sm text-slate-400 hover:text-white transition"
                             >
-                                Réinitialiser les filtres
+                                {t.preorders.index.resetFilters}
                             </button>
                         </div>
                     </div>
@@ -194,8 +187,8 @@ export default function Index({ preorders, shops, filters }: Props) {
                     {preorders.data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6">
                             <Package className="size-12 text-slate-400 mb-4" />
-                            <p className="text-lg font-medium text-slate-300 mb-2">Aucune pré-commande</p>
-                            <p className="text-sm text-slate-400">Créez votre première pré-commande</p>
+                            <p className="text-lg font-medium text-slate-300 mb-2">{t.preorders.index.emptyTitle}</p>
+                            <p className="text-sm text-slate-400">{t.preorders.index.emptySubtitle}</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-white/10">
@@ -218,7 +211,7 @@ export default function Index({ preorders, shops, filters }: Props) {
                                                     </span>
                                                     {overdue && (
                                                         <span className="inline-block px-2 py-1 rounded text-xs font-medium bg-red-400/10 text-red-300">
-                                                            Échue
+                                                            {t.preorders.index.overdue}
                                                         </span>
                                                     )}
                                                 </div>
@@ -233,20 +226,20 @@ export default function Index({ preorders, shops, filters }: Props) {
                                                         {preorder.customer.name}
                                                     </div>
                                                     <div>
-                                                        Qté: <span className="text-white font-medium">{preorder.quantity_ordered}</span>
+                                                        {t.preorders.index.quantity}: <span className="text-white font-medium">{preorder.quantity_ordered}</span>
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <Calendar className="size-3" />
-                                                        {new Date(preorder.expected_delivery_date).toLocaleDateString('fr-FR')}
+                                                        {new Date(preorder.expected_delivery_date).toLocaleDateString(dateLocale)}
                                                     </div>
                                                     <div className="text-right">
-                                                        Total: <span className="text-white font-medium">{number_format(total, 0, ',', ' ')} FCFA</span>
+                                                        {t.preorders.index.total}: <span className="text-white font-medium">{number_format(total, 0, ',', ' ')} FCFA</span>
                                                     </div>
                                                 </div>
 
                                                 {balance > 0 && (
                                                     <div className="mt-2 text-xs text-amber-300">
-                                                        Reste à payer: {number_format(balance, 0, ',', ' ')} FCFA
+                                                        {t.preorders.index.remaining}: {number_format(balance, 0, ',', ' ')} FCFA
                                                     </div>
                                                 )}
                                             </div>
@@ -267,7 +260,7 @@ export default function Index({ preorders, shops, filters }: Props) {
                                     disabled={!link.url}
                                     className={`px-3 py-1 rounded text-sm transition ${
                                         link.active
-                                            ? 'bg-purple-600 text-white'
+                                            ? 'bg-amber-300 text-slate-950 font-semibold'
                                             : link.url
                                             ? 'text-slate-400 hover:bg-slate-800'
                                             : 'text-slate-600 cursor-not-allowed'

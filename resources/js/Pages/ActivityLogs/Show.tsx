@@ -39,7 +39,8 @@ interface Props {
 }
 
 export default function Show({ activity }: Props) {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
+    const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-GB';
     const getActionColor = (action: string) => {
         const colors: Record<string, string> = {
             'created': 'text-green-400 bg-green-400/10',
@@ -65,12 +66,12 @@ export default function Show({ activity }: Props) {
                             <p className="text-xs font-medium text-slate-400 mb-2">{field}</p>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="rounded bg-red-500/10 p-2">
-                                    <p className="text-xs text-slate-500 mb-1">Avant</p>
-                                    <p className="text-sm font-mono text-red-400 break-all">{String(value.from ?? '-')}</p>
+                                    <p className="text-xs text-slate-500 mb-1">{t.activityLogs.show.before}</p>
+                                    <p className="text-sm font-mono text-red-400 break-all">{String(value.old ?? '-')}</p>
                                 </div>
                                 <div className="rounded bg-green-500/10 p-2">
-                                    <p className="text-xs text-slate-500 mb-1">Après</p>
-                                    <p className="text-sm font-mono text-green-400 break-all">{String(value.to ?? '-')}</p>
+                                    <p className="text-xs text-slate-500 mb-1">{t.activityLogs.show.after}</p>
+                                    <p className="text-sm font-mono text-green-400 break-all">{String(value.new ?? '-')}</p>
                                 </div>
                             </div>
                         </div>
@@ -98,12 +99,12 @@ export default function Show({ activity }: Props) {
             return (
                 <div className="rounded-lg bg-slate-900/30 p-4 space-y-2">
                     <div className="flex justify-between">
-                        <span className="text-sm text-slate-400">Type</span>
+                        <span className="text-sm text-slate-400">{t.activityLogs.show.type}</span>
                         <span className="text-sm text-slate-300">{activity.properties.type}</span>
                     </div>
                     {activity.properties.count !== undefined && (
                         <div className="flex justify-between">
-                            <span className="text-sm text-slate-400">Nombre</span>
+                            <span className="text-sm text-slate-400">{t.activityLogs.show.count}</span>
                             <span className="text-sm text-slate-300">{activity.properties.count}</span>
                         </div>
                     )}
@@ -118,11 +119,11 @@ export default function Show({ activity }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Détail du log</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.activityLogs.show.pageTitle}</h1>
                 </div>
             }
         >
-            <Head title="Détail du log d'activité" />
+            <Head title={t.activityLogs.show.headTitle} />
 
             <div className="max-w-4xl">
                 <Link
@@ -130,7 +131,7 @@ export default function Show({ activity }: Props) {
                     className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-6 transition"
                 >
                     <ArrowLeft className="size-4" />
-                    Retour à l'historique
+                    {t.activityLogs.show.backToHistory}
                 </Link>
 
                 <div className="space-y-6">
@@ -145,7 +146,7 @@ export default function Show({ activity }: Props) {
                                 </div>
                                 <h2 className="text-2xl font-bold text-white mb-2">{activity.description}</h2>
                                 <p className="text-sm text-slate-400">
-                                    {new Date(activity.created_at).toLocaleString('fr-FR', {
+                                    {new Date(activity.created_at).toLocaleString(dateLocale, {
                                         year: 'numeric',
                                         month: 'long',
                                         day: 'numeric',
@@ -163,19 +164,19 @@ export default function Show({ activity }: Props) {
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
                             <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
                                 <User className="size-5 text-blue-400" />
-                                Utilisateur
+                                {t.activityLogs.show.userSection}
                             </h3>
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-slate-400">Nom</span>
+                                    <span className="text-sm text-slate-400">{t.activityLogs.show.name}</span>
                                     <span className="text-sm text-white font-medium">{activity.user.name}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-slate-400">Email</span>
+                                    <span className="text-sm text-slate-400">{t.activityLogs.show.email}</span>
                                     <span className="text-sm text-white font-mono">{activity.user.email}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-slate-400">Rôle</span>
+                                    <span className="text-sm text-slate-400">{t.activityLogs.show.role}</span>
                                     <span className="text-sm text-slate-300 capitalize">{activity.user.role.replace('_', ' ')}</span>
                                 </div>
                             </div>
@@ -184,15 +185,15 @@ export default function Show({ activity }: Props) {
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
                             <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
                                 <MapPin className="size-5 text-amber-400" />
-                                Boutique
+                                {t.activityLogs.show.shopSection}
                             </h3>
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-slate-400">Nom</span>
+                                    <span className="text-sm text-slate-400">{t.activityLogs.show.name}</span>
                                     <span className="text-sm text-white font-medium">{activity.shop.name}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-slate-400">ID</span>
+                                    <span className="text-sm text-slate-400">{t.activityLogs.show.id}</span>
                                     <span className="text-sm text-slate-300">{activity.shop.id}</span>
                                 </div>
                             </div>
@@ -204,15 +205,15 @@ export default function Show({ activity }: Props) {
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
                             <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
                                 <Zap className="size-5 text-purple-400" />
-                                Objet modifié
+                                {t.activityLogs.show.subjectSection}
                             </h3>
                             <div className="space-y-2">
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-slate-400">Type</span>
+                                    <span className="text-sm text-slate-400">{t.activityLogs.show.type}</span>
                                     <span className="text-sm text-white font-medium">{activity.subject_label}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-sm text-slate-400">ID</span>
+                                    <span className="text-sm text-slate-400">{t.activityLogs.show.id}</span>
                                     <span className="text-sm text-slate-300">{activity.subject_id}</span>
                                 </div>
                             </div>
@@ -223,7 +224,7 @@ export default function Show({ activity }: Props) {
                     {activity.properties && (
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
                             <h3 className="text-lg font-semibold text-white mb-4">
-                                {activity.properties.changes ? 'Changements' : 'Détails'}
+                                {activity.properties.changes ? t.activityLogs.show.changesTitle : t.activityLogs.show.detailsTitle}
                             </h3>
                             {renderProperties()}
                         </div>
@@ -233,12 +234,12 @@ export default function Show({ activity }: Props) {
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
                         <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-4">
                             <Code className="size-5 text-green-400" />
-                            Métadonnées techniques
+                            {t.activityLogs.show.technicalMetadata}
                         </h3>
                         <div className="space-y-3">
                             {activity.method && (
                                 <div>
-                                    <p className="text-xs font-medium text-slate-400 mb-1">Méthode HTTP</p>
+                                    <p className="text-xs font-medium text-slate-400 mb-1">{t.activityLogs.show.httpMethod}</p>
                                     <div className="rounded bg-slate-900/50 px-3 py-2">
                                         <p className="text-sm font-mono text-slate-300">{activity.method}</p>
                                     </div>
@@ -246,7 +247,7 @@ export default function Show({ activity }: Props) {
                             )}
                             {activity.url && (
                                 <div>
-                                    <p className="text-xs font-medium text-slate-400 mb-1">URL</p>
+                                    <p className="text-xs font-medium text-slate-400 mb-1">{t.activityLogs.show.url}</p>
                                     <div className="rounded bg-slate-900/50 px-3 py-2">
                                         <p className="text-sm font-mono text-slate-300 break-all">{activity.url}</p>
                                     </div>
@@ -254,7 +255,7 @@ export default function Show({ activity }: Props) {
                             )}
                             {activity.ip_address && (
                                 <div>
-                                    <p className="text-xs font-medium text-slate-400 mb-1">Adresse IP</p>
+                                    <p className="text-xs font-medium text-slate-400 mb-1">{t.activityLogs.ipLabel}</p>
                                     <div className="rounded bg-slate-900/50 px-3 py-2">
                                         <p className="text-sm font-mono text-slate-300">{activity.ip_address}</p>
                                     </div>
@@ -262,7 +263,7 @@ export default function Show({ activity }: Props) {
                             )}
                             {activity.user_agent && (
                                 <div>
-                                    <p className="text-xs font-medium text-slate-400 mb-1">User Agent</p>
+                                    <p className="text-xs font-medium text-slate-400 mb-1">{t.activityLogs.show.userAgent}</p>
                                     <div className="rounded bg-slate-900/50 px-3 py-2">
                                         <p className="text-sm font-mono text-slate-300 text-xs break-all">{activity.user_agent}</p>
                                     </div>

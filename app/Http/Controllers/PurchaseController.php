@@ -173,11 +173,12 @@ class PurchaseController extends Controller
 
             $purchase->calculateTotals();
 
-            ActivityLogger::log(
+            ActivityLogger::message(
                 'purchase_created',
-                "Bon de commande {$purchase->reference} créé",
+                'purchase_created',
+                ['reference' => $purchase->reference],
                 $purchase,
-                ['reference' => $purchase->reference, 'supplier' => $purchase->supplier->name]
+                ['supplier' => $purchase->supplier->name]
             );
 
             DB::commit();
@@ -306,11 +307,7 @@ class PurchaseController extends Controller
 
             $purchase->calculateTotals();
 
-            ActivityLogger::log(
-                'purchase_updated',
-                "Bon de commande {$purchase->reference} modifié",
-                $purchase
-            );
+            ActivityLogger::message('purchase_updated', 'purchase_updated', ['reference' => $purchase->reference], $purchase);
 
             DB::commit();
 
@@ -335,11 +332,7 @@ class PurchaseController extends Controller
 
         $purchase->update(['status' => 'confirmed']);
 
-        ActivityLogger::log(
-            'purchase_confirmed',
-            "Bon de commande {$purchase->reference} confirmé",
-            $purchase
-        );
+        ActivityLogger::message('purchase_confirmed', 'purchase_confirmed', ['reference' => $purchase->reference], $purchase);
 
         return redirect()
             ->route('purchases.show', ['code_user' => $codeUser, 'purchase' => $purchase->id])
@@ -386,11 +379,7 @@ class PurchaseController extends Controller
             }
             $purchase->save();
 
-            ActivityLogger::log(
-                'purchase_received',
-                "Réception de marchandise pour {$purchase->reference}",
-                $purchase
-            );
+            ActivityLogger::message('purchase_received', 'purchase_received', ['reference' => $purchase->reference], $purchase);
 
             DB::commit();
 
@@ -419,11 +408,7 @@ class PurchaseController extends Controller
 
         $purchase->update(['status' => 'cancelled']);
 
-        ActivityLogger::log(
-            'purchase_cancelled',
-            "Bon de commande {$purchase->reference} annulé",
-            $purchase
-        );
+        ActivityLogger::message('purchase_cancelled', 'purchase_cancelled', ['reference' => $purchase->reference], $purchase);
 
         return redirect()
             ->route('purchases.show', ['code_user' => $codeUser, 'purchase' => $purchase->id])
@@ -442,11 +427,7 @@ class PurchaseController extends Controller
         $reference = $purchase->reference;
         $purchase->delete();
 
-        ActivityLogger::log(
-            'purchase_deleted',
-            "Bon de commande {$reference} supprimé",
-            null
-        );
+        ActivityLogger::message('purchase_deleted', 'purchase_deleted', ['reference' => $reference]);
 
         return redirect()
             ->route('purchases.index', ['code_user' => $codeUser])

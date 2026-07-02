@@ -103,7 +103,7 @@ class UserController extends Controller
         }
 
         // Log activity
-        ActivityLogger::created($user, "Utilisateur créé: {$user->name} ({$user->email})");
+        ActivityLogger::created($user, "{$user->name} ({$user->email})");
 
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur créé avec succès.');
     }
@@ -163,7 +163,7 @@ class UserController extends Controller
         }
 
         // Log activity
-        ActivityLogger::updated($user, [], "Utilisateur mis à jour: {$user->name} ({$user->email})");
+        ActivityLogger::updated($user, [], "{$user->name} ({$user->email})");
 
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur mis à jour avec succès.');
     }
@@ -181,7 +181,7 @@ class UserController extends Controller
         $user->delete();
 
         // Log activity
-        ActivityLogger::deleted($user, "Utilisateur supprimé: {$userName} ({$userEmail})");
+        ActivityLogger::deleted($user, "{$userName} ({$userEmail})");
 
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', "L'utilisateur {$userName} a été supprimé avec succès.");
     }

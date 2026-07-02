@@ -82,7 +82,7 @@ class ActivityLogController extends Controller
             ],
             'action' => $activity->action,
             'action_label' => $activity->action_label,
-            'description' => $activity->description,
+            'description' => $activity->translated_description,
             'subject_type' => $activity->subject_type,
             'subject_label' => $activity->subject_label,
             'subject_id' => $activity->subject_id,
@@ -115,7 +115,7 @@ class ActivityLogController extends Controller
             ->pluck('action')
             ->map(fn($action) => [
                 'value' => $action,
-                'label' => ucfirst($action)
+                'label' => ActivityLog::translateOrFallback('activity.actions.' . $action, ucfirst($action)),
             ]);
 
         $subjectTypesQuery = ActivityLog::whereNotNull('subject_type')
@@ -127,7 +127,7 @@ class ActivityLogController extends Controller
             ->pluck('subject_type')
             ->map(fn($type) => [
                 'value' => $type,
-                'label' => class_basename($type)
+                'label' => ActivityLog::translateOrFallback('activity.subjects.' . $type, class_basename($type)),
             ]);
 
         return Inertia::render('ActivityLogs/Index', [
@@ -178,7 +178,7 @@ class ActivityLogController extends Controller
                 ],
                 'action' => $activityLog->action,
                 'action_label' => $activityLog->action_label,
-                'description' => $activityLog->description,
+                'description' => $activityLog->translated_description,
                 'subject_type' => $activityLog->subject_type,
                 'subject_label' => $activityLog->subject_label,
                 'subject_id' => $activityLog->subject_id,

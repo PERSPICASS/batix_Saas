@@ -85,7 +85,7 @@ class CustomerController extends Controller
         $customer = $shop->customers()->create($validated);
 
         // Log activity
-        ActivityLogger::created($customer, "Client créé: {$customer->name}");
+        ActivityLogger::created($customer, $customer->name);
 
         return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client créé avec succès.');
     }
@@ -136,7 +136,7 @@ class CustomerController extends Controller
         $customer->update($validated);
 
         // Log activity
-        ActivityLogger::updated($customer, [], "Client mis à jour: {$customer->name}");
+        ActivityLogger::updated($customer, [], $customer->name);
 
         return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client modifié avec succès.');
     }
@@ -157,7 +157,7 @@ class CustomerController extends Controller
         $customer->delete();
 
         // Log activity
-        ActivityLogger::deleted($customer, "Client supprimé: {$customerName}");
+        ActivityLogger::deleted($customer, $customerName);
 
         return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client supprimé avec succès.');
     }

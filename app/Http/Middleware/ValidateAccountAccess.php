@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\User;
 
@@ -70,7 +72,15 @@ class ValidateAccountAccess
             'account_owner' => $accountOwner,
             'account_code' => $codeUser,
         ]);
-        
+
+        // Permet aux appels route() côté frontend (Ziggy) d'omettre {code_user},
+        // puisque c'est un préfixe présent sur toutes les routes de ce groupe.
+        URL::defaults(['code_user' => $codeUser]);
+
+        // Aligne la langue Laravel (__(), Carbon, etc.) sur la préférence de l'utilisateur,
+        // pour que tout texte rendu côté serveur (ex. journal d'activité) soit dans sa langue.
+        App::setLocale($currentUser->getLocale());
+
         return $next($request);
     }
 }

@@ -27,9 +27,14 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     const setLocale = useCallback((next: Locale) => {
         setLocaleState(next);
         window.localStorage.setItem(STORAGE_KEY, next);
-        // Best-effort sync so server-rendered content (emails, PDFs…) matches the UI language.
-        // Silently ignored when logged out (guest users have no locale to persist).
-        axios.post('/locale', { locale: next }).catch(() => {});
+        // Best-effort sync so server-rendered content (emails, activity log, PDFs…) matches
+        // the UI language. Silently ignored outside {code_user}-scoped pages (guest pages,
+        // platform-admin…) where the route can't even be built, and when logged out.
+        try {
+            axios.post(route('locale.update'), { locale: next }).catch(() => {});
+        } catch {
+            // route() throws synchronously if {code_user} isn't resolvable here — nothing to sync.
+        }
     }, []);
 
     return (

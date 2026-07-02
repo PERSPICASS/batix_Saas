@@ -153,7 +153,7 @@ class InvoiceController extends Controller
         });
 
         // Log activity
-        ActivityLogger::created($invoice, "Facture créée: {$invoice->invoice_number}");
+        ActivityLogger::created($invoice, $invoice->invoice_number);
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture créée avec succès.');
     }
@@ -267,7 +267,7 @@ class InvoiceController extends Controller
         });
 
         // Log activity
-        ActivityLogger::updated($invoice, [], "Facture mise à jour: {$invoice->invoice_number}");
+        ActivityLogger::updated($invoice, [], $invoice->invoice_number);
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture modifiée avec succès.');
     }
@@ -294,7 +294,7 @@ class InvoiceController extends Controller
         $invoice->delete();
 
         // Log activity
-        ActivityLogger::deleted($invoice, "Facture supprimée: {$invoiceNumber}");
+        ActivityLogger::deleted($invoice, $invoiceNumber);
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture supprimée avec succès.');
     }

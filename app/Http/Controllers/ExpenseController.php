@@ -132,7 +132,7 @@ class ExpenseController extends Controller
             'receipt'        => $receiptPath,
         ]);
 
-        ActivityLogger::created($expense, "Dépense créée : {$expense->title} ({$expense->amount})");
+        ActivityLogger::created($expense, "{$expense->title} ({$expense->amount})");
 
         return redirect()
             ->route('expenses.index', ['code_user' => $codeUser])
@@ -166,7 +166,7 @@ class ExpenseController extends Controller
 
         $expense->update($validated);
 
-        ActivityLogger::updated($expense, [], "Dépense modifiée : {$expense->title}");
+        ActivityLogger::updated($expense, [], $expense->title);
 
         return redirect()
             ->route('expenses.index', ['code_user' => $codeUser])
@@ -182,7 +182,7 @@ class ExpenseController extends Controller
             Storage::disk('public')->delete($expense->receipt);
         }
 
-        ActivityLogger::deleted($expense, "Dépense supprimée : {$expense->title}");
+        ActivityLogger::deleted($expense, $expense->title);
         $expense->delete();
 
         return redirect()

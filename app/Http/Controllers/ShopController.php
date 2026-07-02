@@ -65,7 +65,7 @@ class ShopController extends Controller
         $shop = $user->accessibleShopsQuery()->create($validated);
 
         // Log activity
-        ActivityLogger::created($shop, "Boutique créée: {$shop->name}");
+        ActivityLogger::created($shop, $shop->name);
 
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique créée avec succès.');
     }
@@ -116,7 +116,7 @@ class ShopController extends Controller
         $shop->update($validated);
 
         // Log activity
-        ActivityLogger::updated($shop, [], "Boutique mise à jour: {$shop->name}");
+        ActivityLogger::updated($shop, [], $shop->name);
 
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique mise à jour avec succès.');
     }
@@ -134,7 +134,7 @@ class ShopController extends Controller
         $shop->delete();
 
         // Log activity
-        ActivityLogger::deleted($shop, "Boutique supprimée: {$shopName}");
+        ActivityLogger::deleted($shop, $shopName);
 
         return redirect()->route('shops.index', ['code_user' => request()->route('code_user')])->with('success', 'Boutique supprimée avec succès.');
     }
@@ -244,7 +244,7 @@ class ShopController extends Controller
         session(['active_shop_id' => $shop->id]);
 
         // Log activity
-        ActivityLogger::created($shop, "Première boutique créée: {$shop->name}");
+        ActivityLogger::message('create', 'shop_first_created', ['name' => $shop->name], $shop);
 
         $redirectUrl = route('dashboard', ['code_user' => $user->code_user]);
 

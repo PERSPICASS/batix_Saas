@@ -1,0 +1,87 @@
+<?php
+
+return [
+    'actions' => [
+        'create' => 'Création',
+        'update' => 'Modification',
+        'delete' => 'Suppression',
+        'view' => 'Consultation',
+        'export' => 'Exportation',
+        'import' => 'Importation',
+        'login' => 'Connexion',
+        'logout' => 'Déconnexion',
+        'lock' => 'Verrouillage',
+        'unlock' => 'Déverrouillage',
+        'restore' => 'Restauration',
+        'preorder_batch_created' => 'Création de précommande(s)',
+        'preorder_to_sale' => 'Conversion en vente',
+        'credit_payment' => 'Paiement de créance',
+        'purchase_created' => 'Bon de commande créé',
+        'purchase_updated' => 'Bon de commande modifié',
+        'purchase_confirmed' => 'Bon de commande confirmé',
+        'purchase_received' => 'Réception de marchandise',
+        'purchase_cancelled' => 'Bon de commande annulé',
+        'purchase_deleted' => 'Bon de commande supprimé',
+    ],
+
+    'subjects' => [
+        'App\\Models\\Product' => 'Produit',
+        'App\\Models\\Category' => 'Catégorie',
+        'App\\Models\\Customer' => 'Client',
+        'App\\Models\\Supplier' => 'Fournisseur',
+        'App\\Models\\Invoice' => 'Facture',
+        'App\\Models\\Sale' => 'Vente',
+        'App\\Models\\Shop' => 'Boutique',
+        'App\\Models\\User' => 'Utilisateur',
+        'App\\Models\\Preorder' => 'Précommande',
+        'App\\Models\\Expense' => 'Dépense',
+        'App\\Models\\SaleReturn' => 'Retour',
+        'App\\Models\\Purchase' => 'Achat',
+    ],
+
+    'fields' => [
+        'status' => 'Statut',
+        'name' => 'Nom',
+        'price' => 'Prix',
+        'quantity' => 'Quantité',
+        'amount' => 'Montant',
+    ],
+
+    'preorder_statuses' => [
+        'pending' => 'En attente',
+        'confirmed' => 'Confirmée',
+        'ready' => 'Prête',
+        'completed' => 'Complétée',
+        'cancelled' => 'Annulée',
+    ],
+
+    // Gabarit générique pour les actions create/update/delete "régulières"
+    'generic_with_identifier' => ':action · :subject : :identifier',
+    'generic_without_identifier' => ':action · :subject',
+
+    // Messages spécifiques pour les actions qui ne suivent pas le gabarit générique
+    'messages' => [
+        'preorder_batch_created' => 'Pré-commande(s) créée(s) pour : :products',
+        'preorder_status_changed' => 'Statut changé : :old → :new',
+        'preorder_to_sale' => 'Convertie en vente : :product',
+        'preorder_completed_by_sale' => 'Convertie en vente : :ticket',
+        'return_created' => 'Retour enregistré pour :product (Qté : :qty)',
+        'return_cancelled' => 'Retour annulé pour :product',
+        'shop_first_created' => 'Première boutique créée : :name',
+        'product_removed_from_shop' => 'Produit retiré de la boutique : :name',
+        'product_restored_to_shop' => 'Produit remis en boutique : :name',
+        'credit_payment' => 'Paiement de :amount pour la vente :ticket',
+        'purchase_created' => 'Bon de commande :reference créé',
+        'purchase_updated' => 'Bon de commande :reference modifié',
+        'purchase_confirmed' => 'Bon de commande :reference confirmé',
+        'purchase_received' => 'Réception de marchandise pour :reference',
+        'purchase_cancelled' => 'Bon de commande :reference annulé',
+        'purchase_deleted' => 'Bon de commande :reference supprimé',
+        'api_token_created' => "Token API créé : :name",
+        'api_token_revoked' => 'Token API révoqué : :name',
+        'login' => 'Connexion à la plateforme',
+        'logout' => 'Déconnexion de la plateforme',
+        'lock' => "Verrouillage de l'écran",
+        'unlock' => "Déverrouillage de l'écran",
+    ],
+];

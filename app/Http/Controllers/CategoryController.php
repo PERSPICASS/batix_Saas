@@ -62,7 +62,7 @@ class CategoryController extends Controller
         $category = $shop->categories()->create($validated);
 
         // Log activity
-        ActivityLogger::created($category, "Catégorie créée: {$category->name}");
+        ActivityLogger::created($category, $category->name);
 
         return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie créée avec succès.');
     }
@@ -113,7 +113,7 @@ class CategoryController extends Controller
         $category->update($validated);
 
         // Log activity
-        ActivityLogger::updated($category, [], "Catégorie mise à jour: {$category->name}");
+        ActivityLogger::updated($category, [], $category->name);
 
         return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie mise à jour avec succès.');
     }
@@ -131,7 +131,7 @@ class CategoryController extends Controller
         $category->delete();
 
         // Log activity
-        ActivityLogger::deleted($category, "Catégorie supprimée: {$categoryName}");
+        ActivityLogger::deleted($category, $categoryName);
 
         return redirect()->route('categories.index', ['code_user' => request()->route('code_user')])->with('success', 'Catégorie supprimée avec succès.');
     }

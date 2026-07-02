@@ -106,7 +106,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                         </div>
                         <div>
                             <h2 className="text-xl font-semibold text-white">{t.activityLogs.title}</h2>
-                            <p className="text-sm text-slate-400">Suivez toutes les actions effectuées dans vos boutiques</p>
+                            <p className="text-sm text-slate-400">{t.activityLogs.subtitle}</p>
                         </div>
                     </div>
                 </div>
@@ -123,7 +123,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                             <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Rechercher par description, utilisateur..."
+                                placeholder={t.activityLogs.filters.searchPlaceholder}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -138,14 +138,14 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                 className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-sm text-white hover:bg-slate-800 transition"
                             >
                                 <Filter className="size-4" />
-                                <span>Filtres</span>
+                                <span>{t.activityLogs.filters.filtersButton}</span>
                             </button>
                             <button
                                 onClick={handleSearch}
                                 className="flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600 transition"
                             >
                                 <Search className="size-4" />
-                                <span>Rechercher</span>
+                                <span>{t.common.actions.search}</span>
                             </button>
                         </div>
                     </div>
@@ -155,13 +155,13 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                         <div className="mt-4 grid gap-4 sm:grid-cols-3 border-t border-white/10 pt-4">
                             {/* User Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Utilisateur</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.activityLogs.filters.user}</label>
                                 <select
                                     value={filters.user_id || ''}
                                     onChange={(e) => handleFilter('user_id', e.target.value)}
                                     className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                 >
-                                    <option value="">Tous les utilisateurs</option>
+                                    <option value="">{t.activityLogs.filters.allUsers}</option>
                                     {filterOptions.users.map((user) => (
                                         <option key={user.id} value={user.id}>
                                             {user.name} ({user.email})
@@ -172,13 +172,13 @@ export default function Index({ activities, filters, filterOptions }: Props) {
 
                             {/* Action Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Action</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.activityLogs.filters.action}</label>
                                 <select
                                     value={filters.action || ''}
                                     onChange={(e) => handleFilter('action', e.target.value)}
                                     className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                 >
-                                    <option value="">Toutes les actions</option>
+                                    <option value="">{t.activityLogs.filters.allActions}</option>
                                     {filterOptions.actions.map((action: any) => (
                                         <option key={action.value} value={action.value}>
                                             {action.label}
@@ -189,13 +189,13 @@ export default function Index({ activities, filters, filterOptions }: Props) {
 
                             {/* Subject Type Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Type</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.activityLogs.filters.type}</label>
                                 <select
                                     value={filters.subject_type || ''}
                                     onChange={(e) => handleFilter('subject_type', e.target.value)}
                                     className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                 >
-                                    <option value="">Tous les types</option>
+                                    <option value="">{t.activityLogs.filters.allTypes}</option>
                                     {filterOptions.subjectTypes.map((type: any) => (
                                         <option key={type.value} value={type.value}>
                                             {type.label}
@@ -210,7 +210,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                     onClick={clearFilters}
                                     className="text-sm text-slate-400 hover:text-white transition"
                                 >
-                                    Réinitialiser les filtres
+                                    {t.activityLogs.filters.resetFilters}
                                 </button>
                             </div>
                         </div>
@@ -224,9 +224,9 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                             <div className="flex items-center justify-center w-16 h-16 rounded-full bg-slate-800/50 mb-4">
                                 <History className="size-8 text-slate-400" />
                             </div>
-                            <p className="text-lg font-medium text-slate-300 mb-2">Aucune activité trouvée</p>
+                            <p className="text-lg font-medium text-slate-300 mb-2">{t.activityLogs.emptyMessage}</p>
                             <p className="text-sm text-slate-400">
-                                Aucune activité ne correspond à vos critères de recherche
+                                {t.activityLogs.emptySubtitle}
                             </p>
                         </div>
                     ) : (
@@ -273,7 +273,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                                     {activity.created_at}
                                                 </span>
                                                 {activity.ip_address && (
-                                                    <span>IP: {activity.ip_address}</span>
+                                                    <span>{t.activityLogs.ipLabel}: {activity.ip_address}</span>
                                                 )}
                                             </div>
                                         </div>

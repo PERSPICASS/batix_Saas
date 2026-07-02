@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import ProductImage from '@/Components/ProductImage';
@@ -39,10 +39,21 @@ interface Product {
     }>;
 }
 
+interface PreorderPrefill {
+    id: number;
+    customer_id: number | null;
+    product_id: number;
+    quantity: number;
+    unit_price: number;
+    deposit_amount: number;
+    remaining_balance: number;
+}
+
 interface Props {
     shops: Shop[];
     customers: Customer[];
     products: Product[];
+    preorder?: PreorderPrefill | null;
 }
 
 interface CartItem {
@@ -54,7 +65,7 @@ interface CartItem {
     subtotal: number;
 }
 
-export default function SalesCreate({ shops, customers, products }: Props) {
+export default function SalesCreate({ shops, customers, products, preorder }: Props) {
     const { t } = useLocale();
     const route = useRoute();
 
@@ -68,14 +79,44 @@ export default function SalesCreate({ shops, customers, products }: Props) {
 
     const { data, setData, post, processing, errors } = useForm({
         shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
-        customer_id: '',
+        customer_id: preorder?.customer_id ? preorder.customer_id.toString() : '',
         payment_method: 'cash' as string,
-        amount_paid: '',
+        amount_paid: preorder && preorder.deposit_amount > 0 ? preorder.deposit_amount.toString() : '',
         discount_amount: '0',
         credit_due_date: '',
-        notes: '',
+        notes: preorder
+            ? `Vente issue de la pré-commande #${preorder.id}${preorder.deposit_amount > 0 ? ` — acompte déjà versé : ${preorder.deposit_amount.toLocaleString('fr-FR')} FCFA` : ''}`
+            : '',
         items: [] as any[],
+        preorder_id: preorder?.id.toString() || '',
     });
+
+    // Pré-remplir le panier et le client avec les infos de la pré-commande, une seule fois au montage
+    useEffect(() => {
+        if (!preorder) return;
+
+        const product = products.find((p) => p.id === preorder.product_id);
+        if (product) {
+            setCart([
+                {
+                    product_id: product.id,
+                    product_name: product.name,
+                    quantity: preorder.quantity,
+                    unit_price: preorder.unit_price,
+                    tax_rate: parseFloat(product.tax_rate || '0'),
+                    subtotal: preorder.quantity * preorder.unit_price,
+                },
+            ]);
+        }
+
+        if (preorder.customer_id) {
+            const customer = customers.find((c) => c.id === preorder.customer_id);
+            if (customer) {
+                setSearchCustomer(customer.name);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const addToCart = (product: Product) => {
         const existingItem = cart.find((item) => item.product_id === product.id);

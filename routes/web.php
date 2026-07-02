@@ -3,6 +3,7 @@
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\LemonSqueezyController;
 use App\Http\Controllers\PaddleController;
 use App\Http\Controllers\FixedCostController;
 use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\PreorderController;
 use App\Http\Controllers\RecurringInvoiceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TwoFactorController;
@@ -272,6 +274,14 @@ Route::prefix('{code_user}')
     Route::post('devis/{quote}/accepter', [QuoteController::class, 'accept'])->name('quotes.accept');
     Route::post('devis/{quote}/convertir-facture', [QuoteController::class, 'convertToInvoice'])->name('quotes.convert');
 
+    // Routes pour les précommandes
+    Route::resource('precommandes', PreorderController::class)
+        ->names('preorders')
+        ->parameters(['precommandes' => 'preorder'])
+        ->only(['index', 'create', 'store', 'show']);
+    Route::patch('precommandes/{preorder}/statut', [PreorderController::class, 'updateStatus'])->name('preorders.update-status');
+    Route::post('precommandes/{preorder}/convertir-vente', [PreorderController::class, 'convertToSale'])->name('preorders.convert');
+
     // Routes pour les factures récurrentes
     Route::resource('factures-recurrentes', RecurringInvoiceController::class)->names('recurring-invoices')->parameters(['factures-recurrentes' => 'recurring_invoice']);
     Route::post('factures-recurrentes/{recurring_invoice}/generer', [RecurringInvoiceController::class, 'generateNow'])->name('recurring-invoices.generate');
@@ -380,6 +390,11 @@ Route::prefix('{code_user}')
     // Paramètres de la boutique
     Route::get('/parametres', [SettingsController::class, 'index'])->name('settings.index');
     Route::patch('/parametres', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Tokens API pour intégrations (super_admin uniquement)
+    Route::get('/integrations', [ApiTokenController::class, 'index'])->name('api-tokens.index');
+    Route::post('/integrations', [ApiTokenController::class, 'store'])->name('api-tokens.store');
+    Route::delete('/integrations/{tokenId}', [ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

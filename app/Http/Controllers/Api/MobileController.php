@@ -13,6 +13,16 @@ use Illuminate\Validation\Validator;
 
 class MobileController extends Controller
 {
+    /**
+     * Vérifie que $shopId appartient bien au compte du token authentifié.
+     * Sans ce contrôle, n'importe quel token valide pourrait lire ou écrire
+     * les données d'une boutique appartenant à un autre compte.
+     */
+    private function authorizeShop($user, $shopId): bool
+    {
+        return $shopId && $user->accessibleShopsQuery()->where('id', $shopId)->exists();
+    }
+
     public function syncSales(Request $request)
     {
         $user = Auth::guard('sanctum')->user();
@@ -22,6 +32,10 @@ class MobileController extends Controller
 
         $lastSync = $request->input('last_sync');
         $shopId = $request->input('shop_id');
+
+        if (!$this->authorizeShop($user, $shopId)) {
+            return response()->json(['error' => 'Unauthorized shop'], 403);
+        }
 
         $query = Sale::with(['customer', 'items'])
             ->where('shop_id', $shopId)
@@ -60,6 +74,10 @@ class MobileController extends Controller
         $lastSync = $request->input('last_sync');
         $shopId = $request->input('shop_id');
 
+        if (!$this->authorizeShop($user, $shopId)) {
+            return response()->json(['error' => 'Unauthorized shop'], 403);
+        }
+
         $query = Product::where('shop_id', $shopId)
             ->where('is_active', true);
 
@@ -94,6 +112,10 @@ class MobileController extends Controller
 
         $lastSync = $request->input('last_sync');
         $shopId = $request->input('shop_id');
+
+        if (!$this->authorizeShop($user, $shopId)) {
+            return response()->json(['error' => 'Unauthorized shop'], 403);
+        }
 
         $query = Customer::where('shop_id', $shopId);
 
@@ -133,6 +155,10 @@ class MobileController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
+
+        if (!$this->authorizeShop($user, $validated['shop_id'])) {
+            return response()->json(['error' => 'Unauthorized shop'], 403);
+        }
 
         try {
             $subtotal = 0;

@@ -17,6 +17,8 @@ export const nav = {
         customers: 'Clients',
         invoices: 'Factures',
         analytics: 'Analytics',
+        quotes: 'Devis',
+        recurringInvoices: 'Factures Récurrentes',
         history: 'Historique',
         settings: 'Paramètres',
         profile: 'Profil',
@@ -31,6 +33,7 @@ export const nav = {
         subscriptions: 'Abonnements',
         mrr: 'MRR & Revenus',
         blog: 'Blog',
+        charges: 'Charges fixes',
     },
     en: {
         dashboard: 'Dashboard',
@@ -42,6 +45,8 @@ export const nav = {
         inventory: 'Inventory',
         purchases: 'Purchases',
         expenses: 'Expenses',
+        quotes: 'Quotes',
+        recurringInvoices: 'Recurring Invoices',
         sales: 'Sales',
         credits: 'Credits',
         returnedInventory: 'Returned inventory',
@@ -64,5 +69,6 @@ export const nav = {
         subscriptions: 'Subscriptions',
         mrr: 'MRR & Revenue',
         blog: 'Blog',
+        charges: 'Fixed Charges',
     },
 } as const;

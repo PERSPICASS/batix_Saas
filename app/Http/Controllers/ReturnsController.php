@@ -64,7 +64,10 @@ class ReturnsController extends Controller
             return $return;
         });
 
-        ActivityLogger::created($return, "Retour enregistré pour {$saleItem->product_name} (Qté: {$validated['quantity_returned']})");
+        ActivityLogger::message('create', 'return_created', [
+            'product' => $saleItem->product_name,
+            'qty' => $validated['quantity_returned'],
+        ], $return);
 
         // Recharger la vente avec les items et retours mis à jour pour la réponse
         $sale = $sale->fresh(['items.returns', 'items.product', 'customer']);
@@ -145,7 +148,7 @@ class ReturnsController extends Controller
             $this->recalculateSaleAmounts($sale);
         });
 
-        ActivityLogger::deleted($return, "Retour annulé pour {$saleItem->product_name}");
+        ActivityLogger::message('delete', 'return_cancelled', ['product' => $saleItem->product_name], $return);
 
         return back()->with('success', 'Retour annulé et stock restauré.');
     }

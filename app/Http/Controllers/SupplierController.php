@@ -100,7 +100,7 @@ class SupplierController extends Controller
         $supplier->shops()->attach($shopIds);
 
         // Log activity
-        ActivityLogger::created($supplier, "Fournisseur créé: {$supplier->name}");
+        ActivityLogger::created($supplier, $supplier->name);
 
         return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur créé avec succès.');
     }
@@ -189,7 +189,7 @@ class SupplierController extends Controller
         $supplier->shops()->sync($shopIds);
 
         // Log activity
-        ActivityLogger::updated($supplier, [], "Fournisseur mis à jour: {$supplier->name}");
+        ActivityLogger::updated($supplier, [], $supplier->name);
 
         return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur mis à jour avec succès.');
     }
@@ -218,7 +218,7 @@ class SupplierController extends Controller
         $supplier->delete();
 
         // Log activity
-        ActivityLogger::deleted($supplier, "Fournisseur supprimé: {$supplierName}");
+        ActivityLogger::deleted($supplier, $supplierName);
 
         return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur supprimé avec succès.');
     }

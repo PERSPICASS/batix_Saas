@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Preorder;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -115,29 +116,47 @@ class SaleController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         $activeShopId = get_active_shop_id();
-        
+
         if (!$activeShopId) {
             return redirect()->route('shops.index')
                 ->with('error', 'Veuillez sélectionner une boutique active.');
         }
-        
+
         $shops = Auth::user()->accessibleShops();
-        
+
         $customers = Customer::where('shop_id', $activeShopId)->get();
-        
+
         $products = Product::where('shop_id', $activeShopId)
             ->where('is_active', true)
             ->whereNull('parent_id')
             ->with(['variations' => fn($q) => $q->where('is_active', true)->orderBy('name')])
             ->get();
 
+        $preorder = null;
+        if ($request->filled('preorder_id')) {
+            $preorderModel = Preorder::where('shop_id', $activeShopId)
+                ->find($request->input('preorder_id'));
+
+            if ($preorderModel) {
+                $preorder = [
+                    'id'             => $preorderModel->id,
+                    'customer_id'    => $preorderModel->customer_id,
+                    'product_id'     => $preorderModel->product_id,
+                    'quantity'       => $preorderModel->quantity_ordered,
+                    'unit_price'     => (float) $preorderModel->unit_price,
+                    'deposit_amount' => (float) $preorderModel->deposit_amount,
+                ];
+            }
+        }
+
         return Inertia::render('Sales/Create', [
             'shops' => $shops,
             'customers' => $customers,
             'products' => $products,
+            'preorder' => $preorder,
         ]);
     }
 
@@ -155,9 +174,12 @@ class SaleController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity'   => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'preorder_id'        => 'nullable|exists:preorders,id',
         ]);
 
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+        $preorderId = $validated['preorder_id'] ?? null;
+        unset($validated['preorder_id']);
 
         $sale = DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];
@@ -225,7 +247,22 @@ class SaleController extends Controller
             return $sale;
         });
 
-        ActivityLogger::created($sale, "Vente enregistrée: {$sale->ticket_number}");
+        ActivityLogger::created($sale, $sale->ticket_number);
+
+        if ($preorderId) {
+            $preorder = Preorder::where('shop_id', $shop->id)->find($preorderId);
+            if ($preorder && !in_array($preorder->status, ['completed', 'cancelled'])) {
+                $oldStatus = $preorder->status;
+                $preorder->update(['status' => 'completed']);
+                ActivityLogger::message(
+                    'update',
+                    'preorder_completed_by_sale',
+                    ['ticket' => $sale->ticket_number],
+                    $preorder,
+                    ['changes' => ['status' => ['old' => $oldStatus, 'new' => 'completed']]]
+                );
+            }
+        }
 
         $msg = $sale->remaining_amount > 0
             ? "Vente à crédit enregistrée. Reste à payer : " . number_format($sale->remaining_amount, 0, ',', ' ') . " FCFA"

@@ -205,10 +205,13 @@ class CreditController extends Controller
             'notes'            => $sale->notes ? $sale->notes . "\n" . $note : $note,
         ]);
 
-        ActivityLogger::log('credit_payment', null, $sale, [
-            'amount'          => $validated['amount'],
-            'remaining'       => $newRemaining,
-            'payment_method'  => $validated['payment_method'],
+        ActivityLogger::message('credit_payment', 'credit_payment', [
+            'amount' => number_format($validated['amount'], 0, ',', ' ') . ' FCFA',
+            'ticket' => $sale->ticket_number,
+        ], $sale, [
+            'amount' => $validated['amount'],
+            'remaining' => $newRemaining,
+            'payment_method' => $validated['payment_method'],
         ]);
 
         $msg = $newRemaining <= 0
