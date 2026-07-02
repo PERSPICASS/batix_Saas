@@ -55,6 +55,7 @@ class UserController extends Controller
         return Inertia::render('Users/Create', [
             'shops' => $shops,
             'currentUserRole' => $user->role,
+            'modules' => UserPermission::MODULES,
         ]);
     }
 
@@ -90,16 +91,24 @@ class UserController extends Controller
 
         $user = User::create($validated);
 
-        // Create permissions
-        foreach ($permissions as $permission) {
-            UserPermission::create([
-                'user_id' => $user->id,
-                'module' => $permission['module'],
-                'can_view' => $permission['can_view'] ?? false,
-                'can_create' => $permission['can_create'] ?? false,
-                'can_edit' => $permission['can_edit'] ?? false,
-                'can_delete' => $permission['can_delete'] ?? false,
-            ]);
+        // Si l'admin n'a coché aucune permission dans le formulaire, on applique les
+        // valeurs par défaut du rôle plutôt que de laisser l'utilisateur sans aucun
+        // accès (hasPermission() refuse tout module sans ligne en base).
+        if (empty($permissions)) {
+            foreach (UserPermission::defaultsForRole($user->role) as $module => $actions) {
+                UserPermission::create(['user_id' => $user->id, 'module' => $module] + $actions);
+            }
+        } else {
+            foreach ($permissions as $permission) {
+                UserPermission::create([
+                    'user_id' => $user->id,
+                    'module' => $permission['module'],
+                    'can_view' => $permission['can_view'] ?? false,
+                    'can_create' => $permission['can_create'] ?? false,
+                    'can_edit' => $permission['can_edit'] ?? false,
+                    'can_delete' => $permission['can_delete'] ?? false,
+                ]);
+            }
         }
 
         // Log activity
@@ -118,6 +127,7 @@ class UserController extends Controller
             'user' => $user,
             'shops' => $shops,
             'currentUserRole' => $currentUser->role,
+            'modules' => UserPermission::MODULES,
         ]);
     }
 

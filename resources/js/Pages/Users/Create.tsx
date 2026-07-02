@@ -21,17 +21,12 @@ interface ModulePermission {
 interface Props {
     shops: Shop[];
     currentUserRole: string;
+    modules: Record<string, string>;
 }
-
-const MODULE_KEYS = [
-    'shops', 'products', 'categories', 'stocks', 'inventory', 'sales',
-    'purchases', 'expenses', 'depots', 'suppliers', 'customers', 'invoices',
-    'credits', 'users', 'reports', 'analytics', 'activity_logs', 'settings',
-];
 
 const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
-export default function UsersCreate({ shops, currentUserRole }: Props) {
+export default function UsersCreate({ shops, currentUserRole, modules }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const isSuperAdmin = currentUserRole === 'super_admin';
@@ -221,7 +216,7 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                         </div>
 
                         <div className="space-y-3">
-                            {MODULE_KEYS.map((key) => {
+                            {Object.keys(modules).map((key) => {
                                 const isSelected = selectedModules.includes(key);
                                 const permission = getPermission(key);
 
@@ -238,7 +233,7 @@ export default function UsersCreate({ shops, currentUserRole }: Props) {
                                                 }`}>
                                                     {isSelected && <Check className="size-3 text-slate-950" />}
                                                 </div>
-                                                <span className="font-medium text-slate-200">{moduleLabels[key] || key}</span>
+                                                <span className="font-medium text-slate-200">{moduleLabels[key] || modules[key]}</span>
                                             </button>
 
                                             {isSelected && permission && (

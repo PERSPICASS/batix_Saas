@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, User, Clock, Zap, MapPin, Globe, Code } from 'lucide-react';
+import { ArrowLeft, User, Clock, Zap, MapPin, Globe, Code, Key } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 
 interface ActivityLog {
@@ -27,6 +27,7 @@ interface ActivityLog {
         type?: string;
         count?: number;
     } | null;
+    api_token_name: string | null;
     ip_address: string | null;
     user_agent: string | null;
     method: string | null;
@@ -143,6 +144,12 @@ export default function Show({ activity }: Props) {
                                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getActionColor(activity.action)}`}>
                                         {activity.action_label}
                                     </span>
+                                    {activity.api_token_name && (
+                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-300">
+                                            <Key className="size-3.5" />
+                                            {t.activityLogs.viaApiToken(activity.api_token_name)}
+                                        </span>
+                                    )}
                                 </div>
                                 <h2 className="text-2xl font-bold text-white mb-2">{activity.description}</h2>
                                 <p className="text-sm text-slate-400">

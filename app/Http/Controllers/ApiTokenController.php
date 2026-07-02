@@ -12,6 +12,17 @@ use Inertia\Response;
 class ApiTokenController extends Controller
 {
     /**
+     * Portées disponibles pour un token — tenues synchronisées avec les middlewares
+     * `abilities:` posés sur routes/api.php. Un token sans aucune portée cochée
+     * reçoit ['*'] (accès complet), pour rester simple par défaut.
+     */
+    public const ABILITIES = [
+        'products:read', 'products:write',
+        'customers:read', 'customers:write',
+        'sales:read', 'sales:write',
+    ];
+
+    /**
      * Seul le propriétaire du compte (super_admin) gère les tokens d'intégration :
      * ils donnent un accès API à l'ensemble du compte, pas à une seule boutique.
      */
@@ -32,6 +43,7 @@ class ApiTokenController extends Controller
 
         return Inertia::render('Settings/ApiTokens', [
             'tokens' => $tokens,
+            'availableAbilities' => self::ABILITIES,
         ]);
     }
 
@@ -42,13 +54,17 @@ class ApiTokenController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'expires_in_days' => 'nullable|integer|min:1|max:730',
+            'abilities' => 'nullable|array',
+            'abilities.*' => 'string|in:' . implode(',', self::ABILITIES),
         ]);
 
         $expiresAt = !empty($validated['expires_in_days'])
             ? now()->addDays((int) $validated['expires_in_days'])
             : null;
 
-        $token = Auth::user()->createToken($validated['name'], ['*'], $expiresAt);
+        $abilities = !empty($validated['abilities']) ? $validated['abilities'] : ['*'];
+
+        $token = Auth::user()->createToken($validated['name'], $abilities, $expiresAt);
 
         ActivityLogger::message('create', 'api_token_created', ['name' => $validated['name']]);
 
@@ -58,7 +74,7 @@ class ApiTokenController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, int $tokenId): RedirectResponse
+    public function destroy(Request $request, string $code_user, int $tokenId): RedirectResponse
     {
         $this->authorizeOwner();
 

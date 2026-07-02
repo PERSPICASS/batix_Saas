@@ -3,6 +3,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { Key, Plus, Trash2, Copy, Check, AlertTriangle } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
+import ConfirmDialog from '@/Components/ConfirmDialog';
 
 interface ApiToken {
     id: number;
@@ -15,9 +16,10 @@ interface ApiToken {
 
 interface Props {
     tokens: ApiToken[];
+    availableAbilities: string[];
 }
 
-export default function ApiTokens({ tokens }: Props) {
+export default function ApiTokens({ tokens, availableAbilities }: Props) {
     const { t, locale } = useLocale();
     const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-GB';
     const { props } = usePage();
@@ -35,19 +37,42 @@ export default function ApiTokens({ tokens }: Props) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         expires_in_days: '',
+        abilities: [] as string[],
     });
+
+    const resources = ['products', 'customers', 'sales'] as const;
+
+    const toggleAbility = (ability: string) => {
+        setData('abilities', data.abilities.includes(ability)
+            ? data.abilities.filter((a) => a !== ability)
+            : [...data.abilities, ability]);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('api-tokens.store'), {
             preserveScroll: true,
-            onSuccess: () => reset('name', 'expires_in_days'),
+            onSuccess: () => reset('name', 'expires_in_days', 'abilities'),
         });
     };
 
-    const handleRevoke = (tokenId: number, name: string) => {
-        if (!confirm(t.apiTokens.revokeConfirm(name))) return;
-        router.delete(route('api-tokens.destroy', tokenId), { preserveScroll: true });
+    const [tokenToRevoke, setTokenToRevoke] = useState<ApiToken | null>(null);
+    const [isRevoking, setIsRevoking] = useState(false);
+
+    const handleRevokeClick = (token: ApiToken) => {
+        setTokenToRevoke(token);
+    };
+
+    const handleConfirmRevoke = () => {
+        if (!tokenToRevoke) return;
+        setIsRevoking(true);
+        router.delete(route('api-tokens.destroy', tokenToRevoke.id), {
+            preserveScroll: true,
+            onFinish: () => {
+                setIsRevoking(false);
+                setTokenToRevoke(null);
+            },
+        });
     };
 
     const copyToken = () => {
@@ -100,32 +125,67 @@ export default function ApiTokens({ tokens }: Props) {
                         <Plus className="size-4 text-amber-300" />
                         {t.apiTokens.createTitle}
                     </h3>
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                        <div className="flex-1">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.nameLabel}</label>
-                            <input
-                                type="text"
-                                value={data.name}
-                                onChange={(e) => setData('name', e.target.value)}
-                                placeholder={t.apiTokens.namePlaceholder}
-                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                                required
-                            />
-                            {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                            <div className="flex-1">
+                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.nameLabel}</label>
+                                <input
+                                    type="text"
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    placeholder={t.apiTokens.namePlaceholder}
+                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    required
+                                />
+                                {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+                            </div>
+                            <div className="sm:w-52">
+                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.expiryLabel}</label>
+                                <select
+                                    value={data.expires_in_days}
+                                    onChange={(e) => setData('expires_in_days', e.target.value)}
+                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                >
+                                    <option value="">{t.apiTokens.expiryNever}</option>
+                                    <option value="30">{t.apiTokens.expiryDays(30)}</option>
+                                    <option value="90">{t.apiTokens.expiryDays(90)}</option>
+                                    <option value="365">{t.apiTokens.expiryDays(365)}</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="sm:w-52">
-                            <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.expiryLabel}</label>
-                            <select
-                                value={data.expires_in_days}
-                                onChange={(e) => setData('expires_in_days', e.target.value)}
-                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
-                            >
-                                <option value="">{t.apiTokens.expiryNever}</option>
-                                <option value="30">{t.apiTokens.expiryDays(30)}</option>
-                                <option value="90">{t.apiTokens.expiryDays(90)}</option>
-                                <option value="365">{t.apiTokens.expiryDays(365)}</option>
-                            </select>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.scopesLabel}</label>
+                            <p className="mb-2 text-xs text-slate-500">{t.apiTokens.scopesHint}</p>
+                            <div className="grid gap-2 sm:grid-cols-3">
+                                {resources.map((resource) => (
+                                    <div key={resource} className="rounded-lg border border-white/10 bg-slate-800/30 p-3">
+                                        <p className="mb-2 text-xs font-semibold text-slate-200">{t.apiTokens.resources[resource]}</p>
+                                        <div className="flex gap-4">
+                                            {(['read', 'write'] as const).map((mode) => {
+                                                const ability = `${resource}:${mode}`;
+                                                if (!availableAbilities.includes(ability)) return null;
+                                                return (
+                                                    <label key={mode} className="flex items-center gap-1.5 text-xs text-slate-300">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={data.abilities.includes(ability)}
+                                                            onChange={() => toggleAbility(ability)}
+                                                            className="rounded border-white/20 bg-slate-800 text-amber-300 focus:ring-amber-300"
+                                                        />
+                                                        {mode === 'read' ? t.apiTokens.read : t.apiTokens.write}
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {data.abilities.length === 0 && (
+                                <p className="mt-2 text-xs text-amber-300/80">{t.apiTokens.noScopesSelected}</p>
+                            )}
                         </div>
+
                         <button
                             type="submit"
                             disabled={processing}
@@ -154,6 +214,15 @@ export default function ApiTokens({ tokens }: Props) {
                                             <Key className="size-4 text-amber-300 shrink-0" />
                                             <p className="text-sm font-semibold text-white truncate">{token.name}</p>
                                         </div>
+                                        <div className="mt-1 flex flex-wrap gap-1">
+                                            {token.abilities.includes('*') ? (
+                                                <span className="rounded-full bg-amber-300/15 px-2 py-0.5 text-[11px] text-amber-300">{t.apiTokens.fullAccess}</span>
+                                            ) : (
+                                                token.abilities.map((ability) => (
+                                                    <span key={ability} className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-slate-300">{ability}</span>
+                                                ))
+                                            )}
+                                        </div>
                                         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
                                             <span>
                                                 {t.apiTokens.createdAt}: {new Date(token.created_at).toLocaleDateString(dateLocale)}
@@ -172,7 +241,7 @@ export default function ApiTokens({ tokens }: Props) {
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => handleRevoke(token.id, token.name)}
+                                        onClick={() => handleRevokeClick(token)}
                                         className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-rose-300/30 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-300/10 transition"
                                     >
                                         <Trash2 className="size-3.5" />
@@ -184,6 +253,17 @@ export default function ApiTokens({ tokens }: Props) {
                     )}
                 </div>
             </div>
+
+            <ConfirmDialog
+                show={tokenToRevoke !== null}
+                onClose={() => setTokenToRevoke(null)}
+                onConfirm={handleConfirmRevoke}
+                title={t.apiTokens.revoke}
+                message={t.apiTokens.revokeConfirm(tokenToRevoke?.name ?? '')}
+                confirmText={t.apiTokens.revoke}
+                type="danger"
+                isProcessing={isRevoking}
+            />
         </AuthenticatedLayout>
     );
 }

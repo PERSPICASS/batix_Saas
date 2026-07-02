@@ -9,6 +9,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Services\ActivityLogger;
+use App\Services\SaleCreationService;
 use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -180,72 +181,9 @@ class SaleController extends Controller
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         $preorderId = $validated['preorder_id'] ?? null;
         unset($validated['preorder_id']);
+        $validated['user_id'] = Auth::id();
 
-        $sale = DB::transaction(function () use ($validated, $shop) {
-            $items = $validated['items'];
-            unset($validated['items']);
-
-            $validated['user_id'] = Auth::id();
-
-            // Calculer les montants pour déterminer le reste à payer
-            $subtotal = 0;
-            $taxAmount = 0;
-            $productItems = [];
-
-            foreach ($items as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
-                $lineTotal = $itemData['unit_price'] * $itemData['quantity'];
-                $lineTax   = $lineTotal * ($product->tax_rate ?? 0) / 100;
-                $subtotal  += $lineTotal;
-                $taxAmount += $lineTax;
-                $productItems[] = array_merge($itemData, ['product' => $product, 'line_total' => $lineTotal, 'line_tax' => $lineTax]);
-            }
-
-            $discount  = (float) ($validated['discount_amount'] ?? 0);
-            $total     = $subtotal + $taxAmount - $discount;
-            $amountPaid = (float) $validated['amount_paid'];
-            $remaining = max(0, $total - $amountPaid);
-            $change    = max(0, $amountPaid - $total);
-
-            // Vente à crédit si reste > 0
-            $validated['status']           = $remaining > 0 ? 'pending' : 'completed';
-            $validated['subtotal']         = $subtotal;
-            $validated['tax_amount']       = $taxAmount;
-            $validated['discount_amount']  = $discount;
-            $validated['total']            = $total;
-            $validated['change_amount']    = $change;
-            $validated['remaining_amount'] = $remaining;
-
-            // credit_due_date seulement si vente à crédit
-            if ($remaining <= 0) {
-                $validated['credit_due_date'] = null;
-            }
-
-            $sale = $shop->sales()->create($validated);
-
-            foreach ($productItems as $itemData) {
-                $product = $itemData['product'];
-
-                // Si c'est une déclinaison, charger le parent pour avoir le nom complet
-                $parentName = null;
-                if ($product->parent_id) {
-                    $parent = $product->parent ?? Product::find($product->parent_id);
-                    $parentName = $parent?->name;
-                }
-
-                $sale->items()->create([
-                    'product_id'      => $product->id,
-                    'product_name'    => $parentName ? "{$parentName} › {$product->name}" : $product->name,
-                    'sku'             => $product->sku,
-                    'quantity'        => $itemData['quantity'],
-                    'unit_price'      => $itemData['unit_price'],
-                    'tax_rate'        => $product->tax_rate ?? 0,
-                    'discount_amount' => 0,
-                ]);
-            }
-
-            return $sale;
-        });
+        $sale = SaleCreationService::create($validated, $shop);
 
         ActivityLogger::created($sale, $sale->ticket_number);
 

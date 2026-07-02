@@ -119,6 +119,14 @@ class ActivityLog extends Model
     }
 
     /**
+     * Name of the API token used for this action, if it wasn't done from the web UI.
+     */
+    public function getApiTokenNameAttribute(): ?string
+    {
+        return $this->properties['api_token_name'] ?? null;
+    }
+
+    /**
      * Get a human-readable, locale-aware action label
      */
     public function getActionLabelAttribute(): string

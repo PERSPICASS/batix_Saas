@@ -27,6 +27,7 @@ export const activityLogs = {
         emptyMessage: 'Aucune activité trouvée',
         emptySubtitle: 'Aucune activité ne correspond à vos critères de recherche',
         ipLabel: 'IP',
+        viaApiToken: (name: string) => `via API : ${name}`,
         actions: {
             view: 'Voir',
         },
@@ -81,6 +82,7 @@ export const activityLogs = {
         emptyMessage: 'No activity found',
         emptySubtitle: 'No activity matches your search criteria',
         ipLabel: 'IP',
+        viaApiToken: (name: string) => `via API: ${name}`,
         actions: {
             view: 'View',
         },

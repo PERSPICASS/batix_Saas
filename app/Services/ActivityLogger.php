@@ -72,6 +72,16 @@ class ActivityLogger
             $data['properties'] = $properties;
         }
 
+        // Si l'action a été faite via un token API (pas la session web), on le trace —
+        // utile pour le propriétaire du compte qui veut savoir ce qu'une intégration a fait.
+        $token = $user?->currentAccessToken();
+        if ($token instanceof \Laravel\Sanctum\PersonalAccessToken) {
+            $data['properties'] = array_merge($data['properties'] ?? [], [
+                'via_api' => true,
+                'api_token_name' => $token->name,
+            ]);
+        }
+
         return ActivityLog::create($data);
     }
 

@@ -10,6 +10,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Subcategory;
 use App\Services\ActivityLogger;
+use App\Services\ProductCreationService;
 use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -146,36 +147,13 @@ class ProductController extends Controller
 
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = $user->accessibleShopsQuery()->findOrFail($validated['shop_id']);
-        
-        // Définir les valeurs par défaut pour les champs nullable
-        $validated['tax_rate'] = $validated['tax_rate'] ?? 0;
-        $validated['stock_quantity'] = $validated['stock_quantity'] ?? 0;
-        $validated['min_stock_alert'] = $validated['min_stock_alert'] ?? 0;
-        $validated['unit'] = $validated['unit'] ?? 'piece';
-        $validated['track_stock'] = $validated['track_stock'] ?? true;
-        
+
         // Gérer l'upload de l'image
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
-        
-        // Générer automatiquement le SKU s'il n'est pas fourni
-        if (empty($validated['sku'])) {
-            $validated['sku'] = 'SKU-' . strtoupper(substr(uniqid(), -8));
-        }
 
-        // Créer le produit d'abord (pour avoir l'ID)
-        $product = $shop->products()->create($validated);
-        
-        // Générer le code-barres avec catégorie, ID et prix si pas fourni ou invalide
-        if (empty($validated['barcode']) || !preg_match('/^\d{13}$/', $validated['barcode'])) {
-            $product->barcode = $this->generateBarcodeWithPrice(
-                $product->id,
-                $product->category_id,
-                $product->selling_price
-            );
-            $product->save();
-        }
+        $product = (new ProductCreationService())->create($validated, $shop);
 
         // Log activity
         ActivityLogger::created($product, $product->name);
@@ -362,47 +340,6 @@ class ProductController extends Controller
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit supprimé avec succès.');
     }
 
-    /**
-     * Generate an EAN-13 barcode with category, product ID and price embedded.
-     * 
-     * Format: 2 | CC | PPPPP | XXXX | C (13 chiffres)
-     * 
-     * Structure:
-     * - Position 1: "2" = préfixe pour codes internes
-     * - Positions 2-3: ID catégorie (2 chiffres, 0-99)
-     * - Positions 4-8: ID produit (5 chiffres, 0-99999)
-     * - Positions 9-12: Prix ÷ 100 (4 chiffres, 0-9999 = 0-999 900 FCFA)
-     * - Position 13: Checksum EAN-13
-     * 
-     * @param int $productId L'ID du produit
-     * @param int|null $categoryId L'ID de la catégorie
-     * @param float $price Le prix de vente en FCFA
-     * @return string Code-barres EAN-13 de 13 chiffres
-     */
-    private function generateBarcodeWithPrice(int $productId, ?int $categoryId, float $price): string
-    {
-        // Préfixe "2" pour usage interne (standard EAN pour codes magasin)
-        $prefix = '2';
-        
-        // ID catégorie sur 2 chiffres (max 99 catégories)
-        $categoryPart = str_pad((string)(($categoryId ?? 0) % 100), 2, '0', STR_PAD_LEFT);
-        
-        // ID produit sur 5 chiffres (max 99999 produits)
-        $productPart = str_pad((string)($productId % 100000), 5, '0', STR_PAD_LEFT);
-        
-        // Prix divisé par 100 sur 4 chiffres (max 999900 FCFA)
-        // Ex: 15000 FCFA → 150, 250000 FCFA → 2500
-        $priceHundreds = (int)min(floor($price / 100), 9999);
-        $pricePart = str_pad((string)$priceHundreds, 4, '0', STR_PAD_LEFT);
-        
-        // 12 premiers chiffres
-        $barcode12 = $prefix . $categoryPart . $productPart . $pricePart;
-        
-        // Calculer le checksum
-        $checksum = $this->calculateEAN13Checksum($barcode12);
-        
-        return $barcode12 . $checksum;
-    }
 
     /**
      * Decode category, product ID and price from an internal barcode.

@@ -60,9 +60,12 @@ class Sale extends Model
     {
         $date = date('Ymd');
         $prefix = "TKT-{$date}";
-        
-        $lastSale = static::where('shop_id', $shopId)
-            ->where('ticket_number', 'like', "{$prefix}%")
+
+        // ticket_number est unique GLOBALEMENT (toutes boutiques confondues) en base,
+        // donc la recherche du dernier numéro ne doit pas être filtrée par shop_id —
+        // sinon deux boutiques du même compte peuvent générer le même numéro le même
+        // jour et la création de vente échoue avec une violation de contrainte unique.
+        $lastSale = static::where('ticket_number', 'like', "{$prefix}%")
             ->orderBy('ticket_number', 'desc')
             ->first();
         

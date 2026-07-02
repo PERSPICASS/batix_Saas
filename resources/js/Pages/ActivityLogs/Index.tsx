@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { History, Search, Filter, Eye, Download, User, Clock, Activity } from 'lucide-react';
+import { History, Search, Filter, Eye, Download, User, Clock, Activity, Key } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
 
@@ -23,6 +23,7 @@ interface Activity {
     subject_label: string | null;
     subject_id: number | null;
     changes_summary: string | null;
+    api_token_name: string | null;
     ip_address: string | null;
     created_at: string;
     created_at_human: string;
@@ -249,6 +250,12 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                                     {activity.subject_label && (
                                                         <span className="text-sm text-slate-400">
                                                             · {activity.subject_label}
+                                                        </span>
+                                                    )}
+                                                    {activity.api_token_name && (
+                                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/10 px-2 py-0.5 text-xs text-amber-300">
+                                                            <Key className="size-3" />
+                                                            {t.activityLogs.viaApiToken(activity.api_token_name)}
                                                         </span>
                                                     )}
                                                 </div>

@@ -9,16 +9,11 @@ interface Shop { id: number; name: string }
 interface UserPermission { id: number; module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
 interface User { id: number; name: string; email: string; shop_id: number | null; role: string; is_active: boolean; permissions: UserPermission[] }
 interface ModulePermission { module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
-interface Props { user: User; shops: Shop[]; currentUserRole: string }
+interface Props { user: User; shops: Shop[]; currentUserRole: string; modules: Record<string, string> }
 
-const MODULE_KEYS = [
-    'shops', 'products', 'categories', 'stocks', 'inventory', 'sales',
-    'purchases', 'expenses', 'depots', 'suppliers', 'customers', 'invoices',
-    'credits', 'users', 'reports', 'analytics', 'activity_logs', 'settings',
-];
 const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
-export default function UsersEdit({ user, shops, currentUserRole }: Props) {
+export default function UsersEdit({ user, shops, currentUserRole, modules }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const isSuperAdmin = currentUserRole === 'super_admin';
@@ -157,7 +152,7 @@ export default function UsersEdit({ user, shops, currentUserRole }: Props) {
                         </div>
 
                         <div className="space-y-3">
-                            {MODULE_KEYS.map((key) => {
+                            {Object.keys(modules).map((key) => {
                                 const isSelected = selectedModules.includes(key);
                                 const permission = getPermission(key);
                                 return (
@@ -167,7 +162,7 @@ export default function UsersEdit({ user, shops, currentUserRole }: Props) {
                                                 <div className={`flex size-5 items-center justify-center rounded border ${isSelected ? 'border-amber-300 bg-amber-300' : 'border-white/15 bg-slate-900/70'}`}>
                                                     {isSelected && <Check className="size-3 text-slate-950" />}
                                                 </div>
-                                                <span className="font-medium text-slate-200">{moduleLabels[key] || key}</span>
+                                                <span className="font-medium text-slate-200">{moduleLabels[key] || modules[key]}</span>
                                             </button>
                                             {isSelected && permission && (
                                                 <div className="flex items-center gap-4">
