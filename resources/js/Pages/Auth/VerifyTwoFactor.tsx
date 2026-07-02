@@ -79,11 +79,11 @@ export default function VerifyTwoFactor({ codeUser }: Props) {
                                     type="text"
                                     value={code}
                                     onChange={(e) => {
-                                        const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                                        const val = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 8);
                                         setCode(val);
                                     }}
                                     placeholder="000000"
-                                    maxLength={6}
+                                    maxLength={8}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-4 py-3 text-center font-mono text-4xl tracking-widest text-slate-200 placeholder-slate-600 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     disabled={loading}
                                     autoFocus
@@ -93,7 +93,7 @@ export default function VerifyTwoFactor({ codeUser }: Props) {
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                disabled={loading || code.length !== 6}
+                                disabled={loading || (code.length !== 6 && code.length !== 8)}
                                 className="w-full rounded-lg bg-amber-300 py-2 font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? t.auth.actions.verifying : t.auth.actions.verify}

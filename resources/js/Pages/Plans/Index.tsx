@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface SubscriptionPlan {
     id: number;
@@ -29,50 +30,51 @@ interface PlansProps extends PageProps {
 }
 
 export default function Index({ plans, auth }: PlansProps) {
+    const { t } = useLocale();
     const currentPlanSlug = auth.user && 'subscription' in auth ? (auth as any).subscription?.plan_slug : null;
 
     const getPlanBadge = (planSlug: string): string => {
         const badges: Record<string, string> = {
-            free: 'GRATUIT',
-            starter: 'DÉMARRAGE',
-            growth: 'CROISSANCE',
-            scale: 'ENTREPRISE',
+            free: t.plans.badges.free,
+            starter: t.plans.badges.starter,
+            growth: t.plans.badges.growth,
+            scale: t.plans.badges.scale,
         };
-        return badges[planSlug] || 'PLAN';
+        return badges[planSlug] || t.plans.badges.default;
     };
 
     const getPlanFeatures = (plan: SubscriptionPlan): string[] => {
         const shopsLabel = plan.has_unlimited_shops
-            ? 'Boutiques illimitées'
-            : `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`;
+            ? t.plans.features.unlimitedShops
+            : t.plans.features.shopsCount(plan.max_shops);
 
         const usersLabel = plan.has_unlimited_users
-            ? 'Utilisateurs illimités'
-            : `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}`;
+            ? t.plans.features.unlimitedUsers
+            : t.plans.features.usersCount(plan.max_users);
 
         const productsLabel = plan.has_unlimited_products
-            ? 'Produits illimités'
-            : `${plan.max_products} produit${plan.max_products > 1 ? 's' : ''} par boutique`;
+            ? t.plans.features.unlimitedProducts
+            : t.plans.features.productsCount(plan.max_products);
 
         const depotsLabel = plan.max_depots === 0
-            ? 'Sans dépôt'
+            ? t.plans.features.noDepot
             : plan.has_unlimited_depots
-                ? 'Dépôts illimités'
-                : `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}`;
+                ? t.plans.features.unlimitedDepots
+                : t.plans.features.depotsCount(plan.max_depots);
 
         const baseFeatures = [
             shopsLabel,
             usersLabel,
             productsLabel,
             depotsLabel,
-            'Ventes & caisse',
-            'Gestion des achats',
-            'Rapports & statistiques',
+            t.plans.features.salesAndPos,
+            t.plans.features.purchaseManagement,
+            t.plans.features.reportsAndStats,
         ];
 
         // Add AI Assistant for Growth, Pro, and Enterprise plans
         if (['growth', 'pro', 'enterprise'].includes(plan.slug)) {
-            baseFeatures.push('Agent IA');
+            baseFeatures.push(t.plans.features.aiAgent);
         }
 
         return baseFeatures;
@@ -90,14 +92,14 @@ export default function Index({ plans, auth }: PlansProps) {
         <AuthenticatedLayout
             header={
                 <div>
-                    <h1 className="text-xl font-semibold text-white">Choisir un Plan</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.plans.pageTitle}</h1>
                     <p className="mt-1 text-sm text-slate-300">
-                        Sélectionnez le plan qui correspond le mieux à vos besoins
+                        {t.plans.pageSubtitle}
                     </p>
                 </div>
             }
         >
-            <Head title="Choisir un Plan" />
+            <Head title={t.plans.pageTitle} />
 
             <section className="space-y-8">
                 {/* Header avec retour */}
@@ -108,7 +110,7 @@ export default function Index({ plans, auth }: PlansProps) {
                             className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white transition"
                         >
                             <ArrowLeft className="size-4" />
-                            Retour au dashboard
+                            {t.plans.backToDashboard}
                         </Link>
                     )}
                 </div>
@@ -132,7 +134,7 @@ export default function Index({ plans, auth }: PlansProps) {
                                 {/* Badge du plan */}
                                 <p className="text-sm font-semibold text-amber-200">
                                     {getPlanBadge(plan.slug)}
-                                    {isCurrent && ' • ACTUEL'}
+                                    {isCurrent && ` • ${t.plans.current}`}
                                 </p>
 
                                 {/* Nom du plan */}
@@ -142,8 +144,8 @@ export default function Index({ plans, auth }: PlansProps) {
                                 <div className="mt-4 flex items-center justify-between gap-4">
                                     {plan.slug === 'enterprise' ? (
                                         <div className="py-4">
-                                            <p className="text-2xl font-bold text-amber-300">Devis sur mesure</p>
-                                            <p className="mt-1 text-xs font-medium text-slate-400">Nous contacter pour obtenir un prix</p>
+                                            <p className="text-2xl font-bold text-amber-300">{t.plans.customQuote}</p>
+                                            <p className="mt-1 text-xs font-medium text-slate-400">{t.plans.contactForPrice}</p>
                                         </div>
                                     ) : (
                                         <>
@@ -156,7 +158,7 @@ export default function Index({ plans, auth }: PlansProps) {
                                                         {plan.price_eur.replace(/[0-9\s]/g, '').trim() || 'EUR'}
                                                     </span>
                                                 </div>
-                                                <p className="mt-0.5 text-xs font-medium text-slate-400">par mois</p>
+                                                <p className="mt-0.5 text-xs font-medium text-slate-400">{t.plans.perMonth}</p>
                                             </div>
                                             {plan.price_fcfa && (
                                                 <div className="flex items-center h-16">
@@ -170,7 +172,7 @@ export default function Index({ plans, auth }: PlansProps) {
                                                             {plan.price_fcfa.replace(' FCFA', '')}
                                                         </p>
                                                         <p className="text-xs font-medium text-amber-300">FCFA</p>
-                                                        <p className="mt-0.5 text-xs font-medium text-slate-400">par mois</p>
+                                                        <p className="mt-0.5 text-xs font-medium text-slate-400">{t.plans.perMonth}</p>
                                                     </div>
                                                 </div>
                                             )}
@@ -195,14 +197,14 @@ export default function Index({ plans, auth }: PlansProps) {
                                             disabled
                                             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-semibold text-slate-400 cursor-not-allowed"
                                         >
-                                            Plan actuel
+                                            {t.plans.currentPlanButton}
                                         </button>
                                     ) : plan.slug === 'enterprise' ? (
                                         <a
                                             href="mailto:contact@batixpro.com"
                                             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
                                         >
-                                            Nous contacter
+                                            {t.plans.contactUs}
                                             <ArrowRight className="size-4" />
                                         </a>
                                     ) : (
@@ -210,7 +212,7 @@ export default function Index({ plans, auth }: PlansProps) {
                                             href={`/plans/${plan.slug}/checkout`}
                                             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
                                         >
-                                            {plan.slug === 'free' ? 'Commencer' : 'Choisir ce plan'}
+                                            {plan.slug === 'free' ? t.plans.getStarted : t.plans.choosePlan}
                                             <ArrowRight className="size-4" />
                                         </a>
                                     )}
@@ -222,23 +224,23 @@ export default function Index({ plans, auth }: PlansProps) {
 
                 {/* Section Aide - Style Landing Page */}
                 <section className="rounded-3xl border border-white/10 bg-gradient-to-r from-amber-300/20 via-orange-300/15 to-cyan-300/20 p-8 text-center backdrop-blur-xl">
-                    <h2 className="text-2xl font-bold text-white">Besoin d'aide pour choisir ?</h2>
+                    <h2 className="text-2xl font-bold text-white">{t.plans.helpTitle}</h2>
                     <p className="mx-auto mt-3 max-w-2xl text-slate-200">
-                        Contactez notre équipe commerciale pour discuter de vos besoins spécifiques et obtenir des conseils personnalisés.
+                        {t.plans.helpText}
                     </p>
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
                         <a
                             href="mailto:support@batixpro.com"
                             className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200"
                         >
-                            Contacter le support
+                            {t.plans.contactSupport}
                             <ArrowRight className="size-4" />
                         </a>
                         <Link
                             href="/#faq"
                             className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
                         >
-                            Voir la FAQ
+                            {t.plans.seeFaq}
                         </Link>
                     </div>
                 </section>

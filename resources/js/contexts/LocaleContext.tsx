@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Locale } from '@/types/types';
 import { translations } from '@/i18n';
+import axios from 'axios';
 
 const STORAGE_KEY = 'dashboard_locale';
 const DEFAULT_LOCALE: Locale = 'fr';
@@ -26,6 +27,9 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     const setLocale = useCallback((next: Locale) => {
         setLocaleState(next);
         window.localStorage.setItem(STORAGE_KEY, next);
+        // Best-effort sync so server-rendered content (emails, PDFs…) matches the UI language.
+        // Silently ignored when logged out (guest users have no locale to persist).
+        axios.post('/locale', { locale: next }).catch(() => {});
     }, []);
 
     return (

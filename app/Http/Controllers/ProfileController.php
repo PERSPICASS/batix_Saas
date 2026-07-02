@@ -41,6 +41,20 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's preferred locale (used e.g. to pick the language of transactional emails).
+     */
+    public function updateLocale(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'locale' => 'required|string|in:fr,en',
+        ]);
+
+        $request->user()->update(['locale' => $validated['locale']]);
+
+        return response()->json(['locale' => $validated['locale']]);
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse

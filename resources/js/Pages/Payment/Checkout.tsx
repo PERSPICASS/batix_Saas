@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import LemonSqueezyPayment from '@/Components/LemonSqueezyPayment';
 import PaddlePayment from '@/Components/PaddlePayment';
+import { useLocale } from '@/contexts/LocaleContext';
 
 import logoWave   from '../../../images/logo-wave.jpg';
 import logoOrange from '../../../images/logo_orange_money.png';
@@ -99,12 +100,12 @@ const JEKO_METHODS = [
     { id: 'moov',   label: 'Moov Money',    logo: logoMoov   },
 ];
 
-// Manual fallback methods (Wave manual + virement)
+// Manual fallback methods (Wave manual + virement) — "wave" has no fixed label, it's translated at render time
 const MANUAL_METHODS = [
-    { id: 'wave',         label: 'Wave (manuel)',     logo: logoWave   },
-    { id: 'orange_money', label: 'Orange Money',      logo: logoOrange },
-    { id: 'mtn_money',    label: 'MTN Money',         logo: logoMtn    },
-    { id: 'moov_money',   label: 'Moov Money',        logo: logoMoov   },
+    { id: 'wave',         label: null as string | null, logo: logoWave   },
+    { id: 'orange_money', label: 'Orange Money',         logo: logoOrange },
+    { id: 'mtn_money',    label: 'MTN Money',            logo: logoMtn    },
+    { id: 'moov_money',   label: 'Moov Money',           logo: logoMoov   },
 ];
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -120,6 +121,7 @@ function getCsrfToken(): string {
 ───────────────────────────────────────────────────────────────────────────── */
 
 export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth }: Props) {
+    const { t } = useLocale();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [paymentMode, setPaymentMode] = useState<PaymentMode>('paddle');
 
@@ -145,6 +147,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
     const [phone, setPhone] = useState('');
     const [transactionRef, setTransactionRef] = useState('');
     const [submittingManual, setSubmittingManual] = useState(false);
+    const [manualSuccess, setManualSuccess] = useState(false);
 
     // Pricing
     const isLocalCurrency = ['XOF', 'FCFA', 'GNF', 'MRU', 'SLL'].includes(currency);
@@ -161,18 +164,18 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
             ? val.toLocaleString('fr-FR')
             : val.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-    // Features list
-    const ul = 'Illimité';
+    // Features list — kept in sync with Plans/Index.tsx's getPlanFeatures()
     const features = [
-        plan.has_unlimited_shops    ? `${ul} boutiques`    : `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}`,
-        plan.has_unlimited_users    ? `${ul} utilisateurs` : `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}`,
-        plan.has_unlimited_products ? `${ul} produits`     : `${plan.max_products} produit${plan.max_products > 1 ? 's' : ''}`,
-        plan.max_depots === 0       ? 'Sans dépôt'
-            : plan.has_unlimited_depots ? `${ul} dépôts`
-            : `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}`,
-        'Ventes & caisse',
-        'Gestion des achats',
-        'Rapports & statistiques',
+        plan.has_unlimited_shops    ? t.plans.features.unlimitedShops    : t.plans.features.shopsCount(plan.max_shops),
+        plan.has_unlimited_users    ? t.plans.features.unlimitedUsers    : t.plans.features.usersCount(plan.max_users),
+        plan.has_unlimited_products ? t.plans.features.unlimitedProducts : t.plans.features.productsCount(plan.max_products),
+        plan.max_depots === 0       ? t.plans.features.noDepot
+            : plan.has_unlimited_depots ? t.plans.features.unlimitedDepots
+            : t.plans.features.depotsCount(plan.max_depots),
+        t.plans.features.salesAndPos,
+        t.plans.features.purchaseManagement,
+        t.plans.features.reportsAndStats,
+        ...(['growth', 'pro', 'enterprise'].includes(plan.slug) ? [t.plans.features.aiAgent] : []),
     ];
 
     // Countries that have at least one correspondent matching the shop currency (fallback to XOF)
@@ -338,12 +341,11 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
             });
 
             if (response.status === 200 || response.status === 201) {
-                // Redirection au dashboard ou page de confirmation
-                window.location.href = `/${auth.user?.code_user}/dashboard`;
+                setManualSuccess(true);
             }
         } catch (err: any) {
             console.error('Payment error:', err);
-            alert(`Erreur: ${err.response?.data?.message || 'Une erreur est survenue'}`);
+            alert(`Erreur: ${err.response?.data?.message || t.plans.checkout.manual.genericError}`);
         } finally {
             setSubmittingManual(false);
         }
@@ -353,24 +355,24 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
     if (plan.price === 0) {
         return (
-            <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">Activer le plan gratuit</h2>}>
-                <Head title="Plan gratuit" />
+            <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">{t.plans.checkout.freePlanTitle}</h2>}>
+                <Head title={t.plans.checkout.freePlanHeadTitle} />
                 <div className="mx-auto max-w-md space-y-6">
                     <Link href="/plans" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">
-                        <ArrowLeft className="size-4" /> Retour aux plans
+                        <ArrowLeft className="size-4" /> {t.plans.checkout.backToPlans}
                     </Link>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center space-y-4">
                         <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-500/20">
                             <Check className="size-7 text-emerald-400" />
                         </div>
-                        <h2 className="text-xl font-bold text-white">Plan {plan.name}</h2>
-                        <p className="text-slate-400">Aucun paiement requis. Activez votre plan immédiatement.</p>
+                        <h2 className="text-xl font-bold text-white">{t.plans.checkout.freePlanName(plan.name)}</h2>
+                        <p className="text-slate-400">{t.plans.checkout.freePlanNoPaymentRequired}</p>
                         <form method="POST" action={`/plans/${plan.id}/process`}>
                             <input type="hidden" name="_token" value={getCsrfToken()} />
                             <input type="hidden" name="payment_method" value="wave" />
                             <input type="hidden" name="billing_cycle" value="monthly" />
                             <button type="submit" className="w-full rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200">
-                                Activer gratuitement
+                                {t.plans.checkout.activateFree}
                             </button>
                         </form>
                     </div>
@@ -382,18 +384,18 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
     /* ── Main render ──────────────────────────────────────────────────── */
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">Paiement</h2>}>
-            <Head title={`Paiement — ${plan.name}`} />
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">{t.plans.checkout.title}</h2>}>
+            <Head title={`${t.plans.checkout.title} — ${plan.name}`} />
 
             <div className="mx-auto max-w-5xl space-y-6">
                 <Link href="/plans" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">
-                    <ArrowLeft className="size-4" /> Retour aux plans
+                    <ArrowLeft className="size-4" /> {t.plans.checkout.backToPlans}
                 </Link>
 
                 {currentPlan && currentPlan.slug !== plan.slug && (
                     <div className="flex items-start gap-3 rounded-xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-amber-200">
                         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                        <span>Vous passez du plan <strong>{currentPlan.name}</strong> au plan <strong>{plan.name}</strong>. Votre abonnement actuel sera remplacé après confirmation du paiement.</span>
+                        <span>{t.plans.checkout.switchingPlanWarning(currentPlan.name, plan.name)}</span>
                     </div>
                 )}
 
@@ -403,14 +405,14 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                     <aside className="lg:col-span-2 space-y-4">
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-widest text-amber-200">Plan sélectionné</p>
+                                <p className="text-xs font-semibold uppercase tracking-widest text-amber-200">{t.plans.checkout.selectedPlan}</p>
                                 <h3 className="mt-1 text-2xl font-bold text-white">{plan.name}</h3>
                                 {plan.description && <p className="mt-1 text-sm text-slate-400">{plan.description}</p>}
                             </div>
 
                             {/* Cycle de facturation */}
                             <div className="space-y-2">
-                                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Cycle de facturation</p>
+                                <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{t.plans.checkout.billingCycle}</p>
                                 <div className="flex gap-2">
                                     {(['monthly', 'yearly'] as const).map(cycle => (
                                         <button
@@ -419,19 +421,19 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                             onClick={() => setBillingCycle(cycle)}
                                             className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${billingCycle === cycle ? 'border-amber-300 bg-amber-300/10 text-amber-200' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
                                         >
-                                            {cycle === 'monthly' ? 'Mensuel' : <>Annuel <span className="text-xs text-emerald-400">2 mois offerts</span></>}
+                                            {cycle === 'monthly' ? t.plans.checkout.monthly : <>{t.plans.checkout.yearly} <span className="text-xs text-emerald-400">{t.plans.checkout.twoMonthsFree}</span></>}
                                         </button>
                                     ))}
                                 </div>
                                 {billingCycle === 'yearly' && (
-                                    <p className="text-xs text-emerald-400">Économie de {formatPrice(saving)} {currencyLabel}/an</p>
+                                    <p className="text-xs text-emerald-400">{t.plans.checkout.yearlySaving(formatPrice(saving), currencyLabel)}</p>
                                 )}
                             </div>
 
                             {/* Prix */}
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-400">Montant {billingCycle === 'yearly' ? '(annuel)' : '(mensuel)'}</span>
+                                    <span className="text-sm text-slate-400">{billingCycle === 'yearly' ? t.plans.checkout.amountYearly : t.plans.checkout.amountMonthly}</span>
                                     <span className="text-lg font-bold text-white">{formatPrice(displayPrice)} {currencyLabel}</span>
                                 </div>
                                 {billingCycle === 'yearly' && (
@@ -439,7 +441,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                 )}
                                 {isLocalCurrency && (
                                     <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
-                                        <span className="text-sm text-slate-400">En euros</span>
+                                        <span className="text-sm text-slate-400">{t.plans.checkout.inEuros}</span>
                                         <span className="text-lg font-bold text-amber-300">
                                             €{billingCycle === 'yearly'
                                                 ? (parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || '0') * 10).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -463,7 +465,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-slate-400">
                             <ShieldCheck className="size-4 text-emerald-400 shrink-0" />
-                            Paiement sécurisé via Paddle.
+                            {t.plans.checkout.securePaymentPaddle}
                         </div>
                     </aside>
 
@@ -471,8 +473,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                     <div className="lg:col-span-3 space-y-4">
 
                         {/* ── Sélection du mode de paiement ── */}
-                        {/* <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
-                            <p className="text-sm font-medium text-slate-300">Mode de paiement</p>
+                        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
+                            <p className="text-sm font-medium text-slate-300">{t.plans.checkout.paymentModeLabel}</p>
                             <div className="grid grid-cols-2 gap-3">
                                 <button
                                     type="button"
@@ -484,7 +486,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                     }`}
                                 >
                                     <CreditCard className="inline size-4 mr-2" />
-                                    Paddle (Carte)
+                                    {t.plans.checkout.paddleCard}
                                 </button>
                                 <button
                                     type="button"
@@ -496,10 +498,10 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                     }`}
                                 >
                                     <Building2 className="inline size-4 mr-2" />
-                                    Paiement Manuel
+                                    {t.plans.checkout.manual.title}
                                 </button>
                             </div>
-                        </div> */}
+                        </div>
 
                         {/* ══════════════════ PADDLE FLOW ══════════════════ */}
                         {paymentMode === 'paddle' && (
@@ -775,56 +777,79 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             <LemonSqueezyPayment plan={plan} />
                         )}
 
+                        {/* ══════════════════ MANUAL FLOW — SUCCESS ══════════════════ */}
+                        {paymentMode === 'manual' && manualSuccess && (
+                            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-6 text-center space-y-4">
+                                <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-400/20">
+                                    <CheckCircle2 className="size-8 text-emerald-400" />
+                                </div>
+                                <div>
+                                    <p className="text-lg font-semibold text-white">{t.plans.checkout.manual.successTitle}</p>
+                                    <p className="mt-1 text-sm text-slate-300">{t.plans.checkout.manual.successMessage}</p>
+                                </div>
+                                <a
+                                    href={`/${auth.user?.code_user}/dashboard`}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200"
+                                >
+                                    {t.plans.checkout.manual.goToDashboard}
+                                    <ArrowLeft className="size-4 rotate-180" />
+                                </a>
+                            </div>
+                        )}
+
                         {/* ══════════════════ MANUAL FLOW ══════════════════ */}
-                        {paymentMode === 'manual' && (
+                        {paymentMode === 'manual' && !manualSuccess && (
                             <form onSubmit={handleManualSubmit} className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
                                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                     <CreditCard className="size-5 text-amber-200" />
-                                    Paiement manuel
+                                    {t.plans.checkout.manual.title}
                                 </h3>
 
                                 <div className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs text-amber-200">
-                                    Envoyez le montant manuellement puis saisissez la référence de transaction ci-dessous.
+                                    {t.plans.checkout.manual.intro}
                                 </div>
 
                                 {/* Méthode */}
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                    {MANUAL_METHODS.map(method => (
-                                        <button
-                                            key={method.id}
-                                            type="button"
-                                            onClick={() => setManualMethod(method.id)}
-                                            className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-sm font-medium transition ${
-                                                manualMethod === method.id
-                                                    ? 'border-amber-300 bg-amber-300/10 text-amber-200'
-                                                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                                            }`}
-                                        >
-                                            <img src={method.logo} alt={method.label} className="h-8 w-auto object-contain" />
-                                            {method.label}
-                                        </button>
-                                    ))}
+                                    {MANUAL_METHODS.map(method => {
+                                        const label = method.label ?? t.plans.checkout.manual.waveManual;
+                                        return (
+                                            <button
+                                                key={method.id}
+                                                type="button"
+                                                onClick={() => setManualMethod(method.id)}
+                                                className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-sm font-medium transition ${
+                                                    manualMethod === method.id
+                                                        ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                                        : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                                }`}
+                                            >
+                                                <img src={method.logo} alt={label} className="h-8 w-auto object-contain" />
+                                                {label}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
 
                                 {/* Instructions */}
                                 {manualMethod && (
                                     <div className="rounded-xl border border-blue-400/20 bg-blue-400/10 p-4 text-sm text-blue-200 space-y-2">
                                         <p className="font-semibold flex items-center gap-2">
-                                            <Smartphone className="size-4" /> Instructions
+                                            <Smartphone className="size-4" /> {t.plans.checkout.manual.instructions}
                                         </p>
                                         {paymentNumbers[manualMethod] ? (
-                                            <p>Envoyez à : <strong className="text-white">{paymentNumbers[manualMethod]}</strong></p>
+                                            <p>{t.plans.checkout.manual.sendTo} <strong className="text-white">{paymentNumbers[manualMethod]}</strong></p>
                                         ) : (
-                                            <p className="text-amber-200">Contactez le support pour les coordonnées de paiement.</p>
+                                            <p className="text-amber-200">{t.plans.checkout.manual.contactSupportForDetails}</p>
                                         )}
-                                        <p>Montant : <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong></p>
-                                        <p>Référence : <strong className="text-white">BTX-{plan.id}-{Date.now().toString().slice(-6)}</strong></p>
+                                        <p>{t.plans.checkout.manual.amountColon} <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong></p>
+                                        <p>{t.plans.checkout.manual.referenceColon} <strong className="text-white">BTX-{plan.id}-{Date.now().toString().slice(-6)}</strong></p>
                                     </div>
                                 )}
 
                                 {/* Téléphone */}
                                 <div className="space-y-1.5">
-                                    <label className="block text-sm font-medium text-slate-300">Numéro utilisé</label>
+                                    <label className="block text-sm font-medium text-slate-300">{t.plans.checkout.manual.phoneUsedLabel}</label>
                                     <input
                                         type="tel"
                                         value={phone}
@@ -837,8 +862,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                 {/* Référence */}
                                 <div className="space-y-1.5">
                                     <label className="block text-sm font-medium text-slate-300">
-                                        Référence / ID de transaction
-                                        <span className="ml-1 text-xs text-slate-500">(facultatif mais recommandé)</span>
+                                        {t.plans.checkout.manual.transactionRefLabel}
+                                        <span className="ml-1 text-xs text-slate-500">{t.plans.checkout.manual.optionalRecommended}</span>
                                     </label>
                                     <input
                                         type="text"
@@ -855,14 +880,14 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                     className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {submittingManual ? (
-                                        <><Loader2 className="size-4 animate-spin" /> Traitement…</>
+                                        <><Loader2 className="size-4 animate-spin" /> {t.plans.checkout.manual.processing}</>
                                     ) : (
-                                        <><Building2 className="size-4" /> Confirmer — {formatPrice(displayPrice)} {currencyLabel}</>
+                                        <><Building2 className="size-4" /> {t.plans.checkout.manual.confirmButton(`${formatPrice(displayPrice)} ${currencyLabel}`)}</>
                                     )}
                                 </button>
 
                                 <p className="text-center text-xs text-slate-500">
-                                    L'abonnement sera activé après vérification manuelle dans quelques minutes.
+                                    {t.plans.checkout.manual.activationNote}
                                 </p>
                             </form>
                         )}

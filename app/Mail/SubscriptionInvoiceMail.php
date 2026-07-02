@@ -19,7 +19,9 @@ class SubscriptionInvoiceMail extends Mailable
         public User                $user,
         public Subscription        $subscription,
         public SubscriptionInvoice $invoice,
-    ) {}
+    ) {
+        $this->locale($this->user->getLocale() ?? 'fr');
+    }
 
     public function envelope(): Envelope
     {
@@ -30,7 +32,6 @@ class SubscriptionInvoiceMail extends Mailable
                 'appName' => config('app.name'),
                 'invoiceNumber' => $this->invoice->invoice_number,
             ], $locale),
-            locale: $locale,
         );
     }
 

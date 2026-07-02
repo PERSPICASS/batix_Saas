@@ -53,7 +53,10 @@ class PaddleController extends Controller
                 'user_id' => $user->id,
                 'plan_slug' => $plan->slug,
                 'billing_cycle' => $billingCycle,
-            ]
+            ],
+            'checkout' => [
+                'url' => route('paddle.success', ['plan_slug' => $plan->slug]),
+            ],
         ];
 
         $response = Http::withHeaders([
@@ -95,9 +98,11 @@ class PaddleController extends Controller
 
     public function success(Request $request): \Inertia\Response
     {
+        $plan = SubscriptionPlan::where('slug', $request->input('plan_slug'))->first();
+
         return Inertia::render('Payment/Confirmation', [
-            'planSlug' => $request->input('plan_slug'),
-            'paymentMethod' => 'paddle',
+            'planName' => $plan?->name,
+            'message'  => null,
         ]);
     }
 

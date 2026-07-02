@@ -1,6 +1,7 @@
 import { CreditCard, Loader2, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import axios from 'axios';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Plan {
     id: number;
@@ -16,6 +17,7 @@ interface PaddlePaymentProps {
 }
 
 export default function PaddlePayment({ plan, billingCycle = 'monthly' }: PaddlePaymentProps) {
+    const { t } = useLocale();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -38,12 +40,12 @@ export default function PaddlePayment({ plan, billingCycle = 'monthly' }: Paddle
                 // Redirect to Paddle checkout
                 window.location.href = response.data.checkout_url;
             } else {
-                setError('Failed to create checkout');
+                setError(t.plans.checkout.paddle.failedCheckout);
             }
         } catch (err: any) {
             setError(
                 err.response?.data?.error ||
-                'Failed to create checkout'
+                t.plans.checkout.paddle.failedCheckout
             );
             console.error('Paddle checkout error:', err);
         } finally {
@@ -55,11 +57,11 @@ export default function PaddlePayment({ plan, billingCycle = 'monthly' }: Paddle
         <div className="space-y-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold text-blue-900">Paddle</h3>
+                <h3 className="font-semibold text-blue-900">{t.plans.checkout.paddle.brand}</h3>
             </div>
 
             <p className="text-sm text-blue-700">
-                Secure payment with Paddle. Multiple payment methods accepted.
+                {t.plans.checkout.paddle.secureDescription}
             </p>
 
             {error && (
@@ -74,7 +76,7 @@ export default function PaddlePayment({ plan, billingCycle = 'monthly' }: Paddle
                     €{formatPrice(displayPrice)}
                 </p>
                 <p className="text-xs text-gray-500">
-                    {billingCycle === 'yearly' ? 'Annual subscription (2 months free)' : 'Monthly subscription'}
+                    {billingCycle === 'yearly' ? t.plans.checkout.paddle.annualSubscription : t.plans.checkout.paddle.monthlySubscription}
                 </p>
                 {billingCycle === 'yearly' && monthlyPrice > 0 && (
                     <p className="text-xs text-gray-400 line-through">
@@ -91,15 +93,15 @@ export default function PaddlePayment({ plan, billingCycle = 'monthly' }: Paddle
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        Redirecting to checkout...
+                        {t.plans.checkout.paddle.redirecting}
                     </span>
                 ) : (
-                    `Pay €${formatPrice(displayPrice)}`
+                    t.plans.checkout.paddle.payButton(formatPrice(displayPrice))
                 )}
             </button>
 
             <p className="text-center text-xs text-gray-500">
-                Secure payment • No extra fees
+                {t.plans.checkout.paddle.secureNoFees}
             </p>
         </div>
     );

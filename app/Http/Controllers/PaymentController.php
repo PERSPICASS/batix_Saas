@@ -134,8 +134,7 @@ class PaymentController extends Controller
             );
         });
 
-        return redirect()->route('payment.confirmation', ['planSlug' => $plan->slug])
-            ->with('success', 'Votre abonnement ' . $plan->name . ' est maintenant actif !');
+        return redirect()->route('payment.confirmation', ['planSlug' => $plan->slug]);
     }
 
     /**
@@ -147,7 +146,7 @@ class PaymentController extends Controller
 
         return Inertia::render('Payment/Confirmation', [
             'planName' => $plan->name,
-            'message'  => $request->session()->get('success'),
+            'message'  => null,
         ]);
     }
 

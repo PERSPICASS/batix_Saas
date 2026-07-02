@@ -27,7 +27,7 @@ class AiChatController extends Controller
             }
 
             // Check if user has access to AI Assistant
-            $subscription = $user->subscription();
+            $subscription = $user->activeSubscription();
             if (!$subscription || !$subscription->hasAiAssistant()) {
                 return response()->json([
                     'error' => 'L\'assistant IA est disponible uniquement sur les plans Growth, Pro et Entreprise. Mettez à niveau votre abonnement pour y accéder.',
