@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Key, Plus, Trash2, Copy, Check, AlertTriangle } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 import ConfirmDialog from '@/Components/ConfirmDialog';
+import InputError from '@/Components/InputError';
 
 interface ApiToken {
     id: number;
@@ -137,7 +138,7 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
                                     className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     required
                                 />
-                                {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+                                <InputError message={errors.name} />
                             </div>
                             <div className="sm:w-52">
                                 <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.expiryLabel}</label>

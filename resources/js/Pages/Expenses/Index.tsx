@@ -5,6 +5,7 @@ import {
     Plus, Trash2, Search, X, SlidersHorizontal, RotateCcw,
     Receipt, TrendingDown, Calendar, Pencil, Upload, FileText
 } from 'lucide-react';
+import InputError from '@/Components/InputError';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useRef, FormEvent } from 'react';
@@ -192,7 +193,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                 <input type="text" value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
                     placeholder={t.expenses.form.labelPlaceholder}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                {errors.title && <p className="mt-1 text-xs text-rose-500">{errors.title}</p>}
+                <InputError message={errors.title} />
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -200,13 +201,13 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                     <input type="number" min="0" step="0.01" value={formData.amount} onChange={e => setFormData(f => ({ ...f, amount: e.target.value }))}
                         placeholder="0.00"
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                    {errors.amount && <p className="mt-1 text-xs text-rose-500">{errors.amount}</p>}
+                    <InputError message={errors.amount} />
                 </div>
                 <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.date}</label>
                     <input type="date" value={formData.expense_date} onChange={e => setFormData(f => ({ ...f, expense_date: e.target.value }))}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                    {errors.expense_date && <p className="mt-1 text-xs text-rose-500">{errors.expense_date}</p>}
+                    <InputError message={errors.expense_date} />
                 </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -216,7 +217,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none">
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                    {errors.category && <p className="mt-1 text-xs text-rose-500">{errors.category}</p>}
+                    <InputError message={errors.category} />
                 </div>
                 <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.paymentMethod}</label>
@@ -225,7 +226,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                         <option value="">{t.expenses.form.paymentUnspecified}</option>
                         {Object.entries(PAYMENT_METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                     </select>
-                    {errors.payment_method && <p className="mt-1 text-xs text-rose-500">{errors.payment_method}</p>}
+                    <InputError message={errors.payment_method} />
                 </div>
             </div>
             <div>
@@ -233,14 +234,14 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                 <input type="text" value={formData.reference} onChange={e => setFormData(f => ({ ...f, reference: e.target.value }))}
                     placeholder={t.expenses.form.referencePlaceholder}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                {errors.reference && <p className="mt-1 text-xs text-rose-500">{errors.reference}</p>}
+                <InputError message={errors.reference} />
             </div>
             <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.notes}</label>
                 <textarea rows={2} value={formData.notes} onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))}
                     placeholder={t.expenses.form.notesPlaceholder}
                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-amber-300 focus:outline-none" />
-                {errors.notes && <p className="mt-1 text-xs text-rose-500">{errors.notes}</p>}
+                <InputError message={errors.notes} />
             </div>
             <div className="flex gap-3 pt-1">
                 <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">

@@ -4,6 +4,7 @@ import { ArrowLeft, Plus, Search, Trash2, X } from 'lucide-react';
 import { FormEventHandler, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useState } from 'react';
 import Modal from '@/Components/Modal';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -204,7 +205,7 @@ export default function Create({ shops, customers, products }: Props) {
                                     </option>
                                 ))}
                             </select>
-                            {errors.shop_id && <p className="mt-1 text-xs text-red-400">{errors.shop_id}</p>}
+                            <InputError message={errors.shop_id} />
                         </div>
 
                         <div>
@@ -224,7 +225,7 @@ export default function Create({ shops, customers, products }: Props) {
                                     </option>
                                 ))}
                             </select>
-                            {errors.customer_id && <p className="mt-1 text-xs text-red-400">{errors.customer_id}</p>}
+                            <InputError message={errors.customer_id} />
                         </div>
                     </div>
 
@@ -327,7 +328,7 @@ export default function Create({ shops, customers, products }: Props) {
                                 );
                             })}
                         </div>
-                        {errors.items && <p className="mt-2 text-xs text-red-400">{errors.items}</p>}
+                        <InputError message={errors.items} />
 
                         {totalAmount > 0 && (
                             <div className="mt-4 border-t border-white/10 pt-4 space-y-1">

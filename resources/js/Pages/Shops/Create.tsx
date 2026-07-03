@@ -4,6 +4,7 @@ import { FormEventHandler } from 'react';
 import { Store, MapPin, Phone, FileText } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 export default function Create() {
     const { t } = useLocale();
@@ -46,7 +47,7 @@ export default function Create() {
                                     onChange={(e) => setData('name', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     autoFocus required />
-                                {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+                                <InputError message={errors.name} />
                             </div>
 
                             <div>
@@ -57,7 +58,7 @@ export default function Create() {
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={3}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.description && <p className="mt-1 text-sm text-red-400">{errors.description}</p>}
+                                <InputError message={errors.description} />
                             </div>
                         </div>
                     </div>
@@ -76,7 +77,7 @@ export default function Create() {
                                 <input type="tel" id="phone" value={data.phone}
                                     onChange={(e) => setData('phone', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
+                                <InputError message={errors.phone} />
                             </div>
 
                             <div>
@@ -86,7 +87,7 @@ export default function Create() {
                                 <input type="email" id="email" value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+                                <InputError message={errors.email} />
                             </div>
                         </div>
                     </div>
@@ -106,7 +107,7 @@ export default function Create() {
                                     onChange={(e) => setData('address', e.target.value)}
                                     rows={2}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.address && <p className="mt-1 text-sm text-red-400">{errors.address}</p>}
+                                <InputError message={errors.address} />
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -117,7 +118,7 @@ export default function Create() {
                                     <input type="text" id="city" value={data.city}
                                         onChange={(e) => setData('city', e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                    {errors.city && <p className="mt-1 text-sm text-red-400">{errors.city}</p>}
+                                    <InputError message={errors.city} />
                                 </div>
 
                                 <div>
@@ -127,7 +128,7 @@ export default function Create() {
                                     <input type="text" id="postal_code" value={data.postal_code}
                                         onChange={(e) => setData('postal_code', e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                    {errors.postal_code && <p className="mt-1 text-sm text-red-400">{errors.postal_code}</p>}
+                                    <InputError message={errors.postal_code} />
                                 </div>
                             </div>
                         </div>
@@ -146,7 +147,7 @@ export default function Create() {
                             <input type="text" id="tax_id" value={data.tax_id}
                                 onChange={(e) => setData('tax_id', e.target.value)}
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                            {errors.tax_id && <p className="mt-1 text-sm text-red-400">{errors.tax_id}</p>}
+                            <InputError message={errors.tax_id} />
                         </div>
                     </div>
 

@@ -4,6 +4,7 @@ import { FormEventHandler, useEffect, useState } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Props {
     user: {
@@ -88,7 +89,7 @@ export default function LockScreen({ user }: Props) {
                                 {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                             </button>
                         </div>
-                        {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password}</p>}
+                        <InputError message={errors.password} />
                     </div>
 
                     <PrimaryButton

@@ -4,6 +4,7 @@ import { FormEventHandler, useState } from 'react';
 import { Shield, Check } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop { id: number; name: string }
 interface UserPermission { id: number; module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
@@ -72,14 +73,14 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                 <input type="text" id="name" value={data.name} autoFocus
                                     onChange={(e) => setData('name', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+                                <InputError message={errors.name} />
                             </div>
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-slate-200">{t.common.form.emailRequired}</label>
                                 <input type="email" id="email" value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+                                <InputError message={errors.email} />
                             </div>
                         </div>
 
@@ -93,7 +94,7 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                         onChange={(e) => setData('password', e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                         placeholder={t.common.form.passwordMin} />
-                                    {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+                                    <InputError message={errors.password} />
                                 </div>
                                 <div>
                                     <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-200">
@@ -102,7 +103,7 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                     <input type="password" id="password_confirmation" value={data.password_confirmation}
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                    {errors.password_confirmation && <p className="mt-1 text-sm text-red-400">{errors.password_confirmation}</p>}
+                                    <InputError message={errors.password_confirmation} />
                                 </div>
                             </div>
                         </div>
@@ -125,7 +126,7 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                     {shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
                                 </select>
                                 {!isSuperAdmin && <p className="mt-1 text-xs text-slate-500">{t.common.form.shopAssignHint}</p>}
-                                {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                                <InputError message={errors.shop_id} />
                             </div>
                             <div>
                                 <label htmlFor="role" className="block text-sm font-medium text-slate-200">{t.common.form.role}</label>
@@ -133,7 +134,7 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300">
                                     {ROLE_KEYS.map((key) => <option key={key} value={key}>{roleLabels[key] || key}</option>)}
                                 </select>
-                                {errors.role && <p className="mt-1 text-sm text-red-400">{errors.role}</p>}
+                                <InputError message={errors.role} />
                             </div>
                         </div>
 

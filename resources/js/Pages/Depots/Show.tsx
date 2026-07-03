@@ -8,6 +8,7 @@ import { useRef, useState, useEffect } from 'react';
 import ProductImage from '@/Components/ProductImage';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface DepotProductItem {
     id: number;
@@ -616,7 +617,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     placeholder="Ex : Ciment Portland 50kg"
                                     required
                                 />
-                                {addStockForm.errors.name && <p className="mt-1 text-xs text-rose-500">{addStockForm.errors.name}</p>}
+                                <InputError message={addStockForm.errors.name} />
                             </div>
                             <div>
                                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">SKU / Référence</label>
@@ -627,7 +628,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     placeholder="Ex : SKU-001 (optionnel)"
                                 />
-                                {addStockForm.errors.sku && <p className="mt-1 text-xs text-rose-500">{addStockForm.errors.sku}</p>}
+                                <InputError message={addStockForm.errors.sku} />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
@@ -640,7 +641,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                         required
                                     />
-                                    {addStockForm.errors.quantity && <p className="mt-1 text-xs text-rose-500">{addStockForm.errors.quantity}</p>}
+                                    <InputError message={addStockForm.errors.quantity} />
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Alerte stock min</label>
@@ -664,7 +665,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     placeholder="0"
                                 />
-                                {addStockForm.errors.purchase_price && <p className="mt-1 text-xs text-rose-500">{addStockForm.errors.purchase_price}</p>}
+                                <InputError message={addStockForm.errors.purchase_price} />
                             </div>
                             <div>
                                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Photo du produit</label>
@@ -706,7 +707,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         Supprimer l'image
                                     </button>
                                 )}
-                                {addStockForm.errors.image && <p className="mt-1 text-xs text-rose-500">{addStockForm.errors.image}</p>}
+                                <InputError message={addStockForm.errors.image} />
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="submit" disabled={addStockForm.processing} className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50">
@@ -746,7 +747,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                 </select>
-                                {transferForm.errors.shop_id && <p className="mt-1 text-xs text-rose-500">{transferForm.errors.shop_id}</p>}
+                                <InputError message={transferForm.errors.shop_id} />
                             </div>
 
                             {/* Lignes produits */}
@@ -951,7 +952,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     onChange={e => editForm.setData('name', e.target.value)}
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                 />
-                                {editForm.errors.name && <p className="mt-1 text-xs text-rose-500">{editForm.errors.name}</p>}
+                                <InputError message={editForm.errors.name} />
                             </div>
                             <div>
                                 <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">SKU / Référence</label>
@@ -962,7 +963,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     placeholder="Ex : SKU-001 (optionnel)"
                                 />
-                                {editForm.errors.sku && <p className="mt-1 text-xs text-rose-500">{editForm.errors.sku}</p>}
+                                <InputError message={editForm.errors.sku} />
                             </div>
                             {/* Stock */}
                             <div className="grid grid-cols-2 gap-3">
@@ -975,7 +976,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         onChange={e => editForm.setData('quantity', parseInt(e.target.value) || 0)}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
-                                    {editForm.errors.quantity && <p className="mt-1 text-xs text-rose-500">{editForm.errors.quantity}</p>}
+                                    <InputError message={editForm.errors.quantity} />
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Alerte min</label>
@@ -999,7 +1000,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     placeholder="0"
                                 />
-                                {editForm.errors.purchase_price && <p className="mt-1 text-xs text-rose-500">{editForm.errors.purchase_price}</p>}
+                                <InputError message={editForm.errors.purchase_price} />
                             </div>
                             {/* Image */}
                             <div>
@@ -1042,7 +1043,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         Supprimer l'image
                                     </button>
                                 )}
-                                {editForm.errors.image && <p className="mt-1 text-xs text-rose-500">{editForm.errors.image}</p>}
+                                <InputError message={editForm.errors.image} />
                             </div>
                             <div className="flex gap-3 pt-2">
                                 <button type="submit" disabled={editForm.processing} className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50">
@@ -1151,7 +1152,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         <option key={d.id} value={d.id}>{d.name}</option>
                                     ))}
                                 </select>
-                                {transferDepotForm.errors.target_depot_id && <p className="mt-1 text-xs text-rose-500">{transferDepotForm.errors.target_depot_id}</p>}
+                                <InputError message={transferDepotForm.errors.target_depot_id} />
                             </div>
 
                             {/* Lignes produits */}

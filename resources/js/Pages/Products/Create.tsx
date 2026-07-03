@@ -4,6 +4,7 @@ import { FormEventHandler, useState, useMemo } from 'react';
 import { RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -142,7 +143,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <p className="text-xs text-slate-400">
                             {t.common.form.shopHint}
                         </p>
-                        {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
+                        <InputError message={errors.shop_id} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -152,7 +153,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('name', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.name && <span className="text-xs text-red-400">{errors.name}</span>}
+                        <InputError message={errors.name} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -166,7 +167,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <p className="text-xs text-slate-400">
                             {t.products.form.skuHint}
                         </p>
-                        {errors.sku && <span className="text-xs text-red-400">{errors.sku}</span>}
+                        <InputError message={errors.sku} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -193,7 +194,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 ? t.products.form.barcodeScanned
                                 : t.products.form.barcodeHint}
                         </p>
-                        {errors.barcode && <span className="text-xs text-red-400">{errors.barcode}</span>}
+                        <InputError message={errors.barcode} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -210,7 +211,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 </option>
                             ))}
                         </select>
-                        {errors.category_id && <span className="text-xs text-red-400">{errors.category_id}</span>}
+                        <InputError message={errors.category_id} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -228,7 +229,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 </option>
                             ))}
                         </select>
-                        {errors.subcategory_id && <span className="text-xs text-red-400">{errors.subcategory_id}</span>}
+                        <InputError message={errors.subcategory_id} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -239,7 +240,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             placeholder="Ex: Bosch, Stanley, Makita..."
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.brand && <span className="text-xs text-red-400">{errors.brand}</span>}
+                        <InputError message={errors.brand} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -258,7 +259,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             <option value="m2">Mètre carré</option>
                             <option value="pack">Pack</option>
                         </select>
-                        {errors.unit && <span className="text-xs text-red-400">{errors.unit}</span>}
+                        <InputError message={errors.unit} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -271,7 +272,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('purchase_price', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.purchase_price && <span className="text-xs text-red-400">{errors.purchase_price}</span>}
+                        <InputError message={errors.purchase_price} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -284,7 +285,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('selling_price', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.selling_price && <span className="text-xs text-red-400">{errors.selling_price}</span>}
+                        <InputError message={errors.selling_price} />
                     </label>
 
                     {/* Indicateur de marge bénéficiaire */}
@@ -330,7 +331,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('tax_rate', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.tax_rate && <span className="text-xs text-red-400">{errors.tax_rate}</span>}
+                        <InputError message={errors.tax_rate} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -341,7 +342,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('stock_quantity', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.stock_quantity && <span className="text-xs text-red-400">{errors.stock_quantity}</span>}
+                        <InputError message={errors.stock_quantity} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200">
@@ -352,7 +353,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('min_stock_alert', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.min_stock_alert && <span className="text-xs text-red-400">{errors.min_stock_alert}</span>}
+                        <InputError message={errors.min_stock_alert} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
@@ -363,7 +364,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             rows={3}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.description && <span className="text-xs text-red-400">{errors.description}</span>}
+                        <InputError message={errors.description} />
                     </label>
 
                     <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
@@ -386,7 +387,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <p className="text-xs text-slate-400">
                             {t.products.form.imageFormats}
                         </p>
-                        {errors.image && <span className="text-xs text-red-400">{errors.image}</span>}
+                        <InputError message={errors.image} />
                     </label>
 
                     <label className="flex items-center gap-2 text-sm text-slate-200 md:col-span-2">

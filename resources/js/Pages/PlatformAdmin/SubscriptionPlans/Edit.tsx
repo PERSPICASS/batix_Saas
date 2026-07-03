@@ -2,6 +2,7 @@ import React, { FormEvent, useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ArrowLeft, Plus, X, AlertCircle } from 'lucide-react';
+import InputError from '@/Components/InputError';
 
 interface SubscriptionPlan {
     id: number;
@@ -105,7 +106,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 required
                             />
-                            {errors.name && <span className="text-xs text-red-400">{errors.name}</span>}
+                            <InputError message={errors.name} />
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
@@ -118,7 +119,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 required
                             />
                             <p className="text-xs text-slate-400">Identifiant unique (ex: starter, growth, scale)</p>
-                            {errors.slug && <span className="text-xs text-red-400">{errors.slug}</span>}
+                            <InputError message={errors.slug} />
                         </label>
                     </div>
 
@@ -131,7 +132,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                             rows={3}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.description && <span className="text-xs text-red-400">{errors.description}</span>}
+                        <InputError message={errors.description} />
                     </label>
 
                     {/* Prix */}
@@ -145,7 +146,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             required
                         />
-                        {errors.price && <span className="text-xs text-red-400">{errors.price}</span>}
+                        <InputError message={errors.price} />
                     </label>
 
                     {/* Limites */}
@@ -160,7 +161,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 required
                             />
                             <p className="text-xs text-slate-400">-1 pour illimité</p>
-                            {errors.max_shops && <span className="text-xs text-red-400">{errors.max_shops}</span>}
+                            <InputError message={errors.max_shops} />
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
@@ -173,7 +174,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 required
                             />
                             <p className="text-xs text-slate-400">-1 pour illimité</p>
-                            {errors.max_users && <span className="text-xs text-red-400">{errors.max_users}</span>}
+                            <InputError message={errors.max_users} />
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
@@ -186,7 +187,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 required
                             />
                             <p className="text-xs text-slate-400">-1 pour illimité</p>
-                            {errors.max_products && <span className="text-xs text-red-400">{errors.max_products}</span>}
+                            <InputError message={errors.max_products} />
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
@@ -199,7 +200,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 required
                             />
                             <p className="text-xs text-slate-400">-1 pour illimité, 0 pour aucun</p>
-                            {errors.max_depots && <span className="text-xs text-red-400">{errors.max_depots}</span>}
+                            <InputError message={errors.max_depots} />
                         </label>
                     </div>
 
@@ -228,7 +229,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 <Plus className="w-5 h-5" />
                             </button>
                         </div>
-                        {errors.features && <span className="text-xs text-red-400">{errors.features}</span>}
+                        <InputError message={errors.features} />
 
                         {data.features.length > 0 && (
                             <div className="space-y-2 mt-3">

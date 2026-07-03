@@ -5,6 +5,7 @@ import { ArrowUpRight, Plus, Warehouse, X } from 'lucide-react';
 import { useState } from 'react';
 import ProductImage from '@/Components/ProductImage';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Transfer {
     id: number;
@@ -244,7 +245,7 @@ export default function Transfers({ depot, transfers, shops, depotProducts }: Pr
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                 </select>
-                                {form.errors.shop_id && <p className="mt-1 text-xs text-rose-500">{form.errors.shop_id}</p>}
+                                <InputError message={form.errors.shop_id} />
                             </div>
 
                             {/* Lignes produits */}

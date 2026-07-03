@@ -102,7 +102,10 @@ class Invoice extends Model
 
     public function calculateTotals(): void
     {
-        $this->subtotal = $this->items->sum('total');
+        // item.total est TTC (subtotal + tax_amount, voir InvoiceItem::saving()) : soustraire
+        // la taxe de chaque ligne pour obtenir un sous-total HT, sans quoi la taxe était
+        // comptée deux fois dans le total de la facture.
+        $this->subtotal = $this->items->sum(fn ($item) => $item->total - $item->tax_amount);
         $this->tax_amount = $this->items->sum('tax_amount');
         $this->total = $this->subtotal + $this->tax_amount - $this->discount_amount;
         $this->save();

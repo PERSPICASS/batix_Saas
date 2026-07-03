@@ -4,6 +4,7 @@ import { FormEvent } from 'react';
 import { PageProps } from '@/types';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Category {
     id: number; name: string; description: string | null;
@@ -37,14 +38,14 @@ export default function CategoriesEdit({ category, shops }: PageProps<{ category
                     <span>{t.common.form.name}</span>
                     <input value={data.name} onChange={(e) => setData('name', e.target.value)}
                         className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2" required />
-                    {errors.name && <span className="text-xs text-red-400">{errors.name}</span>}
+                    <InputError message={errors.name} />
                 </label>
 
                 <label className="block space-y-1 text-sm text-slate-200">
                     <span>{t.common.form.description}</span>
                     <textarea value={data.description} onChange={(e) => setData('description', e.target.value)}
                         className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2" rows={4} />
-                    {errors.description && <span className="text-xs text-red-400">{errors.description}</span>}
+                    <InputError message={errors.description} />
                 </label>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -52,14 +53,14 @@ export default function CategoriesEdit({ category, shops }: PageProps<{ category
                         <span>{t.common.form.color}</span>
                         <input type="color" value={data.color} onChange={(e) => setData('color', e.target.value)}
                             className="h-10 w-full rounded-lg border border-white/15 bg-slate-900/70" />
-                        {errors.color && <span className="text-xs text-red-400">{errors.color}</span>}
+                        <InputError message={errors.color} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
                         <span>{t.categories.form.displayOrder}</span>
                         <input type="number" value={data.order} onChange={(e) => setData('order', parseInt(e.target.value))}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2" />
-                        {errors.order && <span className="text-xs text-red-400">{errors.order}</span>}
+                        <InputError message={errors.order} />
                     </label>
                 </div>
 

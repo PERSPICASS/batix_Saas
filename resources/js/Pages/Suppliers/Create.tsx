@@ -4,6 +4,7 @@ import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import { Check } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop { id: number; name: string }
 interface Props { shops: Shop[] }
@@ -75,7 +76,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                     </button>
                                 ))}
                             </div>
-                            {errors.shop_ids && <p className="mt-1 text-sm text-red-400">{errors.shop_ids}</p>}
+                            <InputError message={errors.shop_ids} />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -86,7 +87,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="name" value={data.name} autoFocus
                                     onChange={(e) => setData('name', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+                                <InputError message={errors.name} />
                             </div>
 
                             <div>
@@ -96,7 +97,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="company_name" value={data.company_name}
                                     onChange={(e) => setData('company_name', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.company_name && <p className="mt-1 text-sm text-red-400">{errors.company_name}</p>}
+                                <InputError message={errors.company_name} />
                             </div>
                         </div>
 
@@ -108,7 +109,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="email" id="email" value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+                                <InputError message={errors.email} />
                             </div>
                             <div>
                                 <label htmlFor="phone" className="block text-sm font-medium text-slate-200">
@@ -117,7 +118,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="phone" value={data.phone}
                                     onChange={(e) => setData('phone', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
+                                <InputError message={errors.phone} />
                             </div>
                             <div>
                                 <label htmlFor="mobile" className="block text-sm font-medium text-slate-200">
@@ -126,7 +127,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="mobile" value={data.mobile}
                                     onChange={(e) => setData('mobile', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.mobile && <p className="mt-1 text-sm text-red-400">{errors.mobile}</p>}
+                                <InputError message={errors.mobile} />
                             </div>
                         </div>
                     </div>
@@ -141,7 +142,7 @@ export default function SuppliersCreate({ shops }: Props) {
                             <textarea id="address" value={data.address} rows={3}
                                 onChange={(e) => setData('address', e.target.value)}
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                            {errors.address && <p className="mt-1 text-sm text-red-400">{errors.address}</p>}
+                            <InputError message={errors.address} />
                         </div>
 
                         <div className="grid grid-cols-3 gap-4">
@@ -152,7 +153,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="city" value={data.city}
                                     onChange={(e) => setData('city', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.city && <p className="mt-1 text-sm text-red-400">{errors.city}</p>}
+                                <InputError message={errors.city} />
                             </div>
                             <div>
                                 <label htmlFor="postal_code" className="block text-sm font-medium text-slate-200">
@@ -161,7 +162,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="postal_code" value={data.postal_code}
                                     onChange={(e) => setData('postal_code', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.postal_code && <p className="mt-1 text-sm text-red-400">{errors.postal_code}</p>}
+                                <InputError message={errors.postal_code} />
                             </div>
                             <div>
                                 <label htmlFor="country" className="block text-sm font-medium text-slate-200">
@@ -170,7 +171,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="country" value={data.country}
                                     onChange={(e) => setData('country', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.country && <p className="mt-1 text-sm text-red-400">{errors.country}</p>}
+                                <InputError message={errors.country} />
                             </div>
                         </div>
                     </div>
@@ -186,7 +187,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="text" id="tax_id" value={data.tax_id}
                                     onChange={(e) => setData('tax_id', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.tax_id && <p className="mt-1 text-sm text-red-400">{errors.tax_id}</p>}
+                                <InputError message={errors.tax_id} />
                             </div>
                             <div>
                                 <label htmlFor="website" className="block text-sm font-medium text-slate-200">
@@ -195,7 +196,7 @@ export default function SuppliersCreate({ shops }: Props) {
                                 <input type="url" id="website" value={data.website}
                                     onChange={(e) => setData('website', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                                {errors.website && <p className="mt-1 text-sm text-red-400">{errors.website}</p>}
+                                <InputError message={errors.website} />
                             </div>
                         </div>
 
@@ -206,7 +207,7 @@ export default function SuppliersCreate({ shops }: Props) {
                             <textarea id="notes" value={data.notes} rows={3}
                                 onChange={(e) => setData('notes', e.target.value)}
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                            {errors.notes && <p className="mt-1 text-sm text-red-400">{errors.notes}</p>}
+                            <InputError message={errors.notes} />
                         </div>
 
                         <div className="flex items-center gap-2">

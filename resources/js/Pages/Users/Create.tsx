@@ -4,6 +4,7 @@ import { FormEventHandler, useState } from 'react';
 import { Shield, Check } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -97,7 +98,7 @@ export default function UsersCreate({ shops, currentUserRole, modules }: Props) 
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     autoFocus
                                 />
-                                {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+                                <InputError message={errors.name} />
                             </div>
 
                             <div>
@@ -111,7 +112,7 @@ export default function UsersCreate({ shops, currentUserRole, modules }: Props) 
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+                                <InputError message={errors.email} />
                             </div>
                         </div>
 
@@ -128,7 +129,7 @@ export default function UsersCreate({ shops, currentUserRole, modules }: Props) 
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     placeholder={t.common.form.passwordMin}
                                 />
-                                {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+                                <InputError message={errors.password} />
                             </div>
 
                             <div>
@@ -174,7 +175,7 @@ export default function UsersCreate({ shops, currentUserRole, modules }: Props) 
                                     ))}
                                 </select>
                                 {!isSuperAdmin && <p className="mt-1 text-xs text-slate-500">{t.common.form.shopAssignHint}</p>}
-                                {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                                <InputError message={errors.shop_id} />
                             </div>
 
                             <div>
@@ -191,7 +192,7 @@ export default function UsersCreate({ shops, currentUserRole, modules }: Props) 
                                         <option key={key} value={key}>{roleLabels[key] || key}</option>
                                     ))}
                                 </select>
-                                {errors.role && <p className="mt-1 text-sm text-red-400">{errors.role}</p>}
+                                <InputError message={errors.role} />
                             </div>
                         </div>
 

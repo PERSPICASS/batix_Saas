@@ -4,14 +4,14 @@ import { FormEventHandler, useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useRoute } from '@/utils/route';
 import { PageProps } from '@/types';
-import { 
-    Store, 
-    MapPin, 
-    Phone, 
-    Mail, 
-    Globe, 
-    FileText, 
-    DollarSign, 
+import {
+    Store,
+    MapPin,
+    Phone,
+    Mail,
+    Globe,
+    FileText,
+    DollarSign,
     Percent,
     Hash,
     Save,
@@ -21,6 +21,7 @@ import {
     Upload,
     X
 } from 'lucide-react';
+import InputError from '@/Components/InputError';
 
 interface Currency {
     code: string;
@@ -164,7 +165,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     required
                                 />
-                                {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+                                <InputError message={errors.name} />
                             </div>
 
                             <div>
@@ -178,7 +179,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     rows={3}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.description && <p className="mt-1 text-sm text-red-400">{errors.description}</p>}
+                                <InputError message={errors.description} />
                             </div>
 
                             <div>
@@ -227,7 +228,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         </label>
                                     </div>
                                 )}
-                                {errors.logo && <p className="mt-1 text-sm text-red-400">{errors.logo}</p>}
+                                <InputError message={errors.logo} />
                                 <p className="mt-1 text-xs text-slate-400">
                                     {t.settings.hints.logoDescription}
                                 </p>
@@ -254,7 +255,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     onChange={(e) => setData('phone', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.phone && <p className="mt-1 text-sm text-red-400">{errors.phone}</p>}
+                                <InputError message={errors.phone} />
                             </div>
 
                             <div>
@@ -268,7 +269,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     onChange={(e) => setData('email', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+                                <InputError message={errors.email} />
                             </div>
 
                             <div className="md:col-span-2">
@@ -283,7 +284,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     placeholder="https://example.com"
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.website && <p className="mt-1 text-sm text-red-400">{errors.website}</p>}
+                                <InputError message={errors.website} />
                             </div>
                         </div>
                     </div>
@@ -307,7 +308,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     onChange={(e) => setData('address', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.address && <p className="mt-1 text-sm text-red-400">{errors.address}</p>}
+                                <InputError message={errors.address} />
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -322,7 +323,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         onChange={(e) => setData('city', e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
-                                    {errors.city && <p className="mt-1 text-sm text-red-400">{errors.city}</p>}
+                                    <InputError message={errors.city} />
                                 </div>
 
                                 <div>
@@ -336,7 +337,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         onChange={(e) => setData('postal_code', e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
-                                    {errors.postal_code && <p className="mt-1 text-sm text-red-400">{errors.postal_code}</p>}
+                                    <InputError message={errors.postal_code} />
                                 </div>
                             </div>
                         </div>
@@ -362,7 +363,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     placeholder={t.settings.hints.taxIdPlaceholder}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.tax_id && <p className="mt-1 text-sm text-red-400">{errors.tax_id}</p>}
+                                <InputError message={errors.tax_id} />
                             </div>
 
                             <div>
@@ -382,7 +383,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         </option>
                                     ))}
                                 </select>
-                                {errors.currency && <p className="mt-1 text-sm text-red-400">{errors.currency}</p>}
+                                <InputError message={errors.currency} />
                             </div>
 
                             <div className="md:col-span-2">
@@ -405,7 +406,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         <Percent className="h-5 w-5 text-slate-400" />
                                     </div>
                                 </div>
-                                {errors.default_tax_rate && <p className="mt-1 text-sm text-red-400">{errors.default_tax_rate}</p>}
+                                <InputError message={errors.default_tax_rate} />
                             </div>
                         </div>
                     </div>
@@ -439,7 +440,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                 <p className="mt-1 text-xs text-slate-400">
                                     {t.settings.numbersFormat(data.invoice_prefix)}
                                 </p>
-                                {errors.invoice_prefix && <p className="mt-1 text-sm text-red-400">{errors.invoice_prefix}</p>}
+                                <InputError message={errors.invoice_prefix} />
                             </div>
 
                             <div>
@@ -454,7 +455,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     placeholder={t.settings.hints.invoiceFooterPlaceholder}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.invoice_footer && <p className="mt-1 text-sm text-red-400">{errors.invoice_footer}</p>}
+                                <InputError message={errors.invoice_footer} />
                             </div>
                         </div>
                     </div>

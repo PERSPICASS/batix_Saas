@@ -4,6 +4,7 @@ import { FormEventHandler, useState, useRef, useEffect } from 'react';
 import { useRoute } from '@/utils/route';
 import { Search, X, ChevronDown } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -108,7 +109,7 @@ export default function StocksCreate({ shops, products }: Props) {
                             <p className="mt-1 text-xs text-slate-400">
                                 Boutique sélectionnée via le switcher
                             </p>
-                            {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                            <InputError message={errors.shop_id} />
                         </div>
 
                         <div>
@@ -126,7 +127,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                 <option value="transfer">Transfert</option>
                                 <option value="adjustment">Ajustement</option>
                             </select>
-                            {errors.type && <p className="mt-1 text-sm text-red-400">{errors.type}</p>}
+                            <InputError message={errors.type} />
                         </div>
 
                         <div className="md:col-span-2">
@@ -260,7 +261,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                 min="1"
                             />
-                            {errors.quantity && <p className="mt-1 text-sm text-red-400">{errors.quantity}</p>}
+                            <InputError message={errors.quantity} />
                         </div>
 
                         <div>
@@ -276,7 +277,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                 placeholder="0.00"
                             />
-                            {errors.unit_cost && <p className="mt-1 text-sm text-red-400">{errors.unit_cost}</p>}
+                            <InputError message={errors.unit_cost} />
                         </div>
 
                         <div>
@@ -290,7 +291,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                 onChange={(e) => setData('movement_date', e.target.value)}
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                             />
-                            {errors.movement_date && <p className="mt-1 text-sm text-red-400">{errors.movement_date}</p>}
+                            <InputError message={errors.movement_date} />
                         </div>
 
                         <div className="md:col-span-2">
@@ -305,7 +306,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                 placeholder="Raison du mouvement, détails..."
                             />
-                            {errors.notes && <p className="mt-1 text-sm text-red-400">{errors.notes}</p>}
+                            <InputError message={errors.notes} />
                         </div>
                     </div>
 

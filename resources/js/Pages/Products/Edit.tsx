@@ -4,6 +4,7 @@ import { FormEventHandler, useMemo, useState } from 'react';
 import { TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -140,7 +141,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                             <p className="mt-1 text-xs text-slate-400">
                                 La boutique ne peut pas être modifiée
                             </p>
-                            {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                            <InputError message={errors.shop_id} />
                         </div>
 
                         <div>
@@ -163,7 +164,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                     </option>
                                 ))}
                             </select>
-                            {errors.category_id && <p className="mt-1 text-sm text-red-400">{errors.category_id}</p>}
+                            <InputError message={errors.category_id} />
                         </div>
 
                         <div>
@@ -184,7 +185,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                     </option>
                                 ))}
                             </select>
-                            {errors.subcategory_id && <p className="mt-1 text-sm text-red-400">{errors.subcategory_id}</p>}
+                            <InputError message={errors.subcategory_id} />
                         </div>
 
                         <div>
@@ -199,7 +200,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="Ex: Bosch, Stanley, Makita..."
                             />
-                            {errors.brand && <p className="mt-1 text-sm text-red-400">{errors.brand}</p>}
+                            <InputError message={errors.brand} />
                         </div>
 
                         <div>
@@ -214,7 +215,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="Ex: Marteau"
                             />
-                            {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+                            <InputError message={errors.name} />
                         </div>
 
                         <div>
@@ -229,7 +230,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="Ex: MAR-001"
                             />
-                            {errors.sku && <p className="mt-1 text-sm text-red-400">{errors.sku}</p>}
+                            <InputError message={errors.sku} />
                         </div>
 
                         <div>
@@ -244,7 +245,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="Ex: 1234567890123"
                             />
-                            {errors.barcode && <p className="mt-1 text-sm text-red-400">{errors.barcode}</p>}
+                            <InputError message={errors.barcode} />
                         </div>
 
                         <div>
@@ -264,7 +265,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 <option value="box">Boîte</option>
                                 <option value="pack">Pack</option>
                             </select>
-                            {errors.unit && <p className="mt-1 text-sm text-red-400">{errors.unit}</p>}
+                            <InputError message={errors.unit} />
                         </div>
 
                         <div>
@@ -281,7 +282,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="0.00"
                             />
-                            {errors.purchase_price && <p className="mt-1 text-sm text-red-400">{errors.purchase_price}</p>}
+                            <InputError message={errors.purchase_price} />
                         </div>
 
                         <div>
@@ -298,7 +299,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="0.00"
                             />
-                            {errors.selling_price && <p className="mt-1 text-sm text-red-400">{errors.selling_price}</p>}
+                            <InputError message={errors.selling_price} />
                         </div>
 
                         {/* Indicateur de marge bénéficiaire */}
@@ -348,7 +349,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="20.00"
                             />
-                            {errors.tax_rate && <p className="mt-1 text-sm text-red-400">{errors.tax_rate}</p>}
+                            <InputError message={errors.tax_rate} />
                         </div>
 
                         <div>
@@ -363,7 +364,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="0"
                             />
-                            {errors.stock_quantity && <p className="mt-1 text-sm text-red-400">{errors.stock_quantity}</p>}
+                            <InputError message={errors.stock_quantity} />
                         </div>
 
                         <div>
@@ -378,7 +379,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="10"
                             />
-                            {errors.min_stock_alert && <p className="mt-1 text-sm text-red-400">{errors.min_stock_alert}</p>}
+                            <InputError message={errors.min_stock_alert} />
                         </div>
 
                         <div className="flex items-center">
@@ -406,7 +407,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 placeholder="Description du produit"
                             />
-                            {errors.description && <p className="mt-1 text-sm text-red-400">{errors.description}</p>}
+                            <InputError message={errors.description} />
                         </div>
 
                         <div>
@@ -440,7 +441,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                     </p>
                                 </div>
                             </div>
-                            {errors.image && <p className="mt-1 text-sm text-red-400">{errors.image}</p>}
+                            <InputError message={errors.image} />
                         </div>
 
                         <div className="flex items-center">

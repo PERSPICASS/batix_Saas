@@ -6,6 +6,7 @@ import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
 import BarcodeScanner from '@/Components/BarcodeScanner';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -208,7 +209,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                     </option>
                                 ))}
                             </select>
-                            {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                            <InputError message={errors.shop_id} />
                         </div>
 
                         <div>
@@ -220,7 +221,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                 disabled={inventory.status === 'completed'}
                             />
-                            {errors.inventory_date && <p className="mt-1 text-sm text-red-400">{errors.inventory_date}</p>}
+                            <InputError message={errors.inventory_date} />
                         </div>
 
                         <div>
@@ -235,7 +236,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                 <option value="in_progress">En cours</option>
                                 <option value="cancelled">Annulé</option>
                             </select>
-                            {errors.status && <p className="mt-1 text-sm text-red-400">{errors.status}</p>}
+                            <InputError message={errors.status} />
                         </div>
                     </div>
 
@@ -436,7 +437,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                             </table>
                         </div>
                     )}
-                    {errors.items && <p className="mt-2 text-sm text-red-400">{errors.items}</p>}
+                    <InputError message={errors.items} />
                 </div>
 
                 {/* Actions */}

@@ -4,6 +4,7 @@ import { FormEventHandler, useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, Search, X, ChevronDown } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -246,7 +247,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                 <p className="mt-1 text-xs text-slate-400">
                                     Boutique sélectionnée via le switcher
                                 </p>
-                                {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                                <InputError message={errors.shop_id} />
                             </div>
 
                             <div>
@@ -277,7 +278,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                     placeholder="Raison de l'inventaire, observations..."
                                 />
-                                {errors.notes && <p className="mt-1 text-sm text-red-400">{errors.notes}</p>}
+                                <InputError message={errors.notes} />
                             </div>
                         </div>
                     </div>
@@ -408,7 +409,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                 );
                             })}
                         </div>
-                        {errors.items && <p className="mt-2 text-sm text-red-400">{errors.items}</p>}
+                        <InputError message={errors.items} />
                     </div>
 
                     <div className="flex items-center justify-end gap-3">

@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Category { id: number; name: string }
 interface Subcategory { id: number; category_id: number; name: string; description: string | null }
@@ -44,7 +45,7 @@ export default function SubcategoriesEdit({ subcategory, categories }: Props) {
                                 <option key={category.id} value={category.id}>{category.name}</option>
                             ))}
                         </select>
-                        {errors.category_id && <p className="mt-1 text-sm text-red-400">{errors.category_id}</p>}
+                        <InputError message={errors.category_id} />
                     </div>
 
                     <div>
@@ -54,7 +55,7 @@ export default function SubcategoriesEdit({ subcategory, categories }: Props) {
                         <input type="text" id="name" value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                        {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+                        <InputError message={errors.name} />
                     </div>
 
                     <div>
@@ -65,7 +66,7 @@ export default function SubcategoriesEdit({ subcategory, categories }: Props) {
                             onChange={(e) => setData('description', e.target.value)}
                             rows={3}
                             className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
-                        {errors.description && <p className="mt-1 text-sm text-red-400">{errors.description}</p>}
+                        <InputError message={errors.description} />
                     </div>
 
                     <div className="flex items-center justify-end gap-3 border-t border-white/10 pt-4">

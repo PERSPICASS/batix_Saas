@@ -67,7 +67,7 @@ export default function UpdateProfileInformation({
                         />
                     </div>
 
-                    {errors.name && <p className="mt-2 text-sm text-red-400">{errors.name}</p>}
+                    <InputError message={errors.name} />
                 </div>
 
                 <div>
@@ -90,7 +90,7 @@ export default function UpdateProfileInformation({
                         />
                     </div>
 
-                    {errors.email && <p className="mt-2 text-sm text-red-400">{errors.email}</p>}
+                    <InputError message={errors.email} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (

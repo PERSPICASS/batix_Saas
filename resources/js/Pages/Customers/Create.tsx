@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number;
@@ -54,7 +55,7 @@ export default function CustomersCreate({ shops }: Props) {
                             ))}
                         </select>
                         <p className="text-xs text-slate-400">{t.common.form.shopHint}</p>
-                        {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
+                        <InputError message={errors.shop_id} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
@@ -64,7 +65,7 @@ export default function CustomersCreate({ shops }: Props) {
                             onChange={(e) => setData('name', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.name && <span className="text-xs text-red-400">{errors.name}</span>}
+                        <InputError message={errors.name} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
@@ -75,7 +76,7 @@ export default function CustomersCreate({ shops }: Props) {
                             onChange={(e) => setData('email', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.email && <span className="text-xs text-red-400">{errors.email}</span>}
+                        <InputError message={errors.email} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
@@ -85,7 +86,7 @@ export default function CustomersCreate({ shops }: Props) {
                             onChange={(e) => setData('phone', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.phone && <span className="text-xs text-red-400">{errors.phone}</span>}
+                        <InputError message={errors.phone} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
@@ -95,7 +96,7 @@ export default function CustomersCreate({ shops }: Props) {
                             onChange={(e) => setData('address', e.target.value)}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.address && <span className="text-xs text-red-400">{errors.address}</span>}
+                        <InputError message={errors.address} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
@@ -106,7 +107,7 @@ export default function CustomersCreate({ shops }: Props) {
                             rows={3}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                         />
-                        {errors.notes && <span className="text-xs text-red-400">{errors.notes}</span>}
+                        <InputError message={errors.notes} />
                     </label>
 
                     <label className="flex items-center gap-2 text-sm text-slate-200 md:col-span-2">

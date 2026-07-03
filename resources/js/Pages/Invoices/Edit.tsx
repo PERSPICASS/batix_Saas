@@ -5,6 +5,7 @@ import { Calculator, FilePenLine, Plus, Trash2 } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Customer {
     id: number;
@@ -186,7 +187,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                         </option>
                                     ))}
                                 </select>
-                                {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                                <InputError message={errors.shop_id} />
                             </div>
 
                             <div>
@@ -206,7 +207,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                         </option>
                                     ))}
                                 </select>
-                                {errors.customer_id && <p className="mt-1 text-sm text-red-400">{errors.customer_id}</p>}
+                                <InputError message={errors.customer_id} />
                             </div>
 
                             <div>
@@ -225,7 +226,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     <option value="overdue">En retard</option>
                                     <option value="cancelled">Annulée</option>
                                 </select>
-                                {errors.status && <p className="mt-1 text-sm text-red-400">{errors.status}</p>}
+                                <InputError message={errors.status} />
                             </div>
 
                             <div>
@@ -244,7 +245,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     <option value="check">Chèque</option>
                                     <option value="transfer">Virement</option>
                                 </select>
-                                {errors.payment_method && <p className="mt-1 text-sm text-red-400">{errors.payment_method}</p>}
+                                <InputError message={errors.payment_method} />
                             </div>
 
                             <div>
@@ -258,7 +259,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     onChange={(e) => setData('invoice_date', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.invoice_date && <p className="mt-1 text-sm text-red-400">{errors.invoice_date}</p>}
+                                <InputError message={errors.invoice_date} />
                             </div>
 
                             <div>
@@ -272,7 +273,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     onChange={(e) => setData('due_date', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.due_date && <p className="mt-1 text-sm text-red-400">{errors.due_date}</p>}
+                                <InputError message={errors.due_date} />
                             </div>
 
                             <div>
@@ -288,7 +289,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     onChange={(e) => setData('discount_amount', Math.max(Number(e.target.value) || 0, 0))}
                                     className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                 />
-                                {errors.discount_amount && <p className="mt-1 text-sm text-red-400">{errors.discount_amount}</p>}
+                                <InputError message={errors.discount_amount} />
                             </div>
                         </div>
                     </div>
@@ -386,7 +387,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                 </div>
                             ))}
                         </div>
-                        {errors.items && <p className="mt-2 text-sm text-red-400">{errors.items}</p>}
+                        <InputError message={errors.items} />
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -401,7 +402,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                             className="mt-1 w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                             placeholder="Notes internes..."
                         />
-                        {errors.notes && <p className="mt-1 text-sm text-red-400">{errors.notes}</p>}
+                        <InputError message={errors.notes} />
                     </div>
                 </section>
 

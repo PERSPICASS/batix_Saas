@@ -10,6 +10,7 @@ import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import ProductImage from '@/Components/ProductImage';
 import BarcodeScanner from '@/Components/BarcodeScanner';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Category {
     id: number;
@@ -463,7 +464,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                                     onChange={(e) => setData('file', e.target.files?.[0] || null)}
                                     className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950 hover:file:bg-amber-200"
                                 />
-                                {errors.file && <p className="mt-1 text-sm text-red-400">{errors.file}</p>}
+                                <InputError message={errors.file} />
                             </div>
 
                             <div className="flex items-center justify-end gap-3">

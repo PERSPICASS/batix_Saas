@@ -110,7 +110,7 @@ export default function UpdatePasswordForm({
                         />
                     </div>
 
-                    {errors.password && <p className="mt-2 text-sm text-red-400">{errors.password}</p>}
+                    <InputError message={errors.password} />
                 </div>
 
                 <div>

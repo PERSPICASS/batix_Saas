@@ -3,6 +3,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Package, User, DollarSign, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Preorder {
     id: number;
@@ -264,7 +265,7 @@ export default function Show({ preorder }: Props) {
                                     <option value="completed">{t.preorders.status.completed}</option>
                                     <option value="cancelled">{t.preorders.status.cancelled}</option>
                                 </select>
-                                {errors.status && <p className="mt-1 text-xs text-red-400">{errors.status}</p>}
+                                <InputError message={errors.status} />
                             </div>
 
                             <div className="flex gap-3 pt-4">
