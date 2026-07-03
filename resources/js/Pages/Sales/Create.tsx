@@ -615,6 +615,12 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                 </div>
                             )}
 
+                            {errors.items && (
+                                <div className="rounded-lg border border-rose-400/30 bg-rose-500/15 p-3 text-sm text-rose-300">
+                                    {errors.items}
+                                </div>
+                            )}
+
                             <div className="flex gap-2">
                                 <Link
                                     href={route('sales.index')}

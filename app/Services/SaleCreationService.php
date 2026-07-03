@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Shop;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SaleCreationService
 {
@@ -28,12 +29,38 @@ class SaleCreationService
             $items = $data['items'];
             unset($data['items']);
 
+            // Aggregate quantities per product (an item list can reference the same
+            // product more than once) and lock the rows for the duration of the
+            // transaction, to prevent two concurrent sales from oversell the same stock.
+            $neededByProduct = [];
+            foreach ($items as $itemData) {
+                $neededByProduct[$itemData['product_id']] = ($neededByProduct[$itemData['product_id']] ?? 0) + $itemData['quantity'];
+            }
+
+            $products = Product::whereIn('id', array_keys($neededByProduct))
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $errors = [];
+            foreach ($neededByProduct as $productId => $neededQty) {
+                $product = $products->get($productId);
+
+                if ($product && $product->track_stock && $product->stock_quantity < $neededQty) {
+                    $errors['items'][] = "Stock insuffisant pour « {$product->name} » (disponible : {$product->stock_quantity}, demandé : {$neededQty}).";
+                }
+            }
+
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
+
             $subtotal = 0;
             $taxAmount = 0;
             $productItems = [];
 
             foreach ($items as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
+                $product = $products->get($itemData['product_id']);
                 $lineTotal = $itemData['unit_price'] * $itemData['quantity'];
                 $lineTax = $lineTotal * ($product->tax_rate ?? 0) / 100;
                 $subtotal += $lineTotal;

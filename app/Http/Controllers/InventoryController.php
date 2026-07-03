@@ -10,6 +10,7 @@ use App\Services\StockMovementService;
 use App\Services\InventoryAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -68,12 +69,19 @@ class InventoryController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $request->input('shop_id'))->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
             'inventory_date' => 'required|date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'items.*.counted_quantity' => 'nullable|integer|min:0',
             'items.*.defective_quantity' => 'nullable|integer|min:0',
         ]);
@@ -113,6 +121,10 @@ class InventoryController extends Controller
 
     public function show(string $code_user, Inventory $inventory): Response
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
         $inventory->load(['shop', 'user', 'items.product']);
 
         return Inertia::render('Inventory/Show', [
@@ -122,11 +134,16 @@ class InventoryController extends Controller
 
     public function edit(string $code_user, Inventory $inventory): Response
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
         $inventory->load(['items.product']);
 
         $products = Product::with('shop')
             ->where('is_active', true)
             ->whereNull('parent_id')
+            ->where('shop_id', $inventory->shop_id)
             ->get();
 
         // Enrich products with movement data
@@ -141,6 +158,14 @@ class InventoryController extends Controller
 
     public function update(Request $request, string $code_user, Inventory $inventory): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $request->input('shop_id'))->exists()) {
+            abort(403);
+        }
+
         if ($inventory->status === 'completed') {
             return back()->withErrors(['error' => 'Impossible de modifier un inventaire terminé.']);
         }
@@ -151,7 +176,10 @@ class InventoryController extends Controller
             'status' => 'required|in:draft,in_progress,completed,cancelled',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'items.*.counted_quantity' => 'nullable|integer|min:0',
             'items.*.defective_quantity' => 'nullable|integer|min:0',
         ]);
@@ -192,8 +220,12 @@ class InventoryController extends Controller
         return redirect()->route('inventory.index', ['code_user' => request()->route('code_user')])->with('success', 'Inventaire mis à jour avec succès.');
     }
 
-    public function complete(Inventory $inventory): RedirectResponse
+    public function complete(string $code_user, Inventory $inventory): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
         if ($inventory->status === 'completed') {
             return back()->withErrors(['error' => 'Cet inventaire est déjà terminé.']);
         }
@@ -219,6 +251,10 @@ class InventoryController extends Controller
 
     public function destroy(string $code_user, Inventory $inventory): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
         if ($inventory->status === 'completed') {
             return back()->withErrors(['error' => 'Impossible de supprimer un inventaire terminé.']);
         }

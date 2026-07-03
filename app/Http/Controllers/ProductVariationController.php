@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class ProductVariationController extends Controller
@@ -90,13 +92,27 @@ class ProductVariationController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $variation->update([
-            'name' => $validated['name'],
-            'purchase_price' => $validated['purchase_price'],
-            'selling_price' => $validated['selling_price'],
-            'stock_quantity' => $validated['stock_quantity'] ?? $variation->stock_quantity,
-            'is_active' => $validated['is_active'] ?? $variation->is_active,
-        ]);
+        $oldStock = $variation->stock_quantity;
+        $newStock = (int) ($validated['stock_quantity'] ?? $oldStock);
+
+        DB::transaction(function () use ($variation, $validated, $oldStock, $newStock) {
+            $variation->update([
+                'name' => $validated['name'],
+                'purchase_price' => $validated['purchase_price'],
+                'selling_price' => $validated['selling_price'],
+                'is_active' => $validated['is_active'] ?? $variation->is_active,
+            ]);
+
+            if ($newStock !== $oldStock) {
+                StockMovementService::recordManualAdjustment(
+                    $variation,
+                    $newStock - $oldStock,
+                    'adjustment',
+                    $variation->shop_id,
+                    "Correction manuelle via formulaire déclinaison (ancienne valeur: {$oldStock}, nouvelle: {$newStock})"
+                );
+            }
+        });
 
         return back()->with('success', "Déclinaison mise à jour.");
     }

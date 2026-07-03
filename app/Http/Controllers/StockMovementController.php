@@ -9,6 +9,7 @@ use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -82,9 +83,16 @@ class StockMovementController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $request->input('shop_id'))->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'product_id' => 'required|exists:products,id',
+            'product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'type' => 'required|in:in,out,transfer,adjustment',
             'quantity' => 'required|integer|not_in:0',
             'unit_cost' => 'nullable|numeric|min:0',
@@ -110,12 +118,20 @@ class StockMovementController extends Controller
 
     public function show(string $code_user, StockMovement $stock): Response
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $stock->shop_id)->exists()) {
+            abort(403);
+        }
+
         $stock->load(['shop', 'product', 'user']);
         return Inertia::render('Stocks/Show', ['movement' => $stock]);
     }
 
     public function destroy(string $code_user, StockMovement $stock): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $stock->shop_id)->exists()) {
+            abort(403);
+        }
+
         DB::transaction(function () use ($stock) {
             StockMovementService::reverseMovement($stock);
             $stock->delete();

@@ -324,6 +324,16 @@ class ProductController extends Controller
             return back()->with('error', "Impossible de supprimer \"{$productName}\" : ce produit est encore présent dans {$depotCount} dépôt(s). Retirez-le d'abord du dépôt.");
         }
 
+        // Un produit ayant un historique (mouvements de stock, achats, inventaires) ne doit
+        // pas être supprimé : ça effacerait silencieusement le grand livre comptable de la boutique.
+        $hasHistory = \App\Models\StockMovement::where('product_id', $product->id)->exists()
+            || \App\Models\PurchaseItem::where('product_id', $product->id)->exists()
+            || \App\Models\InventoryItem::where('product_id', $product->id)->exists();
+
+        if ($hasHistory) {
+            return back()->with('error', "Impossible de supprimer \"{$productName}\" : ce produit a un historique de mouvements de stock, d'achats ou d'inventaires. Désactivez-le plutôt.");
+        }
+
         // Supprimer les entrées dépôt sans stock (quantity = 0) avant de supprimer le produit
         \App\Models\DepotProduct::where('product_id', $product->id)->delete();
         

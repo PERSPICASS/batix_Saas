@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -111,8 +112,23 @@ class PurchaseController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $activeShopId = get_active_shop_id();
+        $codeUser = $request->route('code_user');
+
+        if (!$activeShopId) {
+            return back()->with('error', 'Veuillez sélectionner une boutique.');
+        }
+
         $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
+            'supplier_id' => [
+                'required',
+                Rule::exists('suppliers', 'id')->whereExists(function ($q) use ($activeShopId) {
+                    $q->select(DB::raw(1))
+                        ->from('shop_supplier')
+                        ->whereColumn('shop_supplier.supplier_id', 'suppliers.id')
+                        ->where('shop_supplier.shop_id', $activeShopId);
+                }),
+            ],
             'order_date' => 'required|date',
             'expected_date' => 'nullable|date|after_or_equal:order_date',
             'shipping_cost' => 'nullable|numeric|min:0',
@@ -121,18 +137,14 @@ class PurchaseController extends Controller
             'notes' => 'nullable|string',
             'internal_notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('shop_id', $activeShopId),
+            ],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
         ]);
-
-        $activeShopId = get_active_shop_id();
-        $codeUser = $request->route('code_user');
-
-        if (!$activeShopId) {
-            return back()->with('error', 'Veuillez sélectionner une boutique.');
-        }
 
         $shop = Shop::find($activeShopId);
 
@@ -198,6 +210,10 @@ class PurchaseController extends Controller
      */
     public function show(Request $request, string $codeUser, Purchase $purchase): Response
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
         $purchase->load(['supplier', 'user', 'items.product', 'shop']);
 
         return Inertia::render('Purchases/Show', [
@@ -211,6 +227,10 @@ class PurchaseController extends Controller
      */
     public function edit(Request $request, string $codeUser, Purchase $purchase): Response
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
         $activeShopId = get_active_shop_id();
 
         if (!$activeShopId) {
@@ -252,12 +272,24 @@ class PurchaseController extends Controller
      */
     public function update(Request $request, string $codeUser, Purchase $purchase): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
         if ($purchase->status !== 'draft') {
             return back()->with('error', 'Seuls les bons de commande en brouillon peuvent être modifiés.');
         }
 
         $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
+            'supplier_id' => [
+                'required',
+                Rule::exists('suppliers', 'id')->whereExists(function ($q) use ($purchase) {
+                    $q->select(DB::raw(1))
+                        ->from('shop_supplier')
+                        ->whereColumn('shop_supplier.supplier_id', 'suppliers.id')
+                        ->where('shop_supplier.shop_id', $purchase->shop_id);
+                }),
+            ],
             'order_date' => 'required|date',
             'expected_date' => 'nullable|date|after_or_equal:order_date',
             'shipping_cost' => 'nullable|numeric|min:0',
@@ -266,7 +298,10 @@ class PurchaseController extends Controller
             'notes' => 'nullable|string',
             'internal_notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('shop_id', $purchase->shop_id),
+            ],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
@@ -326,6 +361,10 @@ class PurchaseController extends Controller
      */
     public function confirm(Request $request, string $codeUser, Purchase $purchase): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
         if ($purchase->status !== 'draft') {
             return back()->with('error', 'Seuls les bons de commande en brouillon peuvent être confirmés.');
         }
@@ -344,9 +383,16 @@ class PurchaseController extends Controller
      */
     public function receive(Request $request, string $codeUser, Purchase $purchase): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'items' => 'required|array',
-            'items.*.id' => 'required|exists:purchase_items,id',
+            'items.*.id' => [
+                'required',
+                Rule::exists('purchase_items', 'id')->where('purchase_id', $purchase->id),
+            ],
             'items.*.quantity' => 'required|integer|min:0',
         ]);
 
@@ -398,6 +444,10 @@ class PurchaseController extends Controller
      */
     public function cancel(Request $request, string $codeUser, Purchase $purchase): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
         if ($purchase->status === 'cancelled') {
             return back()->with('error', 'Ce bon de commande est déjà annulé.');
         }
@@ -420,6 +470,10 @@ class PurchaseController extends Controller
      */
     public function destroy(Request $request, string $codeUser, Purchase $purchase): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
         if (!in_array($purchase->status, ['draft', 'cancelled'])) {
             return back()->with('error', 'Seuls les bons de commande en brouillon ou annulés peuvent être supprimés.');
         }

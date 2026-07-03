@@ -14,6 +14,7 @@ use App\Traits\GeneratesBarcode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -419,28 +420,31 @@ class DepotController extends Controller
             'items.*.selling_price' => 'nullable|numeric|min:0',
         ]);
 
-        // Vérifier le stock disponible pour chaque produit
-        $errors = [];
-        $depotProducts = [];
+        DB::transaction(function () use ($depot, $validated, $user) {
+            // Verrouiller et vérifier le stock disponible pour chaque produit à l'intérieur
+            // de la transaction, pour empêcher deux transferts concurrents de survendre
+            // le même stock de dépôt (le verrou est conservé jusqu'au commit/rollback).
+            $errors = [];
+            $depotProducts = [];
 
-        foreach ($validated['items'] as $index => $item) {
-            $depotProduct = DepotProduct::where('depot_id', $depot->id)
-                ->where('product_id', $item['product_id'])
-                ->first();
+            foreach ($validated['items'] as $index => $item) {
+                $depotProduct = DepotProduct::where('depot_id', $depot->id)
+                    ->where('product_id', $item['product_id'])
+                    ->lockForUpdate()
+                    ->first();
 
-            if (!$depotProduct || $depotProduct->quantity < $item['quantity']) {
-                $productName = Product::find($item['product_id'])?->name ?? "Produit #{$item['product_id']}";
-                $errors["items.{$index}.quantity"] = "Stock insuffisant pour « {$productName} » (disponible : " . ($depotProduct?->quantity ?? 0) . ").";
-            } else {
-                $depotProducts[$index] = $depotProduct;
+                if (!$depotProduct || $depotProduct->quantity < $item['quantity']) {
+                    $productName = Product::find($item['product_id'])?->name ?? "Produit #{$item['product_id']}";
+                    $errors["items.{$index}.quantity"] = "Stock insuffisant pour « {$productName} » (disponible : " . ($depotProduct?->quantity ?? 0) . ").";
+                } else {
+                    $depotProducts[$index] = $depotProduct;
+                }
             }
-        }
 
-        if (!empty($errors)) {
-            return back()->withErrors($errors);
-        }
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
 
-        DB::transaction(function () use ($depot, $depotProducts, $validated, $user) {
             foreach ($validated['items'] as $index => $item) {
                 $depotProduct = $depotProducts[$index];
 
@@ -523,28 +527,30 @@ class DepotController extends Controller
             abort(403);
         }
 
-        // Vérifier le stock disponible
-        $errors = [];
-        $depotProducts = [];
+        DB::transaction(function () use ($depot, $targetDepot, $validated, $user) {
+            // Verrouiller et vérifier le stock disponible à l'intérieur de la transaction,
+            // pour empêcher deux transferts concurrents de survendre le même stock source.
+            $errors = [];
+            $depotProducts = [];
 
-        foreach ($validated['items'] as $index => $item) {
-            $depotProduct = DepotProduct::where('depot_id', $depot->id)
-                ->where('product_id', $item['product_id'])
-                ->first();
+            foreach ($validated['items'] as $index => $item) {
+                $depotProduct = DepotProduct::where('depot_id', $depot->id)
+                    ->where('product_id', $item['product_id'])
+                    ->lockForUpdate()
+                    ->first();
 
-            if (!$depotProduct || $depotProduct->quantity < $item['quantity']) {
-                $productName = Product::find($item['product_id'])?->name ?? "Produit #{$item['product_id']}";
-                $errors["items.{$index}.quantity"] = "Stock insuffisant pour « {$productName} » (disponible : " . ($depotProduct?->quantity ?? 0) . ").";
-            } else {
-                $depotProducts[$index] = $depotProduct;
+                if (!$depotProduct || $depotProduct->quantity < $item['quantity']) {
+                    $productName = Product::find($item['product_id'])?->name ?? "Produit #{$item['product_id']}";
+                    $errors["items.{$index}.quantity"] = "Stock insuffisant pour « {$productName} » (disponible : " . ($depotProduct?->quantity ?? 0) . ").";
+                } else {
+                    $depotProducts[$index] = $depotProduct;
+                }
             }
-        }
 
-        if (!empty($errors)) {
-            return back()->withErrors($errors);
-        }
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
 
-        DB::transaction(function () use ($depot, $targetDepot, $depotProducts, $validated, $user) {
             foreach ($validated['items'] as $index => $item) {
                 $srcProduct = $depotProducts[$index];
 
