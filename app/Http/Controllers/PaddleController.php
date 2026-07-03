@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SubscriptionInvoiceMail;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
+use App\Models\SubscriptionInvoice;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class PaddleController extends Controller
@@ -79,21 +84,118 @@ class PaddleController extends Controller
         return $checkoutUrl;
     }
 
+    /**
+     * Handle a Paddle webhook notification.
+     *
+     * Signature verification is done by \Laravel\Paddle\Http\Middleware\VerifyWebhookSignature,
+     * applied to this route — by the time we get here the payload is authenticated.
+     *
+     * This app doesn't use Cashier's own Billable subscription tables (App\Models\Subscription /
+     * SubscriptionPlan / SubscriptionInvoice are custom, shared with the PawaPay/Jèko flows), so
+     * we handle the event ourselves instead of routing through Cashier's native WebhookController.
+     */
     public function webhook(Request $request): JsonResponse
     {
-        // Paddle will send webhook notifications to this endpoint
-        // The Paddle Cashier package handles webhook verification automatically
+        $payload = $request->all();
+        $eventType = $payload['event_type'] ?? null;
 
-        $payload = $request->getContent();
+        \Log::info('Paddle webhook received', ['event_type' => $eventType]);
 
-        try {
-            // The billable model will automatically handle webhook events
-            \Laravel\Paddle\Events\WebhookReceived::dispatch($payload);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Webhook processing failed'], 500);
+        if ($eventType !== 'transaction.completed') {
+            // Other event types (subscription.*, transaction.updated, ...) aren't used by
+            // this app's activation flow — acknowledge so Paddle doesn't retry.
+            return response()->json(['status' => 'ignored']);
         }
 
+        $data = $payload['data'] ?? [];
+        $customData = $data['custom_data'] ?? [];
+        $transactionId = $data['id'] ?? null;
+
+        $userId = $customData['user_id'] ?? null;
+        $planSlug = $customData['plan_slug'] ?? null;
+        $billingCycle = $customData['billing_cycle'] ?? 'monthly';
+
+        if (!$transactionId || !$userId || !$planSlug) {
+            \Log::warning('Paddle webhook: missing transaction/user/plan in custom_data', ['transactionId' => $transactionId]);
+            return response()->json(['status' => 'ignored']);
+        }
+
+        // Idempotence : Paddle peut renvoyer le même événement plusieurs fois.
+        if (Subscription::where('metadata->paddle_transaction_id', $transactionId)->exists()) {
+            return response()->json(['status' => 'already_processed']);
+        }
+
+        $user = User::find($userId);
+        $plan = SubscriptionPlan::where('slug', $planSlug)->first();
+
+        if (!$user || !$plan) {
+            \Log::warning('Paddle webhook: unknown user or plan', ['userId' => $userId, 'planSlug' => $planSlug]);
+            return response()->json(['status' => 'ignored']);
+        }
+
+        $this->activateSubscription($user, $plan, $billingCycle, $transactionId);
+
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Create subscription + invoice after a confirmed Paddle transaction.
+     * Mirrors PawaPayController::activateSubscription / JekoController::activateSubscription.
+     */
+    private function activateSubscription(User $user, SubscriptionPlan $plan, string $billingCycle, string $transactionId): void
+    {
+        $months = $billingCycle === 'yearly' ? 12 : 1;
+        $amount = $billingCycle === 'yearly'
+            ? round((float) $plan->price * 10)
+            : (float) $plan->price;
+
+        $result = DB::transaction(function () use ($user, $plan, $months, $amount, $billingCycle, $transactionId) {
+            Subscription::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+
+            $subscription = Subscription::create([
+                'user_id' => $user->id,
+                'subscription_plan_id' => $plan->id,
+                'status' => 'active',
+                'started_at' => now(),
+                'expires_at' => now()->addMonths($months),
+                'amount' => $amount,
+                'billing_cycle' => $billingCycle,
+                'metadata' => [
+                    'payment_method' => 'paddle',
+                    'paddle_transaction_id' => $transactionId,
+                ],
+            ]);
+
+            $invoice = SubscriptionInvoice::create([
+                'subscription_id' => $subscription->id,
+                'user_id' => $user->id,
+                'invoice_number' => SubscriptionInvoice::generateInvoiceNumber(),
+                'amount' => $amount,
+                'tax' => 0,
+                'total' => $amount,
+                'status' => 'paid',
+                'issued_at' => now(),
+                'paid_at' => now(),
+                'due_at' => now(),
+                'payment_method' => 'paddle',
+                'metadata' => [
+                    'paddle_transaction_id' => $transactionId,
+                ],
+            ]);
+
+            return [$subscription, $invoice];
+        });
+
+        try {
+            [$subscription, $invoice] = $result;
+            Mail::to($user->email)->send(
+                new SubscriptionInvoiceMail($user, $subscription, $invoice)
+            );
+        } catch (\Throwable $e) {
+            \Log::error('SubscriptionInvoiceMail failed', ['user' => $user->id, 'error' => $e->getMessage()]);
+        }
     }
 
     public function success(Request $request): \Inertia\Response

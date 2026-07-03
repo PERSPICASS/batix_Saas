@@ -6,16 +6,35 @@ use App\Models\Quote;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Invoice;
+use App\Models\Shop;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 
 class QuoteController extends Controller
 {
+    /**
+     * Resolve the shop this request should operate on: the active shop selected in
+     * session, scoped to shops the current user can actually access (owner, manager,
+     * or employee — not just shops they personally own via Shop.user_id).
+     */
+    private function resolveActiveShop(): Shop
+    {
+        $activeShopId = get_active_shop_id();
+        $shop = $activeShopId
+            ? Auth::user()->accessibleShopsQuery()->find($activeShopId)
+            : null;
+
+        abort_unless($shop, 403, 'Veuillez sélectionner une boutique.');
+
+        return $shop;
+    }
+
     public function index(string $code_user, Request $request): Response
     {
-        $shop = auth()->user()->shops->first();
+        $shop = $this->resolveActiveShop();
 
         $query = Quote::with('customer')
             ->where('shop_id', $shop->id);
@@ -46,7 +65,7 @@ class QuoteController extends Controller
 
     public function create(string $code_user): Response
     {
-        $shop = auth()->user()->shops->first();
+        $shop = $this->resolveActiveShop();
 
         $customers = Customer::where('shop_id', $shop->id)
             ->get(['id', 'name', 'email']);
@@ -62,14 +81,20 @@ class QuoteController extends Controller
 
     public function store(Request $request, string $code_user): RedirectResponse
     {
-        $shop = auth()->user()->shops->first();
+        $shop = $this->resolveActiveShop();
 
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('customers', 'id')->where('shop_id', $shop->id),
+            ],
             'quote_date' => 'required|date',
             'expiry_date' => 'required|date|after:quote_date',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('products', 'id')->where('shop_id', $shop->id),
+            ],
             'items.*.product_article_id' => 'nullable|exists:product_articles,id',
             'items.*.article_name' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
@@ -122,8 +147,7 @@ class QuoteController extends Controller
     public function show(string $code_user, Quote $quote): Response
     {
         // Vérifier que le devis appartient à la boutique de l'utilisateur
-        $shop = auth()->user()->shops->first();
-        if ($quote->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
             abort(403);
         }
 
@@ -134,15 +158,14 @@ class QuoteController extends Controller
 
     public function edit(string $code_user, Quote $quote): Response
     {
-        $shop = auth()->user()->shops->first();
-        if ($quote->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
             abort(403);
         }
 
-        $customers = Customer::where('shop_id', $shop->id)
+        $customers = Customer::where('shop_id', $quote->shop_id)
             ->get(['id', 'name']);
 
-        $products = Product::where('shop_id', $shop->id)
+        $products = Product::where('shop_id', $quote->shop_id)
             ->get(['id', 'name', 'selling_price']);
 
         $quote->load('customer', 'items.product');
@@ -167,8 +190,7 @@ class QuoteController extends Controller
 
     public function update(Request $request, string $code_user, Quote $quote): RedirectResponse
     {
-        $shop = auth()->user()->shops->first();
-        if ($quote->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
             abort(403);
         }
 
@@ -180,7 +202,10 @@ class QuoteController extends Controller
             'quote_date' => 'required|date',
             'expiry_date' => 'required|date|after:quote_date',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('products', 'id')->where('shop_id', $quote->shop_id),
+            ],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
@@ -227,8 +252,7 @@ class QuoteController extends Controller
 
     public function send(string $code_user, Quote $quote): RedirectResponse
     {
-        $shop = auth()->user()->shops->first();
-        if ($quote->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
             abort(403);
         }
 
@@ -244,8 +268,7 @@ class QuoteController extends Controller
 
     public function accept(string $code_user, Quote $quote): RedirectResponse
     {
-        $shop = auth()->user()->shops->first();
-        if ($quote->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
             abort(403);
         }
 
@@ -256,7 +279,7 @@ class QuoteController extends Controller
 
     public function export(string $code_user)
     {
-        $shop = auth()->user()->shops->first();
+        $shop = $this->resolveActiveShop();
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\QuotesExport($shop->id),
             'Devis-' . now()->format('Y-m-d') . '.xlsx'
@@ -265,8 +288,7 @@ class QuoteController extends Controller
 
     public function convertToInvoice(string $code_user, Quote $quote): RedirectResponse
     {
-        $shop = auth()->user()->shops->first();
-        if ($quote->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
             abort(403);
         }
 
@@ -283,8 +305,7 @@ class QuoteController extends Controller
 
     public function destroy(string $code_user, Quote $quote): RedirectResponse
     {
-        $shop = auth()->user()->shops->first();
-        if ($quote->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
             abort(403);
         }
 

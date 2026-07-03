@@ -74,8 +74,11 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'shop_id' => 'nullable|exists:shops,id',
-            'role' => ['required', Rule::in(['super_admin', 'admin', 'manager', 'cashier', 'staff'])],
+            'shop_id' => [
+                'nullable',
+                Rule::exists('shops', 'id')->whereIn('id', $currentUser->accessibleShopsQuery()->pluck('id')),
+            ],
+            'role' => ['required', Rule::in(self::assignableRoles($currentUser))],
             'is_active' => 'boolean',
             'permissions' => 'array',
             'permissions.*.module' => 'required|string',
@@ -120,6 +123,11 @@ class UserController extends Controller
     public function edit(string $code_user, User $user): Response
     {
         $currentUser = auth()->user();
+
+        if (!$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
+            abort(403);
+        }
+
         $shops = $currentUser->accessibleShopsQuery()->select('id', 'name')->orderBy('name')->get();
         $user->load('permissions');
 
@@ -133,12 +141,21 @@ class UserController extends Controller
 
     public function update(Request $request, string $code_user, User $user): RedirectResponse
     {
+        $currentUser = auth()->user();
+
+        if (!$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'shop_id' => 'nullable|exists:shops,id',
-            'role' => ['required', Rule::in(['super_admin', 'admin', 'manager', 'cashier', 'staff'])],
+            'shop_id' => [
+                'nullable',
+                Rule::exists('shops', 'id')->whereIn('id', $currentUser->accessibleShopsQuery()->pluck('id')),
+            ],
+            'role' => ['required', Rule::in(self::assignableRoles($currentUser))],
             'is_active' => 'boolean',
             'permissions' => 'array',
             'permissions.*.module' => 'required|string',
@@ -147,6 +164,11 @@ class UserController extends Controller
             'permissions.*.can_edit' => 'boolean',
             'permissions.*.can_delete' => 'boolean',
         ]);
+
+        // Un utilisateur ne peut jamais modifier son propre rôle (auto-élévation de privilèges).
+        if ($user->id === $currentUser->id) {
+            $validated['role'] = $user->role;
+        }
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -184,6 +206,10 @@ class UserController extends Controller
             return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
 
+        if (!auth()->user()->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
+            abort(403);
+        }
+
         $userName = $user->name;
         $userEmail = $user->email;
         
@@ -194,5 +220,20 @@ class UserController extends Controller
         ActivityLogger::deleted($user, "{$userName} ({$userEmail})");
 
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', "L'utilisateur {$userName} a été supprimé avec succès.");
+    }
+
+    /**
+     * Roles that $currentUser is allowed to assign to another account.
+     * Only account owners (or platform admins) can grant super_admin/admin.
+     */
+    private static function assignableRoles(User $currentUser): array
+    {
+        $all = ['super_admin', 'admin', 'manager', 'cashier', 'staff'];
+
+        if (in_array($currentUser->role, ['super_admin', 'admin_platforme'])) {
+            return $all;
+        }
+
+        return array_values(array_diff($all, ['super_admin', 'admin']));
     }
 }

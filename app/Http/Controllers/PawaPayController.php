@@ -150,12 +150,11 @@ class PawaPayController extends Controller
     public function webhook(Request $request): JsonResponse
     {
         $payload = $request->all();
-        Log::info('PawaPay webhook received', ['depositId' => $payload['depositId'] ?? null]);
-
         $depositId = $payload['depositId'] ?? null;
-        $status    = $payload['status'] ?? null;
 
-        if (!$depositId || !$status) {
+        Log::info('PawaPay webhook received', ['depositId' => $depositId]);
+
+        if (!$depositId) {
             return response()->json(['ok' => false], 400);
         }
 
@@ -166,9 +165,20 @@ class PawaPayController extends Controller
             return response()->json(['ok' => true]);
         }
 
+        // The webhook body is not authenticated (no signature from PawaPay), so its
+        // "status" field can't be trusted. Re-fetch the deposit status directly from
+        // PawaPay's API — the same server-to-server call already used by pollStatus().
+        $result = $this->pawaPay->getDeposit($depositId);
+        $status = $result['status'] ?? null;
+
+        if (!$status) {
+            Log::warning('PawaPay webhook: could not re-verify deposit status', ['depositId' => $depositId]);
+            return response()->json(['ok' => false], 502);
+        }
+
         $deposit->update([
             'status'       => $status,
-            'metadata'     => $payload,
+            'metadata'     => $result,
             'completed_at' => $status === 'COMPLETED' ? now() : null,
         ]);
 

@@ -121,13 +121,14 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Route admin pour synchroniser les produits LemonSqueezy
-Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
+Route::middleware(['auth', 'platform.admin'])->prefix('platform-admin')->group(function () {
     Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
 });
 
 // Routes Paddle (webhook public, checkout with auth)
 Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])
     ->name('paddle.webhook')
+    ->middleware(\Laravel\Paddle\Http\Middleware\VerifyWebhookSignature::class)
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
 
 Route::middleware(['auth'])->group(function () {
@@ -140,12 +141,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/two-factor', [TwoFactorController::class, 'index'])->name('two-factor.index');
     Route::get('/two-factor/verify', [TwoFactorController::class, 'showVerification'])->name('two-factor.verify.get');
     Route::post('/two-factor/generate-secret', [TwoFactorController::class, 'generateSecret'])->name('two-factor.generate');
-    Route::post('/two-factor/verify', [TwoFactorController::class, 'verify'])->name('two-factor.verify');
+    Route::post('/two-factor/verify', [TwoFactorController::class, 'verify'])->middleware('throttle:6,1')->name('two-factor.verify');
     Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
-    Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->name('two-factor.check');
-
-    // Debug only - remove in production
-    Route::get('/two-factor/debug/secret', [TwoFactorController::class, 'debugSecret'])->name('two-factor.debug.secret');
+    Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->middleware('throttle:6,1')->name('two-factor.check');
 });
 
 Route::get('/paddle/success', [PaddleController::class, 'success'])->name('paddle.success');
@@ -156,7 +154,7 @@ Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('
 Route::post('/invitation/{token}/accept', [InvitationController::class, 'accept'])->name('invitation.accept');
 
 // Routes admin plateforme (accès réservé aux admin_platforme)
-Route::middleware(['auth'])->prefix('platform-admin')->group(function () {
+Route::middleware(['auth', 'platform.admin'])->prefix('platform-admin')->group(function () {
     Route::get('/dashboard', [PlatformAdminController::class, 'index'])->name('platform.dashboard');
     Route::get('/accounts', [PlatformAdminController::class, 'accounts'])->name('platform.accounts');
     Route::post('/accounts/{user}/toggle', [PlatformAdminController::class, 'toggleAccountStatus'])->name('platform.accounts.toggle');

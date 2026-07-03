@@ -163,6 +163,10 @@ class InvoiceController extends Controller
      */
     public function show(string $code_user, Invoice $invoice)
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
         $invoice->load(['shop', 'customer', 'user', 'items.product.parent']);
 
         // Enrichir le product_name des anciens items de déclinaisons qui ne l'ont pas encore
@@ -182,6 +186,10 @@ class InvoiceController extends Controller
      */
     public function edit(string $code_user, Invoice $invoice): Response
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
         // Ne pas permettre la modification des factures payées
         if ($invoice->status === 'paid') {
             return redirect()->route('invoices.show', $invoice)
@@ -215,14 +223,21 @@ class InvoiceController extends Controller
      */
     public function update(Request $request, string $code_user, Invoice $invoice)
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
         // Ne pas permettre la modification des factures payées
         if ($invoice->status === 'paid') {
             return redirect()->route('invoices.show', $invoice)
                 ->with('error', 'Impossible de modifier une facture payée.');
         }
-        
+
         $validated = $request->validate([
-            'shop_id' => 'required|exists:shops,id',
+            'shop_id' => [
+                'required',
+                Rule::exists('shops', 'id')->whereIn('id', Auth::user()->accessibleShopsQuery()->pluck('id')),
+            ],
             'customer_id' => [
                 'required',
                 Rule::exists('customers', 'id')->where(function ($query) use ($request) {
@@ -247,9 +262,6 @@ class InvoiceController extends Controller
             'items.*.discount_amount' => 'nullable|numeric|min:0',
         ]);
 
-        // Vérifier que la boutique appartient à l'utilisateur
-        Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
-        
         DB::transaction(function () use ($validated, $invoice) {
             $items = $validated['items'];
             unset($validated['items']);
@@ -284,7 +296,7 @@ class InvoiceController extends Controller
         }
         
         // Vérifier que la boutique de la facture appartient à l'utilisateur
-        if ($invoice->shop->user_id !== Auth::id()) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
             abort(403);
         }
 
@@ -301,8 +313,7 @@ class InvoiceController extends Controller
 
     public function send(string $code_user, Invoice $invoice)
     {
-        $shop = auth()->user()->shops->first();
-        if ($invoice->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
             abort(403);
         }
 
@@ -317,17 +328,21 @@ class InvoiceController extends Controller
 
     public function export(string $code_user)
     {
-        $shop = auth()->user()->shops->first();
+        $activeShopId = get_active_shop_id();
+
+        if (!$activeShopId || !Auth::user()->accessibleShopsQuery()->where('id', $activeShopId)->exists()) {
+            return back()->with('error', 'Veuillez sélectionner une boutique.');
+        }
+
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\InvoicesExport($shop->id),
+            new \App\Exports\InvoicesExport($activeShopId),
             'Factures-' . now()->format('Y-m-d') . '.xlsx'
         );
     }
 
     public function createRecurring(Request $request, string $code_user, Invoice $invoice)
     {
-        $shop = auth()->user()->shops->first();
-        if ($invoice->shop_id !== $shop->id) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
             abort(403);
         }
 

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -95,8 +96,12 @@ class CustomerController extends Controller
      */
     public function show(string $code_user, Customer $customer)
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
+            abort(403);
+        }
+
         $customer->load(['shop', 'invoices.items']);
-        
+
         return Inertia::render('Customers/Show', [
             'customer' => $customer,
         ]);
@@ -107,8 +112,12 @@ class CustomerController extends Controller
      */
     public function edit(string $code_user, Customer $customer): Response
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
+            abort(403);
+        }
+
         $shops = Auth::user()->accessibleShops();
-        
+
         return Inertia::render('Customers/Edit', [
             'customer' => $customer,
             'shops' => $shops,
@@ -120,8 +129,15 @@ class CustomerController extends Controller
      */
     public function update(Request $request, string $code_user, Customer $customer)
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
-            'shop_id' => 'required|exists:shops,id',
+            'shop_id' => [
+                'required',
+                Rule::exists('shops', 'id')->whereIn('id', Auth::user()->accessibleShopsQuery()->pluck('id')),
+            ],
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
@@ -130,9 +146,6 @@ class CustomerController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        // Vérifier que la boutique appartient à l'utilisateur
-        Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
-        
         $customer->update($validated);
 
         // Log activity
@@ -147,7 +160,7 @@ class CustomerController extends Controller
     public function destroy(string $code_user, Customer $customer)
     {
         // Vérifier que la boutique du client appartient à l'utilisateur
-        if ($customer->shop->user_id !== Auth::id()) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
             abort(403);
         }
 
