@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef, useCallback } from 'react';
-import { ArrowLeft, Plus, Trash2, Search, ScanLine, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Search, ScanLine, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
 import BarcodeScanner from '@/Components/BarcodeScanner';
@@ -31,6 +31,7 @@ interface InventoryItem {
     product_id: number;
     product: Product;
     expected_quantity: number;
+    expected_defective_quantity: number;
     counted_quantity: number | null;
     defective_quantity: number;
 }
@@ -58,6 +59,7 @@ interface FormItem {
     product_name: string;
     product_sku: string;
     expected_quantity: number;
+    expected_defective_quantity: number;
 }
 
 type ScanFeedback = { type: 'success' | 'added' | 'error'; message: string } | null;
@@ -83,6 +85,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
             product_name: item.product.name,
             product_sku: item.product.sku,
             expected_quantity: item.expected_quantity,
+            expected_defective_quantity: item.expected_defective_quantity,
         })) as FormItem[],
     });
 
@@ -96,7 +99,6 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
 
     const addProduct = (product: Product) => {
         setData('items', [
-            ...data.items,
             {
                 product_id: product.id,
                 counted_quantity: null,
@@ -104,7 +106,9 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                 product_name: product.name,
                 product_sku: product.sku,
                 expected_quantity: product.stock_quantity,
+                expected_defective_quantity: product.defective_stock_quantity,
             },
+            ...data.items,
         ]);
         setSearchProduct('');
     };
@@ -156,7 +160,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
 
         if (existingItem) {
             highlightRow(existingItem.product_id);
-            showFeedback({ type: 'success', message: `Produit trouvé : ${existingItem.product_name}` });
+            showFeedback({ type: 'success', message: t.inventory.form.productFound(existingItem.product_name) });
             return;
         }
 
@@ -168,12 +172,12 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
         if (product) {
             addProduct(product);
             setTimeout(() => highlightRow(product.id), 100);
-            showFeedback({ type: 'added', message: `"${product.name}" ajouté à l'inventaire` });
+            showFeedback({ type: 'added', message: t.inventory.form.productAdded(product.name) });
             return;
         }
 
-        showFeedback({ type: 'error', message: `Aucun produit trouvé pour ce code : ${code}` });
-    }, [data.items, data.shop_id, products]);
+        showFeedback({ type: 'error', message: t.inventory.form.noProductForCode(code) });
+    }, [data.items, data.shop_id, products, t]);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -182,14 +186,14 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Modifier l'inventaire {inventory.inventory_number}</h1>}
+            header={<h1 className="text-xl font-semibold text-white">{t.inventory.form.editTitle} {inventory.inventory_number}</h1>}
         >
-            <Head title={`Modifier inventaire ${inventory.inventory_number}`} />
+            <Head title={`${t.inventory.form.editTitle} ${inventory.inventory_number}`} />
 
             <form onSubmit={submit} className="space-y-6">
                 {/* Informations générales */}
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-white">Informations générales</h2>
+                    <h2 className="mb-4 text-lg font-semibold text-white">{t.common.form.generalInfo}</h2>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
@@ -225,29 +229,29 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">Statut</label>
+                            <label className="block text-sm font-medium text-slate-200">{t.common.misc.status}</label>
                             <select
                                 value={data.status}
                                 onChange={(e) => setData('status', e.target.value)}
                                 className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                 disabled={inventory.status === 'completed'}
                             >
-                                <option value="draft">Brouillon</option>
-                                <option value="in_progress">En cours</option>
-                                <option value="cancelled">Annulé</option>
+                                <option value="draft">{t.inventory.status.draft}</option>
+                                <option value="in_progress">{t.inventory.status.in_progress}</option>
+                                <option value="cancelled">{t.inventory.status.cancelled}</option>
                             </select>
                             <InputError message={errors.status} />
                         </div>
                     </div>
 
                     <div className="mt-4">
-                        <label className="block text-sm font-medium text-slate-200">Notes</label>
+                        <label className="block text-sm font-medium text-slate-200">{t.common.form.notes}</label>
                         <textarea
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                             rows={3}
                             className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
-                            placeholder="Notes optionnelles..."
+                            placeholder={t.inventory.form.notesOptionalPlaceholder}
                         />
                     </div>
                 </div>
@@ -256,14 +260,14 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                 {inventory.status !== 'completed' && (
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">Ajouter des produits</h2>
+                            <h2 className="text-lg font-semibold text-white">{t.inventory.form.addProducts}</h2>
                             <button
                                 type="button"
                                 onClick={() => setShowScanner(true)}
                                 className="flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-sm text-amber-300 transition hover:bg-amber-300/20"
                             >
                                 <ScanLine className="size-4" />
-                                Scanner un code
+                                {t.inventory.form.scanCode}
                             </button>
                         </div>
 
@@ -288,7 +292,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                 type="text"
                                 value={searchProduct}
                                 onChange={(e) => setSearchProduct(e.target.value)}
-                                placeholder="Rechercher un produit par nom ou SKU..."
+                                placeholder={t.inventory.form.searchProductPlaceholder}
                                 className="w-full rounded-lg border border-white/15 bg-slate-900/70 py-2 pl-10 pr-4 text-slate-200"
                             />
                         </div>
@@ -320,28 +324,33 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
 
                 {/* Liste des produits à inventorier */}
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-white">
-                        Produits à inventorier ({data.items.length})
+                    <h2 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-white">
+                        {t.inventory.form.productsToInventory(data.items.length)}
+                        <span title={t.inventory.show.helpText}>
+                            <Info className="size-4 text-slate-400" />
+                        </span>
                     </h2>
 
                     {data.items.length === 0 ? (
-                        <p className="text-center text-slate-400">Aucun produit ajouté</p>
+                        <p className="text-center text-slate-400">{t.inventory.form.noProductAdded}</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-white/10 text-left text-sm text-slate-400">
-                                        <th className="pb-3 pr-4">Produit</th>
-                                        <th className="pb-3 pr-4 text-right">Stock théorique</th>
-                                        <th className="pb-3 pr-4 text-right">Bons</th>
-                                        <th className="pb-3 pr-4 text-right">Défectueuses</th>
-                                        <th className="pb-3 pr-4 text-right">Écart</th>
+                                        <th className="pb-3 pr-4">{t.inventory.form.product}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.expectedStock}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.goodQuantity}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.defective}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.difference}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.defectiveDifference}</th>
                                         <th className="pb-3"></th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {data.items.map((item) => {
-                                        const difference = ((item.counted_quantity ?? 0) + item.defective_quantity) - item.expected_quantity;
+                                        const difference = (item.counted_quantity ?? 0) - item.expected_quantity;
+                                        const defectiveDifference = item.defective_quantity - item.expected_defective_quantity;
                                         const isHighlighted = highlightedId === item.product_id;
                                         return (
                                             <tr
@@ -358,9 +367,9 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                             if (product?.sold_since_last_inventory || product?.purchased_since_last_inventory) {
                                                                 return (
                                                                     <p className="text-xs text-amber-300 mt-1">
-                                                                        {product?.sold_since_last_inventory > 0 && `↓ ${product.sold_since_last_inventory} vendus`}
+                                                                        {product?.sold_since_last_inventory > 0 && t.inventory.form.soldCount(product.sold_since_last_inventory)}
                                                                         {product?.sold_since_last_inventory > 0 && product?.purchased_since_last_inventory > 0 && ' • '}
-                                                                        {product?.purchased_since_last_inventory > 0 && `↑ ${product.purchased_since_last_inventory} achetés`}
+                                                                        {product?.purchased_since_last_inventory > 0 && t.inventory.form.purchasedCount(product.purchased_since_last_inventory)}
                                                                     </p>
                                                                 );
                                                             }
@@ -419,6 +428,20 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                         </span>
                                                     )}
                                                 </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    <span
+                                                        className={`font-medium ${
+                                                            defectiveDifference === 0
+                                                                ? 'text-slate-400'
+                                                                : defectiveDifference > 0
+                                                                ? 'text-green-300'
+                                                                : 'text-red-300'
+                                                        }`}
+                                                    >
+                                                        {defectiveDifference > 0 ? '+' : ''}
+                                                        {defectiveDifference}
+                                                    </span>
+                                                </td>
                                                 <td className="py-3 text-right">
                                                     {inventory.status !== 'completed' && (
                                                         <button
@@ -447,7 +470,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                         className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
                     >
                         <ArrowLeft className="size-4" />
-                        Annuler
+                        {t.common.actions.cancel}
                     </Link>
 
                     {inventory.status !== 'completed' && (
@@ -456,7 +479,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                             disabled={processing || data.items.length === 0}
                             className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-6 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {processing ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                            {processing ? t.inventory.form.saving : t.inventory.form.saveChanges}
                         </button>
                     )}
                 </div>

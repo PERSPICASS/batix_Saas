@@ -102,6 +102,7 @@ class InventoryController extends Controller
                     'inventory_id' => $inventory->id,
                     'product_id' => $item['product_id'],
                     'expected_quantity' => $product->stock_quantity,
+                    'expected_defective_quantity' => $product->defective_stock_quantity,
                     'counted_quantity' => $item['counted_quantity'] ?? 0,
                     'defective_quantity' => $item['defective_quantity'] ?? 0,
                     'unit_cost' => $product->purchase_price,
@@ -111,7 +112,7 @@ class InventoryController extends Controller
             // Update inventory stats
             $inventory->total_items = count($validated['items']);
             $inventory->total_discrepancies = InventoryItem::where('inventory_id', $inventory->id)
-                ->where('difference', '!=', 0)
+                ->where(fn ($q) => $q->where('difference', '!=', 0)->orWhere('defective_difference', '!=', 0))
                 ->count();
             $inventory->save();
         });
@@ -192,17 +193,24 @@ class InventoryController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
+            // Preserve the original expected quantities for products already counted in this
+            // inventory, so re-saving a draft doesn't silently shift everyone's baseline to
+            // whatever the live stock happens to be at save time (see StockMovementService).
+            $existingByProduct = $inventory->items()->get()->keyBy('product_id');
+
             // Delete existing items
             $inventory->items()->delete();
 
             // Create new items
             foreach ($validated['items'] as $item) {
                 $product = Product::findOrFail($item['product_id']);
+                $existing = $existingByProduct->get($item['product_id']);
 
                 InventoryItem::create([
                     'inventory_id' => $inventory->id,
                     'product_id' => $item['product_id'],
-                    'expected_quantity' => $product->stock_quantity,
+                    'expected_quantity' => $existing->expected_quantity ?? $product->stock_quantity,
+                    'expected_defective_quantity' => $existing->expected_defective_quantity ?? $product->defective_stock_quantity,
                     'counted_quantity' => $item['counted_quantity'] ?? 0,
                     'defective_quantity' => $item['defective_quantity'] ?? 0,
                     'unit_cost' => $product->purchase_price,
@@ -212,12 +220,37 @@ class InventoryController extends Controller
             // Update stats
             $inventory->total_items = count($validated['items']);
             $inventory->total_discrepancies = InventoryItem::where('inventory_id', $inventory->id)
-                ->where('difference', '!=', 0)
+                ->where(fn ($q) => $q->where('difference', '!=', 0)->orWhere('defective_difference', '!=', 0))
                 ->count();
             $inventory->save();
         });
 
         return redirect()->route('inventory.index', ['code_user' => request()->route('code_user')])->with('success', 'Inventaire mis à jour avec succès.');
+    }
+
+    /**
+     * JSON preview of the stock adjustments "Terminer l'inventaire" will apply, computed
+     * against the product's live stock (same comparison StockMovementService uses), so the
+     * confirmation shown to the user always matches what will actually happen.
+     */
+    public function completionPreview(string $code_user, Inventory $inventory): \Illuminate\Http\JsonResponse
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
+        $inventory->load('items.product:id,name,stock_quantity,defective_stock_quantity');
+
+        return response()->json([
+            'items' => $inventory->items->map(fn (InventoryItem $item) => [
+                'id' => $item->id,
+                'product_name' => $item->product->name,
+                'good_before' => $item->product->stock_quantity,
+                'good_after' => $item->counted_quantity ?? 0,
+                'defective_before' => $item->product->defective_stock_quantity,
+                'defective_after' => $item->defective_quantity,
+            ]),
+        ]);
     }
 
     public function complete(string $code_user, Inventory $inventory): RedirectResponse
