@@ -4,6 +4,7 @@ import { DollarSign, Edit2, Trash2, Plus } from 'lucide-react';
 import Table, { TableActions, TableBadge } from '@/Components/Table';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface FixedCost {
     id: number;
@@ -22,15 +23,9 @@ interface Props {
     total_monthly: number;
 }
 
-const CATEGORIES = {
-    infrastructure: 'Infrastructure',
-    api: 'API & Services',
-    storage: 'Stockage',
-    security: 'Sécurité',
-    other: 'Autre',
-};
-
 export default function FixedCostsIndex({ costs, total_monthly }: Props) {
+    const { t } = useLocale();
+    const CATEGORIES = t.platformFixedCosts.categories;
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
     const handleDelete = (id: number) => {
@@ -45,7 +40,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
     const columns = [
         {
             key: 'name',
-            label: 'Charge',
+            label: t.platformFixedCosts.index.columns.name,
             render: (cost: FixedCost) => (
                 <div>
                     <p className="font-medium text-white">{cost.name}</p>
@@ -57,7 +52,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
         },
         {
             key: 'category',
-            label: 'Catégorie',
+            label: t.platformFixedCosts.index.columns.category,
             render: (cost: FixedCost) => (
                 <span className="rounded-full bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-300">
                     {CATEGORIES[cost.category as keyof typeof CATEGORIES] || cost.category}
@@ -66,14 +61,14 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
         },
         {
             key: 'amount_monthly',
-            label: 'Montant',
+            label: t.platformFixedCosts.index.columns.amount,
             render: (cost: FixedCost) => (
                 <div className="flex items-center gap-2 font-semibold text-amber-300">
                     <DollarSign className="size-4" />
                     <div>
                         <div>{parseFloat(cost.amount_monthly.toString()).toFixed(2)} {cost.currency}</div>
                         <div className="text-xs text-slate-400">
-                            {cost.billing_cycle === 'monthly' ? 'Mensuel' : 'Annuel'}
+                            {cost.billing_cycle === 'monthly' ? t.platformFixedCosts.billingCycles.monthly : t.platformFixedCosts.billingCycles.annual}
                         </div>
                     </div>
                 </div>
@@ -81,22 +76,22 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.platformFixedCosts.index.columns.status,
             render: (cost: FixedCost) => (
                 <TableBadge variant={cost.is_active ? 'success' : 'danger'}>
-                    {cost.is_active ? 'Actif' : 'Inactif'}
+                    {cost.is_active ? t.platformFixedCosts.index.active : t.platformFixedCosts.index.inactive}
                 </TableBadge>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t.platformFixedCosts.index.columns.actions,
             render: (cost: FixedCost) => (
                 <TableActions>
                     <Link
                         href={route('platform.fixed-costs.edit', cost.id)}
                         className="rounded-lg p-2 text-blue-300 transition hover:bg-blue-500/10"
-                        title="Modifier"
+                        title={t.platformFixedCosts.index.edit}
                     >
                         <Edit2 className="size-4" />
                     </Link>
@@ -104,7 +99,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                         type="button"
                         onClick={() => setConfirmDelete(cost.id)}
                         className="rounded-lg p-2 text-red-300 transition hover:bg-red-500/10"
-                        title="Supprimer"
+                        title={t.platformFixedCosts.index.delete}
                     >
                         <Trash2 className="size-4" />
                     </button>
@@ -117,31 +112,31 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Charges Fixes</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.platformFixedCosts.index.title}</h1>
                     <Link
                         href={route('platform.dashboard')}
                         className="text-sm text-amber-300 hover:text-amber-200"
                     >
-                        ← Retour au dashboard
+                        {t.platformFixedCosts.index.backToDashboard}
                     </Link>
                 </div>
             }
         >
-            <Head title="Charges Fixes - Admin Plateforme" />
+            <Head title={`${t.platformFixedCosts.index.title} - Admin Plateforme`} />
 
             <div className="space-y-6">
                 {/* Boutons et stats */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1">
-                        <p className="text-sm text-slate-400">Charges actives: <span className="font-semibold text-white">{activeCosts.length}</span></p>
-                        <p className="text-sm text-slate-400">Total mensuel: <span className="font-semibold text-amber-300">€{total_monthly.toFixed(2)}</span></p>
+                        <p className="text-sm text-slate-400">{t.platformFixedCosts.index.activeCostsLabel} <span className="font-semibold text-white">{activeCosts.length}</span></p>
+                        <p className="text-sm text-slate-400">{t.platformFixedCosts.index.totalMonthlyLabel} <span className="font-semibold text-amber-300">€{total_monthly.toFixed(2)}</span></p>
                     </div>
                     <Link
                         href={route('platform.fixed-costs.create')}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 font-medium text-slate-950 transition hover:bg-amber-200"
                     >
                         <Plus className="size-4" />
-                        Nouvelle charge
+                        {t.platformFixedCosts.index.newCost}
                     </Link>
                 </div>
 
@@ -149,7 +144,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                 <Table
                     columns={columns}
                     data={costs}
-                    emptyMessage="Aucune charge définie."
+                    emptyMessage={t.platformFixedCosts.index.emptyMessage}
                 />
             </div>
 
@@ -159,8 +154,8 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                     show={true}
                     onClose={() => setConfirmDelete(null)}
                     onConfirm={() => handleDelete(confirmDelete)}
-                    title="Supprimer la charge"
-                    message="Êtes-vous sûr de vouloir supprimer cette charge ? Cette action est irréversible."
+                    title={t.platformFixedCosts.index.deleteTitle}
+                    message={t.platformFixedCosts.index.deleteMessage}
                 />
             )}
         </AuthenticatedLayout>

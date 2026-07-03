@@ -7,6 +7,12 @@ import { gettingStarted } from './gettingStarted';
 import { freeTrialBanner } from './freeTrialBanner';
 import { subscriptionBanner } from './subscriptionBanner';
 import { subscriptionGraceBanner } from './subscriptionGraceBanner';
+import { management } from './management';
+import { payment } from './payment';
+import { reportsAnalytics } from './reportsAnalytics';
+import { platformFixedCosts } from './platformFixedCosts';
+import { platformBlog } from './platformBlog';
+import { platformSubscriptionPlans } from './platformSubscriptionPlans';
 import { customers } from './customers';
 import { products } from './products';
 import { sales } from './sales';
@@ -51,6 +57,12 @@ export const translations = {
         freeTrialBanner: freeTrialBanner.fr,
         subscriptionBanner: subscriptionBanner.fr,
         subscriptionGraceBanner: subscriptionGraceBanner.fr,
+        management: management.fr,
+        payment: payment.fr,
+        reportsAnalytics: reportsAnalytics.fr,
+        platformFixedCosts: platformFixedCosts.fr,
+        platformBlog: platformBlog.fr,
+        platformSubscriptionPlans: platformSubscriptionPlans.fr,
         customers: customers.fr,
         products: products.fr,
         sales: sales.fr,
@@ -94,6 +106,12 @@ export const translations = {
         freeTrialBanner: freeTrialBanner.en,
         subscriptionBanner: subscriptionBanner.en,
         subscriptionGraceBanner: subscriptionGraceBanner.en,
+        management: management.en,
+        payment: payment.en,
+        reportsAnalytics: reportsAnalytics.en,
+        platformFixedCosts: platformFixedCosts.en,
+        platformBlog: platformBlog.en,
+        platformSubscriptionPlans: platformSubscriptionPlans.en,
         customers: customers.en,
         products: products.en,
         sales: sales.en,

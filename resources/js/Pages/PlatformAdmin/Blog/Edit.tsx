@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
 import RichEditor from '@/Components/RichEditor';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Post {
     id: number;
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function BlogEdit({ post }: Props) {
+    const { t } = useLocale();
     const { data, setData, post: submit, processing, errors } = useForm({
         title_fr: post.title_fr,
         title_en: post.title_en ?? '',
@@ -46,7 +48,7 @@ export default function BlogEdit({ post }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title={`Modifier — ${post.title_fr}`} />
+            <Head title={`${t.platformBlog.edit.headTitle} ${post.title_fr}`} />
 
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
@@ -57,7 +59,7 @@ export default function BlogEdit({ post }: Props) {
                         <ArrowLeft className="size-5" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Modifier l'article</h1>
+                        <h1 className="text-2xl font-bold text-white">{t.platformBlog.edit.title}</h1>
                         <p className="mt-1 text-sm text-white/60">{post.slug}</p>
                     </div>
                 </div>
@@ -67,10 +69,10 @@ export default function BlogEdit({ post }: Props) {
                         {/* Contenu principal */}
                         <div className="space-y-5 lg:col-span-2">
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
-                                <h2 className="text-sm font-semibold uppercase tracking-wider text-white/40">Contenu</h2>
+                                <h2 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t.platformBlog.form.content}</h2>
 
                                 <div className="grid gap-5 sm:grid-cols-2">
-                                    <Field label="Titre (FR) *" error={errors.title_fr}>
+                                    <Field label={t.platformBlog.form.titleFr} error={errors.title_fr}>
                                         <input
                                             type="text"
                                             value={data.title_fr}
@@ -78,7 +80,7 @@ export default function BlogEdit({ post }: Props) {
                                             className={inputClass(!!errors.title_fr)}
                                         />
                                     </Field>
-                                    <Field label="Titre (EN)" error={errors.title_en}>
+                                    <Field label={t.platformBlog.form.titleEn} error={errors.title_en}>
                                         <input
                                             type="text"
                                             value={data.title_en}
@@ -89,7 +91,7 @@ export default function BlogEdit({ post }: Props) {
                                 </div>
 
                                 <div className="grid gap-5 sm:grid-cols-2">
-                                    <Field label="Extrait (FR)" error={errors.excerpt_fr}>
+                                    <Field label={t.platformBlog.form.excerptFr} error={errors.excerpt_fr}>
                                         <textarea
                                             rows={3}
                                             value={data.excerpt_fr}
@@ -97,7 +99,7 @@ export default function BlogEdit({ post }: Props) {
                                             className={inputClass(false)}
                                         />
                                     </Field>
-                                    <Field label="Extrait (EN)" error={errors.excerpt_en}>
+                                    <Field label={t.platformBlog.form.excerptEn} error={errors.excerpt_en}>
                                         <textarea
                                             rows={3}
                                             value={data.excerpt_en}
@@ -107,20 +109,20 @@ export default function BlogEdit({ post }: Props) {
                                     </Field>
                                 </div>
 
-                                <Field label="Contenu (FR) *" error={errors.content_fr}>
+                                <Field label={t.platformBlog.form.contentFr} error={errors.content_fr}>
                                     <RichEditor
                                         value={data.content_fr}
                                         onChange={v => setData('content_fr', v)}
-                                        placeholder="Contenu de l'article en français..."
+                                        placeholder={t.platformBlog.form.contentFrPlaceholder}
                                         rows={14}
                                     />
                                 </Field>
 
-                                <Field label="Contenu (EN)" error={errors.content_en}>
+                                <Field label={t.platformBlog.form.contentEn} error={errors.content_en}>
                                     <RichEditor
                                         value={data.content_en}
                                         onChange={v => setData('content_en', v)}
-                                        placeholder="Article content in English..."
+                                        placeholder={t.platformBlog.form.contentEnPlaceholder}
                                         rows={14}
                                     />
                                 </Field>
@@ -130,9 +132,9 @@ export default function BlogEdit({ post }: Props) {
                         {/* Sidebar */}
                         <div className="space-y-5">
                             <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
-                                <h2 className="text-sm font-semibold uppercase tracking-wider text-white/40">Paramètres</h2>
+                                <h2 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t.platformBlog.form.settings}</h2>
 
-                                <Field label="Auteur" error={errors.author_name}>
+                                <Field label={t.platformBlog.form.author} error={errors.author_name}>
                                     <input
                                         type="text"
                                         value={data.author_name}
@@ -141,7 +143,7 @@ export default function BlogEdit({ post }: Props) {
                                     />
                                 </Field>
 
-                                <Field label="Catégorie" error={errors.category}>
+                                <Field label={t.platformBlog.form.category} error={errors.category}>
                                     <input
                                         type="text"
                                         value={data.category}
@@ -152,7 +154,7 @@ export default function BlogEdit({ post }: Props) {
 
                                 {post.cover_image && (
                                     <div className="space-y-1.5">
-                                        <p className="text-xs text-white/40">Image actuelle</p>
+                                        <p className="text-xs text-white/40">{t.platformBlog.form.currentImage}</p>
                                         <img
                                             src={`/storage/${post.cover_image}`}
                                             alt=""
@@ -162,7 +164,7 @@ export default function BlogEdit({ post }: Props) {
                                     </div>
                                 )}
 
-                                <Field label="Nouvelle image de couverture" error={errors.cover_image as string}>
+                                <Field label={t.platformBlog.form.newCoverImage} error={errors.cover_image as string}>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -183,7 +185,7 @@ export default function BlogEdit({ post }: Props) {
                                             <div className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-transform ${data.is_published ? 'translate-x-4' : 'translate-x-0.5'}`} />
                                         </div>
                                     </div>
-                                    <span className="text-sm text-white/70">Publié</span>
+                                    <span className="text-sm text-white/70">{t.platformBlog.form.published}</span>
                                 </label>
                             </div>
 
@@ -193,7 +195,7 @@ export default function BlogEdit({ post }: Props) {
                                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-amber-300 disabled:opacity-50"
                             >
                                 <Save className="size-4" />
-                                {processing ? 'Enregistrement...' : 'Mettre à jour'}
+                                {processing ? t.platformBlog.edit.saving : t.platformBlog.edit.submit}
                             </button>
                         </div>
                     </div>

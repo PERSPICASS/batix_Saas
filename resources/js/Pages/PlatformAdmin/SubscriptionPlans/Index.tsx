@@ -5,6 +5,7 @@ import Table, { TableActionButton, TableActions, TableBadge } from '@/Components
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import Currency from '@/Components/Currency';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface SubscriptionPlan {
     id: number;
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export default function Index({ plans }: Props) {
+    const { t } = useLocale();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [planToDelete, setPlanToDelete] = useState<SubscriptionPlan | null>(null);
 
@@ -53,7 +55,7 @@ export default function Index({ plans }: Props) {
 
     const confirmDelete = (plan: SubscriptionPlan) => {
         if (plan.subscriptions_count > 0) {
-            alert('Impossible de supprimer un plan avec des abonnements actifs.');
+            alert(t.platformSubscriptionPlans.index.cannotDeleteWithSubscriptions);
             return;
         }
         setPlanToDelete(plan);
@@ -77,26 +79,26 @@ export default function Index({ plans }: Props) {
             header={
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-xl font-semibold text-white">Plans d'Abonnement</h1>
+                        <h1 className="text-xl font-semibold text-white">{t.platformSubscriptionPlans.index.title}</h1>
                         <p className="text-sm text-slate-400 mt-1">
-                            Gérer les plans et leurs fonctionnalités
+                            {t.platformSubscriptionPlans.index.subtitle}
                         </p>
                     </div>
                 </div>
             }
         >
-            <Head title="Plans d'Abonnement" />
+            <Head title={t.platformSubscriptionPlans.index.title} />
 
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-slate-300">
-                        {plans.total} plan{plans.total > 1 ? 's' : ''}
+                        {t.platformSubscriptionPlans.index.planCount(plans.total)}
                     </p>
                     <Link
                         href={route('platform.subscriptions.create')}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                     >
-                        <Plus className="size-4" /> Nouveau plan
+                        <Plus className="size-4" /> {t.platformSubscriptionPlans.index.newPlan}
                     </Link>
                 </div>
 
@@ -105,7 +107,7 @@ export default function Index({ plans }: Props) {
                     columns={[
                         {
                             key: 'name',
-                            label: 'Plan',
+                            label: t.platformSubscriptionPlans.index.columns.plan,
                             render: (plan) => (
                                 <div className="flex flex-col">
                                     <span className="font-medium text-white">{plan.name}</span>
@@ -119,7 +121,7 @@ export default function Index({ plans }: Props) {
                         },
                         {
                             key: 'price',
-                            label: 'Prix',
+                            label: t.platformSubscriptionPlans.index.columns.price,
                             align: 'right',
                             render: (plan) => (
                                 <Currency amount={plan.price} className="font-semibold text-emerald-400" />
@@ -127,19 +129,19 @@ export default function Index({ plans }: Props) {
                         },
                         {
                             key: 'limits',
-                            label: 'Limites',
+                            label: t.platformSubscriptionPlans.index.columns.limits,
                             render: (plan) => (
                                 <div className="flex flex-col text-sm">
                                     <span className="text-slate-300">{plan.shop_limit_text}</span>
                                     <span className="text-xs text-slate-400">
-                                        {plan.max_users === -1 ? 'Utilisateurs illimités' : `${plan.max_users} utilisateurs`}
+                                        {plan.max_users === -1 ? t.platformSubscriptionPlans.index.unlimitedUsers : t.platformSubscriptionPlans.index.usersCount(plan.max_users)}
                                     </span>
                                 </div>
                             ),
                         },
                         {
                             key: 'subscriptions_count',
-                            label: 'Abonnements',
+                            label: t.platformSubscriptionPlans.index.columns.subscriptions,
                             align: 'center',
                             render: (plan) => (
                                 <span className="text-slate-300">{plan.subscriptions_count}</span>
@@ -147,7 +149,7 @@ export default function Index({ plans }: Props) {
                         },
                         {
                             key: 'is_active',
-                            label: 'Statut',
+                            label: t.platformSubscriptionPlans.index.columns.status,
                             align: 'center',
                             render: (plan) => (
                                 <button
@@ -155,14 +157,14 @@ export default function Index({ plans }: Props) {
                                     className="inline-block"
                                 >
                                     <TableBadge variant={plan.is_active ? 'success' : 'danger'}>
-                                        {plan.is_active ? 'Actif' : 'Inactif'}
+                                        {plan.is_active ? t.platformSubscriptionPlans.index.active : t.platformSubscriptionPlans.index.inactive}
                                     </TableBadge>
                                 </button>
                             ),
                         },
                         {
                             key: 'actions',
-                            label: 'Actions',
+                            label: t.platformSubscriptionPlans.index.columns.actions,
                             align: 'right',
                             render: (plan) => (
                                 <TableActions>
@@ -170,19 +172,19 @@ export default function Index({ plans }: Props) {
                                         href={route('platform.subscriptions.edit', plan.id)}
                                         className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
                                     >
-                                        <Pencil className="size-3.5" /> Modifier
+                                        <Pencil className="size-3.5" /> {t.platformSubscriptionPlans.index.edit}
                                     </Link>
                                     <TableActionButton
                                         variant="danger"
                                         onClick={() => confirmDelete(plan)}
                                     >
-                                        <Trash2 className="size-3.5" /> Supprimer
+                                        <Trash2 className="size-3.5" /> {t.platformSubscriptionPlans.index.delete}
                                     </TableActionButton>
                                 </TableActions>
                             ),
                         },
                     ]}
-                    emptyMessage="Aucun plan d'abonnement trouvé"
+                    emptyMessage={t.platformSubscriptionPlans.index.emptyMessage}
                 />
 
                 {/* Pagination */}
@@ -207,8 +209,8 @@ export default function Index({ plans }: Props) {
 
             <ConfirmDeleteModal
                 show={showDeleteModal}
-                title="Supprimer le plan"
-                message={`Êtes-vous sûr de vouloir supprimer le plan "${planToDelete?.name}" ? Cette action est irréversible.`}
+                title={t.platformSubscriptionPlans.index.deleteTitle}
+                message={t.platformSubscriptionPlans.index.deleteMessage(planToDelete?.name)}
                 onConfirm={handleDelete}
                 onClose={() => {
                     setShowDeleteModal(false);

@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ArrowLeft, Plus, X, AlertCircle } from 'lucide-react';
 import InputError from '@/Components/InputError';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface SubscriptionPlan {
     id: number;
@@ -24,10 +25,8 @@ interface Props {
 }
 
 export default function Edit({ plan, activeSubscriptionsCount }: Props) {
-    // Debug: voir ce qui est reçu
-    console.log('Plan received:', plan);
-    console.log('Active subscriptions count:', activeSubscriptionsCount);
-    
+    const { t } = useLocale();
+
     const { data, setData, put, processing, errors } = useForm({
         name: plan.name || '',
         slug: plan.slug || '',
@@ -69,11 +68,11 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <h1 className="text-xl font-semibold text-white">Modifier: {plan.name}</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.platformSubscriptionPlans.edit.title(plan.name)}</h1>
                 </div>
             }
         >
-            <Head title={`Modifier le Plan: ${plan.name}`} />
+            <Head title={t.platformSubscriptionPlans.edit.headTitle(plan.name)} />
 
             <div className="space-y-4">
                 {/* Avertissement pour les plans avec abonnements actifs */}
@@ -83,11 +82,10 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                             <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5 shrink-0" />
                             <div>
                                 <h3 className="text-sm font-medium text-yellow-400">
-                                    Attention
+                                    {t.platformSubscriptionPlans.edit.warningTitle}
                                 </h3>
                                 <p className="mt-1 text-sm text-yellow-300/90">
-                                    Ce plan a {activeSubscriptionsCount} abonnement(s) actif(s). 
-                                    Les modifications importantes (prix, limites) peuvent affecter les clients existants.
+                                    {t.platformSubscriptionPlans.edit.warningText(activeSubscriptionsCount)}
                                 </p>
                             </div>
                         </div>
@@ -98,7 +96,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                     {/* Nom et Slug */}
                     <div className="grid gap-4 md:grid-cols-2">
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Nom du Plan *</span>
+                            <span>{t.platformSubscriptionPlans.form.name}</span>
                             <input
                                 type="text"
                                 value={data.name}
@@ -110,7 +108,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Slug *</span>
+                            <span>{t.platformSubscriptionPlans.form.slug}</span>
                             <input
                                 type="text"
                                 value={data.slug}
@@ -118,14 +116,14 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 required
                             />
-                            <p className="text-xs text-slate-400">Identifiant unique (ex: starter, growth, scale)</p>
+                            <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.slugHint}</p>
                             <InputError message={errors.slug} />
                         </label>
                     </div>
 
                     {/* Description */}
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Description</span>
+                        <span>{t.platformSubscriptionPlans.form.description}</span>
                         <textarea
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
@@ -137,7 +135,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
 
                     {/* Prix */}
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Prix (XAF/mois) *</span>
+                        <span>{t.platformSubscriptionPlans.form.price}</span>
                         <input
                             type="number"
                             step="0.01"
@@ -152,7 +150,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                     {/* Limites */}
                     <div className="grid gap-4 md:grid-cols-2">
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Max boutiques *</span>
+                            <span>{t.platformSubscriptionPlans.form.maxShops}</span>
                             <input
                                 type="number"
                                 value={data.max_shops}
@@ -160,12 +158,12 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 required
                             />
-                            <p className="text-xs text-slate-400">-1 pour illimité</p>
+                            <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                             <InputError message={errors.max_shops} />
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Max utilisateurs *</span>
+                            <span>{t.platformSubscriptionPlans.form.maxUsers}</span>
                             <input
                                 type="number"
                                 value={data.max_users}
@@ -173,12 +171,12 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 required
                             />
-                            <p className="text-xs text-slate-400">-1 pour illimité</p>
+                            <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                             <InputError message={errors.max_users} />
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Max produits *</span>
+                            <span>{t.platformSubscriptionPlans.form.maxProducts}</span>
                             <input
                                 type="number"
                                 value={data.max_products}
@@ -186,12 +184,12 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 required
                             />
-                            <p className="text-xs text-slate-400">-1 pour illimité</p>
+                            <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                             <InputError message={errors.max_products} />
                         </label>
 
                         <label className="block space-y-1 text-sm text-slate-200">
-                            <span>Max dépôts *</span>
+                            <span>{t.platformSubscriptionPlans.form.maxDepots}</span>
                             <input
                                 type="number"
                                 value={data.max_depots}
@@ -199,20 +197,20 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                                 className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 required
                             />
-                            <p className="text-xs text-slate-400">-1 pour illimité, 0 pour aucun</p>
+                            <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedOrNoneHint}</p>
                             <InputError message={errors.max_depots} />
                         </label>
                     </div>
 
                     {/* Fonctionnalités */}
                     <label className="block space-y-2 text-sm text-slate-200">
-                        <span>Fonctionnalités</span>
+                        <span>{t.platformSubscriptionPlans.form.features}</span>
                         <div className="flex gap-2">
                             <input
                                 type="text"
                                 value={featureInput}
                                 onChange={(e) => setFeatureInput(e.target.value)}
-                                placeholder="Ajouter une fonctionnalité..."
+                                placeholder={t.platformSubscriptionPlans.form.addFeaturePlaceholder}
                                 className="flex-1 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                                 onKeyPress={(e) => {
                                     if (e.key === 'Enter') {
@@ -260,7 +258,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                             onChange={(e) => setData('is_active', e.target.checked)}
                             className="rounded border border-white/15 bg-slate-900/70"
                         />
-                        <span>Plan actif (visible pour les clients)</span>
+                        <span>{t.platformSubscriptionPlans.form.isActive}</span>
                     </label>
 
                     {/* Boutons */}
@@ -269,14 +267,14 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                             href={route('platform.subscriptions.index')}
                             className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10 transition"
                         >
-                            Annuler
+                            {t.platformSubscriptionPlans.form.cancel}
                         </Link>
                         <button
                             type="submit"
                             disabled={processing}
                             className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50 transition"
                         >
-                            {processing ? 'Mise à jour...' : 'Mettre à Jour'}
+                            {processing ? t.platformSubscriptionPlans.edit.submitting : t.platformSubscriptionPlans.edit.submit}
                         </button>
                     </div>
                 </form>

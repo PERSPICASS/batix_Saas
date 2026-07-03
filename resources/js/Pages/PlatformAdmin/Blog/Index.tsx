@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Eye, Pencil, Trash2, ToggleLeft, ToggleRight, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Post {
     id: number;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function BlogAdminIndex({ posts }: Props) {
+    const { t } = useLocale();
     const [deleteId, setDeleteId] = useState<number | null>(null);
 
     const handleDelete = () => {
@@ -37,21 +39,21 @@ export default function BlogAdminIndex({ posts }: Props) {
 
     return (
         <AuthenticatedLayout>
-            <Head title="Blog — Gestion des articles" />
+            <Head title={t.platformBlog.index.headTitle} />
 
             <div className="space-y-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Blog</h1>
-                        <p className="mt-1 text-sm text-white/60">Gestion des articles publiés sur le site</p>
+                        <h1 className="text-2xl font-bold text-white">{t.platformBlog.index.title}</h1>
+                        <p className="mt-1 text-sm text-white/60">{t.platformBlog.index.subtitle}</p>
                     </div>
                     <Link
                         href={route('platform.blog.create')}
                         className="flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-amber-300"
                     >
                         <Plus className="size-4" />
-                        Nouvel article
+                        {t.platformBlog.index.newPost}
                     </Link>
                 </div>
 
@@ -59,18 +61,18 @@ export default function BlogAdminIndex({ posts }: Props) {
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                     {posts.length === 0 ? (
                         <div className="py-16 text-center text-white/40">
-                            Aucun article. <Link href={route('platform.blog.create')} className="text-amber-400 underline">Créer le premier</Link>
+                            {t.platformBlog.index.empty} <Link href={route('platform.blog.create')} className="text-amber-400 underline">{t.platformBlog.index.createFirst}</Link>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-white">
                                 <thead className="border-b border-white/10 text-white/60">
                                     <tr>
-                                        <th className="px-4 py-3 text-left">Article</th>
-                                        <th className="px-4 py-3 text-left">Catégorie</th>
-                                        <th className="px-4 py-3 text-left">Auteur</th>
-                                        <th className="px-4 py-3 text-center">Statut</th>
-                                        <th className="px-4 py-3 text-right">Actions</th>
+                                        <th className="px-4 py-3 text-left">{t.platformBlog.index.columns.article}</th>
+                                        <th className="px-4 py-3 text-left">{t.platformBlog.index.columns.category}</th>
+                                        <th className="px-4 py-3 text-left">{t.platformBlog.index.columns.author}</th>
+                                        <th className="px-4 py-3 text-center">{t.platformBlog.index.columns.status}</th>
+                                        <th className="px-4 py-3 text-right">{t.platformBlog.index.columns.actions}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/10">
@@ -105,7 +107,7 @@ export default function BlogAdminIndex({ posts }: Props) {
                                             <td className="px-4 py-3 text-center">
                                                 <button
                                                     onClick={() => handleToggle(post.id)}
-                                                    title={post.is_published ? 'Dépublier' : 'Publier'}
+                                                    title={post.is_published ? t.platformBlog.index.unpublish : t.platformBlog.index.publish}
                                                     className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition"
                                                     style={{
                                                         background: post.is_published ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.08)',
@@ -113,8 +115,8 @@ export default function BlogAdminIndex({ posts }: Props) {
                                                     }}
                                                 >
                                                     {post.is_published
-                                                        ? <><ToggleRight className="size-3.5" /> Publié</>
-                                                        : <><ToggleLeft className="size-3.5" /> Brouillon</>}
+                                                        ? <><ToggleRight className="size-3.5" /> {t.platformBlog.index.published}</>
+                                                        : <><ToggleLeft className="size-3.5" /> {t.platformBlog.index.draft}</>}
                                                 </button>
                                             </td>
                                             <td className="px-4 py-3">
@@ -123,21 +125,21 @@ export default function BlogAdminIndex({ posts }: Props) {
                                                         href={route('blog.show', post.slug)}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        title="Voir sur le site"
+                                                        title={t.platformBlog.index.viewOnSite}
                                                         className="rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-white"
                                                     >
                                                         <ExternalLink className="size-4" />
                                                     </a>
                                                     <Link
                                                         href={route('platform.blog.edit', post.id)}
-                                                        title="Modifier"
+                                                        title={t.platformBlog.index.edit}
                                                         className="rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-amber-400"
                                                     >
                                                         <Pencil className="size-4" />
                                                     </Link>
                                                     <button
                                                         onClick={() => setDeleteId(post.id)}
-                                                        title="Supprimer"
+                                                        title={t.platformBlog.index.delete}
                                                         className="rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-red-400"
                                                     >
                                                         <Trash2 className="size-4" />
@@ -157,8 +159,8 @@ export default function BlogAdminIndex({ posts }: Props) {
                 show={!!deleteId}
                 onClose={() => setDeleteId(null)}
                 onConfirm={handleDelete}
-                title="Supprimer l'article"
-                message="Cette action est irréversible. L'article sera définitivement supprimé."
+                title={t.platformBlog.index.deleteTitle}
+                message={t.platformBlog.index.deleteMessage}
             />
         </AuthenticatedLayout>
     );

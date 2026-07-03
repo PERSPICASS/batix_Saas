@@ -3,6 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { Download, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function Analytics({ shop }: Props) {
     const route = useRoute();
+    const { t } = useLocale();
     const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0]);
     const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
     const [loading, setLoading] = useState(false);
@@ -57,22 +59,22 @@ export default function Analytics({ shop }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Rapports analytiques</h1>}
+            header={<h1 className="text-xl font-semibold text-white">{t.reportsAnalytics.title}</h1>}
         >
-            <Head title="Rapports analytiques" />
+            <Head title={t.reportsAnalytics.title} />
 
             <div className="space-y-6">
                 {/* Formulaire d'export */}
                 <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
                     <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
-                        <Calendar className="size-5 text-amber-300" /> Générer un rapport
+                        <Calendar className="size-5 text-amber-300" /> {t.reportsAnalytics.generateReport}
                     </h2>
 
                     <form onSubmit={handleExport} className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                                    Date de début
+                                    {t.reportsAnalytics.startDate}
                                 </label>
                                 <input
                                     type="date"
@@ -84,7 +86,7 @@ export default function Analytics({ shop }: Props) {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                                    Date de fin
+                                    {t.reportsAnalytics.endDate}
                                 </label>
                                 <input
                                     type="date"
@@ -102,7 +104,7 @@ export default function Analytics({ shop }: Props) {
                             className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-6 py-2 font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Download className="size-4" />
-                            {loading ? 'Génération...' : 'Télécharger le rapport'}
+                            {loading ? t.reportsAnalytics.generating : t.reportsAnalytics.downloadReport}
                         </button>
                     </form>
                 </div>
@@ -110,36 +112,36 @@ export default function Analytics({ shop }: Props) {
                 {/* Information sur le rapport */}
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                        <h3 className="font-semibold text-white mb-3">Contenu du rapport</h3>
+                        <h3 className="font-semibold text-white mb-3">{t.reportsAnalytics.reportContent.title}</h3>
                         <ul className="space-y-2 text-sm text-slate-300">
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-300 mt-1">✓</span>
-                                <span><strong>Résumé:</strong> KPI clés (CA, factures, devis, conversion)</span>
+                                <span><strong>{t.reportsAnalytics.reportContent.summary}</strong> {t.reportsAnalytics.reportContent.summaryDesc}</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-300 mt-1">✓</span>
-                                <span><strong>Chiffre d'affaires:</strong> Par statut de facture</span>
+                                <span><strong>{t.reportsAnalytics.reportContent.revenue}</strong> {t.reportsAnalytics.reportContent.revenueDesc}</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-300 mt-1">✓</span>
-                                <span><strong>Clients:</strong> Top clients, montants, derniers achats</span>
+                                <span><strong>{t.reportsAnalytics.reportContent.customers}</strong> {t.reportsAnalytics.reportContent.customersDesc}</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-300 mt-1">✓</span>
-                                <span><strong>Produits:</strong> Produits les plus vendus</span>
+                                <span><strong>{t.reportsAnalytics.reportContent.products}</strong> {t.reportsAnalytics.reportContent.productsDesc}</span>
                             </li>
                         </ul>
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                        <h3 className="font-semibold text-white mb-3">Autres exports</h3>
+                        <h3 className="font-semibold text-white mb-3">{t.reportsAnalytics.otherExports.title}</h3>
                         <div className="space-y-3">
                             <a
                                 href={route('invoices.export', {})}
                                 className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 p-3 hover:bg-slate-900/70"
                             >
                                 <span className="text-slate-300">
-                                    <strong>Factures</strong> - Liste complète
+                                    <strong>{t.reportsAnalytics.otherExports.invoices}</strong> - {t.reportsAnalytics.otherExports.invoicesDesc}
                                 </span>
                                 <Download className="size-4 text-slate-400" />
                             </a>
@@ -148,7 +150,7 @@ export default function Analytics({ shop }: Props) {
                                 className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 p-3 hover:bg-slate-900/70"
                             >
                                 <span className="text-slate-300">
-                                    <strong>Devis</strong> - Liste complète
+                                    <strong>{t.reportsAnalytics.otherExports.quotes}</strong> - {t.reportsAnalytics.otherExports.quotesDesc}
                                 </span>
                                 <Download className="size-4 text-slate-400" />
                             </a>
@@ -159,8 +161,7 @@ export default function Analytics({ shop }: Props) {
                 {/* Tips */}
                 <div className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4">
                     <p className="text-sm text-amber-100">
-                        💡 <strong>Conseil:</strong> Utilisez les rapports analytiques pour suivre votre activité,
-                        identifier vos meilleurs clients, et analyser vos tendances de ventes.
+                        💡 <strong>{t.reportsAnalytics.tip.label}</strong> {t.reportsAnalytics.tip.text}
                     </p>
                 </div>
             </div>

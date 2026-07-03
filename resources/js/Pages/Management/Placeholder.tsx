@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { Construction, ArrowRight } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Placeholder({
     title,
@@ -9,6 +10,8 @@ export default function Placeholder({
     title: string;
     description: string;
 }) {
+    const { t } = useLocale();
+
     return (
         <AuthenticatedLayout
             header={<h1 className="text-xl font-semibold text-white">{title}</h1>}
@@ -23,15 +26,14 @@ export default function Placeholder({
                 <p className="mt-2 max-w-2xl text-slate-300">{description}</p>
 
                 <div className="mt-6 rounded-xl border border-dashed border-white/20 bg-slate-900/50 p-5 text-sm text-slate-300">
-                    Page placeholder prete a remplir: ajoute ici tes tableaux,
-                    formulaires, actions metier et API.
+                    {t.management.placeholder.body}
                 </div>
 
                 <button
                     type="button"
                     className="mt-6 inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
                 >
-                    Ajouter les composants metier
+                    {t.management.placeholder.addComponents}
                     <ArrowRight className="size-4" />
                 </button>
             </section>

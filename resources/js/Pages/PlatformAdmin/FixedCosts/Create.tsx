@@ -2,27 +2,13 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
-
-const CATEGORIES = [
-    { value: 'infrastructure', label: 'Infrastructure' },
-    { value: 'api', label: 'API & Services' },
-    { value: 'storage', label: 'Stockage' },
-    { value: 'security', label: 'Sécurité' },
-    { value: 'other', label: 'Autre' },
-];
-
-const CURRENCIES = [
-    { code: 'EUR', label: 'Euro (€)' },
-    { code: 'USD', label: 'Dollar US ($)' },
-    { code: 'FCFA', label: 'Franc CFA (FCFA)' },
-];
-
-const BILLING_CYCLES = [
-    { value: 'monthly', label: 'Mensuel' },
-    { value: 'annual', label: 'Annuel' },
-];
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function CreateFixedCost() {
+    const { t } = useLocale();
+    const CATEGORIES = Object.entries(t.platformFixedCosts.categories).map(([value, label]) => ({ value, label }));
+    const CURRENCIES = Object.entries(t.platformFixedCosts.currencies).map(([code, label]) => ({ code, label }));
+    const BILLING_CYCLES = Object.entries(t.platformFixedCosts.billingCycles).map(([value, label]) => ({ value, label }));
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -44,35 +30,35 @@ export default function CreateFixedCost() {
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Nouvelle Charge Fixe</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.platformFixedCosts.create.title}</h1>
                     <Link
                         href={route('platform.fixed-costs.index')}
                         className="flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200"
                     >
                         <ArrowLeft className="size-4" />
-                        Retour à la liste
+                        {t.platformFixedCosts.create.backToList}
                     </Link>
                 </div>
             }
         >
-            <Head title="Nouvelle Charge Fixe" />
+            <Head title={t.platformFixedCosts.create.title} />
 
             <div className="mx-auto max-w-2xl">
                 <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-white/10 bg-white/5 p-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">Nom *</label>
+                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.name}</label>
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
-                            placeholder="ex: Serveur AWS"
+                            placeholder={t.platformFixedCosts.form.namePlaceholder}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">Catégorie *</label>
+                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.category}</label>
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -88,7 +74,7 @@ export default function CreateFixedCost() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300">Montant *</label>
+                            <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.amount}</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -100,7 +86,7 @@ export default function CreateFixedCost() {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300">Devise *</label>
+                            <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.currency}</label>
                             <select
                                 value={formData.currency}
                                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
@@ -116,7 +102,7 @@ export default function CreateFixedCost() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">Cycle de facturation *</label>
+                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.billingCycle}</label>
                         <select
                             value={formData.billing_cycle}
                             onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
@@ -131,13 +117,13 @@ export default function CreateFixedCost() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">Description</label>
+                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.description}</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
                             rows={3}
-                            placeholder="Notes optionnelles"
+                            placeholder={t.platformFixedCosts.form.descriptionPlaceholder}
                         />
                     </div>
 
@@ -150,7 +136,7 @@ export default function CreateFixedCost() {
                             className="rounded"
                         />
                         <label htmlFor="is_active" className="text-sm text-slate-300">
-                            Charge active
+                            {t.platformFixedCosts.form.isActive}
                         </label>
                     </div>
 
@@ -160,13 +146,13 @@ export default function CreateFixedCost() {
                             disabled={loading}
                             className="flex-1 rounded-lg bg-amber-300 px-4 py-2 font-medium text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {loading ? 'Création...' : 'Créer la charge'}
+                            {loading ? t.platformFixedCosts.create.submitting : t.platformFixedCosts.create.submit}
                         </button>
                         <Link
                             href={route('platform.fixed-costs.index')}
                             className="flex-1 rounded-lg border border-white/10 px-4 py-2 text-center font-medium text-slate-300 transition hover:bg-white/5"
                         >
-                            Annuler
+                            {t.platformFixedCosts.form.cancel}
                         </Link>
                     </div>
                 </form>

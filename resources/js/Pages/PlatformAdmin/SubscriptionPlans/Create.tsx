@@ -3,8 +3,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { ArrowLeft, Plus, X } from 'lucide-react';
 import InputError from '@/Components/InputError';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Create() {
+    const { t } = useLocale();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         slug: '',
@@ -60,17 +62,17 @@ export default function Create() {
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <h1 className="text-xl font-semibold text-white">Créer un Plan d'Abonnement</h1>
+                    <h1 className="text-xl font-semibold text-white">{t.platformSubscriptionPlans.create.title}</h1>
                 </div>
             }
         >
-            <Head title="Créer un Plan" />
+            <Head title={t.platformSubscriptionPlans.create.headTitle} />
 
             <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
                 {/* Nom et Slug */}
                 <div className="grid gap-4 md:grid-cols-2">
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Nom du Plan *</span>
+                        <span>{t.platformSubscriptionPlans.form.name}</span>
                         <input
                             type="text"
                             value={data.name}
@@ -82,7 +84,7 @@ export default function Create() {
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Slug *</span>
+                        <span>{t.platformSubscriptionPlans.form.slug}</span>
                         <input
                             type="text"
                             value={data.slug}
@@ -90,14 +92,14 @@ export default function Create() {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             required
                         />
-                        <p className="text-xs text-slate-400">Identifiant unique (ex: starter, growth, scale)</p>
+                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.slugHint}</p>
                         <InputError message={errors.slug} />
                     </label>
                 </div>
 
                 {/* Description */}
                 <label className="block space-y-1 text-sm text-slate-200">
-                    <span>Description</span>
+                    <span>{t.platformSubscriptionPlans.form.description}</span>
                     <textarea
                         value={data.description}
                         onChange={(e) => setData('description', e.target.value)}
@@ -109,7 +111,7 @@ export default function Create() {
 
                 {/* Prix */}
                 <label className="block space-y-1 text-sm text-slate-200">
-                    <span>Prix (XAF/mois) *</span>
+                    <span>{t.platformSubscriptionPlans.form.price}</span>
                     <input
                         type="number"
                         step="0.01"
@@ -124,7 +126,7 @@ export default function Create() {
                 {/* Limites */}
                 <div className="grid gap-4 md:grid-cols-2">
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Max boutiques *</span>
+                        <span>{t.platformSubscriptionPlans.form.maxShops}</span>
                         <input
                             type="number"
                             value={data.max_shops}
@@ -132,12 +134,12 @@ export default function Create() {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             required
                         />
-                        <p className="text-xs text-slate-400">-1 pour illimité</p>
+                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                         <InputError message={errors.max_shops} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Max utilisateurs *</span>
+                        <span>{t.platformSubscriptionPlans.form.maxUsers}</span>
                         <input
                             type="number"
                             value={data.max_users}
@@ -145,12 +147,12 @@ export default function Create() {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             required
                         />
-                        <p className="text-xs text-slate-400">-1 pour illimité</p>
+                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                         <InputError message={errors.max_users} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Max produits *</span>
+                        <span>{t.platformSubscriptionPlans.form.maxProducts}</span>
                         <input
                             type="number"
                             value={data.max_products}
@@ -158,12 +160,12 @@ export default function Create() {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             required
                         />
-                        <p className="text-xs text-slate-400">-1 pour illimité</p>
+                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                         <InputError message={errors.max_products} />
                     </label>
 
                     <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Max dépôts *</span>
+                        <span>{t.platformSubscriptionPlans.form.maxDepots}</span>
                         <input
                             type="number"
                             value={data.max_depots}
@@ -171,20 +173,20 @@ export default function Create() {
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             required
                         />
-                        <p className="text-xs text-slate-400">-1 pour illimité, 0 pour aucun</p>
+                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedOrNoneHint}</p>
                         <InputError message={errors.max_depots} />
                     </label>
                 </div>
 
                 {/* Fonctionnalités */}
                 <label className="block space-y-2 text-sm text-slate-200">
-                    <span>Fonctionnalités</span>
+                    <span>{t.platformSubscriptionPlans.form.features}</span>
                     <div className="flex gap-2">
                         <input
                             type="text"
                             value={featureInput}
                             onChange={(e) => setFeatureInput(e.target.value)}
-                            placeholder="Ajouter une fonctionnalité..."
+                            placeholder={t.platformSubscriptionPlans.form.addFeaturePlaceholder}
                             className="flex-1 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
                             onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
@@ -232,7 +234,7 @@ export default function Create() {
                         onChange={(e) => setData('is_active', e.target.checked)}
                         className="rounded border border-white/15 bg-slate-900/70"
                     />
-                    <span>Plan actif (visible pour les clients)</span>
+                    <span>{t.platformSubscriptionPlans.form.isActive}</span>
                 </label>
 
                 {/* Boutons */}
@@ -241,14 +243,14 @@ export default function Create() {
                         href={route('platform.subscriptions.index')}
                         className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10 transition"
                     >
-                        Annuler
+                        {t.platformSubscriptionPlans.form.cancel}
                     </Link>
                     <button
                         type="submit"
                         disabled={processing}
                         className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50 transition"
                     >
-                        {processing ? 'Création...' : 'Créer le Plan'}
+                        {processing ? t.platformSubscriptionPlans.create.submitting : t.platformSubscriptionPlans.create.submit}
                     </button>
                 </div>
             </form>
