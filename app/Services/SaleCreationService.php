@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Shop;
+use App\Support\ConcurrencySafe;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,7 +26,10 @@ class SaleCreationService
      */
     public static function create(array $data, Shop $shop): Sale
     {
-        return DB::transaction(function () use ($data, $shop) {
+        // ticket_number is generated from the last known number (see Sale::generateTicketNumber);
+        // two concurrent sales can compute the same candidate number. Retrying regenerates a
+        // fresh one on each attempt instead of losing the sale to a raw constraint violation.
+        return ConcurrencySafe::retryOnDuplicate(fn () => DB::transaction(function () use ($data, $shop) {
             $items = $data['items'];
             unset($data['items']);
 
@@ -109,6 +113,6 @@ class SaleCreationService
             }
 
             return $sale;
-        });
+        }));
     }
 }

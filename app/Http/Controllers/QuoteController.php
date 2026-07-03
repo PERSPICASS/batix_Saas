@@ -110,36 +110,46 @@ class QuoteController extends Controller
         $taxAmount = $subtotal * 0.18; // 18% TVA
         $total = $subtotal + $taxAmount;
 
-        $quote = Quote::create([
-            'shop_id' => $shop->id,
-            'customer_id' => $validated['customer_id'],
-            'quote_number' => Quote::generateNumber($shop->id),
-            'quote_date' => $validated['quote_date'],
-            'expiry_date' => $validated['expiry_date'],
-            'subtotal' => $subtotal,
-            'tax_amount' => $taxAmount,
-            'total' => $total,
-            'notes' => $validated['notes'] ?? null,
-            'terms' => $validated['terms'] ?? null,
-            'status' => 'draft',
-        ]);
+        // quote_number est généré à partir du dernier numéro connu : deux devis créés au
+        // même instant peuvent calculer le même candidat. Le retry régénère un numéro frais
+        // à chaque tentative (via Quote::generateNumber, rappelé dans la closure) plutôt que
+        // de perdre le devis sur une violation de contrainte brute.
+        $quote = \App\Support\ConcurrencySafe::retryOnDuplicate(function () use ($shop, $validated, $subtotal, $taxAmount, $total) {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($shop, $validated, $subtotal, $taxAmount, $total) {
+                $quote = Quote::create([
+                    'shop_id' => $shop->id,
+                    'customer_id' => $validated['customer_id'],
+                    'quote_number' => Quote::generateNumber($shop->id),
+                    'quote_date' => $validated['quote_date'],
+                    'expiry_date' => $validated['expiry_date'],
+                    'subtotal' => $subtotal,
+                    'tax_amount' => $taxAmount,
+                    'total' => $total,
+                    'notes' => $validated['notes'] ?? null,
+                    'terms' => $validated['terms'] ?? null,
+                    'status' => 'draft',
+                ]);
 
-        foreach ($validated['items'] as $item) {
-            // Marquer l'article comme vendu si fourni
-            if (!empty($item['product_article_id'])) {
-                \App\Models\ProductArticle::find($item['product_article_id'])?->markAsSold();
-            }
+                foreach ($validated['items'] as $item) {
+                    // Marquer l'article comme vendu si fourni
+                    if (!empty($item['product_article_id'])) {
+                        \App\Models\ProductArticle::find($item['product_article_id'])?->markAsSold();
+                    }
 
-            $quote->items()->create([
-                'product_id' => $item['product_id'],
-                'product_article_id' => $item['product_article_id'] ?? null,
-                'article_name' => $item['article_name'] ?? null,
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'line_total' => $item['quantity'] * $item['unit_price'],
-                'tax_rate' => 18,
-            ]);
-        }
+                    $quote->items()->create([
+                        'product_id' => $item['product_id'],
+                        'product_article_id' => $item['product_article_id'] ?? null,
+                        'article_name' => $item['article_name'] ?? null,
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'line_total' => $item['quantity'] * $item['unit_price'],
+                        'tax_rate' => 18,
+                    ]);
+                }
+
+                return $quote;
+            });
+        });
 
         return redirect()->route('quotes.show', ['code_user' => $code_user, 'quote' => $quote])->with('success', 'Devis créé avec succès');
     }

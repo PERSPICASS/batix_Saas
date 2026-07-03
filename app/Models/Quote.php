@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\ConcurrencySafe;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Quote extends Model
 {
@@ -87,33 +89,36 @@ class Quote extends Model
 
     public function convertToInvoice()
     {
-        $invoice = Invoice::create([
-            'shop_id' => $this->shop_id,
-            'customer_id' => $this->customer_id,
-            'user_id' => auth()->id(),
-            'invoice_number' => Invoice::generateInvoiceNumber($this->shop_id),
-            'invoice_date' => now()->toDateString(),
-            'due_date' => now()->addDays(30)->toDateString(),
-            'status' => 'draft',
-            'subtotal' => $this->subtotal,
-            'tax_amount' => $this->tax_amount,
-            'total' => $this->total,
-            'notes' => $this->notes,
-        ]);
+        return ConcurrencySafe::retryOnDuplicate(function () {
+            return DB::transaction(function () {
+                $invoice = Invoice::create([
+                    'shop_id' => $this->shop_id,
+                    'customer_id' => $this->customer_id,
+                    'user_id' => auth()->id(),
+                    'invoice_date' => now()->toDateString(),
+                    'due_date' => now()->addDays(30)->toDateString(),
+                    'status' => 'draft',
+                    'subtotal' => $this->subtotal,
+                    'tax_amount' => $this->tax_amount,
+                    'total' => $this->total,
+                    'notes' => $this->notes,
+                ]);
 
-        foreach ($this->items as $item) {
-            InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'product_id' => $item->product_id,
-                'product_name' => $item->product->name,
-                'description' => $item->description,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'tax_rate' => $item->tax_rate,
-                'discount_amount' => 0,
-            ]);
-        }
+                foreach ($this->items as $item) {
+                    InvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product->name,
+                        'description' => $item->description,
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'tax_rate' => $item->tax_rate,
+                        'discount_amount' => 0,
+                    ]);
+                }
 
-        return $invoice;
+                return $invoice;
+            });
+        });
     }
 }

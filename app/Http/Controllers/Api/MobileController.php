@@ -7,9 +7,12 @@ use App\Models\Customer;
 use App\Models\Preorder;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Services\ActivityLogger;
+use App\Services\SaleCreationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Validator;
+use Illuminate\Validation\ValidationException;
 
 class MobileController extends Controller
 {
@@ -139,6 +142,12 @@ class MobileController extends Controller
         ]);
     }
 
+    /**
+     * Crée une vente via le même SaleCreationService que le formulaire web et l'API v1 —
+     * mêmes totaux/taxes, même vérification de stock avec verrouillage, même journal de
+     * mouvements de stock. Avant ce correctif, cette route créait la vente "à la main" en
+     * contournant complètement ces protections (survente possible, taxes toujours à 0).
+     */
     public function createSale(Request $request)
     {
         $user = Auth::guard('sanctum')->user();
@@ -150,6 +159,7 @@ class MobileController extends Controller
             'shop_id' => 'required|exists:shops,id',
             'customer_id' => 'nullable|exists:customers,id',
             'payment_method' => 'required|in:cash,card,transfer,check,mobile,credit',
+            'amount_paid' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -160,49 +170,38 @@ class MobileController extends Controller
             return response()->json(['error' => 'Unauthorized shop'], 403);
         }
 
-        try {
+        // Le client mobile ne collecte pas toujours un montant payé explicite : par défaut,
+        // on considère la vente réglée intégralement (comportement préexistant de cette route).
+        if (!isset($validated['amount_paid'])) {
             $subtotal = 0;
             foreach ($validated['items'] as $item) {
                 $subtotal += $item['unit_price'] * $item['quantity'];
             }
+            $validated['amount_paid'] = $subtotal;
+        }
 
-            $sale = Sale::create([
-                'shop_id' => $validated['shop_id'],
-                'customer_id' => $validated['customer_id'],
-                'user_id' => $user->id,
-                'payment_method' => $validated['payment_method'],
-                'amount_paid' => $subtotal,
-                'status' => 'completed',
-                'subtotal' => $subtotal,
-                'tax_amount' => 0,
-                'discount_amount' => 0,
-                'total' => $subtotal,
-                'change_amount' => 0,
-                'remaining_amount' => 0,
-            ]);
+        $shop = $user->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+        $validated['user_id'] = $user->id;
 
-            foreach ($validated['items'] as $item) {
-                $sale->items()->create([
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'tax_rate' => 0,
-                ]);
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'data' => [
-                    'id' => $sale->id,
-                    'ticket_number' => $sale->ticket_number,
-                ],
-            ], 201);
-        } catch (\Exception $e) {
+        try {
+            $sale = SaleCreationService::create($validated, $shop);
+        } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage(),
-            ], 400);
+                'errors' => $e->errors(),
+            ], 422);
         }
+
+        ActivityLogger::created($sale, $sale->ticket_number);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'id' => $sale->id,
+                'ticket_number' => $sale->ticket_number,
+            ],
+        ], 201);
     }
 
     public function getShopInfo(Request $request)

@@ -177,33 +177,53 @@ class CreditController extends Controller
             abort(403);
         }
 
-        if ($sale->remaining_amount <= 0) {
-            return back()->with('error', 'Cette vente n\'a pas de reste à payer.');
-        }
-
         $validated = $request->validate([
-            'amount'          => "required|numeric|min:0.01|max:{$sale->remaining_amount}",
+            'amount'          => 'required|numeric|min:0.01',
             'payment_method'  => 'required|in:cash,card,transfer,check,mobile',
             'notes'           => 'nullable|string|max:500',
             'new_due_date'    => 'nullable|date|after_or_equal:today',
         ]);
 
-        $newRemaining = round($sale->remaining_amount - $validated['amount'], 2);
-        $note = "[Relance " . now()->format('d/m/Y') . ": +"
-            . number_format($validated['amount'], 0, ',', ' ')
-            . " FCFA via " . $validated['payment_method'] . "]";
+        $result = DB::transaction(function () use ($sale, $validated) {
+            // Reverrouiller et relire le solde à l'intérieur de la transaction : deux
+            // encaissements soumis au même instant ne doivent pas tous deux passer la
+            // vérification sur la base d'un solde périmé (double encaissement).
+            $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
-        if (!empty($validated['notes'])) {
-            $note .= " — " . $validated['notes'];
+            if ($sale->remaining_amount <= 0) {
+                return ['error' => 'Cette vente n\'a pas de reste à payer.'];
+            }
+
+            if ($validated['amount'] > $sale->remaining_amount) {
+                return ['error' => 'Le montant dépasse le reste dû (' . number_format($sale->remaining_amount, 0, ',', ' ') . ' FCFA).'];
+            }
+
+            $newRemaining = round($sale->remaining_amount - $validated['amount'], 2);
+            $note = "[Relance " . now()->format('d/m/Y') . ": +"
+                . number_format($validated['amount'], 0, ',', ' ')
+                . " FCFA via " . $validated['payment_method'] . "]";
+
+            if (!empty($validated['notes'])) {
+                $note .= " — " . $validated['notes'];
+            }
+
+            $sale->update([
+                'amount_paid'      => $sale->amount_paid + $validated['amount'],
+                'remaining_amount' => $newRemaining,
+                'status'           => $newRemaining <= 0 ? 'completed' : 'pending',
+                'credit_due_date'  => $validated['new_due_date'] ?? $sale->credit_due_date,
+                'notes'            => $sale->notes ? $sale->notes . "\n" . $note : $note,
+            ]);
+
+            return ['sale' => $sale, 'newRemaining' => $newRemaining];
+        });
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
         }
 
-        $sale->update([
-            'amount_paid'      => $sale->amount_paid + $validated['amount'],
-            'remaining_amount' => $newRemaining,
-            'status'           => $newRemaining <= 0 ? 'completed' : 'pending',
-            'credit_due_date'  => $validated['new_due_date'] ?? $sale->credit_due_date,
-            'notes'            => $sale->notes ? $sale->notes . "\n" . $note : $note,
-        ]);
+        $sale = $result['sale'];
+        $newRemaining = $result['newRemaining'];
 
         ActivityLogger::message('credit_payment', 'credit_payment', [
             'amount' => number_format($validated['amount'], 0, ',', ' ') . ' FCFA',

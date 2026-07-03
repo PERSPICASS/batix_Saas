@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\ConcurrencySafe;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class RecurringInvoice extends Model
 {
@@ -63,40 +65,47 @@ class RecurringInvoice extends Model
 
     public function generateNextInvoice(): Invoice
     {
-        $invoice = Invoice::create([
-            'shop_id' => $this->shop_id,
-            'customer_id' => $this->customer_id,
-            'user_id' => $this->user_id,
-            'invoice_number' => Invoice::generateInvoiceNumber($this->shop_id),
-            'invoice_date' => now()->toDateString(),
-            'due_date' => now()->addDays(30)->toDateString(),
-            'status' => 'draft',
-            'subtotal' => $this->subtotal,
-            'tax_amount' => $this->tax_amount,
-            'total' => $this->total,
-            'notes' => $this->notes,
-            'recurring_invoice_id' => $this->id,
-        ]);
+        // invoice_number est régénéré à chaque tentative (via le hook `creating` d'Invoice,
+        // pas assigné ici) pour rester sûr en cas de collision avec une facture créée au même
+        // instant par ailleurs. Le tout est transactionnel : si la création d'une ligne échoue,
+        // on ne garde pas de facture partielle ni un next_invoice_date jamais avancé.
+        return ConcurrencySafe::retryOnDuplicate(function () {
+            return DB::transaction(function () {
+                $invoice = Invoice::create([
+                    'shop_id' => $this->shop_id,
+                    'customer_id' => $this->customer_id,
+                    'user_id' => $this->user_id,
+                    'invoice_date' => now()->toDateString(),
+                    'due_date' => now()->addDays(30)->toDateString(),
+                    'status' => 'draft',
+                    'subtotal' => $this->subtotal,
+                    'tax_amount' => $this->tax_amount,
+                    'total' => $this->total,
+                    'notes' => $this->notes,
+                    'recurring_invoice_id' => $this->id,
+                ]);
 
-        foreach ($this->items as $item) {
-            \App\Models\InvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'product_id' => $item->product_id,
-                'product_name' => $item->product_name,
-                'description' => $item->description,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'tax_rate' => $item->tax_rate,
-                'discount_amount' => $item->discount_amount,
-            ]);
-        }
+                foreach ($this->items as $item) {
+                    \App\Models\InvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product_name,
+                        'description' => $item->description,
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'tax_rate' => $item->tax_rate,
+                        'discount_amount' => $item->discount_amount,
+                    ]);
+                }
 
-        $this->update([
-            'last_generated_at' => now(),
-            'next_invoice_date' => $this->calculateNextInvoiceDate(),
-        ]);
+                $this->update([
+                    'last_generated_at' => now(),
+                    'next_invoice_date' => $this->calculateNextInvoiceDate(),
+                ]);
 
-        return $invoice;
+                return $invoice;
+            });
+        });
     }
 
     public function calculateNextInvoiceDate()

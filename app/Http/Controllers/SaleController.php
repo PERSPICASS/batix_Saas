@@ -218,40 +218,61 @@ class SaleController extends Controller
      */
     public function payCredit(Request $request, string $code_user, Sale $sale)
     {
-        if ($sale->shop->user_id !== Auth::id() && !Auth::user()->accessibleShopsQuery()->where('id', $sale->shop_id)->exists()) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $sale->shop_id)->exists()) {
             abort(403);
         }
 
-        if ($sale->remaining_amount <= 0) {
-            return back()->with('error', 'Cette vente n\'a pas de reste à payer.');
-        }
-
         $validated = $request->validate([
-            'payment_amount'  => "required|numeric|min:0.01|max:{$sale->remaining_amount}",
+            'payment_amount'  => 'required|numeric|min:0.01',
             'payment_method'  => 'required|in:cash,card,transfer,check,mobile',
             'notes'           => 'nullable|string',
         ]);
 
-        $newRemaining = round($sale->remaining_amount - $validated['payment_amount'], 2);
+        $result = DB::transaction(function () use ($sale, $validated) {
+            // Reverrouiller et relire le solde à l'intérieur de la transaction : deux
+            // encaissements soumis au même instant ne doivent pas tous deux passer la
+            // vérification sur la base d'un solde périmé (double encaissement).
+            $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
-        $sale->update([
-            'amount_paid'      => $sale->amount_paid + $validated['payment_amount'],
-            'remaining_amount' => $newRemaining,
-            'status'           => $newRemaining <= 0 ? 'completed' : 'pending',
-            'notes'            => $sale->notes
-                ? $sale->notes . "\n[Paiement crédit " . now()->format('d/m/Y') . ": " . number_format($validated['payment_amount'], 0, ',', ' ') . " via " . $validated['payment_method'] . "]"
-                : "[Paiement crédit " . now()->format('d/m/Y') . ": " . number_format($validated['payment_amount'], 0, ',', ' ') . " via " . $validated['payment_method'] . "]",
-        ]);
+            if ($sale->remaining_amount <= 0) {
+                return ['error' => 'Cette vente n\'a pas de reste à payer.'];
+            }
 
-        $msg = $newRemaining <= 0
+            if ($validated['payment_amount'] > $sale->remaining_amount) {
+                return ['error' => 'Le montant dépasse le reste dû (' . number_format($sale->remaining_amount, 0, ',', ' ') . ' FCFA).'];
+            }
+
+            $newRemaining = round($sale->remaining_amount - $validated['payment_amount'], 2);
+
+            $sale->update([
+                'amount_paid'      => $sale->amount_paid + $validated['payment_amount'],
+                'remaining_amount' => $newRemaining,
+                'status'           => $newRemaining <= 0 ? 'completed' : 'pending',
+                'notes'            => $sale->notes
+                    ? $sale->notes . "\n[Paiement crédit " . now()->format('d/m/Y') . ": " . number_format($validated['payment_amount'], 0, ',', ' ') . " via " . $validated['payment_method'] . "]"
+                    : "[Paiement crédit " . now()->format('d/m/Y') . ": " . number_format($validated['payment_amount'], 0, ',', ' ') . " via " . $validated['payment_method'] . "]",
+            ]);
+
+            return ['newRemaining' => $newRemaining];
+        });
+
+        if (isset($result['error'])) {
+            return back()->with('error', $result['error']);
+        }
+
+        $msg = $result['newRemaining'] <= 0
             ? 'Vente soldée. Paiement complet enregistré.'
-            : 'Paiement partiel enregistré. Reste à payer : ' . number_format($newRemaining, 0, ',', ' ') . ' FCFA';
+            : 'Paiement partiel enregistré. Reste à payer : ' . number_format($result['newRemaining'], 0, ',', ' ') . ' FCFA';
 
         return back()->with('success', $msg);
     }
 
     public function show(string $code_user, Sale $sale)
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $sale->shop_id)->exists()) {
+            abort(403);
+        }
+
         $sale->load(['shop', 'user', 'customer', 'items.product.parent', 'items.returns', 'returns']);
 
         // Enrichir le product_name des anciens items de déclinaisons qui ne l'ont pas encore

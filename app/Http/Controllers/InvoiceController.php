@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Services\ActivityLogger;
+use App\Support\ConcurrencySafe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -119,12 +120,16 @@ class InvoiceController extends Controller
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
         
-        $invoice = DB::transaction(function () use ($validated, $shop) {
+        // invoice_number est généré à partir du dernier numéro connu : deux factures créées
+        // au même instant peuvent calculer le même candidat. Le retry régénère un numéro
+        // frais à chaque tentative plutôt que de perdre la facture sur une violation de
+        // contrainte brute.
+        $invoice = ConcurrencySafe::retryOnDuplicate(fn () => DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];
             unset($validated['items']);
-            
+
             $validated['user_id'] = Auth::id();
-            
+
             $invoice = $shop->invoices()->create($validated);
             
             foreach ($items as $item) {
@@ -148,9 +153,9 @@ class InvoiceController extends Controller
             }
             
             // Le calcul des totaux se fait automatiquement via les observers
-            
+
             return $invoice;
-        });
+        }));
 
         // Log activity
         ActivityLogger::created($invoice, $invoice->invoice_number);

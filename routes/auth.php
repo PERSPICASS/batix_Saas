@@ -86,5 +86,6 @@ Route::middleware('auth')->group(function () {
         ->name('lock-screen.lock');
     
     Route::post('lock-screen/unlock', [LockScreenController::class, 'unlock'])
+        ->middleware('throttle:6,1')
         ->name('lock-screen.unlock');
 });

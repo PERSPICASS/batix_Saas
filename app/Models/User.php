@@ -494,13 +494,31 @@ class User extends Authenticatable
      */
     public function canCreateProduct(?int $shopId = null): bool
     {
-        // Products are unlimited for all plans
         if ($this->role === 'admin_platforme') {
             return false;
         }
 
         $subscription = $this->activeSubscription();
-        return $subscription !== null;
+
+        if (!$subscription) {
+            return false;
+        }
+
+        $plan = $subscription->plan;
+
+        if ($plan->hasUnlimitedProducts()) {
+            return true;
+        }
+
+        if ($plan->max_products === 0) {
+            return false;
+        }
+
+        $currentCount = $shopId
+            ? Product::where('shop_id', $shopId)->where('is_active', true)->count()
+            : Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))->where('is_active', true)->count();
+
+        return $currentCount < $plan->max_products;
     }
 
     /**
@@ -540,8 +558,23 @@ class User extends Authenticatable
      */
     public function remainingProductSlots(?int $shopId = null): int
     {
-        // Products are unlimited for all plans
-        return -1;
+        $subscription = $this->activeSubscription();
+
+        if (!$subscription) {
+            return 0;
+        }
+
+        $plan = $subscription->plan;
+
+        if ($plan->hasUnlimitedProducts()) {
+            return -1; // Unlimited
+        }
+
+        $currentCount = $shopId
+            ? Product::where('shop_id', $shopId)->where('is_active', true)->count()
+            : Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))->where('is_active', true)->count();
+
+        return max(0, $plan->max_products - $currentCount);
     }
 
     /**

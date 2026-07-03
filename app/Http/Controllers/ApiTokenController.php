@@ -13,13 +13,16 @@ class ApiTokenController extends Controller
 {
     /**
      * Portées disponibles pour un token — tenues synchronisées avec les middlewares
-     * `abilities:` posés sur routes/api.php. Un token sans aucune portée cochée
-     * reçoit ['*'] (accès complet), pour rester simple par défaut.
+     * `abilities:` posés sur routes/api.php. Au moins une portée doit être cochée à la
+     * création (voir store()) : un token sans portée explicite n'obtient plus ['*'] par
+     * défaut, pour respecter le principe de moindre privilège.
      */
     public const ABILITIES = [
         'products:read', 'products:write',
         'customers:read', 'customers:write',
         'sales:read', 'sales:write',
+        'invoices:read',
+        'stock-movements:read',
     ];
 
     /**
@@ -54,7 +57,7 @@ class ApiTokenController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'expires_in_days' => 'nullable|integer|min:1|max:730',
-            'abilities' => 'nullable|array',
+            'abilities' => 'required|array|min:1',
             'abilities.*' => 'string|in:' . implode(',', self::ABILITIES),
         ]);
 
@@ -62,9 +65,7 @@ class ApiTokenController extends Controller
             ? now()->addDays((int) $validated['expires_in_days'])
             : null;
 
-        $abilities = !empty($validated['abilities']) ? $validated['abilities'] : ['*'];
-
-        $token = Auth::user()->createToken($validated['name'], $abilities, $expiresAt);
+        $token = Auth::user()->createToken($validated['name'], $validated['abilities'], $expiresAt);
 
         ActivityLogger::message('create', 'api_token_created', ['name' => $validated['name']]);
 

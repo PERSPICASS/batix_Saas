@@ -91,6 +91,7 @@ Route::middleware(['auth'])->group(function () {
 // Routes PawaPay (webhook public, autres avec auth)
 Route::post('/pawapay/webhook', [PawaPayController::class, 'webhook'])
     ->name('pawapay.webhook')
+    ->middleware('throttle:60,1')
     ->withoutMiddleware(['web']); // stateless webhook
 
 Route::middleware(['auth'])->group(function () {
@@ -102,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
 // Routes Jèko (webhook public, success/error public redirects, initiate with auth)
 Route::post('/jeko/webhook', [JekoController::class, 'webhook'])
     ->name('jeko.webhook')
+    ->middleware('throttle:60,1')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook, no CSRF
 
 Route::get('/jeko/success', [JekoController::class, 'success'])->name('jeko.success');
@@ -114,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
 // Routes LemonSqueezy (webhook public, checkout with auth)
 Route::post('/lemonsqueezy/webhook', [LemonSqueezyController::class, 'webhook'])
     ->name('lemonsqueezy.webhook')
+    ->middleware('throttle:60,1')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
 
 Route::middleware(['auth'])->group(function () {
@@ -128,7 +131,7 @@ Route::middleware(['auth', 'platform.admin'])->prefix('platform-admin')->group(f
 // Routes Paddle (webhook public, checkout with auth)
 Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])
     ->name('paddle.webhook')
-    ->middleware(\Laravel\Paddle\Http\Middleware\VerifyWebhookSignature::class)
+    ->middleware(['throttle:60,1', \Laravel\Paddle\Http\Middleware\VerifyWebhookSignature::class])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
 
 Route::middleware(['auth'])->group(function () {
@@ -426,8 +429,9 @@ Route::prefix('{code_user}')
 
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index')->middleware('permission:analytics,view');
 
-    // AI Chat
-    Route::post('ai-chat', [AiChatController::class, 'chat'])->name('ai.chat');
+    // AI Chat — throttle pour limiter le coût d'appels API en rafale (usage normal : quelques
+    // messages par minute dans une conversation).
+    Route::post('ai-chat', [AiChatController::class, 'chat'])->middleware('throttle:20,1')->name('ai.chat');
 
     // Dépenses
     Route::get('depenses', [ExpenseController::class, 'index'])->name('expenses.index')->middleware('permission:expenses,view');

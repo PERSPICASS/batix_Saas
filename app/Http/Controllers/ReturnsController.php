@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ReturnedInventory;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
@@ -126,16 +127,18 @@ class ReturnsController extends Controller
         $saleItem = $return->saleItem;
         $refundAmount = $return->refund_amount;
 
-        DB::transaction(function () use ($return, $sale, $saleItem, $refundAmount) {
-            // Supprimer le retour d'abord
-            $return->delete();
+        $wasApproved = DB::transaction(function () use ($return, $sale, $saleItem) {
+            // Un retour client ne touche le stock qu'à l'approbation (voir
+            // ReturnedInventoryController::approve) : tant qu'il est encore "pending"
+            // (ou a été rejeté), aucune unité n'a été recréditée au stock. Ne re-déduire
+            // le stock à l'annulation que si l'entrée avait bien été approuvée — sinon on
+            // fait dériver le stock vers le négatif pour des unités jamais restaurées.
+            $returnedInventory = ReturnedInventory::where('sale_return_id', $return->id)
+                ->lockForUpdate()
+                ->first();
+            $wasApproved = $returnedInventory?->status === 'approved';
 
-            // Recharger la vente avec les relations mises à jour
-            $sale->refresh();
-            $sale->load('items.returns');
-
-            // Restaurer le stock
-            if ($saleItem->product) {
+            if ($wasApproved && $saleItem->product) {
                 StockMovementService::recordReturnCancellation(
                     $saleItem->product,
                     $return->quantity_returned,
@@ -144,13 +147,24 @@ class ReturnsController extends Controller
                 );
             }
 
+            // Supprimer le retour (cascade sur l'entrée returned_inventories associée)
+            $return->delete();
+
+            // Recharger la vente avec les relations mises à jour
+            $sale->refresh();
+            $sale->load('items.returns');
+
             // Recalculer les montants de la vente après annulation du retour
             $this->recalculateSaleAmounts($sale);
+
+            return $wasApproved;
         });
 
         ActivityLogger::message('delete', 'return_cancelled', ['product' => $saleItem->product_name], $return);
 
-        return back()->with('success', 'Retour annulé et stock restauré.');
+        return back()->with('success', $wasApproved
+            ? 'Retour annulé et stock restauré.'
+            : 'Retour annulé.');
     }
 
     public function listBySale(string $code_user, Sale $sale)

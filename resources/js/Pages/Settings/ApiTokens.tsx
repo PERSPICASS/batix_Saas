@@ -40,7 +40,7 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
         abilities: [] as string[],
     });
 
-    const resources = ['products', 'customers', 'sales'] as const;
+    const resources = ['products', 'customers', 'sales', 'invoices', 'stock-movements'] as const;
 
     const toggleAbility = (ability: string) => {
         setData('abilities', data.abilities.includes(ability)
@@ -188,7 +188,7 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
 
                         <button
                             type="submit"
-                            disabled={processing}
+                            disabled={processing || data.abilities.length === 0}
                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-300 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50 transition"
                         >
                             <Plus className="size-4" />

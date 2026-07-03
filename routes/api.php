@@ -27,8 +27,8 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // API publique v1 — pour intégrations tierces via token (voir Settings/ApiTokens).
-// Chaque route exige l'ability Sanctum correspondante ; un token créé avec ['*']
-// (ancien comportement par défaut) passe toujours ces contrôles.
+// Chaque route exige l'ability Sanctum correspondante ; les tokens créés avant le
+// retrait du défaut ['*'] (accès complet) passent toujours ces contrôles.
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::middleware('abilities:products:read')->group(function () {
         Route::get('/products', [ProductController::class, 'index']);
@@ -56,9 +56,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::post('/sales', [SaleController::class, 'store']);
     });
 
-    // Pas encore de portée dédiée pour ces deux-là (lecture seule, hors périmètre
-    // Phase 2) — accessibles à tout token authentifié, comme en Phase 1.
-    Route::get('/invoices', [InvoiceController::class, 'index']);
-    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
-    Route::get('/stock-movements', [StockMovementController::class, 'index']);
+    Route::middleware('abilities:invoices:read')->group(function () {
+        Route::get('/invoices', [InvoiceController::class, 'index']);
+        Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+    });
+    Route::middleware('abilities:stock-movements:read')->group(function () {
+        Route::get('/stock-movements', [StockMovementController::class, 'index']);
+    });
 });

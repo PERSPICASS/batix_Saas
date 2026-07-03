@@ -148,6 +148,16 @@ class ProductController extends Controller
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = $user->accessibleShopsQuery()->findOrFail($validated['shop_id']);
 
+        // Vérifier le quota de produits de l'offre
+        if (!$user->canCreateProduct($shop->id)) {
+            $limits = $user->getSubscriptionLimits($shop->id);
+            $max = $limits['max_products'];
+            return back()->with('error', $max === 0
+                ? "Votre offre actuelle ne permet pas de créer de produits. Passez à un plan supérieur."
+                : "Vous avez atteint la limite de {$max} produit(s) de votre offre. Passez à un plan supérieur pour en ajouter davantage."
+            );
+        }
+
         // Gérer l'upload de l'image
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');

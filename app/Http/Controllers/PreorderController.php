@@ -152,6 +152,10 @@ class PreorderController extends Controller
             abort(403);
         }
 
+        if (!$user->accessibleShopsQuery()->where('id', $preorder->shop_id)->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,ready,completed,cancelled',
         ]);
@@ -178,6 +182,10 @@ class PreorderController extends Controller
     {
         $user = Auth::user();
         if (!in_array($user->role, ['super_admin', 'manager', 'cashier', 'caisse'])) {
+            abort(403);
+        }
+
+        if (!$user->accessibleShopsQuery()->where('id', $preorder->shop_id)->exists()) {
             abort(403);
         }
 

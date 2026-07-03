@@ -180,7 +180,7 @@ class AiChatService
             return 'Aucune vente trouvée pour la période.';
         }
 
-        $totalRevenue = $sales->sum('total_amount');
+        $totalRevenue = $sales->sum('total');
         $saleCount = $sales->count();
         $avgBasket = $totalRevenue / $saleCount;
 
@@ -204,7 +204,7 @@ class AiChatService
         $products = $query->limit(20)->get([
             'id',
             'name',
-            'current_stock',
+            'stock_quantity',
             'sku',
         ]);
 
