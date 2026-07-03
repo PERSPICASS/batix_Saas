@@ -10,13 +10,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Product;
 use App\Models\Depot;
-use Laravel\Paddle\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, Billable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
     * The attributes that are mass assignable.
@@ -364,7 +363,17 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the active subscription for this user.
+     * Days of continued access after expires_at before creation actions (shop/user/
+     * product/depot) actually get cut off. Gives a window to renew instead of an
+     * abrupt lockout the instant the subscription lapses. Only applies to natural
+     * expiry (status stays active/trial) — a manually cancelled subscription loses
+     * access immediately, see activeSubscription()'s status filter.
+     */
+    public const SUBSCRIPTION_GRACE_PERIOD_DAYS = 14;
+
+    /**
+     * Get the active subscription for this user, including the grace period after
+     * expiry (see SUBSCRIPTION_GRACE_PERIOD_DAYS).
      */
     public function activeSubscription()
     {
@@ -372,10 +381,36 @@ class User extends Authenticatable
             ->whereIn('status', ['active', 'trial'])
             ->where(function ($query) {
                 $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
+                    ->orWhere('expires_at', '>', now()->subDays(self::SUBSCRIPTION_GRACE_PERIOD_DAYS));
             })
             ->latest('started_at')
             ->first();
+    }
+
+    /**
+     * True if the active subscription's expiry date has already passed and we're
+     * only still allowing access because of the grace period.
+     */
+    public function isInSubscriptionGracePeriod(): bool
+    {
+        $subscription = $this->activeSubscription();
+
+        return (bool) ($subscription?->expires_at?->isPast());
+    }
+
+    /**
+     * When the grace period actually runs out (null if no active subscription, or
+     * the subscription has no expiry date at all — i.e. never expires).
+     */
+    public function subscriptionGracePeriodEndsAt(): ?\Carbon\Carbon
+    {
+        $subscription = $this->activeSubscription();
+
+        if (!$subscription || !$subscription->expires_at) {
+            return null;
+        }
+
+        return $subscription->expires_at->copy()->addDays(self::SUBSCRIPTION_GRACE_PERIOD_DAYS);
     }
 
     /**
@@ -634,6 +669,8 @@ class User extends Authenticatable
                 'remaining_products' => 0,
                 'remaining_depots' => 0,
                 'has_ai_assistant' => false,
+                'in_grace_period' => false,
+                'grace_period_ends_at' => null,
             ];
         }
 
@@ -674,6 +711,8 @@ class User extends Authenticatable
             'expires_at' => $subscription->expires_at,
             'status' => $subscription->status,
             'has_ai_assistant' => $subscription->hasAiAssistant(),
+            'in_grace_period' => $this->isInSubscriptionGracePeriod(),
+            'grace_period_ends_at' => $this->subscriptionGracePeriodEndsAt(),
         ];
     }
 }

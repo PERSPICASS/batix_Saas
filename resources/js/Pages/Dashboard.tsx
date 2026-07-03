@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Calendar, Package, ShoppingCart, Store, TrendingUp, Wallet } from 'lucide-react';
 import FreeTrialBanner from '@/Components/FreeTrialBanner';
+import SubscriptionGraceBanner from '@/Components/SubscriptionGraceBanner';
 import GettingStarted from '@/Components/GettingStarted';
 import { useLocale } from '@/contexts/LocaleContext';
 
@@ -142,6 +143,7 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
 
             <section className="space-y-6">
                 <FreeTrialBanner />
+                <SubscriptionGraceBanner />
                 <GettingStarted onboarding={onboarding} />
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

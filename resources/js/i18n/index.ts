@@ -6,6 +6,7 @@ import { dashboard } from './dashboard';
 import { gettingStarted } from './gettingStarted';
 import { freeTrialBanner } from './freeTrialBanner';
 import { subscriptionBanner } from './subscriptionBanner';
+import { subscriptionGraceBanner } from './subscriptionGraceBanner';
 import { customers } from './customers';
 import { products } from './products';
 import { sales } from './sales';
@@ -49,6 +50,7 @@ export const translations = {
         gettingStarted: gettingStarted.fr,
         freeTrialBanner: freeTrialBanner.fr,
         subscriptionBanner: subscriptionBanner.fr,
+        subscriptionGraceBanner: subscriptionGraceBanner.fr,
         customers: customers.fr,
         products: products.fr,
         sales: sales.fr,
@@ -91,6 +93,7 @@ export const translations = {
         gettingStarted: gettingStarted.en,
         freeTrialBanner: freeTrialBanner.en,
         subscriptionBanner: subscriptionBanner.en,
+        subscriptionGraceBanner: subscriptionGraceBanner.en,
         customers: customers.en,
         products: products.en,
         sales: sales.en,

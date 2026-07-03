@@ -355,12 +355,42 @@ class SaleController extends Controller
             return back()->with('error', 'Seules les ventes annulées peuvent être réactivées.');
         }
 
-        DB::transaction(function () use ($sale) {
-            // Redéduire le stock (l'annulation l'avait remis)
+        $error = DB::transaction(function () use ($sale) {
+            $sale->load('items');
+
+            // Verrouiller les produits concernés et vérifier la disponibilité avant de
+            // re-déduire le stock : entre l'annulation et la restauration, une autre vente
+            // a pu consommer le stock libéré — sans ce contrôle, la restauration pouvait
+            // repasser le stock en négatif.
+            $lockedProducts = [];
+            $errors = [];
+
             foreach ($sale->items as $item) {
-                if ($item->product) {
+                if (!$item->product_id) {
+                    continue;
+                }
+
+                $product = Product::whereKey($item->product_id)->lockForUpdate()->first();
+
+                if (!$product || !$product->track_stock) {
+                    continue;
+                }
+
+                if ($product->stock_quantity < $item->quantity) {
+                    $errors[] = "Stock insuffisant pour « {$product->name} » (disponible : {$product->stock_quantity}, demandé : {$item->quantity}).";
+                }
+
+                $lockedProducts[$item->id] = $product;
+            }
+
+            if (!empty($errors)) {
+                return implode(' ', $errors);
+            }
+
+            foreach ($sale->items as $item) {
+                if (isset($lockedProducts[$item->id])) {
                     StockMovementService::recordSaleRestore(
-                        $item->product,
+                        $lockedProducts[$item->id],
                         $item->quantity,
                         $sale->shop_id,
                         $sale
@@ -369,7 +399,13 @@ class SaleController extends Controller
             }
 
             $sale->update(['status' => 'completed']);
+
+            return null;
         });
+
+        if ($error) {
+            return back()->with('error', "Impossible de réactiver la vente : {$error}");
+        }
 
         return redirect()->route('sales.index', ['code_user' => $code_user])
             ->with('success', 'Vente ' . $sale->ticket_number . ' réactivée avec succès.');
