@@ -6,6 +6,7 @@ use App\Models\Depot;
 use App\Models\DepotProduct;
 use App\Models\Product;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -31,7 +32,17 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     {
         foreach ($rows as $index => $row) {
             try {
-                $this->processRow($row->toArray(), $index + 2);
+                // maatwebsite wraps the whole import in one DB transaction (config/excel.php
+                // 'transactions.handler' => 'db'). On Postgres, a single failed query (e.g. a
+                // duplicate slug) poisons that entire transaction — every subsequent query,
+                // even unrelated SELECTs for later rows, then fails with "current transaction
+                // is aborted", and the whole import silently rolls back to nothing at commit
+                // time. Wrapping each row in its own DB::transaction() creates a savepoint
+                // (Laravel does this automatically for nested transactions), so one bad row
+                // only rolls back that row instead of the rest of the file.
+                DB::transaction(function () use ($row, $index) {
+                    $this->processRow($row->toArray(), $index + 2);
+                });
             } catch (\Exception $e) {
                 $this->errors[] = "Ligne " . ($index + 2) . " : " . $e->getMessage();
                 $this->importedCount['errors']++;
@@ -84,17 +95,23 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             }
 
             try {
-                $product = Product::create([
-                    'name'           => $name,
-                    'sku'            => $sku ?? ('SKU-' . strtoupper(substr(uniqid(), -8))),
-                    'shop_id'        => $this->defaultShopId,
-                    'stock_quantity' => 0,
-                    'selling_price'  => 0,
-                    'purchase_price' => $purchasePrice !== null ? (float) $purchasePrice : 0,
-                    'unit'           => 'Pièce',
-                    'is_active'      => false,
-                    'track_stock'    => true,
-                ]);
+                // Wrapped in its own savepoint: on Postgres, catching this exception doesn't
+                // undo the poisoned transaction state on its own — without an explicit
+                // savepoint here, the recovery lookup right below would itself fail with
+                // "current transaction is aborted".
+                $product = DB::transaction(function () use ($name, $sku, $purchasePrice) {
+                    return Product::create([
+                        'name'           => $name,
+                        'sku'            => $sku ?? ('SKU-' . strtoupper(substr(uniqid(), -8))),
+                        'shop_id'        => $this->defaultShopId,
+                        'stock_quantity' => 0,
+                        'selling_price'  => 0,
+                        'purchase_price' => $purchasePrice !== null ? (float) $purchasePrice : 0,
+                        'unit'           => 'Pièce',
+                        'is_active'      => false,
+                        'track_stock'    => true,
+                    ]);
+                });
 
                 $this->importedCount['products_created']++;
             } catch (\Illuminate\Database\QueryException $e) {

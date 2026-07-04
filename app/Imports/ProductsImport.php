@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Subcategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -27,7 +28,17 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     {
         foreach ($rows as $index => $row) {
             try {
-                $this->processRow($row, $index + 2);
+                // maatwebsite wraps the whole import in one DB transaction (config/excel.php
+                // 'transactions.handler' => 'db'). On Postgres, a single failed query (e.g. a
+                // duplicate slug) poisons that entire transaction — every subsequent query,
+                // even unrelated SELECTs for later rows, then fails with "current transaction
+                // is aborted", and the whole import silently rolls back to nothing at commit
+                // time. Wrapping each row in its own DB::transaction() creates a savepoint
+                // (Laravel does this automatically for nested transactions), so one bad row
+                // only rolls back that row instead of the rest of the file.
+                DB::transaction(function () use ($row, $index) {
+                    $this->processRow($row, $index + 2);
+                });
             } catch (\Exception $e) {
                 $this->errors[] = "Ligne " . ($index + 2) . ": " . $e->getMessage();
                 $this->importedCount['errors']++;
