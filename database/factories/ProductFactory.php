@@ -22,7 +22,7 @@ class ProductFactory extends Factory
         $name = fake()->words(3, true);
         $purchasePrice = fake()->randomFloat(2, 5, 100);
         $sellingPrice = $purchasePrice * fake()->randomFloat(2, 1.2, 2.5);
-        
+
         return [
             'shop_id' => Shop::factory(),
             'category_id' => Category::factory(),
@@ -33,12 +33,10 @@ class ProductFactory extends Factory
             'barcode' => fake()->optional()->ean13(),
             'unit' => fake()->randomElement(['piece', 'kg', 'liter', 'meter', 'box']),
             'purchase_price' => $purchasePrice,
-            'sale_price' => $sellingPrice,
-            'wholesale_price' => $sellingPrice * 0.9,
+            'selling_price' => $sellingPrice,
             'tax_rate' => fake()->randomElement([0, 5.5, 10, 20]),
             'stock_quantity' => fake()->numberBetween(0, 100),
-            'min_stock_level' => fake()->numberBetween(5, 20),
-            'max_stock_level' => fake()->numberBetween(100, 500),
+            'min_stock_alert' => fake()->numberBetween(5, 20),
             'image' => null,
             'is_active' => true,
         ];
@@ -71,7 +69,7 @@ class ProductFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'stock_quantity' => fake()->numberBetween(1, 5),
-            'min_stock_level' => 10,
+            'min_stock_alert' => 10,
         ]);
     }
 }

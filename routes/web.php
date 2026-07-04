@@ -91,7 +91,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::cl
 Route::post('/jeko/webhook', [JekoController::class, 'webhook'])
     ->name('jeko.webhook')
     ->middleware('throttle:60,1')
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook, no CSRF
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook, no CSRF
 
 Route::get('/jeko/success', [JekoController::class, 'success'])->name('jeko.success');
 Route::get('/jeko/error', [JekoController::class, 'error'])->name('jeko.error');
@@ -104,7 +104,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::cl
 Route::post('/lemonsqueezy/webhook', [LemonSqueezyController::class, 'webhook'])
     ->name('lemonsqueezy.webhook')
     ->middleware('throttle:60,1')
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook
 
 Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
     Route::post('/lemonsqueezy/checkout/{plan}', [LemonSqueezyController::class, 'checkout'])->name('lemonsqueezy.checkout');
@@ -119,7 +119,7 @@ Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactor
 Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])
     ->name('paddle.webhook')
     ->middleware(['throttle:60,1', \Laravel\Paddle\Http\Middleware\VerifyWebhookSignature::class])
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook
 
 Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
     Route::post('/paddle/checkout/{plan:slug}', [PaddleController::class, 'checkout'])->name('paddle.checkout');

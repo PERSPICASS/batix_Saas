@@ -139,9 +139,9 @@ class ExpenseController extends Controller
             ->with('success', 'Dépense enregistrée avec succès.');
     }
 
-    public function update(Request $request, Expense $expense): RedirectResponse
+    public function update(Request $request, string $code_user, Expense $expense): RedirectResponse
     {
-        $codeUser = $request->route('code_user');
+        $codeUser = $code_user;
 
         if (!Auth::user()->accessibleShopsQuery()->where('id', $expense->shop_id)->exists()) {
             abort(403, 'Accès non autorisé.');
@@ -177,9 +177,9 @@ class ExpenseController extends Controller
             ->with('success', 'Dépense modifiée avec succès.');
     }
 
-    public function destroy(Request $request, Expense $expense): RedirectResponse
+    public function destroy(Request $request, string $code_user, Expense $expense): RedirectResponse
     {
-        $codeUser = $request->route('code_user');
+        $codeUser = $code_user;
 
         if (!Auth::user()->accessibleShopsQuery()->where('id', $expense->shop_id)->exists()) {
             abort(403, 'Accès non autorisé.');
