@@ -23,6 +23,7 @@ class EmailVerificationCode extends Mailable
     {
         $this->verificationCode = $verificationCode;
         $this->userName = $userName;
+        $this->locale($this->user?->getLocale() ?? 'fr');
     }
 
     /**
@@ -34,7 +35,6 @@ class EmailVerificationCode extends Mailable
 
         return new Envelope(
             subject: __('mail.verification_code.subject', ['appName' => config('app.name')], $locale),
-            locale: $locale,
         );
     }
 

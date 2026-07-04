@@ -16,16 +16,16 @@ class QuoteMail extends Mailable
 
     public function __construct(public Quote $quote)
     {
+        $this->locale($this->quote->shop->user->getLocale() ?? 'fr');
     }
 
     public function envelope(): Envelope
     {
-        $locale = $this->quote->customer->user->getLocale() ?? 'fr';
+        $locale = $this->quote->shop->user->getLocale() ?? 'fr';
 
         return new Envelope(
             subject: __('mail.quote.subject', ['number' => $this->quote->quote_number], $locale),
             from: config('mail.from.address'),
-            locale: $locale,
         );
     }
 

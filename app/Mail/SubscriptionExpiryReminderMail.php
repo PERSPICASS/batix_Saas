@@ -18,7 +18,9 @@ class SubscriptionExpiryReminderMail extends Mailable
         public User         $user,
         public Subscription $subscription,
         public int          $daysLeft,
-    ) {}
+    ) {
+        $this->locale($this->user->getLocale() ?? 'fr');
+    }
 
     public function envelope(): Envelope
     {
@@ -33,7 +35,6 @@ class SubscriptionExpiryReminderMail extends Mailable
 
         return new Envelope(
             subject: $subject,
-            locale: $locale,
         );
     }
 

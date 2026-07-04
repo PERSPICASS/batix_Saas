@@ -23,20 +23,18 @@ class ContactFormMail extends Mailable
         $this->senderEmail   = $senderEmail;
         $this->senderSubject = $senderSubject;
         $this->senderMessage = $senderMessage;
+        // Default to 'fr' for contact form emails as sender may not be authenticated
+        $this->locale('fr');
     }
 
     public function envelope(): Envelope
     {
-        // Default to 'fr' for contact form emails as sender may not be authenticated
-        $locale = 'fr';
-
         return new Envelope(
             subject: __('mail.contact_form.subject', [
                 'subject' => $this->senderSubject,
                 'senderName' => $this->senderName,
-            ], $locale),
+            ], 'fr'),
             replyTo: [$this->senderEmail],
-            locale: $locale,
         );
     }
 
