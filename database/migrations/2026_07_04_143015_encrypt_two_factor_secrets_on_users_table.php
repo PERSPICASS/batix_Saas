@@ -13,11 +13,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // `recovery_codes` was a `json` column — MySQL rejects non-JSON values, so it must
-        // become `text` before it can hold an encrypted (base64) ciphertext blob.
-        Schema::table('users', function (Blueprint $table) {
-            $table->text('recovery_codes')->nullable()->change();
-        });
+        $driver = DB::getDriverName();
+
+        // `recovery_codes` was a `json` column — MySQL/SQLite accept a plain
+        // Schema::change() here, but Postgres has no implicit cast from json to text
+        // and rejects `alter column ... type text` without an explicit `using` clause.
+        if ($driver === 'pgsql') {
+            DB::statement('alter table users alter column recovery_codes type text using recovery_codes::text');
+        } else {
+            Schema::table('users', function (Blueprint $table) {
+                $table->text('recovery_codes')->nullable()->change();
+            });
+        }
 
         DB::table('users')
             ->where(function ($q) {
@@ -59,8 +66,14 @@ return new class extends Migration
                 ]);
             });
 
-        Schema::table('users', function (Blueprint $table) {
-            $table->json('recovery_codes')->nullable()->change();
-        });
+        $driver = DB::getDriverName();
+
+        if ($driver === 'pgsql') {
+            DB::statement('alter table users alter column recovery_codes type json using recovery_codes::json');
+        } else {
+            Schema::table('users', function (Blueprint $table) {
+                $table->json('recovery_codes')->nullable()->change();
+            });
+        }
     }
 };
