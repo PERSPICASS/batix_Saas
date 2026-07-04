@@ -60,7 +60,7 @@ class SettingsController extends Controller
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'website' => 'nullable|url|max:255',
-            'logo' => 'nullable|image|max:2048|mimes:jpeg,jpg,png,gif,svg',
+            'logo' => 'nullable|image|max:2048|mimes:jpeg,jpg,png,gif',
             'tax_id' => 'nullable|string|max:50',
             'currency' => 'required|string|max:3',
             'default_tax_rate' => 'nullable|numeric|min:0|max:100',

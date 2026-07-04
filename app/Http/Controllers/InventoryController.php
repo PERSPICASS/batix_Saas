@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Inventory;
 use App\Models\InventoryItem;
-use App\Models\Shop;
 use App\Models\Product;
 use App\Services\StockMovementService;
 use App\Services\InventoryAnalysisService;
@@ -152,7 +151,7 @@ class InventoryController extends Controller
 
         return Inertia::render('Inventory/Edit', [
             'inventory' => $inventory,
-            'shops' => Shop::select('id', 'name')->get(),
+            'shops' => Auth::user()->accessibleShops(),
             'products' => $enrichedProducts,
         ]);
     }

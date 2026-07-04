@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Support\HtmlSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -51,6 +52,9 @@ class BlogAdminController extends Controller
             'is_published' => 'boolean',
             'cover_image' => 'nullable|image|max:2048',
         ]);
+
+        $data['content_fr'] = HtmlSanitizer::sanitize($data['content_fr']);
+        $data['content_en'] = HtmlSanitizer::sanitize($data['content_en'] ?? null);
 
         $data['slug'] = Post::generateSlug($data['title_fr']);
         $data['author_name'] = $data['author_name'] ?? 'BATIX PRO';
@@ -102,6 +106,9 @@ class BlogAdminController extends Controller
             'is_published' => 'boolean',
             'cover_image' => 'nullable|image|max:2048',
         ]);
+
+        $data['content_fr'] = HtmlSanitizer::sanitize($data['content_fr']);
+        $data['content_en'] = HtmlSanitizer::sanitize($data['content_en'] ?? null);
 
         $data['author_name'] = $data['author_name'] ?? 'BATIX PRO';
 

@@ -345,6 +345,10 @@ class DepotController extends Controller
             abort(403);
         }
 
+        if ($depotProduct->depot_id !== $depot->id) {
+            abort(404);
+        }
+
         $validated = $request->validate([
             'quantity'        => 'required|integer|min:0',
             'min_stock_alert' => 'nullable|integer|min:0',
@@ -394,6 +398,10 @@ class DepotController extends Controller
 
         if ($depot->code_user !== $user->code_user) {
             abort(403);
+        }
+
+        if ($depotProduct->depot_id !== $depot->id) {
+            abort(404);
         }
 
         $depotProduct->delete();

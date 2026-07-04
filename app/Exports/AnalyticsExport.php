@@ -2,11 +2,13 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\SanitizesFormulaInjection;
 use App\Models\Shop;
 use App\Models\Invoice;
 use App\Models\Quote;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
@@ -43,8 +45,10 @@ class AnalyticsExport implements WithMultipleSheets
     }
 }
 
-class SummarySheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class SummarySheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -152,8 +156,10 @@ class SummarySheet implements FromArray, WithHeadings, WithColumnWidths, WithSty
     }
 }
 
-class InvoicesDetailSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class InvoicesDetailSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -247,8 +253,10 @@ class InvoicesDetailSheet implements FromArray, WithHeadings, WithColumnWidths, 
     }
 }
 
-class CustomersDetailSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class CustomersDetailSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -336,8 +344,10 @@ class CustomersDetailSheet implements FromArray, WithHeadings, WithColumnWidths,
     }
 }
 
-class ProductsDetailSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class ProductsDetailSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;

@@ -2,11 +2,13 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\SanitizesFormulaInjection;
 use App\Models\Shop;
 use App\Models\Invoice;
 use App\Models\Quote;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
@@ -65,8 +67,10 @@ class ProfessionalAnalyticsExport implements WithMultipleSheets
 }
 
 // SHEET 1: DASHBOARD
-class DashboardSheet implements FromArray, WithColumnWidths, WithStyles
+class DashboardSheet implements FromArray, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -179,8 +183,10 @@ class DashboardSheet implements FromArray, WithColumnWidths, WithStyles
 }
 
 // SHEET 2: TENDANCES
-class TrendSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class TrendSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -257,8 +263,10 @@ class TrendSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyle
 }
 
 // SHEET 3: CLIENTS ANALYSE
-class ClientsAnalysisSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class ClientsAnalysisSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -336,8 +344,10 @@ class ClientsAnalysisSheet implements FromArray, WithHeadings, WithColumnWidths,
 }
 
 // SHEET 4: PRODUITS ANALYSE
-class ProductsAnalysisSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class ProductsAnalysisSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -424,8 +434,10 @@ class ProductsAnalysisSheet implements FromArray, WithHeadings, WithColumnWidths
 }
 
 // SHEET 5: PERFORMANCE
-class PerformanceSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class PerformanceSheet implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;
@@ -504,8 +516,10 @@ class PerformanceSheet implements FromArray, WithHeadings, WithColumnWidths, Wit
 }
 
 // SHEET 6: ALERTES
-class AlertsSheet implements FromArray, WithColumnWidths, WithStyles
+class AlertsSheet implements FromArray, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
     protected string $startDate;
     protected string $endDate;

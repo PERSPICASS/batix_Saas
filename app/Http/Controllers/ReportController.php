@@ -10,8 +10,7 @@ class ReportController extends Controller
 {
     public function analytics(string $code_user): Response
     {
-        $user = auth()->user();
-        $shop = $user->shops->first();
+        $shop = current_shop();
 
         return inertia('Reports/Analytics', [
             'shop' => $shop,
@@ -20,8 +19,9 @@ class ReportController extends Controller
 
     public function exportAnalytics(string $code_user, Request $request)
     {
-        $user = auth()->user();
-        $shop = $user->shops->first();
+        $shop = current_shop();
+
+        abort_if(!$shop, 400, 'Aucune boutique sélectionnée.');
 
         $validated = $request->validate([
             'start_date' => 'required|date',

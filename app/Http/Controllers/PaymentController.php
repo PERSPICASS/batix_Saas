@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\SubscriptionInvoiceMail;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
@@ -10,7 +9,6 @@ use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -65,8 +63,10 @@ class PaymentController extends Controller
     }
 
     /**
-     * Traitement du paiement (paiement manuel : virement, mobile money, etc.)
-     * En production, intégrer ici Wave, Orange Money, Stripe…
+     * Soumission d'un paiement manuel (virement, mobile money, etc.) déclaré par l'utilisateur.
+     * Ces méthodes ne sont pas vérifiables automatiquement : la souscription reste "pending"
+     * tant qu'un administrateur n'a pas confirmé la réception du paiement (voir
+     * PlatformAdminController::activateSubscription).
      */
     public function process(Request $request, SubscriptionPlan $plan)
     {
@@ -87,21 +87,16 @@ class PaymentController extends Controller
         }
 
         DB::transaction(function () use ($user, $plan, $validated) {
-            $months = $validated['billing_cycle'] === 'yearly' ? 12 : 1;
             $amount = $validated['billing_cycle'] === 'yearly'
                 ? $plan->price * 10
                 : $plan->price;
 
-            Subscription::where('user_id', $user->id)
-                ->where('status', 'active')
-                ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
-
             $subscription = Subscription::create([
                 'user_id'              => $user->id,
                 'subscription_plan_id' => $plan->id,
-                'status'               => 'active',
-                'started_at'           => now(),
-                'expires_at'           => now()->addMonths($months),
+                'status'               => 'pending',
+                'started_at'           => null,
+                'expires_at'           => null,
                 'amount'               => $amount,
                 'billing_cycle'        => $validated['billing_cycle'],
                 'metadata'             => [
@@ -111,30 +106,29 @@ class PaymentController extends Controller
                 ],
             ]);
 
-            $invoice = SubscriptionInvoice::create([
+            SubscriptionInvoice::create([
                 'subscription_id'  => $subscription->id,
                 'user_id'          => $user->id,
                 'invoice_number'   => SubscriptionInvoice::generateInvoiceNumber(),
                 'amount'           => $amount,
                 'tax'              => 0,
                 'total'            => $amount,
-                'status'           => 'paid',
+                'status'           => 'pending',
                 'issued_at'        => now(),
-                'paid_at'          => now(),
-                'due_at'           => now(),
+                'paid_at'          => null,
+                'due_at'           => now()->addDays(3),
                 'payment_method'   => $validated['payment_method'],
                 'metadata'         => [
                     'transaction_ref' => $validated['transaction_ref'] ?? null,
                     'phone'           => $validated['phone'] ?? null,
                 ],
             ]);
-
-            Mail::to($user->email)->send(
-                new SubscriptionInvoiceMail($user, $subscription, $invoice)
-            );
         });
 
-        return redirect()->route('payment.confirmation', ['planSlug' => $plan->slug]);
+        return redirect()->route('payment.confirmation', [
+            'planSlug' => $plan->slug,
+            'status'   => 'pending',
+        ]);
     }
 
     /**
@@ -147,6 +141,7 @@ class PaymentController extends Controller
         return Inertia::render('Payment/Confirmation', [
             'planName' => $plan->name,
             'message'  => null,
+            'status'   => $request->query('status') === 'pending' ? 'pending' : 'confirmed',
         ]);
     }
 

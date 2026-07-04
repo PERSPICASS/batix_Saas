@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SubscriptionInvoiceMail;
 use App\Models\LemonSqueezyOrder;
 use App\Models\LemonSqueezyProduct;
+use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
 use App\Services\LemonSqueezyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class LemonSqueezyController extends Controller
 {
@@ -119,20 +123,86 @@ class LemonSqueezyController extends Controller
         }
     }
 
+    /**
+     * Le webhook "subscription_created" ne référence pas directement notre
+     * LemonSqueezyOrder par lemon_subscription_id (cette colonne n'est jamais
+     * peuplée avant cet événement) — la corrélation se fait via `order_id`,
+     * présent dans les attributs de l'abonnement LemonSqueezy, qui pointe vers
+     * la commande dont on a stocké le `lemon_order_id` à l'étape checkout.
+     */
     private function handleSubscriptionCreated(array $data): void
     {
         $subscriptionId = $data['id'] ?? null;
-        if ($subscriptionId) {
-            $order = LemonSqueezyOrder::where('lemon_subscription_id', $subscriptionId)->first();
-            if ($order) {
-                $order->update(['status' => 'paid']);
-                if ($order->subscription_plan_id && $order->user_id) {
-                    Subscription::where('user_id', $order->user_id)
-                        ->where('subscription_plan_id', $order->subscription_plan_id)
-                        ->where('status', '!=', 'active')
-                        ->update(['status' => 'active']);
-                }
-            }
+        $orderId = $data['attributes']['order_id'] ?? null;
+
+        if (!$subscriptionId || !$orderId) {
+            return;
+        }
+
+        $order = LemonSqueezyOrder::where('lemon_order_id', $orderId)->first();
+        if (!$order || !$order->subscription_plan_id || !$order->user_id) {
+            return;
+        }
+
+        $order->update(['lemon_subscription_id' => $subscriptionId]);
+
+        // Rejeu du webhook : l'abonnement local est déjà lié, rien à refaire.
+        if ($order->subscription_id) {
+            $order->update(['status' => 'paid']);
+            return;
+        }
+
+        $user = $order->user;
+        $plan = $order->subscriptionPlan;
+        if (!$user || !$plan) {
+            return;
+        }
+
+        [$subscription, $invoice] = DB::transaction(function () use ($user, $plan, $order) {
+            Subscription::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+
+            $subscription = Subscription::create([
+                'user_id'              => $user->id,
+                'subscription_plan_id' => $plan->id,
+                'status'               => 'active',
+                'started_at'           => now(),
+                'expires_at'           => now()->addMonth(),
+                'amount'               => $order->amount,
+                'billing_cycle'        => 'monthly',
+                'metadata'             => [
+                    'payment_method'         => 'lemonsqueezy',
+                    'lemon_subscription_id'  => $order->lemon_subscription_id,
+                ],
+            ]);
+
+            $invoice = SubscriptionInvoice::create([
+                'subscription_id' => $subscription->id,
+                'user_id'         => $user->id,
+                'invoice_number'  => SubscriptionInvoice::generateInvoiceNumber(),
+                'amount'          => $order->amount,
+                'tax'             => 0,
+                'total'           => $order->amount,
+                'status'          => 'paid',
+                'issued_at'       => now(),
+                'paid_at'         => now(),
+                'due_at'          => now(),
+                'payment_method'  => 'lemonsqueezy',
+                'metadata'        => [
+                    'lemon_subscription_id' => $order->lemon_subscription_id,
+                ],
+            ]);
+
+            $order->update(['status' => 'paid', 'subscription_id' => $subscription->id]);
+
+            return [$subscription, $invoice];
+        });
+
+        try {
+            Mail::to($user->email)->send(new SubscriptionInvoiceMail($user, $subscription, $invoice));
+        } catch (\Throwable $e) {
+            Log::error('SubscriptionInvoiceMail failed', ['user' => $user->id, 'error' => $e->getMessage()]);
         }
     }
 

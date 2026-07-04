@@ -14,13 +14,14 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
-    // Mobile sync endpoints
-    Route::post('/sync/sales', [MobileController::class, 'syncSales']);
-    Route::post('/sync/products', [MobileController::class, 'syncProducts']);
-    Route::post('/sync/customers', [MobileController::class, 'syncCustomers']);
+    // Mobile sync endpoints — mêmes abilities que l'API v1 pour respecter le scope
+    // du token (un token products:read seul ne doit pas pouvoir créer des ventes).
+    Route::middleware('abilities:sales:read')->post('/sync/sales', [MobileController::class, 'syncSales']);
+    Route::middleware('abilities:products:read')->post('/sync/products', [MobileController::class, 'syncProducts']);
+    Route::middleware('abilities:customers:read')->post('/sync/customers', [MobileController::class, 'syncCustomers']);
 
     // Mobile sales creation
-    Route::post('/sales', [MobileController::class, 'createSale']);
+    Route::middleware('abilities:sales:write')->post('/sales', [MobileController::class, 'createSale']);
 
     // Shop information
     Route::get('/shop', [MobileController::class, 'getShopInfo']);

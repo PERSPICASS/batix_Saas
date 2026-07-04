@@ -219,18 +219,24 @@ class JekoController extends Controller
      */
     private function activateSubscription(JekoPaymentRequest $payment): void
     {
-        if ($payment->subscription_activated) {
-            return;
-        }
+        // Verrou + re-vérification de `subscription_activated` à l'intérieur de la
+        // transaction : le webhook et le polling du frontend peuvent arriver en même
+        // temps, et sans ce verrou les deux passeraient le check avant que l'un des
+        // deux persiste le flag, créant deux abonnements/factures pour un seul paiement.
+        $result = DB::transaction(function () use ($payment) {
+            $locked = JekoPaymentRequest::where('id', $payment->id)->lockForUpdate()->first();
 
-        $user = $payment->user;
-        $plan = $payment->plan;
-        $months = $payment->billing_cycle === 'yearly' ? 12 : 1;
+            if (!$locked || $locked->subscription_activated) {
+                return null;
+            }
 
-        // Convert cents back to XOF for storage
-        $amountXof = $payment->amount_cents / 100;
+            $user = $locked->user;
+            $plan = $locked->plan;
+            $months = $locked->billing_cycle === 'yearly' ? 12 : 1;
 
-        $invoice = DB::transaction(function () use ($payment, $user, $plan, $months, $amountXof) {
+            // Convert cents back to XOF for storage
+            $amountXof = $locked->amount_cents / 100;
+
             Subscription::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
@@ -242,11 +248,11 @@ class JekoController extends Controller
                 'started_at' => now(),
                 'expires_at' => now()->addMonths($months),
                 'amount' => $amountXof,
-                'billing_cycle' => $payment->billing_cycle,
+                'billing_cycle' => $locked->billing_cycle,
                 'metadata' => [
                     'payment_method' => 'jeko',
-                    'payment_method_display' => $this->getPaymentMethodLabel($payment->payment_method),
-                    'jeko_payment_request_id' => $payment->payment_request_id,
+                    'payment_method_display' => $this->getPaymentMethodLabel($locked->payment_method),
+                    'jeko_payment_request_id' => $locked->payment_request_id,
                 ],
             ]);
 
@@ -263,19 +269,23 @@ class JekoController extends Controller
                 'due_at' => now(),
                 'payment_method' => 'jeko',
                 'metadata' => [
-                    'jeko_payment_request_id' => $payment->payment_request_id,
-                    'payment_method_display' => $this->getPaymentMethodLabel($payment->payment_method),
+                    'jeko_payment_request_id' => $locked->payment_request_id,
+                    'payment_method_display' => $this->getPaymentMethodLabel($locked->payment_method),
                 ],
             ]);
 
-            $payment->update(['subscription_activated' => true]);
+            $locked->update(['subscription_activated' => true]);
 
-            return [$subscription, $subscriptionInvoice];
+            return [$user, $subscription, $subscriptionInvoice];
         });
 
+        if (!$result) {
+            return;
+        }
+
         // Send email outside transaction
+        [$user, $subscription, $subscriptionInvoice] = $result;
         try {
-            [$subscription, $subscriptionInvoice] = $invoice;
             Mail::to($user->email)->send(
                 new SubscriptionInvoiceMail($user, $subscription, $subscriptionInvoice)
             );

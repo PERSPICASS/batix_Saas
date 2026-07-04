@@ -2,15 +2,19 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\SanitizesFormulaInjection;
 use App\Models\Quote;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class QuotesExport implements FromArray, WithHeadings, WithColumnWidths, WithStyles
+class QuotesExport implements FromArray, WithHeadings, WithColumnWidths, WithStyles, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected int $shopId;
 
     public function __construct(int $shopId)

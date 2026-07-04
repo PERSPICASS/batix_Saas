@@ -2,18 +2,22 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\SanitizesFormulaInjection;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProductsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
+class ProductsExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     protected ?int $shopId;
 
     public function __construct(?int $shopId = null)

@@ -143,6 +143,10 @@ class ExpenseController extends Controller
     {
         $codeUser = $request->route('code_user');
 
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $expense->shop_id)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
         $validated = $request->validate([
             'title'          => 'required|string|max:255',
             'amount'         => 'required|numeric|min:0.01',
@@ -176,6 +180,10 @@ class ExpenseController extends Controller
     public function destroy(Request $request, Expense $expense): RedirectResponse
     {
         $codeUser = $request->route('code_user');
+
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $expense->shop_id)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
 
         // Supprimer le justificatif si présent
         if ($expense->receipt) {

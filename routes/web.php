@@ -50,8 +50,6 @@ use App\Http\Controllers\TwoFactorController;
 use App\Http\Controllers\ProductArticleController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 
 Route::get('/', [WelcomeController::class, 'index']);
@@ -67,22 +65,11 @@ Route::get('/policies/refund', fn() => Inertia::render('Policies/Show', ['policy
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
-// Route pour servir les fichiers uploadés (logos, images, etc.)
-Route::get('/storage/{path}', function ($path) {
-    $file = Storage::disk('public')->path($path);
-    
-    if (!file_exists($file)) {
-        abort(404);
-    }
-    
-    return Response::file($file);
-})->where('path', '.*')->name('storage.file');
-
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');
 
-// Routes paiement manuel (auth requise)
-Route::middleware(['auth'])->group(function () {
+// Routes paiement manuel (auth + 2FA requis si activé)
+Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
     Route::get('/plans/{plan}/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
     Route::post('/plans/{plan}/process', [PaymentController::class, 'process'])->name('payment.process');
     Route::get('/payment/confirmation/{planSlug}', [PaymentController::class, 'confirmation'])->name('payment.confirmation');
@@ -94,7 +81,7 @@ Route::post('/pawapay/webhook', [PawaPayController::class, 'webhook'])
     ->middleware('throttle:60,1')
     ->withoutMiddleware(['web']); // stateless webhook
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
     Route::post('/pawapay/initiate/{plan}', [PawaPayController::class, 'initiate'])->name('pawapay.initiate');
     Route::get('/pawapay/status/{depositId}', [PawaPayController::class, 'pollStatus'])->name('pawapay.status');
     Route::post('/pawapay/simulate/{depositId}', [PawaPayController::class, 'simulate'])->name('pawapay.simulate');
@@ -109,7 +96,7 @@ Route::post('/jeko/webhook', [JekoController::class, 'webhook'])
 Route::get('/jeko/success', [JekoController::class, 'success'])->name('jeko.success');
 Route::get('/jeko/error', [JekoController::class, 'error'])->name('jeko.error');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
     Route::post('/jeko/initiate/{plan}', [JekoController::class, 'initiate'])->name('jeko.initiate');
 });
 
@@ -119,12 +106,12 @@ Route::post('/lemonsqueezy/webhook', [LemonSqueezyController::class, 'webhook'])
     ->middleware('throttle:60,1')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
     Route::post('/lemonsqueezy/checkout/{plan}', [LemonSqueezyController::class, 'checkout'])->name('lemonsqueezy.checkout');
 });
 
 // Route admin pour synchroniser les produits LemonSqueezy
-Route::middleware(['auth', 'platform.admin'])->prefix('platform-admin')->group(function () {
+Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->prefix('platform-admin')->group(function () {
     Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
 });
 
@@ -134,7 +121,7 @@ Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])
     ->middleware(['throttle:60,1', \Laravel\Paddle\Http\Middleware\VerifyWebhookSignature::class])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]); // public webhook
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
     Route::post('/paddle/checkout/{plan:slug}', [PaddleController::class, 'checkout'])->name('paddle.checkout');
     Route::get('/paddle/checkout', fn() => Inertia::render('Payment/PaddlePay'))->name('paddle.pay');
 });
@@ -145,7 +132,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/two-factor/verify', [TwoFactorController::class, 'showVerification'])->name('two-factor.verify.get');
     Route::post('/two-factor/generate-secret', [TwoFactorController::class, 'generateSecret'])->name('two-factor.generate');
     Route::post('/two-factor/verify', [TwoFactorController::class, 'verify'])->middleware('throttle:6,1')->name('two-factor.verify');
-    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->name('two-factor.disable');
+    Route::post('/two-factor/disable', [TwoFactorController::class, 'disable'])->middleware('throttle:6,1')->name('two-factor.disable');
     Route::post('/two-factor/check-code', [TwoFactorController::class, 'checkCode'])->middleware('throttle:6,1')->name('two-factor.check');
 });
 
@@ -157,7 +144,7 @@ Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('
 Route::post('/invitation/{token}/accept', [InvitationController::class, 'accept'])->name('invitation.accept');
 
 // Routes admin plateforme (accès réservé aux admin_platforme)
-Route::middleware(['auth', 'platform.admin'])->prefix('platform-admin')->group(function () {
+Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->prefix('platform-admin')->group(function () {
     Route::get('/dashboard', [PlatformAdminController::class, 'index'])->name('platform.dashboard');
     Route::get('/accounts', [PlatformAdminController::class, 'accounts'])->name('platform.accounts');
     Route::post('/accounts/{user}/toggle', [PlatformAdminController::class, 'toggleAccountStatus'])->name('platform.accounts.toggle');

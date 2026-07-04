@@ -1,34 +1,38 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { CheckCircle2, ArrowRight, Mail } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Mail, Clock } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 
 interface Props extends PageProps {
     planName?: string | null;
     message?: string | null;
+    status?: 'confirmed' | 'pending';
 }
 
-export default function Confirmation({ planName, message, auth }: Props) {
+export default function Confirmation({ planName, message, status = 'confirmed', auth }: Props) {
     const { t } = useLocale();
+    const isPending = status === 'pending';
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">{t.plans.checkout.confirmation.headTitle}</h2>}>
-            <Head title={t.plans.checkout.confirmation.headTitle} />
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">{isPending ? t.plans.checkout.confirmation.pendingHeadTitle : t.plans.checkout.confirmation.headTitle}</h2>}>
+            <Head title={isPending ? t.plans.checkout.confirmation.pendingHeadTitle : t.plans.checkout.confirmation.headTitle} />
 
             <div className="mx-auto max-w-lg">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center space-y-6">
 
                     {/* Icône */}
-                    <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-400/20">
-                        <CheckCircle2 className="size-9 text-emerald-400" />
+                    <div className={`mx-auto flex size-16 items-center justify-center rounded-full ${isPending ? 'bg-amber-400/20' : 'bg-emerald-400/20'}`}>
+                        {isPending ? <Clock className="size-9 text-amber-300" /> : <CheckCircle2 className="size-9 text-emerald-400" />}
                     </div>
 
                     {/* Titre */}
                     <div>
-                        <h1 className="text-2xl font-bold text-white">{t.plans.checkout.confirmation.title}</h1>
+                        <h1 className="text-2xl font-bold text-white">{isPending ? t.plans.checkout.confirmation.pendingTitle : t.plans.checkout.confirmation.title}</h1>
                         <p className="mt-2 text-slate-400">
-                            {message || (planName ? t.plans.checkout.confirmation.withPlan(planName) : t.plans.checkout.confirmation.withoutPlan)}
+                            {message || (isPending
+                                ? t.plans.checkout.confirmation.pendingMessage
+                                : (planName ? t.plans.checkout.confirmation.withPlan(planName) : t.plans.checkout.confirmation.withoutPlan))}
                         </p>
                     </div>
 

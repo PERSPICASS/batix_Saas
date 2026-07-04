@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\SubscriptionInvoiceMail;
 use App\Models\User;
 use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\FixedCost;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -649,9 +652,18 @@ class PlatformAdminController extends Controller
             abort(403);
         }
 
+        // Un seul abonnement actif à la fois : on annule les autres avant d'activer celui-ci.
+        Subscription::where('user_id', $subscription->user_id)
+            ->where('id', '!=', $subscription->id)
+            ->where('status', 'active')
+            ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+
+        $months = $subscription->billing_cycle === 'yearly' ? 12 : 1;
+
         $subscription->update([
-            'status' => 'active',
+            'status'     => 'active',
             'started_at' => $subscription->started_at ?? now(),
+            'expires_at' => $subscription->expires_at ?? now()->addMonths($months),
         ]);
 
         // Mark related pending invoices as paid
@@ -659,6 +671,17 @@ class PlatformAdminController extends Controller
             'status' => 'paid',
             'paid_at' => now(),
         ]);
+
+        $invoice = $subscription->invoices()->latest()->first();
+        if ($invoice) {
+            try {
+                Mail::to($subscription->user->email)->send(
+                    new SubscriptionInvoiceMail($subscription->user, $subscription->fresh(), $invoice)
+                );
+            } catch (\Throwable $e) {
+                Log::error('SubscriptionInvoiceMail failed', ['user' => $subscription->user_id, 'error' => $e->getMessage()]);
+            }
+        }
 
         return back()->with('success', 'Abonnement activé avec succès.');
     }

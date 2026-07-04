@@ -51,6 +51,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'google2fa_secret',
+        'recovery_codes',
     ];
 
     /**
@@ -67,7 +69,8 @@ class User extends Authenticatable
             'invitation_sent_at' => 'datetime',
             'invitation_accepted_at' => 'datetime',
             'email_verification_code_expires_at' => 'datetime',
-            'recovery_codes' => 'array',
+            'google2fa_secret' => 'encrypted',
+            'recovery_codes' => 'encrypted:array',
         ];
     }
 

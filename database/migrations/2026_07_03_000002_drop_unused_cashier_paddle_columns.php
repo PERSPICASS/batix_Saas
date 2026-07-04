@@ -18,10 +18,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
+            // SQLite refuses to drop a column that's still covered by an index.
+            $table->dropUnique(['paddle_id']);
             $table->dropColumn(['billable_type', 'billable_id', 'paddle_id', 'trial_ends_at']);
         });
 
         Schema::table('subscriptions', function (Blueprint $table) {
+            $table->dropUnique(['paddle_id']);
             $table->dropColumn(['billable_type', 'billable_id', 'paddle_id', 'paused_at']);
         });
 

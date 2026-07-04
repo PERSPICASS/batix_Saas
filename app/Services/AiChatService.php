@@ -98,7 +98,14 @@ class AiChatService
             messages: $messages,
         );
 
-        while ($response->stopReason === 'tool_use') {
+        // Cap tool round-trips: an unbounded loop would let a single HTTP request trigger
+        // unlimited Anthropic API calls (each resending the growing message history),
+        // making one request arbitrarily expensive regardless of the per-minute throttle.
+        $maxToolRounds = 5;
+        $toolRounds = 0;
+
+        while ($response->stopReason === 'tool_use' && $toolRounds < $maxToolRounds) {
+            $toolRounds++;
             $toolUseBlock = collect($response->content)->firstWhere('type', 'tool_use');
 
             $toolResult = self::executeTool(

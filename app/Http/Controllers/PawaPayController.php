@@ -194,15 +194,21 @@ class PawaPayController extends Controller
      */
     private function activateSubscription(PawaPayDeposit $deposit): void
     {
-        if ($deposit->subscription_activated) {
-            return;
-        }
+        // Le verrou + la re-vérification de `subscription_activated` se font à l'intérieur
+        // de la transaction : sans ça, deux appels concurrents (webhook + poll du frontend
+        // arrivant en même temps) peuvent tous les deux passer le check avant que l'un des
+        // deux persiste le flag, créant deux abonnements/factures pour un seul paiement.
+        $result = DB::transaction(function () use ($deposit) {
+            $locked = PawaPayDeposit::where('id', $deposit->id)->lockForUpdate()->first();
 
-        $user   = $deposit->user;
-        $plan   = $deposit->plan;
-        $months = $deposit->billing_cycle === 'yearly' ? 12 : 1;
+            if (!$locked || $locked->subscription_activated) {
+                return null;
+            }
 
-        $invoice = DB::transaction(function () use ($deposit, $user, $plan, $months) {
+            $user   = $locked->user;
+            $plan   = $locked->plan;
+            $months = $locked->billing_cycle === 'yearly' ? 12 : 1;
+
             Subscription::where('user_id', $user->id)
                 ->where('status', 'active')
                 ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
@@ -213,13 +219,13 @@ class PawaPayController extends Controller
                 'status'               => 'active',
                 'started_at'           => now(),
                 'expires_at'           => now()->addMonths($months),
-                'amount'               => $deposit->amount,
-                'billing_cycle'        => $deposit->billing_cycle,
+                'amount'               => $locked->amount,
+                'billing_cycle'        => $locked->billing_cycle,
                 'metadata'             => [
                     'payment_method'     => 'pawapay',
-                    'correspondent'      => $deposit->correspondent,
-                    'msisdn'             => $deposit->msisdn,
-                    'pawapay_deposit_id' => $deposit->deposit_id,
+                    'correspondent'      => $locked->correspondent,
+                    'msisdn'             => $locked->msisdn,
+                    'pawapay_deposit_id' => $locked->deposit_id,
                 ],
             ]);
 
@@ -227,29 +233,33 @@ class PawaPayController extends Controller
                 'subscription_id' => $subscription->id,
                 'user_id'         => $user->id,
                 'invoice_number'  => SubscriptionInvoice::generateInvoiceNumber(),
-                'amount'          => $deposit->amount,
+                'amount'          => $locked->amount,
                 'tax'             => 0,
-                'total'           => $deposit->amount,
+                'total'           => $locked->amount,
                 'status'          => 'paid',
                 'issued_at'       => now(),
                 'paid_at'         => now(),
                 'due_at'          => now(),
                 'payment_method'  => 'pawapay',
                 'metadata'        => [
-                    'pawapay_deposit_id' => $deposit->deposit_id,
-                    'correspondent'      => $deposit->correspondent,
-                    'msisdn'             => $deposit->msisdn,
+                    'pawapay_deposit_id' => $locked->deposit_id,
+                    'correspondent'      => $locked->correspondent,
+                    'msisdn'             => $locked->msisdn,
                 ],
             ]);
 
-            $deposit->update(['subscription_activated' => true]);
+            $locked->update(['subscription_activated' => true]);
 
-            return [$subscription, $invoice];
+            return [$user, $subscription, $invoice];
         });
 
+        if (!$result) {
+            return;
+        }
+
         // Mail hors transaction : un échec d'envoi ne rollback pas l'activation
+        [$user, $subscription, $invoice] = $result;
         try {
-            [$subscription, $invoice] = $invoice;
             Mail::to($user->email)->send(
                 new SubscriptionInvoiceMail($user, $subscription, $invoice)
             );

@@ -15,6 +15,8 @@ class AiChatController extends Controller
             $validated = $request->validate([
                 'message' => 'required|string|max:2000',
                 'history' => 'array|max:20',
+                'history.*.role' => 'in:user,assistant',
+                'history.*.content' => 'string|max:4000',
             ]);
 
             $user = Auth::user();

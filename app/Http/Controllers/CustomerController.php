@@ -27,7 +27,7 @@ class CustomerController extends Controller
         // Filtrer par boutique active si sélectionnée
         if ($activeShopId) {
             $query->where('shop_id', $activeShopId);
-        } elseif ($shopId) {
+        } elseif ($shopId && Auth::user()->accessibleShopsQuery()->where('id', $shopId)->exists()) {
             $query->where('shop_id', $shopId);
         } else {
             // Afficher les clients de toutes les boutiques de l'utilisateur

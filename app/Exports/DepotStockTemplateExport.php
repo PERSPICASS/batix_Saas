@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\SanitizesFormulaInjection;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -10,8 +12,10 @@ use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class DepotStockTemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnWidths, WithTitle
+class DepotStockTemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnWidths, WithTitle, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     public function title(): string
     {
         return 'Import Stock Dépôt';

@@ -2,16 +2,20 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\SanitizesFormulaInjection;
 use App\Models\Category;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProductsTemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnWidths
+class ProductsTemplateExport implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithColumnWidths, WithCustomValueBinder
 {
+    use SanitizesFormulaInjection;
+
     public function array(): array
     {
         // Exemples de données pour guider l'utilisateur
