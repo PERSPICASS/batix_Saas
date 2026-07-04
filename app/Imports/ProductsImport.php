@@ -19,6 +19,15 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     protected array $importedCount = ['created' => 0, 'updated' => 0, 'errors' => 0];
     protected array $errors = [];
 
+    /**
+     * Memoizes category/subcategory name lookups for the duration of one import — a
+     * large file routinely repeats the same handful of category names across
+     * thousands of rows, and re-querying them every row is what pushes a big import
+     * past PHP's execution time limit.
+     */
+    protected array $categoryCache = [];
+    protected array $subcategoryCache = [];
+
     public function __construct(int $shopId)
     {
         $this->shopId = $shopId;
@@ -70,26 +79,14 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $categoryId = null;
         $categoryName = $this->getValue($data, ['categorie', 'category', 'catégorie', 'cat']);
         if ($categoryName) {
-            $category = Category::where('shop_id', $this->shopId)
-                ->where(function($q) use ($categoryName) {
-                    $q->where('name', $categoryName)
-                      ->orWhere('name', 'like', "%{$categoryName}%");
-                })
-                ->first();
-            $categoryId = $category?->id;
+            $categoryId = $this->resolveCategoryId($categoryName);
         }
 
         // Chercher la sous-catégorie par nom
         $subcategoryId = null;
         $subcategoryName = $this->getValue($data, ['sous_categorie', 'sous-categorie', 'subcategory', 'souscategorie']);
         if ($subcategoryName && $categoryId) {
-            $subcategory = Subcategory::where('category_id', $categoryId)
-                ->where(function($q) use ($subcategoryName) {
-                    $q->where('name', $subcategoryName)
-                      ->orWhere('name', 'like', "%{$subcategoryName}%");
-                })
-                ->first();
-            $subcategoryId = $subcategory?->id;
+            $subcategoryId = $this->resolveSubcategoryId($categoryId, $subcategoryName);
         }
 
         // Récupérer le code-barres et SKU du fichier
@@ -189,6 +186,42 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             
             $this->importedCount['created']++;
         }
+    }
+
+    protected function resolveCategoryId(string $categoryName): ?int
+    {
+        $cacheKey = mb_strtolower($categoryName);
+
+        if (array_key_exists($cacheKey, $this->categoryCache)) {
+            return $this->categoryCache[$cacheKey];
+        }
+
+        $category = Category::where('shop_id', $this->shopId)
+            ->where(function ($q) use ($categoryName) {
+                $q->where('name', $categoryName)
+                  ->orWhere('name', 'like', "%{$categoryName}%");
+            })
+            ->first();
+
+        return $this->categoryCache[$cacheKey] = $category?->id;
+    }
+
+    protected function resolveSubcategoryId(int $categoryId, string $subcategoryName): ?int
+    {
+        $cacheKey = $categoryId . '|' . mb_strtolower($subcategoryName);
+
+        if (array_key_exists($cacheKey, $this->subcategoryCache)) {
+            return $this->subcategoryCache[$cacheKey];
+        }
+
+        $subcategory = Subcategory::where('category_id', $categoryId)
+            ->where(function ($q) use ($subcategoryName) {
+                $q->where('name', $subcategoryName)
+                  ->orWhere('name', 'like', "%{$subcategoryName}%");
+            })
+            ->first();
+
+        return $this->subcategoryCache[$cacheKey] = $subcategory?->id;
     }
 
     /**

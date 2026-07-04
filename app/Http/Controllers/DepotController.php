@@ -660,6 +660,10 @@ class DepotController extends Controller
         }
 
         try {
+            // A large stock sheet (thousands of rows) can legitimately take longer than
+            // PHP's default 30s execution limit — each row does its own lookups/writes.
+            set_time_limit(300);
+
             $import = new DepotStockImport($depot, $shopIds, (int) $defaultShopId);
             Excel::import($import, $request->file('file'));
 

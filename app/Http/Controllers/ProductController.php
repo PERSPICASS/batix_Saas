@@ -469,6 +469,10 @@ class ProductController extends Controller
         }
 
         try {
+            // A large catalog (thousands of rows) can legitimately take longer than PHP's
+            // default 30s execution limit — each row does its own lookups/writes.
+            set_time_limit(300);
+
             $import = new ProductsImport($shopId);
             Excel::import($import, $request->file('file'));
             
