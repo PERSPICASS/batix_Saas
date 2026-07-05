@@ -153,11 +153,22 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 ->first();
         }
         
-        // Recherche par nom si pas trouvé par SKU/code-barres
+        // Recherche par nom si pas trouvé par SKU/code-barres — deux produits différents
+        // partagent souvent le même nom sous des marques différentes (ex. "Perceuse 500W"
+        // Bosch vs Makita), donc la marque fait partie du critère de correspondance dès
+        // qu'elle est renseignée, sinon des lignes distinctes finissent par s'écraser
+        // les unes les autres au lieu de créer des produits séparés.
         if (!$existingProduct) {
-            $existingProduct = Product::where('shop_id', $this->shopId)
-                ->where('name', $productData['name'])
-                ->first();
+            $nameQuery = Product::where('shop_id', $this->shopId)
+                ->where('name', $productData['name']);
+
+            if (!empty($productData['brand'])) {
+                $nameQuery->where('brand', $productData['brand']);
+            } else {
+                $nameQuery->whereNull('brand');
+            }
+
+            $existingProduct = $nameQuery->first();
         }
 
         if ($existingProduct) {
