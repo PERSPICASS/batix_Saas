@@ -16,8 +16,9 @@ use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 {
     protected int $shopId;
-    protected array $importedCount = ['created' => 0, 'updated' => 0, 'errors' => 0];
+    protected array $importedCount = ['created' => 0, 'updated' => 0, 'errors' => 0, 'skipped' => 0];
     protected array $errors = [];
+    protected array $skippedRows = [];
 
     /**
      * Memoizes category/subcategory name lookups for the duration of one import — a
@@ -69,9 +70,13 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         
         // Récupérer le nom avec plusieurs alias possibles
         $name = $this->getValue($data, ['nom', 'name', 'produit', 'product']);
-        
+
         if (empty($name)) {
-            // Ligne vide ou sans nom, on skip silencieusement
+            // Ligne sans nom exploitable : on l'ignore, mais on le signale — sinon
+            // l'utilisateur voit un total (créés + mis à jour) inférieur au nombre de
+            // lignes de son fichier sans aucune explication.
+            $this->importedCount['skipped']++;
+            $this->skippedRows[] = $rowNumber;
             return;
         }
 
@@ -323,6 +328,11 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     public function getImportedCount(): array
     {
         return $this->importedCount;
+    }
+
+    public function getSkippedRows(): array
+    {
+        return $this->skippedRows;
     }
 
     public function getErrors(): array

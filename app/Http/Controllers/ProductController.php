@@ -478,17 +478,23 @@ class ProductController extends Controller
             
             $count = $import->getImportedCount();
             $errors = $import->getErrors();
-            
+            $skippedRows = $import->getSkippedRows();
+
             $message = "Import terminé : {$count['created']} produit(s) créé(s), {$count['updated']} mis à jour.";
-            
+
+            if (!empty($count['skipped'])) {
+                $message .= " {$count['skipped']} ligne(s) ignorée(s) (nom manquant).";
+            }
+
             if ($count['errors'] > 0) {
                 $message .= " {$count['errors']} erreur(s).";
             }
 
-            if (!empty($errors)) {
+            if (!empty($errors) || !empty($skippedRows)) {
                 return back()
                     ->with('warning', $message)
-                    ->with('import_errors', $errors);
+                    ->with('import_errors', $errors)
+                    ->with('import_skipped_rows', $skippedRows);
             }
 
             return back()->with('success', $message);
