@@ -74,7 +74,7 @@ export default function AuthSplitLayout({
                 <section className="relative hidden h-full overflow-hidden lg:-ml-4 lg:block  lg:shadow-[-28px_0_60px_-24px_rgba(15,23,42,0.55)]">
                     <img src={sideImageSrc} alt="Auth visual" className="absolute inset-0 h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-900/35 to-slate-900/15" />
-                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white sm:p-8">
+                    <div className="absolute bottom-10 left-0 right-0 p-6 text-white sm:p-8">
                         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200">{sideStepLabel}</p>
                         <h2 className="mt-3 max-w-lg text-2xl font-bold leading-tight xl:text-3xl">{sideTitle}</h2>
                         <p className="mt-2 max-w-lg text-sm text-slate-200">{sideDescription}</p>
