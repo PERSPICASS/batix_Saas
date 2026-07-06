@@ -5,7 +5,7 @@ export default function LanguageSwitcher() {
     const { locale, setLocale } = useLocale();
 
     return (
-        <div className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-200 text-xs dark:border-white/10 dark:bg-white/5">
+        <div className="inline-flex items-center rounded-lg border border-slate-300 bg-white text-xs dark:border-white/10 dark:bg-white/5">
             {(['fr', 'en'] as Locale[]).map((l) => (
                 <button
                     key={l}

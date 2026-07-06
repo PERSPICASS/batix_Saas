@@ -29,6 +29,7 @@ import {
     Lock,
     LogOut,
     Menu,
+    Monitor,
     Moon,
     Receipt,
     ShoppingCart,
@@ -48,6 +49,9 @@ import ToastContainer from '@/Components/ToastContainer';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import AiChatWidget from '@/Components/AiChatWidget';
 import { useLocale } from '@/contexts/LocaleContext';
+
+type ThemePreference = 'light' | 'dark' | 'system';
+const THEME_STORAGE_KEY = 'batix_theme_preference';
 
 export default function Authenticated({
     header,
@@ -78,7 +82,13 @@ export default function Authenticated({
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
     const isPlatformAdmin = user?.role === 'admin_platforme';
     const isSuperAdmin = user?.role === 'super_admin';
-    const [theme, setTheme] = useState<'dark' | 'light'>(isPlatformAdmin ? 'light' : 'dark');
+    const [themePreference, setThemePreference] = useState<ThemePreference>('system');
+    const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
+        typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
+    );
+    const isDark = themePreference === 'dark' || (themePreference === 'system' && systemPrefersDark);
+    const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+    const themeMenuRef = useRef<HTMLDivElement>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
 
@@ -118,10 +128,10 @@ export default function Authenticated({
 
     if (!accountCode && user?.role !== 'admin_platforme') {
         return (
-            <div className={`flex h-screen items-center justify-center ${theme === 'dark' ? 'bg-slate-950' : 'bg-slate-100'}`}>
+            <div className={`flex h-screen items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
                 <div className="text-center">
                     <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-amber-300 border-r-transparent"></div>
-                    <p className={theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}>{t.layout.loading}</p>
+                    <p className={isDark ? 'text-slate-400' : 'text-slate-600'}>{t.layout.loading}</p>
                 </div>
             </div>
         );
@@ -148,29 +158,29 @@ export default function Authenticated({
         setShopMenuOpen(false);
     };
 
+    // Charge la préférence sauvegardée (une seule fois, tous rôles confondus).
     useEffect(() => {
-        if (isPlatformAdmin) {
-            const savedTheme = window.localStorage.getItem('platform_admin_theme');
-            if (savedTheme === 'dark' || savedTheme === 'light') {
-                setTheme(savedTheme);
-                return;
-            }
-            setTheme('light');
-            return;
+        const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+        if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            setThemePreference(saved);
         }
-        setTheme('dark');
-    }, [isPlatformAdmin]);
+    }, []);
+
+    // Suit le thème du système en direct tant que la préférence est "system".
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = (event: MediaQueryListEvent) => setSystemPrefersDark(event.matches);
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, []);
 
     useEffect(() => {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-        if (isPlatformAdmin) {
-            window.localStorage.setItem('platform_admin_theme', theme);
-        }
-    }, [theme, isPlatformAdmin]);
+        document.documentElement.classList.toggle('dark', isDark);
+    }, [isDark]);
+
+    useEffect(() => {
+        window.localStorage.setItem(THEME_STORAGE_KEY, themePreference);
+    }, [themePreference]);
 
     useEffect(() => {
         const onClickOutside = (event: MouseEvent) => {
@@ -179,6 +189,9 @@ export default function Authenticated({
             }
             if (shopMenuRef.current && !shopMenuRef.current.contains(event.target as Node)) {
                 setShopMenuOpen(false);
+            }
+            if (themeMenuRef.current && !themeMenuRef.current.contains(event.target as Node)) {
+                setThemeMenuOpen(false);
             }
         };
         window.addEventListener('mousedown', onClickOutside);
@@ -438,7 +451,7 @@ export default function Authenticated({
     });
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
             <div className="absolute inset-0 -z-10 overflow-hidden">
                 <div className="absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-amber-500/10 blur-3xl dark:bg-amber-500/15" />
                 <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-cyan-500/5 blur-3xl dark:bg-cyan-500/10" />
@@ -454,7 +467,7 @@ export default function Authenticated({
             )}
 
             <aside
-                className={`print:hidden fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-300 bg-slate-100/95 p-5 backdrop-blur-xl transition-transform duration-300 dark:border-white/10 dark:bg-slate-900/95 lg:translate-x-0 ${
+                className={`print:hidden fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200 bg-white/95 p-5 backdrop-blur-xl transition-transform duration-300 dark:border-white/10 dark:bg-slate-900/95 lg:translate-x-0 ${
                     mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
@@ -541,7 +554,7 @@ export default function Authenticated({
             </aside>
 
             <div className="lg:pl-72 print:pl-0">
-                <header className="print:hidden sticky top-0 z-30 border-b border-slate-300 bg-slate-100/90 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6 lg:px-8">
+                <header className="print:hidden sticky top-0 z-30 border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <button
@@ -563,16 +576,55 @@ export default function Authenticated({
                         <div className="flex items-center gap-2">
                             <LanguageSwitcher />
 
-                            {isPlatformAdmin && (
-                                <button
+                            <div className="relative" ref={themeMenuRef}>
+                                {/* <button
                                     type="button"
-                                    onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                    onClick={() => setThemeMenuOpen((prev) => !prev)}
+                                    aria-label={t.layout.theme.label}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
-                                    {theme === 'dark' ? <Sun className="size-4 text-amber-300" /> : <Moon className="size-4 text-slate-700" />}
-                                    <span className="hidden sm:inline">{theme === 'dark' ? t.layout.theme.light : t.layout.theme.dark}</span>
-                                </button>
-                            )}
+                                    {themePreference === 'system' ? (
+                                        <Monitor className="size-4 text-slate-600 dark:text-slate-300" />
+                                    ) : isDark ? (
+                                        <Moon className="size-4 text-slate-700 dark:text-slate-200" />
+                                    ) : (
+                                        <Sun className="size-4 text-amber-500" />
+                                    )}
+                                    <span className="hidden sm:inline">
+                                        {themePreference === 'system' ? t.layout.theme.system : themePreference === 'dark' ? t.layout.theme.dark : t.layout.theme.light}
+                                    </span> 
+                                    <ChevronDown className="size-3.5 text-slate-500 dark:text-slate-400" />
+                                </button> */}
+
+                                {themeMenuOpen && (
+                                    <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
+                                        {(
+                                            [
+                                                { value: 'light', label: t.layout.theme.light, icon: Sun },
+                                                { value: 'dark', label: t.layout.theme.dark, icon: Moon },
+                                                { value: 'system', label: t.layout.theme.system, icon: Monitor },
+                                            ] as { value: ThemePreference; label: string; icon: typeof Sun }[]
+                                        ).map((option) => (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                onClick={() => {
+                                                    setThemePreference(option.value);
+                                                    setThemeMenuOpen(false);
+                                                }}
+                                                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
+                                                    themePreference === option.value
+                                                        ? 'bg-amber-300/10 text-amber-600 dark:text-amber-300'
+                                                        : 'text-slate-800 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10'
+                                                }`}
+                                            >
+                                                <option.icon className="size-4" />
+                                                <span>{option.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
 
                             {lowStockCount > 0 && user?.role !== 'admin_platforme' && (
                                 <Link
@@ -600,7 +652,7 @@ export default function Authenticated({
                             {user?.role !== 'admin_platforme' && isSuperAdmin && (
                                 <Link
                                     href={buildRoute('depots.index')}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
                                     <Warehouse className="size-4 text-amber-400" />
                                     <span className="hidden sm:inline">{t.layout.depot}</span>
@@ -614,8 +666,8 @@ export default function Authenticated({
                                     onClick={() => isSuperAdmin && setShopMenuOpen((prev) => !prev)}
                                     className={`relative inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition ${
                                         isSuperAdmin && shops.length > 0
-                                            ? 'border-slate-300 bg-slate-200 text-slate-800 hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 cursor-pointer'
-                                            : 'border-slate-400 bg-slate-200/60 text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500 cursor-not-allowed'
+                                            ? 'border-slate-300 bg-white text-slate-800 hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 cursor-pointer'
+                                            : 'border-slate-400 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500 cursor-not-allowed'
                                     }`}
                                     disabled={shops.length === 0 || !isSuperAdmin}
                                 >
@@ -634,7 +686,7 @@ export default function Authenticated({
                                 </button>
 
                                 {shopMenuOpen && shops.length > 0 && isSuperAdmin && (
-                                    <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
+                                    <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {shops.map((shop) => (
                                             <button
                                                 key={shop.id}
@@ -688,7 +740,7 @@ export default function Authenticated({
                                 </button>
 
                                 {userMenuOpen && (
-                                    <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
+                                    <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {user ? (
                                             <>
                                                 {user.role !== 'admin_platforme' && (

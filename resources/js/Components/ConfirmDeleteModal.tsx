@@ -31,14 +31,14 @@ export default function ConfirmDeleteModal({
 
     return (
         <Modal show={show} onClose={onClose} maxWidth="md">
-            <div className="bg-slate-900 p-6">
+            <div className="bg-white p-6 dark:bg-slate-900">
                 <div className="flex items-start gap-4">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-red-500/20">
-                        <AlertTriangle className="size-6 text-red-400" />
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
+                        <AlertTriangle className="size-6 text-red-600 dark:text-red-400" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white">{resolvedTitle}</h3>
-                        <p className="mt-2 text-sm text-slate-300">{message}</p>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{resolvedTitle}</h3>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</p>
                     </div>
                 </div>
 
@@ -47,7 +47,7 @@ export default function ConfirmDeleteModal({
                         type="button"
                         onClick={onClose}
                         disabled={processing}
-                        className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-50"
+                        className="rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-gray-100 disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                     >
                         {resolvedCancelText}
                     </button>

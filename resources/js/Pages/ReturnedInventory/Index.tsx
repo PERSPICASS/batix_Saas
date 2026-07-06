@@ -150,8 +150,8 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">{t.returnedInventory.title}</h1>
-                    <div className="text-sm text-slate-400">
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.returnedInventory.title}</h1>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
                         {items.data ? items.data.filter(i => i.status === 'pending').length : 0} en attente
                     </div>
                 </div>
@@ -164,7 +164,7 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
                     <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
                         <div className="mb-4">
-                            <h3 className="text-lg font-semibold text-white">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                                 {confirmModal.action === 'approve'
                                     ? 'Approuver ce retour ?'
                                     : 'Rejeter ce retour ?'}
@@ -232,15 +232,15 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
 
                 {/* Panneau de filtres avancés */}
                 {showFilters && (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                             {/* Statut */}
                             <div>
-                                <label className="mb-1 block text-xs text-slate-400">Statut</label>
+                                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Statut</label>
                                 <select
                                     value={filterValues.status}
                                     onChange={(e) => setFilterValues({...filterValues, status: e.target.value})}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                 >
                                     <option value="">Tous</option>
                                     <option value="pending">En attente</option>
@@ -251,11 +251,11 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
 
                             {/* Condition */}
                             <div>
-                                <label className="mb-1 block text-xs text-slate-400">Condition</label>
+                                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Condition</label>
                                 <select
                                     value={filterValues.condition}
                                     onChange={(e) => setFilterValues({...filterValues, condition: e.target.value})}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                 >
                                     <option value="">Tous</option>
                                     <option value="good">Bon état</option>
@@ -265,35 +265,35 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
 
                             {/* Produit */}
                             <div>
-                                <label className="mb-1 block text-xs text-slate-400">Produit</label>
+                                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Produit</label>
                                 <input
                                     type="text"
                                     placeholder="Rechercher..."
                                     value={filterValues.product}
                                     onChange={(e) => setFilterValues({...filterValues, product: e.target.value})}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                 />
                             </div>
 
                             {/* Date depuis */}
                             <div>
-                                <label className="mb-1 block text-xs text-slate-400">Du</label>
+                                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Du</label>
                                 <input
                                     type="date"
                                     value={filterValues.date_from}
                                     onChange={(e) => setFilterValues({...filterValues, date_from: e.target.value})}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                 />
                             </div>
 
                             {/* Date jusqu'au */}
                             <div>
-                                <label className="mb-1 block text-xs text-slate-400">Au</label>
+                                <label className="mb-1 block text-xs text-slate-500 dark:text-slate-400">Au</label>
                                 <input
                                     type="date"
                                     value={filterValues.date_to}
                                     onChange={(e) => setFilterValues({...filterValues, date_to: e.target.value})}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-sm text-white focus:border-amber-300 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -312,19 +312,19 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
                 {!items.data || items.data.length === 0 ? (
                     <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center">
                         <AlertCircle className="mx-auto size-12 text-slate-400 mb-3" />
-                        <p className="text-slate-300">Aucun retour à traiter</p>
+                        <p className="text-slate-600 dark:text-slate-300">Aucun retour à traiter</p>
                     </div>
                 ) : (
                     <div className="rounded-lg border border-white/10 overflow-hidden">
                         <table className="w-full text-sm">
                             <thead className="border-b border-white/10 bg-white/5">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-slate-300">Date</th>
-                                    <th className="px-4 py-3 text-left text-slate-300">Produit</th>
-                                    <th className="px-4 py-3 text-center text-slate-300">Qté</th>
-                                    <th className="px-4 py-3 text-left text-slate-300">Raison</th>
-                                    <th className="px-4 py-3 text-left text-slate-300">Condition</th>
-                                    <th className="px-4 py-3 text-center text-slate-300">Statut</th>
+                                    <th className="px-4 py-3 text-left text-slate-600 dark:text-slate-300">Date</th>
+                                    <th className="px-4 py-3 text-left text-slate-600 dark:text-slate-300">Produit</th>
+                                    <th className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">Qté</th>
+                                    <th className="px-4 py-3 text-left text-slate-600 dark:text-slate-300">Raison</th>
+                                    <th className="px-4 py-3 text-left text-slate-600 dark:text-slate-300">Condition</th>
+                                    <th className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">Statut</th>
                                     <th className="px-4 py-3 text-right text-slate-300">Actions</th>
                                 </tr>
                             </thead>
@@ -339,7 +339,7 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
                                             <td className="px-4 py-3 text-white font-medium">
                                                 {item.product.name}
                                             </td>
-                                            <td className="px-4 py-3 text-center text-slate-300">
+                                            <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-300">
                                                 {item.quantity}
                                             </td>
                                             <td className="px-4 py-3 text-slate-300">

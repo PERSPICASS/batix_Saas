@@ -92,8 +92,8 @@ export default function Index({ plans, auth }: PlansProps) {
         <AuthenticatedLayout
             header={
                 <div>
-                    <h1 className="text-xl font-semibold text-white">{t.plans.pageTitle}</h1>
-                    <p className="mt-1 text-sm text-slate-300">
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.plans.pageTitle}</h1>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                         {t.plans.pageSubtitle}
                     </p>
                 </div>
@@ -138,7 +138,7 @@ export default function Index({ plans, auth }: PlansProps) {
                                 </p>
 
                                 {/* Nom du plan */}
-                                <h3 className="mt-2 text-2xl font-bold text-white">{plan.name}</h3>
+                                <h3 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{plan.name}</h3>
 
                                 {/* Prix */}
                                 <div className="mt-4 flex items-center justify-between gap-4">
@@ -224,7 +224,7 @@ export default function Index({ plans, auth }: PlansProps) {
 
                 {/* Section Aide - Style Landing Page */}
                 <section className="rounded-3xl border border-white/10 bg-gradient-to-r from-amber-300/20 via-orange-300/15 to-cyan-300/20 p-8 text-center backdrop-blur-xl">
-                    <h2 className="text-2xl font-bold text-white">{t.plans.helpTitle}</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{t.plans.helpTitle}</h2>
                     <p className="mx-auto mt-3 max-w-2xl text-slate-200">
                         {t.plans.helpText}
                     </p>

@@ -106,7 +106,7 @@ export default function Settings({ shop, currencies, error }: Props) {
 
     if (error || !shop) {
         return (
-            <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.settings.title}</h1>}>
+            <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.settings.title}</h1>}>
                 <Head title={t.settings.title} />
                 <div className="mx-auto max-w-4xl">
                     <div className="rounded-2xl border border-red-500/20 bg-red-900/10 p-6">
@@ -121,7 +121,7 @@ export default function Settings({ shop, currencies, error }: Props) {
     }
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.settings.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.settings.title}</h1>}>
             <Head title={t.settings.title} />
 
             <div className="mx-auto max-w-4xl">
@@ -146,15 +146,15 @@ export default function Settings({ shop, currencies, error }: Props) {
 
                 <form onSubmit={submit} className="space-y-6">
                     {/* Informations générales */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-6 flex items-center gap-2">
                             <Store className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.general}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.settings.sections.general}</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.name} {t.settings.required}
                                 </label>
                                 <input
@@ -162,14 +162,14 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     id="name"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     required
                                 />
                                 <InputError message={errors.name} />
                             </div>
 
                             <div>
-                                <label htmlFor="description" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.description}
                                 </label>
                                 <textarea
@@ -177,13 +177,13 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={3}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.description} />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
                                     <div className="flex items-center gap-2">
                                         <ImageIcon className="size-4" />
                                         {t.settings.fields.logo}
@@ -216,7 +216,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                                 <p className="mb-1 text-sm text-slate-300">
                                                     <span className="font-semibold">{t.settings.hints.clickToUpload}</span>
                                                 </p>
-                                                <p className="text-xs text-slate-400">{t.settings.hints.logo}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">{t.settings.hints.logo}</p>
                                             </div>
                                             <input
                                                 id="logo-upload"
@@ -229,7 +229,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     </div>
                                 )}
                                 <InputError message={errors.logo} />
-                                <p className="mt-1 text-xs text-slate-400">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     {t.settings.hints.logoDescription}
                                 </p>
                             </div>
@@ -237,15 +237,15 @@ export default function Settings({ shop, currencies, error }: Props) {
                     </div>
 
                     {/* Coordonnées */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-6 flex items-center gap-2">
                             <Phone className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.contact}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.settings.sections.contact}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
-                                <label htmlFor="phone" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="phone" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.phone}
                                 </label>
                                 <input
@@ -253,13 +253,13 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     id="phone"
                                     value={data.phone}
                                     onChange={(e) => setData('phone', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.phone} />
                             </div>
 
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.email}
                                 </label>
                                 <input
@@ -267,13 +267,13 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     id="email"
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
                             <div className="md:col-span-2">
-                                <label htmlFor="website" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="website" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.website}
                                 </label>
                                 <input
@@ -282,7 +282,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     value={data.website}
                                     onChange={(e) => setData('website', e.target.value)}
                                     placeholder="https://example.com"
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.website} />
                             </div>
@@ -290,15 +290,15 @@ export default function Settings({ shop, currencies, error }: Props) {
                     </div>
 
                     {/* Adresse */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-6 flex items-center gap-2">
                             <MapPin className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.address}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.settings.sections.address}</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="address" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="address" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.address}
                                 </label>
                                 <input
@@ -306,14 +306,14 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     id="address"
                                     value={data.address}
                                     onChange={(e) => setData('address', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.address} />
                             </div>
 
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
-                                    <label htmlFor="city" className="block text-sm font-medium text-slate-200">
+                                    <label htmlFor="city" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                         {t.settings.fields.city}
                                     </label>
                                     <input
@@ -321,13 +321,13 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         id="city"
                                         value={data.city}
                                         onChange={(e) => setData('city', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                        className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     />
                                     <InputError message={errors.city} />
                                 </div>
 
                                 <div>
-                                    <label htmlFor="postal_code" className="block text-sm font-medium text-slate-200">
+                                    <label htmlFor="postal_code" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                         {t.settings.fields.postalCode}
                                     </label>
                                     <input
@@ -335,7 +335,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         id="postal_code"
                                         value={data.postal_code}
                                         onChange={(e) => setData('postal_code', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                        className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     />
                                     <InputError message={errors.postal_code} />
                                 </div>
@@ -344,15 +344,15 @@ export default function Settings({ shop, currencies, error }: Props) {
                     </div>
 
                     {/* Fiscalité et devise */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-6 flex items-center gap-2">
                             <DollarSign className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.fiscal}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.settings.sections.fiscal}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
-                                <label htmlFor="tax_id" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="tax_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.taxId}
                                 </label>
                                 <input
@@ -361,20 +361,20 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     value={data.tax_id}
                                     onChange={(e) => setData('tax_id', e.target.value)}
                                     placeholder={t.settings.hints.taxIdPlaceholder}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.tax_id} />
                             </div>
 
                             <div>
-                                <label htmlFor="currency" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="currency" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.currency} {t.settings.required}
                                 </label>
                                 <select
                                     id="currency"
                                     value={data.currency}
                                     onChange={(e) => setData('currency', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     required
                                 >
                                     {currencies.map((currency) => (
@@ -387,7 +387,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label htmlFor="default_tax_rate" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="default_tax_rate" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.defaultTaxRate}
                                 </label>
                                 <div className="relative mt-1">
@@ -403,7 +403,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         className="block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 pr-10 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                        <Percent className="h-5 w-5 text-slate-400" />
+                                        <Percent className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                                     </div>
                                 </div>
                                 <InputError message={errors.default_tax_rate} />
@@ -412,15 +412,15 @@ export default function Settings({ shop, currencies, error }: Props) {
                     </div>
 
                     {/* Configuration des factures */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-6 flex items-center gap-2">
                             <FileText className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">{t.settings.sections.invoices}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.settings.sections.invoices}</h2>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="invoice_prefix" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="invoice_prefix" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.invoicePrefix}
                                 </label>
                                 <div className="relative mt-1">
@@ -434,17 +434,17 @@ export default function Settings({ shop, currencies, error }: Props) {
                                         className="block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 pl-10 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                     />
                                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                        <Hash className="h-5 w-5 text-slate-400" />
+                                        <Hash className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                                     </div>
                                 </div>
-                                <p className="mt-1 text-xs text-slate-400">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     {t.settings.numbersFormat(data.invoice_prefix)}
                                 </p>
                                 <InputError message={errors.invoice_prefix} />
                             </div>
 
                             <div>
-                                <label htmlFor="invoice_footer" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="invoice_footer" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.settings.fields.invoiceFooter}
                                 </label>
                                 <textarea
@@ -453,7 +453,7 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     onChange={(e) => setData('invoice_footer', e.target.value)}
                                     rows={3}
                                     placeholder={t.settings.hints.invoiceFooterPlaceholder}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.invoice_footer} />
                             </div>

@@ -45,15 +45,15 @@ export default function ShowQuote({ quote }: { quote: any }) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Devis {quote.quote_number}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Devis {quote.quote_number}</h1>}>
             <Head title={`Devis ${quote.quote_number}`} />
 
             <div className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
                     {/* En-tête */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-white">
+                            <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                                 <FileText className="size-5 text-amber-300" />
                                 <h2 className="text-lg font-semibold">{quote.quote_number}</h2>
                             </div>
@@ -64,23 +64,23 @@ export default function ShowQuote({ quote }: { quote: any }) {
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">Client</p>
-                                <p className="text-white font-medium">{quote.customer.name}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Client</p>
+                                <p className="text-slate-900 dark:text-white font-medium">{quote.customer.name}</p>
                                 {quote.customer.email && (
-                                    <p className="text-sm text-slate-400 mt-1">{quote.customer.email}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{quote.customer.email}</p>
                                 )}
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">Dates</p>
-                                <p className="text-white font-medium">{new Date(quote.quote_date).toLocaleDateString('fr-FR')}</p>
-                                <p className="text-sm text-slate-400 mt-1">Expire le {new Date(quote.expiry_date).toLocaleDateString('fr-FR')}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Dates</p>
+                                <p className="text-slate-900 dark:text-white font-medium">{new Date(quote.quote_date).toLocaleDateString('fr-FR')}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Expire le {new Date(quote.expiry_date).toLocaleDateString('fr-FR')}</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Articles */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                             <FileText className="size-5 text-amber-300" />
                             Articles
                         </h2>
@@ -88,20 +88,20 @@ export default function ShowQuote({ quote }: { quote: any }) {
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-white/10">
+                                    <tr className="border-b border-gray-200 dark:border-white/10">
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Article</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Qté</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">P.U.</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Montant</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">Qté</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">P.U.</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">Montant</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/10">
                                     {quote.items.map((item: any, index: number) => (
                                         <tr key={index} className="hover:bg-white/5">
-                                            <td className="px-4 py-3 text-white">{item.product.name}</td>
-                                            <td className="px-4 py-3 text-right text-white">{item.quantity}</td>
-                                            <td className="px-4 py-3 text-right text-white"><Currency amount={parseFloat(item.unit_price)} /></td>
-                                            <td className="px-4 py-3 text-right text-white font-medium"><Currency amount={parseFloat(item.line_total)} /></td>
+                                            <td className="px-4 py-3 text-slate-900 dark:text-white">{item.product.name}</td>
+                                            <td className="px-4 py-3 text-right text-slate-900 dark:text-white">{item.quantity}</td>
+                                            <td className="px-4 py-3 text-right text-slate-900 dark:text-white"><Currency amount={parseFloat(item.unit_price)} /></td>
+                                            <td className="px-4 py-3 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(item.line_total)} /></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -111,15 +111,15 @@ export default function ShowQuote({ quote }: { quote: any }) {
                         {/* Totaux */}
                         <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
                             <div className="flex justify-end gap-8">
-                                <span className="text-slate-300">Sous-total:</span>
-                                <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(quote.subtotal)} /></span>
+                                <span className="text-slate-600 dark:text-slate-300">Sous-total:</span>
+                                <span className="w-24 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(quote.subtotal)} /></span>
                             </div>
                             <div className="flex justify-end gap-8">
-                                <span className="text-slate-300">TVA (18%):</span>
-                                <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(quote.tax_amount)} /></span>
+                                <span className="text-slate-600 dark:text-slate-300">TVA (18%):</span>
+                                <span className="w-24 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(quote.tax_amount)} /></span>
                             </div>
                             <div className="flex justify-end gap-8 border-t border-white/10 pt-2">
-                                <span className="text-white font-bold">Total:</span>
+                                <span className="text-slate-900 dark:text-white font-bold">Total:</span>
                                 <span className="w-24 text-right text-xl font-bold text-amber-300"><Currency amount={parseFloat(quote.total)} /></span>
                             </div>
                         </div>
@@ -127,18 +127,18 @@ export default function ShowQuote({ quote }: { quote: any }) {
 
                     {/* Notes */}
                     {(quote.notes || quote.terms) && (
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                            <h2 className="mb-4 text-lg font-semibold text-white">Notes et conditions</h2>
+                        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Notes et conditions</h2>
                             {quote.notes && (
                                 <div className="mb-4">
                                     <p className="text-sm text-slate-400 mb-2">Notes</p>
-                                    <p className="text-white whitespace-pre-wrap text-sm">{quote.notes}</p>
+                                    <p className="text-slate-900 dark:text-white whitespace-pre-wrap text-sm">{quote.notes}</p>
                                 </div>
                             )}
                             {quote.terms && (
                                 <div>
                                     <p className="text-sm text-slate-400 mb-2">Conditions</p>
-                                    <p className="text-white whitespace-pre-wrap text-sm">{quote.terms}</p>
+                                    <p className="text-slate-900 dark:text-white whitespace-pre-wrap text-sm">{quote.terms}</p>
                                 </div>
                             )}
                         </div>
@@ -147,9 +147,9 @@ export default function ShowQuote({ quote }: { quote: any }) {
 
                 {/* Actions */}
                 <aside className="xl:col-span-1">
-                    <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="sticky top-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">Total:</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Total:</h2>
                             <span className="text-2xl font-bold text-amber-300"><Currency amount={parseFloat(quote.total)} /></span>
                         </div>
                         <div className="border-b border-white/10 mb-4 pb-4">

@@ -32,6 +32,7 @@ use App\Http\Controllers\JekoController;
 use App\Http\Controllers\PawaPayController;
 use App\Http\Controllers\PlatformSettingsController;
 use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\SitePageController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BlogAdminController;
@@ -52,7 +53,37 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', [WelcomeController::class, 'index']);
+// ── Site public bilingue : FR par défaut (noms de route classiques),
+// EN sous le préfixe /en (noms de route préfixés `en.`). Chaque groupe force
+// la locale applicative via le middleware `setlocale` pour que Inertia
+// partage la bonne langue (voir HandleInertiaRequests) indépendamment de
+// tout état client. ──────────────────────────────────────────────────────
+Route::middleware('setlocale:fr')->group(function () {
+    Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
+    Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+    Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+    Route::get('/fonctionnalites', [SitePageController::class, 'features'])->name('features.index');
+    Route::get('/fonctionnalites/{slug}', [SitePageController::class, 'featureShow'])->name('features.show');
+    Route::get('/tarifs', [SitePageController::class, 'pricing'])->name('pricing');
+    Route::get('/clients', [SitePageController::class, 'customers'])->name('customers');
+    Route::get('/ressources', [SitePageController::class, 'resources'])->name('resources');
+    Route::get('/a-propos', [SitePageController::class, 'about'])->name('about');
+    Route::get('/contact', [SitePageController::class, 'contactShow'])->name('contact.show');
+});
+
+Route::prefix('en')->name('en.')->middleware('setlocale:en')->group(function () {
+    Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
+    Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+    Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
+    Route::get('/features', [SitePageController::class, 'features'])->name('features.index');
+    Route::get('/features/{slug}', [SitePageController::class, 'featureShow'])->name('features.show');
+    Route::get('/pricing', [SitePageController::class, 'pricing'])->name('pricing');
+    Route::get('/customers', [SitePageController::class, 'customers'])->name('customers');
+    Route::get('/resources', [SitePageController::class, 'resources'])->name('resources');
+    Route::get('/about', [SitePageController::class, 'about'])->name('about');
+    Route::get('/contact', [SitePageController::class, 'contactShow'])->name('contact.show');
+});
+
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 
@@ -60,10 +91,6 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')
 Route::get('/policies/terms', fn() => Inertia::render('Policies/Show', ['policyType' => 'terms']))->name('policies.terms');
 Route::get('/policies/privacy', fn() => Inertia::render('Policies/Show', ['policyType' => 'privacy']))->name('policies.privacy');
 Route::get('/policies/refund', fn() => Inertia::render('Policies/Show', ['policyType' => 'refund']))->name('policies.refund');
-
-// Routes publiques blog
-Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
-Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');

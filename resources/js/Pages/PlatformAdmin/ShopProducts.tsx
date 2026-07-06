@@ -102,9 +102,9 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
             label: 'Produit',
             render: (product: Product) => (
                 <div>
-                    <p className="font-medium text-white">{product.name}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{product.name}</p>
                     {product.sku && (
-                        <p className="text-xs text-slate-400">SKU: {product.sku}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {product.sku}</p>
                     )}
                     {product.barcode && (
                         <p className="text-xs text-slate-500">Code-barres: {product.barcode}</p>
@@ -119,9 +119,9 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
                 <div>
                     {product.category ? (
                         <>
-                            <p className="text-sm text-white">{product.category.name}</p>
+                            <p className="text-sm text-slate-900 dark:text-white">{product.category.name}</p>
                             {product.subcategory && (
-                                <p className="text-xs text-slate-400">{product.subcategory.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{product.subcategory.name}</p>
                             )}
                         </>
                     ) : (
@@ -135,9 +135,9 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
             label: 'Prix',
             render: (product: Product) => (
                 <div>
-                    <p className="font-medium text-white">{formatPrice(product.price)}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{formatPrice(product.price)}</p>
                     {product.cost_price && (
-                        <p className="text-xs text-slate-400">Coût: {formatPrice(product.cost_price)}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">Coût: {formatPrice(product.cost_price)}</p>
                     )}
                 </div>
             ),
@@ -147,18 +147,18 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
             label: 'Stock',
             render: (product: Product) => {
                 if (!product.track_stock) {
-                    return <span className="text-sm text-slate-400">Non suivi</span>;
+                    return <span className="text-sm text-slate-500 dark:text-slate-400">Non suivi</span>;
                 }
 
                 const isLowStock = product.min_stock_alert && product.stock_quantity <= product.min_stock_alert;
 
                 return (
                     <div>
-                        <p className={`font-medium ${isLowStock ? 'text-red-400' : 'text-white'}`}>
+                        <p className={`font-medium ${isLowStock ? 'text-red-400' : 'text-slate-900 dark:text-white'}`}>
                             {product.stock_quantity}
                         </p>
                         {product.min_stock_alert && (
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                                 Alerte: {product.min_stock_alert}
                             </p>
                         )}
@@ -179,7 +179,7 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
             key: 'created_at',
             label: 'Créé le',
             render: (product: Product) => (
-                <span className="text-sm text-slate-400">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
                     {new Date(product.created_at).toLocaleDateString('fr-FR')}
                 </span>
             ),
@@ -191,8 +191,8 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-semibold text-white">Produits de {shop.name}</h1>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Produits de {shop.name}</h1>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                             Propriétaire: {shop.owner.name} ({shop.owner.email})
                         </p>
                     </div>
@@ -210,17 +210,17 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
 
             <div className="space-y-6">
                 {/* Filtres et recherche */}
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                     <div className="flex flex-col gap-4">
                         <form onSubmit={handleSearch} className="flex-1">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                                 <input
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Rechercher par nom, SKU ou code-barres..."
-                                    className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                 />
                             </div>
                         </form>
@@ -295,17 +295,17 @@ export default function ShopProducts({ shop, products, categories, filters }: Pr
 
                 {/* Statistiques */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-                        <p className="text-sm text-slate-400">Total produits</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{products.total}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Total produits</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{products.total}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-                        <p className="text-sm text-slate-400">Sur cette page</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{products.data.length}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Sur cette page</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{products.data.length}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-                        <p className="text-sm text-slate-400">Page actuelle</p>
-                        <p className="mt-1 text-2xl font-bold text-white">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Page actuelle</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
                             {products.current_page} / {products.last_page}
                         </p>
                     </div>

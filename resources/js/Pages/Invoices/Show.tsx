@@ -107,7 +107,7 @@ export default function InvoicesShow({ invoice }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.invoices.form.editTitle} {invoice.invoice_number}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.invoices.form.editTitle} {invoice.invoice_number}</h1>}
         >
             <Head title={`${t.invoices.form.editTitle} ${invoice.invoice_number}`} />
 
@@ -115,7 +115,7 @@ export default function InvoicesShow({ invoice }: Props) {
                 <div className="print:hidden space-y-4">
                     <Link
                         href={route('invoices.index')}
-                        className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
+                        className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                     >
                         <ArrowLeft className="size-4" /> {t.common.actions.back}
                     </Link>
@@ -138,13 +138,13 @@ export default function InvoicesShow({ invoice }: Props) {
                         <button
                             type="button"
                             onClick={handlePrint}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
                         <Link
                             href={route('invoices.edit', { invoice: invoice.id })}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             <Pencil className="size-4" /> {t.invoices.actions.edit}
                         </Link>
@@ -164,42 +164,42 @@ export default function InvoicesShow({ invoice }: Props) {
                                 )}
                                 <div>
                                     <p className="text-xs uppercase tracking-[0.2em] text-amber-300">Facture</p>
-                                    <h2 className="mt-1 text-2xl font-bold text-white">{invoice.invoice_number}</h2>
+                                    <h2 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{invoice.invoice_number}</h2>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs text-slate-400">Émise par</p>
-                                <p className="text-sm font-semibold text-white">{invoice.shop.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Émise par</p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{invoice.shop.name}</p>
                             </div>
                         </div>
                     </div>
 
                     <div className="mb-6 grid gap-3 md:grid-cols-2 print:grid-cols-2 print:gap-x-8 print:gap-y-3">
-                        <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 print:border print:bg-transparent">
-                            <p className="text-xs uppercase tracking-wide text-slate-400">Client</p>
-                            <p className="mt-1 font-medium text-white">{invoice.customer.name}</p>
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 print:border print:bg-transparent dark:border-white/10 dark:bg-slate-900/40">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Client</p>
+                            <p className="mt-1 font-medium text-slate-900 dark:text-white">{invoice.customer.name}</p>
                         </div>
-                        <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 text-right print:border print:bg-transparent">
-                            <p className="text-xs uppercase tracking-wide text-slate-400">Boutique</p>
-                            <p className="mt-1 font-medium text-white">{invoice.shop.name}</p>
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-right print:border print:bg-transparent dark:border-white/10 dark:bg-slate-900/40">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Boutique</p>
+                            <p className="mt-1 font-medium text-slate-900 dark:text-white">{invoice.shop.name}</p>
                         </div>
-                        <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 print:border print:bg-transparent">
-                            <p className="text-xs uppercase tracking-wide text-slate-400">Date facture</p>
-                            <p className="mt-1 text-white">{new Date(invoice.invoice_date).toLocaleDateString('fr-FR')}</p>
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 print:border print:bg-transparent dark:border-white/10 dark:bg-slate-900/40">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Date facture</p>
+                            <p className="mt-1 text-slate-900 dark:text-white">{new Date(invoice.invoice_date).toLocaleDateString('fr-FR')}</p>
                         </div>
-                        <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 text-right print:border print:bg-transparent">
-                            <p className="text-xs uppercase tracking-wide text-slate-400">Échéance</p>
-                            <p className="mt-1 text-white">
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-right print:border print:bg-transparent dark:border-white/10 dark:bg-slate-900/40">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Échéance</p>
+                            <p className="mt-1 text-slate-900 dark:text-white">
                                 {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('fr-FR') : '-'}
                             </p>
                         </div>
-                        <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 print:border print:bg-transparent">
-                            <p className="text-xs uppercase tracking-wide text-slate-400">Statut</p>
-                            <p className="mt-1 text-white">{statusLabels[invoice.status] || invoice.status}</p>
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 print:border print:bg-transparent dark:border-white/10 dark:bg-slate-900/40">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Statut</p>
+                            <p className="mt-1 text-slate-900 dark:text-white">{statusLabels[invoice.status] || invoice.status}</p>
                         </div>
-                        <div className="rounded-lg border border-white/10 bg-slate-900/40 p-3 text-right print:border print:bg-transparent">
-                            <p className="text-xs uppercase tracking-wide text-slate-400">Mode de paiement</p>
-                            <p className="mt-1 text-white">
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-right print:border print:bg-transparent dark:border-white/10 dark:bg-slate-900/40">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Mode de paiement</p>
+                            <p className="mt-1 text-slate-900 dark:text-white">
                                 {invoice.payment_method ? paymentLabels[invoice.payment_method] || invoice.payment_method : 'Non défini'}
                             </p>
                         </div>
@@ -220,13 +220,13 @@ export default function InvoicesShow({ invoice }: Props) {
                                     <tr key={item.id} className="border-b border-white/5">
                                         <td className="py-2.5 pl-4">
                                             {item.product?.parent ? (
-                                                <span className="text-white">
-                                                    <span className="text-slate-400">{item.product.parent.name}</span>
+                                                <span className="text-slate-900 dark:text-white">
+                                                    <span className="text-slate-500 dark:text-slate-400">{item.product.parent.name}</span>
                                                     <span className="mx-1 text-slate-500">›</span>
                                                     <span>{item.product.name}</span>
                                                 </span>
                                             ) : (
-                                                <span className="text-white">{item.product_name}</span>
+                                                <span className="text-slate-900 dark:text-white">{item.product_name}</span>
                                             )}
                                         </td>
                                         <td className="py-2.5 text-center text-slate-300">{item.quantity}</td>
@@ -266,7 +266,7 @@ export default function InvoicesShow({ invoice }: Props) {
                     {invoice.notes && (
                         <div className="mt-6 rounded-xl border border-white/10 bg-slate-900/40 p-4 print:border print:bg-transparent">
                             <p className="mb-1 text-sm text-slate-400">Notes</p>
-                            <p className="text-sm text-white">{invoice.notes}</p>
+                            <p className="text-sm text-slate-900 dark:text-white">{invoice.notes}</p>
                         </div>
                     )}
                 </div>
@@ -280,7 +280,7 @@ export default function InvoicesShow({ invoice }: Props) {
                         <button
                             type="button"
                             onClick={() => setShowRecurringModal(false)}
-                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                            className="rounded-md border border-gray-300 p-1 text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <X className="size-4" />
                         </button>
@@ -288,11 +288,11 @@ export default function InvoicesShow({ invoice }: Props) {
 
                     <form onSubmit={handleCreateRecurring} className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-200 mb-2">Fréquence *</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Fréquence *</label>
                             <select
                                 value={frequency}
                                 onChange={(e) => setFrequency(e.target.value)}
-                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 required
                             >
                                 <option value="monthly">Mensuel</option>
@@ -303,23 +303,23 @@ export default function InvoicesShow({ invoice }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-200 mb-2">Date de début *</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Date de début *</label>
                             <input
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 required
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-200 mb-2">Date de fin (optionnel)</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Date de fin (optionnel)</label>
                             <input
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             />
                         </div>
 

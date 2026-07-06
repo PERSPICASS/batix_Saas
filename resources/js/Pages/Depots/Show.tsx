@@ -278,7 +278,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         <AuthenticatedLayout header={
             <div className="flex items-center gap-3">
                 <Link href={buildRoute('depots.index')} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">Dépôts</Link>
-                <span className="text-slate-300">/</span>
+                <span className="text-slate-600 dark:text-slate-300">/</span>
                 <span className="font-semibold">{depot.name}</span>
             </div>
         }>
@@ -437,7 +437,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                         </div>
                         {(products.total > 0 || search) && (
                             <div className="relative w-full sm:w-64">
-                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                                 <input
                                     type="text"
                                     value={search}
@@ -677,9 +677,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         <img src={imagePreview ?? undefined} alt="Aperçu" className="mx-auto h-20 w-20 rounded-lg object-cover" />
                                     ) : (
                                         <>
-                                            <Upload className="size-6 text-slate-400" />
+                                            <Upload className="size-6 text-slate-500 dark:text-slate-400" />
                                             <p className="text-xs text-slate-500 dark:text-slate-400">Cliquer pour choisir une image</p>
-                                            <p className="text-xs text-slate-400">(JPG, PNG, max 2 Mo)</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">(JPG, PNG, max 2 Mo)</p>
                                         </>
                                     )}
                                 </div>
@@ -798,7 +798,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                             <div className="fixed inset-0 z-10" onClick={() => setOpenTransferDropdown(null)} />
                                                             <div className="absolute z-20 mt-1 max-h-96 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-white/10 dark:bg-slate-800">
                                                                 {filtered.length === 0 ? (
-                                                                    <p className="px-3 py-2 text-sm text-slate-400">Aucun produit trouvé</p>
+                                                                    <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Aucun produit trouvé</p>
                                                                 ) : filtered.map(p => (
                                                                     <button
                                                                         key={p.product_id}
@@ -814,7 +814,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                                     >
                                                                         <span>
                                                                             <span className="font-medium text-slate-900 dark:text-white">{p.product_name}</span>
-                                                                            {p.product_sku && <span className="ml-2 text-xs text-slate-400">{p.product_sku}</span>}
+                                                                            {p.product_sku && <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">{p.product_sku}</span>}
                                                                         </span>
                                                                         <span className={`text-xs font-medium ${p.quantity <= 0 ? 'text-rose-500' : p.quantity <= 5 ? 'text-amber-500' : 'text-emerald-600'}`}>
                                                                             {p.quantity} en stock
@@ -1013,9 +1013,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         <img src={editImagePreview ?? undefined} alt="Aperçu" className="mx-auto h-20 w-20 rounded-lg object-cover" />
                                     ) : (
                                         <>
-                                            <Upload className="size-6 text-slate-400" />
+                                            <Upload className="size-6 text-slate-500 dark:text-slate-400" />
                                             <p className="text-xs text-slate-500 dark:text-slate-400">Cliquer pour changer l'image</p>
-                                            <p className="text-xs text-slate-400">(JPG, PNG, max 2 Mo)</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">(JPG, PNG, max 2 Mo)</p>
                                         </>
                                     )}
                                 </div>

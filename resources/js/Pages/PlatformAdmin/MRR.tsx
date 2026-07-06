@@ -124,7 +124,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             {payload.map((entry: any, i: number) => (
                 <p key={i} style={{ color: entry.color }} className="flex items-center gap-2">
                     <span className="inline-block h-2 w-2 rounded-full" style={{ background: entry.color }} />
-                    {entry.name}: <span className="font-bold text-white">{entry.value.toLocaleString('fr-FR')}</span>
+                    {entry.name}: <span className="font-bold text-slate-900 dark:text-white">{entry.value.toLocaleString('fr-FR')}</span>
                 </p>
             ))}
         </div>
@@ -153,7 +153,7 @@ function KpiCard({ label, value, sub, trend, invertTrend, icon: Icon, color, bgC
                 <div>
                     <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{label}</p>
                     <p className="mt-1.5 text-2xl font-bold text-white">{value}</p>
-                    {sub && <p className="mt-0.5 text-xs text-slate-400">{sub}</p>}
+                    {sub && <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{sub}</p>}
                 </div>
                 <div className={`rounded-xl ${bgColor} p-2.5 ${color}`}>
                     <Icon className="size-5" />
@@ -193,7 +193,7 @@ export default function MRRDashboard({
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-semibold text-white">Dashboard MRR</h1>
+                        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Dashboard MRR</h1>
                         <p className="mt-0.5 text-sm text-slate-400">
                             Monthly Recurring Revenue · Churn · Rétention
                         </p>
@@ -296,8 +296,8 @@ export default function MRRDashboard({
                 </div>
 
                 {/* ── Graphique MRR + New MRR + Churned MRR ─── */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                    <h2 className="mb-1 text-base font-semibold text-white">Évolution MRR (12 mois)</h2>
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                    <h2 className="mb-1 text-base font-semibold text-slate-900 dark:text-white">Évolution MRR (12 mois)</h2>
                     <p className="mb-4 text-xs text-slate-500">MRR = somme normalisée en mensuel de tous les abonnements actifs</p>
                     <ResponsiveContainer width="100%" height={300}>
                         <ComposedChart data={mrr_history}>
@@ -329,8 +329,8 @@ export default function MRRDashboard({
                 {/* ── Churn Rate + Revenue réel ─── */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Churn Rate mensuel */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="mb-1 text-base font-semibold text-white">Churn Rate mensuel (%)</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-1 text-base font-semibold text-slate-900 dark:text-white">Churn Rate mensuel (%)</h2>
                         <p className="mb-4 text-xs text-slate-500">
                             Churn = nb annulés+expirés / nb actifs début de mois × 100
                         </p>
@@ -362,8 +362,8 @@ export default function MRRDashboard({
                     </div>
 
                     {/* Revenue réel (factures payées) */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="mb-1 text-base font-semibold text-white">Revenus encaissés (12 mois)</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-1 text-base font-semibold text-slate-900 dark:text-white">Revenus encaissés (12 mois)</h2>
                         <p className="mb-4 text-xs text-slate-500">
                             Basé sur les factures avec status=paid
                         </p>
@@ -385,7 +385,7 @@ export default function MRRDashboard({
                 </div>
 
                 {/* ── MRR par plan (Pie + légende) ─── */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                     <h2 className="mb-4 text-base font-semibold text-white">Répartition MRR par plan</h2>
                     <div className="grid gap-6 lg:grid-cols-2 items-center">
                         <ResponsiveContainer width="100%" height={260}>
@@ -418,8 +418,8 @@ export default function MRRDashboard({
                                             style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
                                         />
                                         <div>
-                                            <p className="text-sm font-medium text-white">{plan.name}</p>
-                                            <p className="text-xs text-slate-400">{plan.count} abonné{plan.count > 1 ? 's' : ''}</p>
+                                            <p className="text-sm font-medium text-slate-900 dark:text-white">{plan.name}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{plan.count} abonné{plan.count > 1 ? 's' : ''}</p>
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -439,10 +439,10 @@ export default function MRRDashboard({
                 <div className="grid gap-6 lg:grid-cols-2">
 
                     {/* À risque */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center gap-2">
                             <AlertTriangle className="size-4 text-orange-400" />
-                            <h2 className="text-base font-semibold text-white">Abonnements à risque</h2>
+                            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Abonnements à risque</h2>
                             <span className="ml-auto rounded-full bg-orange-500/20 px-2 py-0.5 text-xs text-orange-300">
                                 expire ≤ 30j
                             </span>
@@ -452,9 +452,9 @@ export default function MRRDashboard({
                         ) : (
                             <div className="space-y-2">
                                 {at_risk.map((entry, i) => (
-                                    <div key={i} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3">
+                                    <div key={i} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-white/5 dark:bg-white/5">
                                         <div className="flex-1 min-w-0">
-                                            <p className="truncate text-sm font-medium text-white">{entry.user}</p>
+                                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{entry.user}</p>
                                             <p className="truncate text-xs text-slate-400">{entry.email}</p>
                                             <p className="text-xs text-slate-500">{entry.plan}</p>
                                         </div>
@@ -462,7 +462,7 @@ export default function MRRDashboard({
                                             <p className={`text-xs font-bold ${entry.days_left <= 7 ? 'text-red-400' : 'text-orange-300'}`}>
                                                 J-{entry.days_left}
                                             </p>
-                                            <p className="text-xs text-slate-400">{fmtXAF(entry.amount)}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{fmtXAF(entry.amount)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -471,10 +471,10 @@ export default function MRRDashboard({
                     </div>
 
                     {/* Churns récents */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center gap-2">
                             <TrendingDown className="size-4 text-red-400" />
-                            <h2 className="text-base font-semibold text-white">Churns récents</h2>
+                            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Churns récents</h2>
                             <span className="ml-auto rounded-full bg-red-500/20 px-2 py-0.5 text-xs text-red-300">
                                 30 derniers jours
                             </span>
@@ -484,9 +484,9 @@ export default function MRRDashboard({
                         ) : (
                             <div className="space-y-2">
                                 {recent_churns.map((entry, i) => (
-                                    <div key={i} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3">
+                                    <div key={i} className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-white/5 dark:bg-white/5">
                                         <div className="flex-1 min-w-0">
-                                            <p className="truncate text-sm font-medium text-white">{entry.user}</p>
+                                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{entry.user}</p>
                                             <p className="truncate text-xs text-slate-400">{entry.email}</p>
                                             <p className="text-xs text-slate-500">{entry.plan}</p>
                                         </div>
@@ -498,7 +498,7 @@ export default function MRRDashboard({
                                             }`}>
                                                 {entry.reason === 'cancelled' ? 'Annulé' : 'Expiré'}
                                             </span>
-                                            <p className="mt-1 text-xs text-slate-400">{fmtXAF(entry.amount)}</p>
+                                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{fmtXAF(entry.amount)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -508,9 +508,9 @@ export default function MRRDashboard({
                 </div>
 
                 {/* ── Explications des formules ─── */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                     <h2 className="mb-4 text-base font-semibold text-white flex items-center gap-2">
-                        <BarChart2 className="size-4 text-slate-400" />
+                        <BarChart2 className="size-4 text-slate-500 dark:text-slate-400" />
                         Formules de calcul
                     </h2>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">

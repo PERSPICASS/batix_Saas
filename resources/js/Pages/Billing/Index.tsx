@@ -95,7 +95,7 @@ function InvoiceModal({ inv, codeUser, onClose, t }: { inv: Invoice; codeUser: s
                 <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-widest text-amber-200">{t.billing.invoice.title}</p>
-                        <h3 className="text-lg font-bold text-white">{inv.invoice_number}</h3>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{inv.invoice_number}</h3>
                     </div>
                     <div className="flex items-center gap-2">
                         {inv.status === 'paid' && (
@@ -168,7 +168,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
             label: t.billing.invoicesList.columns.plan,
             render: (inv: Invoice) => (
                 <div>
-                    <p className="text-slate-200">{inv.plan_name}</p>
+                    <p className="text-slate-700 dark:text-slate-200">{inv.plan_name}</p>
                     <p className="text-xs text-slate-500">{cycleLabel(inv.billing_cycle)}</p>
                 </div>
             ),
@@ -177,13 +177,13 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
             key: 'payment_method',
             label: t.billing.invoicesList.columns.method,
             render: (inv: Invoice) => (
-                <span className="text-slate-300">{methodLabel(inv.payment_method, inv.correspondent)}</span>
+                <span className="text-slate-600 dark:text-slate-300">{methodLabel(inv.payment_method, inv.correspondent)}</span>
             ),
         },
         {
             key: 'issued_at',
             label: t.billing.invoicesList.columns.date,
-            render: (inv: Invoice) => <span className="text-slate-400">{inv.issued_at ?? '—'}</span>,
+            render: (inv: Invoice) => <span className="text-slate-500 dark:text-slate-400">{inv.issued_at ?? '—'}</span>,
         },
         {
             key: 'status',
@@ -199,7 +199,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
             label: t.billing.invoicesList.columns.amount,
             align: 'right' as const,
             render: (inv: Invoice) => (
-                <span className="font-semibold text-white">{fmt(inv.amount, inv.currency)}</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{fmt(inv.amount, inv.currency)}</span>
             ),
         },
         {
@@ -231,14 +231,14 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
         {
             key: 'created_at',
             label: t.billing.invoicesList.columns.date,
-            render: (d: Deposit) => <span className="text-slate-400">{d.created_at}</span>,
+            render: (d: Deposit) => <span className="text-slate-500 dark:text-slate-400">{d.created_at}</span>,
         },
         {
             key: 'plan_name',
             label: t.billing.invoicesList.columns.plan,
             render: (d: Deposit) => (
                 <div>
-                    <p className="text-slate-200">{d.plan_name}</p>
+                    <p className="text-slate-700 dark:text-slate-200">{d.plan_name}</p>
                     <p className="text-xs text-slate-500">{cycleLabel(d.billing_cycle)}</p>
                 </div>
             ),
@@ -247,20 +247,20 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
             key: 'correspondent',
             label: t.billing.invoicesList.columns.operator,
             render: (d: Deposit) => (
-                <span className="text-slate-300">{d.correspondent.replace(/_/g, ' ')}</span>
+                <span className="text-slate-600 dark:text-slate-300">{d.correspondent.replace(/_/g, ' ')}</span>
             ),
         },
         {
             key: 'msisdn',
             label: t.billing.invoicesList.columns.msisdn,
-            render: (d: Deposit) => <span className="text-slate-400">+{d.msisdn}</span>,
+            render: (d: Deposit) => <span className="text-slate-500 dark:text-slate-400">+{d.msisdn}</span>,
         },
         {
             key: 'amount',
             label: t.billing.invoicesList.columns.amount,
             align: 'right' as const,
             render: (d: Deposit) => (
-                <span className="font-semibold text-white">{fmt(d.amount, d.currency)}</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{fmt(d.amount, d.currency)}</span>
             ),
         },
         {
@@ -272,23 +272,23 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.billing.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.billing.title}</h1>}>
             <Head title={t.billing.title} />
 
             <section className="space-y-6">
 
                 {/* Stats */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.billing.stats.totalInvoices}</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{invoices.length}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.billing.stats.totalInvoices}</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{invoices.length}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.billing.stats.totalPaid}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.billing.stats.totalPaid}</p>
                         <p className="mt-1 text-2xl font-bold text-green-400">{fmt(totalPaid, 'XOF')}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.billing.stats.mobilePayments}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.billing.stats.mobilePayments}</p>
                         <p className="mt-1 text-2xl font-bold text-blue-400">{deposits.length}</p>
                     </div>
                 </div>
@@ -308,8 +308,8 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                                     <Crown className="size-5 text-amber-300" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-400">{t.billing.subscription.current}</p>
-                                    <p className="text-lg font-bold text-white">{currentSubscription.plan_name ?? '—'}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{t.billing.subscription.current}</p>
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{currentSubscription.plan_name ?? '—'}</p>
                                     <p className="text-xs text-slate-500">{cycleLabel(currentSubscription.billing_cycle)}</p>
                                 </div>
                             </div>
@@ -317,8 +317,8 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                             <div className="flex flex-wrap items-center gap-4">
                                 {currentSubscription.expires_at && (
                                     <div className="text-right">
-                                        <p className="text-xs text-slate-400">{t.billing.subscription.expires}</p>
-                                        <p className="font-semibold text-white">{currentSubscription.expires_at}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.billing.subscription.expires}</p>
+                                        <p className="font-semibold text-slate-900 dark:text-white">{currentSubscription.expires_at}</p>
                                         {currentSubscription.days_left !== null && currentSubscription.days_left <= 7 && (
                                             <p className={`flex items-center gap-1 text-xs font-medium ${
                                                 currentSubscription.days_left <= 1 ? 'text-rose-400' : 'text-amber-400'
@@ -356,7 +356,7 @@ export default function BillingIndex({ auth, invoices, deposits, currentSubscrip
                 ) : (
                     <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center">
                         <Crown className="mx-auto mb-3 size-8 text-slate-500" />
-                        <p className="font-medium text-slate-300">{t.billing.subscription.noSubscription}</p>
+                        <p className="font-medium text-slate-700 dark:text-slate-300">{t.billing.subscription.noSubscription}</p>
                         <p className="mt-1 text-sm text-slate-500">{t.billing.subscription.noSubscriptionText}</p>
                         <Link
                             href="/plans"

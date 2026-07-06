@@ -131,13 +131,13 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
                     <div>
-                        <h2 className="text-lg font-semibold text-white">{t.credits.modals.paymentTitle}</h2>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.credits.modals.paymentTitle}</h2>
                         <p className="text-sm text-slate-400 mt-0.5">
                             Ticket {sale.ticket_number} —{' '}
                             {sale.customer?.name ?? <span className="italic">{t.credits.modals.unknownCustomer}</span>}
                         </p>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
@@ -146,19 +146,19 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                     {/* Résumé */}
                     <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-800/60 p-4">
                         <div>
-                            <p className="text-xs text-slate-400">{t.credits.form.totalSale}</p>
-                            <p className="font-semibold text-white">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t.credits.form.totalSale}</p>
+                            <p className="font-semibold text-slate-900 dark:text-white">
                                 {Number(sale.total).toLocaleString('fr-FR')} FCFA
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs text-slate-400">{t.credits.form.alreadyPaid}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t.credits.form.alreadyPaid}</p>
                             <p className="font-semibold text-emerald-400">
                                 {Number(sale.amount_paid).toLocaleString('fr-FR')} FCFA
                             </p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-xs text-slate-400">{t.credits.form.remainingToPay}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t.credits.form.remainingToPay}</p>
                             <p className="text-xl font-bold text-amber-400">
                                 {Number(sale.remaining_amount).toLocaleString('fr-FR')} FCFA
                             </p>
@@ -173,7 +173,7 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
 
                     {/* Montant */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                             {t.credits.form.paymentAmount} <span className="text-red-400">*</span>
                         </label>
                         <input
@@ -198,13 +198,13 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
 
                     {/* Mode de paiement */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                             {t.credits.form.paymentMethod}
                         </label>
                         <select
                             value={paymentMethod}
                             onChange={(e) => setPaymentMethod(e.target.value)}
-                            className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                         >
                             <option value="cash">{t.sales.payment.cash}</option>
                             <option value="card">{t.sales.payment.card}</option>
@@ -216,7 +216,7 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
 
                     {/* Nouvelle échéance (optionnelle) */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                             {t.credits.form.newDueDate} <span className="text-slate-500">{t.credits.form.optional}</span>
                         </label>
                         <input
@@ -224,13 +224,13 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                             value={newDueDate}
                             onChange={(e) => setNewDueDate(e.target.value)}
                             min={new Date().toISOString().split('T')[0]}
-                            className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                         />
                     </div>
 
                     {/* Notes */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                             {t.credits.form.notes} <span className="text-slate-500">{t.credits.form.optional}</span>
                         </label>
                         <textarea
@@ -300,24 +300,24 @@ function DueDateModal({ sale, onClose, routeFn }: DueDateModalProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
-                    <h2 className="text-lg font-semibold text-white">{t.credits.modals.dueDateTitle}</h2>
-                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.credits.modals.dueDateTitle}</h2>
+                    <button onClick={onClose} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
                         <X className="h-5 w-5" />
                     </button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <p className="text-sm text-slate-400">
-                        Ticket <span className="text-white font-medium">{sale.ticket_number}</span>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Ticket <span className="text-slate-900 dark:text-white font-medium">{sale.ticket_number}</span>
                     </p>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                             {t.credits.form.dueDate}
                         </label>
                         <input
                             type="date"
                             value={dueDate}
                             onChange={(e) => setDueDate(e.target.value)}
-                            className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                         />
                         {dueDate && (
                             <button
@@ -528,7 +528,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
             header={
                 <div className="flex items-center gap-3">
                     <CreditCard className="h-6 w-6 text-amber-400" />
-                    <h2 className="text-xl font-bold text-white">{t.credits.title}</h2>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.credits.title}</h2>
                 </div>
             }
         >
@@ -588,7 +588,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                             <select
                                 value={shopId}
                                 onChange={(e) => handleShopChange(e.target.value)}
-                                className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                             >
                                 <option value="">{t.credits.filters.allShops}</option>
                                 {safeShops.map((s) => (
@@ -601,7 +601,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                         <select
                             value={sortBy}
                             onChange={(e) => handleSortChange(e.target.value)}
-                            className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                         >
                             <option value="overdue_first">{t.credits.filters.sortOverdueFirst}</option>
                             <option value="amount_desc">{t.credits.filters.sortAmountDesc}</option>
@@ -670,24 +670,24 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-slate-700/60 bg-slate-900/40">
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                             {t.credits.columns.customerTicket}
                                         </th>
                                         {safeShops.length > 1 && (
-                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                            <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                                 {t.credits.columns.shop}
                                             </th>
                                         )}
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                             {t.credits.columns.saleDate}
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                             {t.credits.columns.total}
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                             {t.credits.columns.paid}
                                         </th>
-                                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                             {t.credits.columns.remaining}
                                         </th>
                                         <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -708,7 +708,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                         >
                                             {/* Client / Ticket */}
                                             <td className="px-4 py-3">
-                                                <div className="font-medium text-white">
+                                                <div className="font-medium text-slate-900 dark:text-white">
                                                     {sale.customer?.name ?? (
                                                         <span className="italic text-slate-500">{t.credits.customer.anonymous}</span>
                                                     )}
@@ -782,7 +782,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                                     <button
                                                         onClick={() => setDueDateModal(sale)}
                                                         title={t.credits.modals.dueDateTitle}
-                                                        className="rounded-lg bg-slate-700/50 p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                                                        className="rounded-lg bg-gray-100 p-1.5 text-slate-500 hover:bg-gray-200 hover:text-slate-900 transition-colors dark:bg-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
                                                     >
                                                         <Calendar className="h-3.5 w-3.5" />
                                                     </button>
@@ -791,7 +791,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                                     <Link
                                                         href={buildRoute('sales.show', { sale: sale.id })}
                                                         title={t.credits.buttons.seeSale}
-                                                        className="rounded-lg bg-slate-700/50 p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+                                                        className="rounded-lg bg-gray-100 p-1.5 text-slate-500 hover:bg-gray-200 hover:text-slate-900 transition-colors dark:bg-slate-700/50 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
                                                     >
                                                         <Eye className="h-3.5 w-3.5" />
                                                     </Link>

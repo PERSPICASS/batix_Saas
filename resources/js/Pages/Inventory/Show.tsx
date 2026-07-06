@@ -66,7 +66,7 @@ export default function InventoryShow({ inventory }: Props) {
 
     const getStatusBadge = (status: string) => {
         const statuses: Record<string, { label: string; bg: string; text: string }> = {
-            draft: { label: t.inventory.status.draft, bg: 'bg-slate-500/20', text: 'text-slate-300' },
+            draft: { label: t.inventory.status.draft, bg: 'bg-slate-500/20', text: 'text-slate-600 dark:text-slate-300' },
             in_progress: { label: t.inventory.status.in_progress, bg: 'bg-blue-500/20', text: 'text-blue-300' },
             completed: { label: t.inventory.status.completed, bg: 'bg-green-500/20', text: 'text-green-300' },
             cancelled: { label: t.inventory.status.cancelled, bg: 'bg-red-500/20', text: 'text-red-300' },
@@ -127,7 +127,7 @@ export default function InventoryShow({ inventory }: Props) {
     return (
         <AuthenticatedLayout
             header={
-                <h1 className="text-xl font-semibold text-white">
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
                     {t.inventory.title} {inventory.inventory_number}
                 </h1>
             }
@@ -139,7 +139,7 @@ export default function InventoryShow({ inventory }: Props) {
                     <div className="flex flex-wrap items-center gap-2">
                         <Link
                             href={route('inventory.edit', { inventory: inventory.id })}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                         >
                             <Pencil className="size-4" />
                             {t.inventory.actions.edit}
@@ -155,34 +155,34 @@ export default function InventoryShow({ inventory }: Props) {
                 )}
 
                 {/* Informations générales */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                     <div className="flex items-start justify-between">
                         <div>
-                            <h2 className="text-lg font-semibold text-white">{t.common.form.generalInfo}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.generalInfo}</h2>
                             <div className="mt-4 grid grid-cols-2 gap-6 md:grid-cols-4">
                                 <div>
-                                    <p className="text-sm text-slate-400">{t.common.misc.shop}</p>
-                                    <p className="font-medium text-white">{inventory.shop.name}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t.common.misc.shop}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">{inventory.shop.name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-slate-400">{t.common.misc.date}</p>
-                                    <p className="font-medium text-white">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t.common.misc.date}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">
                                         {new Date(inventory.inventory_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-slate-400">{t.inventory.show.performedBy}</p>
-                                    <p className="font-medium text-white">{inventory.user.name}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.show.performedBy}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">{inventory.user.name}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-slate-400">{t.common.misc.status}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t.common.misc.status}</p>
                                     <div className="mt-1">{getStatusBadge(inventory.status)}</div>
                                 </div>
                             </div>
                             {inventory.notes && (
                                 <div className="mt-4">
-                                    <p className="text-sm text-slate-400">{t.common.form.notes}</p>
-                                    <p className="text-white">{inventory.notes}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{t.common.form.notes}</p>
+                                    <p className="text-slate-900 dark:text-white">{inventory.notes}</p>
                                 </div>
                             )}
                         </div>
@@ -191,40 +191,40 @@ export default function InventoryShow({ inventory }: Props) {
 
                 {/* Statistiques */}
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-blue-500/20 p-2">
                                 <Package className="size-5 text-blue-300" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">{t.inventory.columns.items}</p>
-                                <p className="text-xl font-bold text-white">{inventory.total_items}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.columns.items}</p>
+                                <p className="text-xl font-bold text-slate-900 dark:text-white">{inventory.total_items}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-amber-500/20 p-2">
                                 <AlertTriangle className="size-5 text-amber-300" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">{t.inventory.columns.discrepancies}</p>
-                                <p className="text-xl font-bold text-white">{inventory.total_discrepancies}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.columns.discrepancies}</p>
+                                <p className="text-xl font-bold text-slate-900 dark:text-white">{inventory.total_discrepancies}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-red-500/20 p-2">
                                 <AlertTriangle className="size-5 text-red-300" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">{t.inventory.show.defective}</p>
-                                <p className="text-xl font-bold text-white">{totalDefective}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.show.defective}</p>
+                                <p className="text-xl font-bold text-slate-900 dark:text-white">{totalDefective}</p>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3">
                             <div className={`rounded-lg p-2 ${totalGoodDifference >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
                                 {totalGoodDifference >= 0 ? (
@@ -234,14 +234,14 @@ export default function InventoryShow({ inventory }: Props) {
                                 )}
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">{t.inventory.show.difference}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.show.difference}</p>
                                 <p className={`text-xl font-bold ${totalGoodDifference >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                                     {totalGoodDifference > 0 ? '+' : ''}{totalGoodDifference}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3">
                             <div className={`rounded-lg p-2 ${totalDefectiveDifference >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
                                 {totalDefectiveDifference >= 0 ? (
@@ -251,14 +251,14 @@ export default function InventoryShow({ inventory }: Props) {
                                 )}
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">{t.inventory.show.defectiveDifference}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.show.defectiveDifference}</p>
                                 <p className={`text-xl font-bold ${totalDefectiveDifference >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                                     {totalDefectiveDifference > 0 ? '+' : ''}{totalDefectiveDifference}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3">
                             <div className={`rounded-lg p-2 ${totalValue >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
                                 {totalValue >= 0 ? (
@@ -268,7 +268,7 @@ export default function InventoryShow({ inventory }: Props) {
                                 )}
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">{t.inventory.show.differenceValue}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.show.differenceValue}</p>
                                 <p className={`text-xl font-bold ${totalValue >= 0 ? 'text-green-300' : 'text-red-300'}`}>
                                     <Currency amount={Math.abs(totalValue)} />
                                 </p>
@@ -278,11 +278,11 @@ export default function InventoryShow({ inventory }: Props) {
                 </div>
 
                 {/* Liste des articles */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h2 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-white">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h2 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-slate-900 dark:text-white">
                         {t.inventory.show.itemsTitle}
                         <span title={t.inventory.show.helpText}>
-                            <Info className="size-4 text-slate-400" />
+                            <Info className="size-4 text-slate-500 dark:text-slate-400" />
                         </span>
                     </h2>
                     <div className="overflow-x-auto">
@@ -305,24 +305,24 @@ export default function InventoryShow({ inventory }: Props) {
                                             <div className="flex items-center gap-3">
                                                 <ProductImage src={item.product.image} name={item.product.name} thumbnailClass="size-9" />
                                                 <div>
-                                                    <p className="font-medium text-white">{item.product.name}</p>
-                                                    <p className="text-xs text-slate-400">SKU: {item.product.sku}</p>
+                                                    <p className="font-medium text-slate-900 dark:text-white">{item.product.name}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {item.product.sku}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-3 pr-4 text-right text-slate-300">
                                             {item.expected_quantity}
                                         </td>
-                                        <td className="py-3 pr-4 text-right text-white">
+                                        <td className="py-3 pr-4 text-right text-slate-900 dark:text-white">
                                             {item.counted_quantity ?? '-'}
                                         </td>
-                                        <td className="py-3 pr-4 text-right text-white">
+                                        <td className="py-3 pr-4 text-right text-slate-900 dark:text-white">
                                             {item.defective_quantity}
                                         </td>
                                         <td className="py-3 pr-4 text-right">
                                             <span className={`font-medium ${
                                                 item.difference === 0
-                                                    ? 'text-slate-400'
+                                                    ? 'text-slate-500 dark:text-slate-400'
                                                     : item.difference > 0
                                                         ? 'text-green-300'
                                                         : 'text-red-300'
@@ -333,7 +333,7 @@ export default function InventoryShow({ inventory }: Props) {
                                         <td className="py-3 pr-4 text-right">
                                             <span className={`font-medium ${
                                                 item.defective_difference === 0
-                                                    ? 'text-slate-400'
+                                                    ? 'text-slate-500 dark:text-slate-400'
                                                     : item.defective_difference > 0
                                                         ? 'text-green-300'
                                                         : 'text-red-300'
@@ -344,7 +344,7 @@ export default function InventoryShow({ inventory }: Props) {
                                         <td className="py-3 text-right">
                                             <span className={`font-medium ${
                                                 (item.difference + item.defective_difference) === 0
-                                                    ? 'text-slate-400'
+                                                    ? 'text-slate-500 dark:text-slate-400'
                                                     : (item.difference + item.defective_difference) > 0
                                                         ? 'text-green-300'
                                                         : 'text-red-300'
@@ -363,7 +363,7 @@ export default function InventoryShow({ inventory }: Props) {
                 <div className="flex justify-start">
                     <Link
                         href={route('inventory.index')}
-                        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                     >
                         <ArrowLeft className="size-4" />
                         {t.inventory.show.backToList}
@@ -378,8 +378,8 @@ export default function InventoryShow({ inventory }: Props) {
                                 <CheckCircle className="size-6 text-green-400" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h3 className="text-lg font-semibold text-white">{t.inventory.completeModal.title}</h3>
-                                <p className="mt-2 text-sm text-slate-300">{t.inventory.completeModal.previewIntro}</p>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.inventory.completeModal.title}</h3>
+                                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t.inventory.completeModal.previewIntro}</p>
 
                                 <InventoryCompletionPreview
                                     rows={completionPreview.map(({ item, ...rest }) => ({
@@ -396,7 +396,7 @@ export default function InventoryShow({ inventory }: Props) {
                                 type="button"
                                 onClick={() => setCompleteModal(false)}
                                 disabled={processing}
-                                className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-50"
+                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                             >
                                 {t.common.actions.cancel}
                             </button>

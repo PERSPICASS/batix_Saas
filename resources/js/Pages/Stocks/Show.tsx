@@ -72,7 +72,7 @@ export default function StocksShow({ movement }: Props) {
                     >
                         <ArrowLeft className="size-5" />
                     </Link>
-                    <h1 className="text-xl font-semibold text-white">Détails du mouvement</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Détails du mouvement</h1>
                 </div>
             }
         >
@@ -83,8 +83,8 @@ export default function StocksShow({ movement }: Props) {
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-amber-300/10 via-orange-300/5 to-transparent p-6">
                     <div className="flex items-start justify-between">
                         <div>
-                            <p className="text-sm text-slate-400">Mouvement de stock</p>
-                            <h2 className="mt-1 text-2xl font-bold text-white">#{movement.id}</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Mouvement de stock</p>
+                            <h2 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">#{movement.id}</h2>
                         </div>
                         <div>{getTypeBadge(movement.type)}</div>
                     </div>
@@ -95,8 +95,8 @@ export default function StocksShow({ movement }: Props) {
                                 <Calendar className="size-5 text-amber-300" />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Date du mouvement</p>
-                                <p className="font-medium text-slate-200">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Date du mouvement</p>
+                                <p className="font-medium text-slate-700 dark:text-slate-200">
                                     {new Date(movement.movement_date).toLocaleDateString('fr-FR', {
                                         day: 'numeric',
                                         month: 'long',
@@ -111,16 +111,16 @@ export default function StocksShow({ movement }: Props) {
                                 <User className="size-5 text-amber-300" />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Créé par</p>
-                                <p className="font-medium text-slate-200">{movement.user.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Créé par</p>
+                                <p className="font-medium text-slate-700 dark:text-slate-200">{movement.user.name}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Product info */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                         <Package className="size-5 text-amber-300" />
                         Produit
                     </h3>
@@ -136,22 +136,22 @@ export default function StocksShow({ movement }: Props) {
                 </div>
 
                 {/* Movement details */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                         <FileText className="size-5 text-amber-300" />
                         Détails du mouvement
                     </h3>
                     <div className="space-y-4">
                         <div className="flex justify-between">
-                            <span className="text-slate-400">Boutique</span>
+                            <span className="text-slate-500 dark:text-slate-400">Boutique</span>
                             <div className="flex items-center gap-2">
-                                <MapPin className="size-4 text-slate-400" />
-                                <span className="font-medium text-slate-200">{movement.shop.name}</span>
+                                <MapPin className="size-4 text-slate-500 dark:text-slate-400" />
+                                <span className="font-medium text-slate-700 dark:text-slate-200">{movement.shop.name}</span>
                             </div>
                         </div>
 
                         <div className="flex justify-between border-t border-white/10 pt-4">
-                            <span className="text-slate-400">Quantité</span>
+                            <span className="text-slate-500 dark:text-slate-400">Quantité</span>
                             <span
                                 className={`text-xl font-bold ${
                                     movement.quantity > 0 ? 'text-green-400' : 'text-red-400'
@@ -164,8 +164,8 @@ export default function StocksShow({ movement }: Props) {
 
                         {movement.unit_cost && (
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Coût unitaire</span>
-                                <span className="font-medium text-slate-200">
+                                <span className="text-slate-500 dark:text-slate-400">Coût unitaire</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
                                     {parseFloat(movement.unit_cost).toLocaleString('fr-FR', {
                                         minimumFractionDigits: 2,
                                         maximumFractionDigits: 2,
@@ -177,7 +177,7 @@ export default function StocksShow({ movement }: Props) {
 
                         {movement.unit_cost && (
                             <div className="flex justify-between border-t border-white/10 pt-4">
-                                <span className="text-slate-400">Valeur totale</span>
+                                <span className="text-slate-500 dark:text-slate-400">Valeur totale</span>
                                 <span className="text-lg font-bold text-amber-300">
                                     {(Math.abs(movement.quantity) * parseFloat(movement.unit_cost)).toLocaleString(
                                         'fr-FR',

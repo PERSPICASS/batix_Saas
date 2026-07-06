@@ -257,12 +257,12 @@ export default function SalesShow({ sale, auth }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="print:hidden flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">{t.sales.title} {displayedSale.ticket_number}</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.sales.title} {displayedSale.ticket_number}</h1>
                     <div className="flex items-center gap-2">
 
                         <button
                             onClick={handlePrint}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
@@ -297,7 +297,7 @@ export default function SalesShow({ sale, auth }: Props) {
                 <div className='w-full print:hidden flex justify-between items-center'>
                     <Link
                         href={route('sales.index')}
-                        className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white"
+                        className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                     >
                         <ArrowLeft className="size-4" /> {t.sales.title}
                     </Link>
@@ -339,36 +339,36 @@ export default function SalesShow({ sale, auth }: Props) {
                                 />
                             </div>
                         )}
-                        <h2 className="text-2xl font-bold text-white">{displayedSale.shop.name}</h2>
-                        <p className="text-sm text-slate-400">{displayedSale.shop.address}</p>
-                        <p className="text-sm text-slate-400">{displayedSale.shop.phone}</p>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{displayedSale.shop.name}</h2>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{displayedSale.shop.address}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{displayedSale.shop.phone}</p>
                     </div>
 
                     <div className="mb-6 space-y-2 border-y border-white/10 py-4">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">{t.sales.title}:</span>
+                            <span className="text-slate-500 dark:text-slate-400">{t.sales.title}:</span>
                             <span className="font-mono font-semibold text-white">
                                 {displayedSale.ticket_number}
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">{t.sales.columns.date}:</span>
-                            <span className="text-white">
+                            <span className="text-slate-500 dark:text-slate-400">{t.sales.columns.date}:</span>
+                            <span className="text-slate-900 dark:text-white">
                                 {new Date(displayedSale.sale_date).toLocaleString('fr-FR')}
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Vendeur:</span>
-                            <span className="text-white">{displayedSale.user.name}</span>
+                            <span className="text-slate-500 dark:text-slate-400">Vendeur:</span>
+                            <span className="text-slate-900 dark:text-white">{displayedSale.user.name}</span>
                         </div>
                         {displayedSale.customer && (
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">{t.sales.columns.customer || "Client"}:</span>
-                                <span className="text-white">{displayedSale.customer?.name}</span>
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.columns.customer || "Client"}:</span>
+                                <span className="text-slate-900 dark:text-white">{displayedSale.customer?.name}</span>
                             </div>
                         )}
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">{t.sales.columns.status}:</span>
+                            <span className="text-slate-500 dark:text-slate-400">{t.sales.columns.status}:</span>
                             <span
                                 className={`font-semibold ${
                                     displayedSale.status === 'completed'
@@ -386,7 +386,7 @@ export default function SalesShow({ sale, auth }: Props) {
                     {/* Articles */}
                     <div className="mb-6">
                         <table className="w-full text-sm">
-                            <thead className="border-b border-white/10">
+                            <thead className="border-b border-gray-200 dark:border-white/10">
                                 <tr>
                                     <th className="pb-2 text-left text-slate-400">Article</th>
                                     <th className="pb-2 text-center text-slate-400">Qté</th>
@@ -399,13 +399,13 @@ export default function SalesShow({ sale, auth }: Props) {
                                     <tr key={item.id} className="border-b border-white/5">
                                         <td className="py-2">
                                             {item.product?.parent ? (
-                                                <span className="text-white">
-                                                    <span className="text-slate-400">{item.product.parent.name}</span>
+                                                <span className="text-slate-900 dark:text-white">
+                                                    <span className="text-slate-500 dark:text-slate-400">{item.product.parent.name}</span>
                                                     <span className="mx-1 text-slate-500">›</span>
                                                     <span>{item.product.name}</span>
                                                 </span>
                                             ) : (
-                                                <span className="text-white">{item.product_name}</span>
+                                                <span className="text-slate-900 dark:text-white">{item.product_name}</span>
                                             )}
                                         </td>
                                         <td className="py-2 text-center text-slate-300">
@@ -446,27 +446,27 @@ export default function SalesShow({ sale, auth }: Props) {
                     {/* Totaux */}
                     <div className="space-y-2 border-t border-white/10 pt-4">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Sous-total:</span>
-                            <span className="text-white">
+                            <span className="text-slate-500 dark:text-slate-400">Sous-total:</span>
+                            <span className="text-slate-900 dark:text-white">
                                 <Currency amount={parseFloat(displayedSale.subtotal)} />
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">TVA:</span>
-                            <span className="text-white">
+                            <span className="text-slate-500 dark:text-slate-400">TVA:</span>
+                            <span className="text-slate-900 dark:text-white">
                                 <Currency amount={parseFloat(displayedSale.tax_amount)} />
                             </span>
                         </div>
                         {parseFloat(displayedSale.discount_amount) > 0 && (
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Remise:</span>
+                                <span className="text-slate-500 dark:text-slate-400">Remise:</span>
                                 <span className="text-red-400">
                                     -<Currency amount={parseFloat(displayedSale.discount_amount)} />
                                 </span>
                             </div>
                         )}
                         <div className="total-line flex justify-between border-t border-white/10 pt-2 text-lg font-bold">
-                            <span className="text-white">TOTAL:</span>
+                            <span className="text-slate-900 dark:text-white">TOTAL:</span>
                             <span className="text-amber-300">
                                 <Currency amount={parseFloat(displayedSale.total)} />
                             </span>
@@ -476,20 +476,20 @@ export default function SalesShow({ sale, auth }: Props) {
                     {/* Paiement */}
                     <div className="mt-6 space-y-2 border-t border-white/10 pt-4">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Mode de paiement:</span>
-                            <span className="text-white">
+                            <span className="text-slate-500 dark:text-slate-400">Mode de paiement:</span>
+                            <span className="text-slate-900 dark:text-white">
                                 {paymentMethodLabels[displayedSale.payment_method] || displayedSale.payment_method}
                             </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Montant payé:</span>
-                            <span className="text-white">
+                            <span className="text-slate-500 dark:text-slate-400">Montant payé:</span>
+                            <span className="text-slate-900 dark:text-white">
                                 <Currency amount={parseFloat(displayedSale.amount_paid)} />
                             </span>
                         </div>
                         {parseFloat(displayedSale.change_amount) > 0 && (
                             <div className="monnaie-line flex justify-between text-sm">
-                                <span className="text-slate-400">Monnaie rendue:</span>
+                                <span className="text-slate-500 dark:text-slate-400">Monnaie rendue:</span>
                                 <span className="font-semibold text-emerald-400">
                                     <Currency amount={parseFloat(displayedSale.change_amount)} />
                                 </span>
@@ -505,7 +505,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         )}
                         {displayedSale.credit_due_date && parseFloat(displayedSale.remaining_amount) > 0 && (
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Échéance:</span>
+                                <span className="text-slate-500 dark:text-slate-400">Échéance:</span>
                                 <span className="text-amber-300">
                                     {new Date(displayedSale.credit_due_date || '').toLocaleDateString('fr-FR')}
                                 </span>
@@ -521,7 +521,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                     <CreditCard className="size-5 text-rose-400" />
                                     <div>
                                         <p className="text-sm font-semibold text-rose-300">Vente à crédit</p>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">
                                             Reste : <Currency amount={parseFloat(displayedSale.remaining_amount)} />
                                         </p>
                                     </div>
@@ -539,8 +539,8 @@ export default function SalesShow({ sale, auth }: Props) {
 
                     {displayedSale.notes && (
                         <div className="mt-6 rounded-lg bg-slate-900/50 p-4">
-                            <p className="text-sm text-slate-400">Notes:</p>
-                            <p className="text-white">{displayedSale.notes}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Notes:</p>
+                            <p className="text-slate-900 dark:text-white">{displayedSale.notes}</p>
                         </div>
                     )}
 
@@ -557,10 +557,10 @@ export default function SalesShow({ sale, auth }: Props) {
                     <div className="w-full max-w-sm rounded-2xl bg-slate-900 border border-white/10 p-6 shadow-2xl">
                         <div className="mb-4 flex items-center gap-3">
                             <CreditCard className="size-5 text-rose-400" />
-                            <h3 className="text-lg font-semibold text-white">Encaisser le reste</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Encaisser le reste</h3>
                         </div>
                         <div className="mb-4 rounded-lg bg-white/5 p-3 text-center">
-                            <p className="text-xs text-slate-400">Reste à payer</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Reste à payer</p>
                             <p className="text-2xl font-bold text-rose-400">
                                 <Currency amount={parseFloat(displayedSale.remaining_amount)} />
                             </p>
@@ -575,7 +575,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                     max={displayedSale.remaining_amount}
                                     value={creditForm.data.payment_amount}
                                     onChange={e => creditForm.setData('payment_amount', e.target.value)}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white focus:border-amber-300 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                     required
                                 />
                                 {creditForm.errors.payment_amount && (
@@ -587,7 +587,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                 <select
                                     value={creditForm.data.payment_method}
                                     onChange={e => creditForm.setData('payment_method', e.target.value)}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white focus:border-amber-300 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                 >
                                     <option value="cash">Espèces</option>
                                     <option value="card">Carte</option>
@@ -607,7 +607,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setShowCreditModal(false)}
-                                    className="flex-1 rounded-xl border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+                                    className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/5"
                                 >
                                     Annuler
                                 </button>
@@ -625,10 +625,10 @@ export default function SalesShow({ sale, auth }: Props) {
                             <div className="flex size-10 items-center justify-center rounded-full bg-rose-400/10">
                                 <Trash2 className="size-5 text-rose-400" />
                             </div>
-                            <h3 className="text-lg font-semibold text-white">Annuler la vente</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Annuler la vente</h3>
                         </div>
                         <p className="mb-2 text-sm text-slate-300">
-                            Voulez-vous vraiment annuler la vente <strong className="text-white">{displayedSale.ticket_number}</strong> ?
+                            Voulez-vous vraiment annuler la vente <strong className="text-slate-900 dark:text-white">{displayedSale.ticket_number}</strong> ?
                         </p>
                         <p className="mb-6 text-xs text-slate-400">
                             Le stock des produits tracés sera automatiquement remis à jour. Cette action est irréversible.
@@ -643,7 +643,7 @@ export default function SalesShow({ sale, auth }: Props) {
                             </button>
                             <button
                                 onClick={() => setShowCancelModal(false)}
-                                className="flex-1 rounded-xl border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+                                className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/5"
                             >
                                 Fermer
                             </button>
@@ -656,7 +656,7 @@ export default function SalesShow({ sale, auth }: Props) {
             {showReturnModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="rounded-xl border border-white/10 bg-slate-900 p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-lg font-semibold text-white mb-4">Créer un retour</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Créer un retour</h3>
 
                         {/* Message de feedback */}
                         {returnMessage && (
@@ -672,7 +672,7 @@ export default function SalesShow({ sale, auth }: Props) {
                         <form onSubmit={handleCreateReturn} className="space-y-4">
                             {/* Sélection des articles avec dropdown */}
                             <div className="relative" data-dropdown-items>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Articles à retourner *
                                 </label>
                                 <button
@@ -721,8 +721,8 @@ export default function SalesShow({ sale, auth }: Props) {
                                                             className="mt-1"
                                                         />
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="text-sm text-white font-medium">{item.product_name}</p>
-                                                            <p className="text-xs text-slate-400">
+                                                            <p className="text-sm text-slate-900 dark:text-white font-medium">{item.product_name}</p>
+                                                            <p className="text-xs text-slate-500 dark:text-slate-400">
                                                                 Vendu: {item.quantity} | Retourné: {alreadyReturned} | Disponible: {available}
                                                             </p>
                                                         </div>
@@ -746,7 +746,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                             return (
                                                 <div key={item.id} className="space-y-1">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-xs text-slate-400">{item.product_name}</span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400">{item.product_name}</span>
                                                         <input
                                                             type="number"
                                                             min="1"
@@ -768,13 +768,13 @@ export default function SalesShow({ sale, auth }: Props) {
 
                             {/* Raison */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Raison *
                                 </label>
                                 <select
                                     value={returnForm.data.reason}
                                     onChange={(e) => returnForm.setData('reason', e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 >
                                     <option value="defective">Défectueux</option>
                                     <option value="wrong_item">Mauvais article</option>
@@ -785,13 +785,13 @@ export default function SalesShow({ sale, auth }: Props) {
 
                             {/* Condition */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     État de l'article *
                                 </label>
                                 <select
                                     value={returnForm.data.condition}
                                     onChange={(e) => returnForm.setData('condition', e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 >
                                     <option value="good">Bon état</option>
                                     <option value="defective">Défectueux</option>
@@ -800,13 +800,13 @@ export default function SalesShow({ sale, auth }: Props) {
 
                             {/* Méthode de remboursement */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Mode de remboursement *
                                 </label>
                                 <select
                                     value={returnForm.data.refund_method}
                                     onChange={(e) => returnForm.setData('refund_method', e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 >
                                     <option value="cash">Espèces</option>
                                     <option value="card">Carte</option>
@@ -817,7 +817,7 @@ export default function SalesShow({ sale, auth }: Props) {
 
                             {/* Notes */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Notes
                                 </label>
                                 <textarea
@@ -833,7 +833,7 @@ export default function SalesShow({ sale, auth }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setShowReturnModal(false)}
-                                    className="flex-1 rounded-xl border border-white/15 py-2.5 text-sm text-slate-300 hover:bg-white/5"
+                                    className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/5"
                                 >
                                     Annuler
                                 </button>

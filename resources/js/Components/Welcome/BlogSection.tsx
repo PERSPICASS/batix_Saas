@@ -31,7 +31,7 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
     return (
         <motion.section
             id="blog"
-            className="w-full scroll-mt-24 bg-[#efe7db] py-16 md:py-20"
+            className="w-full scroll-mt-24 bg-gray-50 py-16 md:py-20"
             initial="hidden"
             whileInView="show"
             viewport={{ once: false, amount: 0.05 }}
@@ -40,7 +40,7 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 {/* En-tête */}
                 <motion.div className="mb-10" variants={fadeUp}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-600">
                         {locale === 'fr' ? 'Ressources' : 'Resources'}
                     </p>
                     <h2 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">
@@ -56,7 +56,7 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
                 {safePosts.length === 0 ? (
                     <motion.div
                         variants={fadeUp}
-                        className="rounded-2xl border border-dashed border-[#c8bfaf] bg-white/40 py-16 text-center text-slate-500"
+                        className="rounded-2xl border border-dashed border-gray-300 bg-white py-16 text-center text-slate-500"
                     >
                         <p className="text-base">
                             {locale === 'fr' ? 'Bientôt disponible — nos premiers articles arrivent.' : 'Coming soon — our first articles are on the way.'}
@@ -70,8 +70,8 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
                         {safePosts.map((post) => (
                             <motion.div key={post.id} variants={fadeUp}>
                                 <Link
-                                    href={route('blog.show', post.slug)}
-                                    className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#d8cfbe] bg-white/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                    href={locale === 'en' ? route('en.blog.show', post.slug) : route('blog.show', post.slug)}
+                                    className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                                 >
                                     {post.cover_image ? (
                                         <img
@@ -80,20 +80,20 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
                                             className="h-44 w-full object-cover"
                                         />
                                     ) : (
-                                        <div className="flex h-44 items-center justify-center bg-amber-100 text-4xl">
+                                        <div className="flex h-44 items-center justify-center bg-terre-50 text-4xl">
                                             🔧
                                         </div>
                                     )}
 
                                     <div className="flex flex-1 flex-col gap-3 p-5">
                                         {post.category && (
-                                            <div className="flex items-center gap-1 text-xs font-medium text-amber-700">
+                                            <div className="flex items-center gap-1 text-xs font-medium text-terre-700">
                                                 <Tag className="size-3" />
                                                 {post.category}
                                             </div>
                                         )}
 
-                                        <h3 className="text-base font-semibold leading-snug text-slate-900 transition group-hover:text-amber-700">
+                                        <h3 className="text-base font-semibold leading-snug text-slate-900 transition group-hover:text-terre-700">
                                             {getTitle(post)}
                                         </h3>
 
@@ -119,7 +119,7 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-1 text-sm font-medium text-amber-700">
+                                        <div className="flex items-center gap-1 text-sm font-medium text-terre-700">
                                             {locale === 'fr' ? "Lire l'article" : 'Read more'}
                                             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                                         </div>
@@ -133,8 +133,8 @@ export default function BlogSection({ locale, posts = [] }: BlogSectionProps) {
                 {safePosts.length > 0 && (
                     <motion.div className="mt-10 text-center" variants={fadeUp}>
                         <Link
-                            href={route('blog.index')}
-                            className="inline-flex items-center gap-2 rounded-xl border border-[#d8cfbe] bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-amber-400 hover:text-amber-700"
+                            href={locale === 'en' ? route('en.blog.index') : route('blog.index')}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-terre-400 hover:text-terre-700"
                         >
                             {locale === 'fr' ? 'Voir tous les articles' : 'View all articles'}
                             <ArrowRight className="size-4" />

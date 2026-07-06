@@ -140,7 +140,7 @@ export default function VariationsIndex({ product, variations }: Props) {
             label: 'Déclinaison',
             render: (variation: Variation) => (
                 <div>
-                    <div className="font-medium text-white">{variation.name}</div>
+                    <div className="font-medium text-slate-900 dark:text-white">{variation.name}</div>
                     {variation.sku && (
                         <div className="text-xs text-slate-500 font-mono">{variation.sku}</div>
                     )}
@@ -152,7 +152,7 @@ export default function VariationsIndex({ product, variations }: Props) {
             label: 'Prix achat',
             align: 'right' as const,
             render: (variation: Variation) => (
-                <span className="text-slate-400">
+                <span className="text-slate-500 dark:text-slate-400">
                     <Currency amount={variation.purchase_price} />
                 </span>
             ),
@@ -218,10 +218,10 @@ export default function VariationsIndex({ product, variations }: Props) {
                         className="p-1.5 rounded-lg hover:bg-white/10 transition"
                         title="Retour aux produits"
                     >
-                        <ArrowLeft className="size-5 text-slate-400" />
+                        <ArrowLeft className="size-5 text-slate-500 dark:text-slate-400" />
                     </Link>
                     <div>
-                        <h1 className="text-xl font-semibold text-white">Déclinaisons</h1>
+                        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Déclinaisons</h1>
                     </div>
                 </div>
             }
@@ -237,15 +237,15 @@ export default function VariationsIndex({ product, variations }: Props) {
                                 <Layers className="size-7 text-amber-300" />
                             </div>
                             <div>
-                                <h2 className="text-lg font-semibold text-white">{product.name}</h2>
-                                <p className="text-sm text-slate-400">
+                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{product.name}</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {product.brand && <span>{product.brand} • </span>}
                                     {product.category?.name || 'Sans catégorie'}
                                 </p>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-2xl font-bold text-white">
+                            <div className="text-2xl font-bold text-slate-900 dark:text-white">
                                 <Currency amount={product.selling_price} />
                             </div>
                             <p className="text-xs text-slate-500">Prix de base</p>
@@ -256,11 +256,11 @@ export default function VariationsIndex({ product, variations }: Props) {
                     <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-4">
                         <div className="text-center">
                             <div className="text-2xl font-bold text-amber-300">{variations.length}</div>
-                            <div className="text-xs text-slate-400">Déclinaison{variations.length !== 1 ? 's' : ''}</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">Déclinaison{variations.length !== 1 ? 's' : ''}</div>
                         </div>
                         <div className="text-center">
                             <div className="text-2xl font-bold text-emerald-400">{totalStock}</div>
-                            <div className="text-xs text-slate-400">Stock total</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">Stock total</div>
                         </div>
                     </div>
                 </div>
@@ -304,10 +304,10 @@ export default function VariationsIndex({ product, variations }: Props) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
                     <div className="w-full max-w-md rounded-xl bg-slate-800 shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between p-5 border-b border-slate-700">
-                            <h2 className="text-lg font-semibold text-white">Nouvelle déclinaison</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Nouvelle déclinaison</h2>
                             <button 
                                 onClick={() => setShowAddModal(false)} 
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700"
                             >
                                 <X className="size-5" />
                             </button>
@@ -316,7 +316,7 @@ export default function VariationsIndex({ product, variations }: Props) {
                         <form onSubmit={handleAddVariation} className="p-5 space-y-5">
                             {/* Nom avec suggestions */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Nom de la déclinaison
                                 </label>
                                 <input
@@ -348,7 +348,7 @@ export default function VariationsIndex({ product, variations }: Props) {
                             {/* Prix côte à côte */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Prix d'achat
                                     </label>
                                     <input
@@ -356,11 +356,11 @@ export default function VariationsIndex({ product, variations }: Props) {
                                         step="1"
                                         value={addForm.data.purchase_price}
                                         onChange={(e) => addForm.setData('purchase_price', e.target.value)}
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Prix de vente
                                     </label>
                                     <input
@@ -368,21 +368,21 @@ export default function VariationsIndex({ product, variations }: Props) {
                                         step="1"
                                         value={addForm.data.selling_price}
                                         onChange={(e) => addForm.setData('selling_price', e.target.value)}
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                     />
                                 </div>
                             </div>
 
                             {/* Stock */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Stock initial
                                 </label>
                                 <input
                                     type="number"
                                     value={addForm.data.stock_quantity}
                                     onChange={(e) => addForm.setData('stock_quantity', e.target.value)}
-                                    className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                 />
                             </div>
 
@@ -413,10 +413,10 @@ export default function VariationsIndex({ product, variations }: Props) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
                     <div className="w-full max-w-md rounded-xl bg-slate-800 shadow-2xl overflow-hidden">
                         <div className="flex items-center justify-between p-5 border-b border-slate-700">
-                            <h2 className="text-lg font-semibold text-white">Modifier</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Modifier</h2>
                             <button 
                                 onClick={() => setEditingVariation(null)} 
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-gray-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-700"
                             >
                                 <X className="size-5" />
                             </button>
@@ -424,20 +424,20 @@ export default function VariationsIndex({ product, variations }: Props) {
                         
                         <form onSubmit={handleEditVariation} className="p-5 space-y-5">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Nom
                                 </label>
                                 <input
                                     type="text"
                                     value={editForm.data.name}
                                     onChange={(e) => editForm.setData('name', e.target.value)}
-                                    className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Prix d'achat
                                     </label>
                                     <input
@@ -445,11 +445,11 @@ export default function VariationsIndex({ product, variations }: Props) {
                                         step="1"
                                         value={editForm.data.purchase_price}
                                         onChange={(e) => editForm.setData('purchase_price', e.target.value)}
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                         Prix de vente
                                     </label>
                                     <input
@@ -457,20 +457,20 @@ export default function VariationsIndex({ product, variations }: Props) {
                                         step="1"
                                         value={editForm.data.selling_price}
                                         onChange={(e) => editForm.setData('selling_price', e.target.value)}
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Stock
                                 </label>
                                 <input
                                     type="number"
                                     value={editForm.data.stock_quantity}
                                     onChange={(e) => editForm.setData('stock_quantity', e.target.value)}
-                                    className="w-full rounded-lg border border-slate-600 bg-slate-700/50 px-4 py-3 text-white focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                 />
                             </div>
 
@@ -481,7 +481,7 @@ export default function VariationsIndex({ product, variations }: Props) {
                                     onChange={(e) => editForm.setData('is_active', e.target.checked)}
                                     className="size-5 rounded border-slate-600 bg-slate-700 text-amber-300 focus:ring-amber-300 focus:ring-offset-0"
                                 />
-                                <span className="text-sm text-slate-300">Déclinaison active (visible à la vente)</span>
+                                <span className="text-sm text-slate-600 dark:text-slate-300">Déclinaison active (visible à la vente)</span>
                             </label>
 
                             <div className="flex gap-3 pt-2">

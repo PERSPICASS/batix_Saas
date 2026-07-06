@@ -23,6 +23,7 @@ class HandleInertiaRequests extends Middleware
             return [
                 ...parent::share($request),
                 'auth' => ['user' => null, 'code_user' => null],
+                'locale' => fn () => app()->getLocale(),
                 'flash' => [
                     'success' => fn () => $request->session()->get('success'),
                     'error'   => fn () => $request->session()->get('error'),
@@ -128,6 +129,7 @@ class HandleInertiaRequests extends Middleware
                 'user'      => $userForAuth,
                 'code_user' => $user->code_user,
             ],
+            'locale' => fn () => app()->getLocale(),
             'subscription'  => $subscription,
             'lowStockCount' => $lowStockCount,
             'shops'         => $shops,

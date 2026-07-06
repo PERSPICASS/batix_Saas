@@ -45,7 +45,7 @@ export default function BlogAdminIndex({ posts }: Props) {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">{t.platformBlog.index.title}</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.platformBlog.index.title}</h1>
                         <p className="mt-1 text-sm text-white/60">{t.platformBlog.index.subtitle}</p>
                     </div>
                     <Link

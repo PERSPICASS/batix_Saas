@@ -102,9 +102,9 @@ export default function Transfers({ depot, transfers, shops, depotProducts }: Pr
         <AuthenticatedLayout header={
             <div className="flex items-center gap-3">
                 <Link href={buildRoute('depots.index')} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">Dépôts</Link>
-                <span className="text-slate-300">/</span>
+                <span className="text-slate-600 dark:text-slate-300">/</span>
                 <Link href={buildRoute('depots.show', { depot: depot.id })} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">{depot.name}</Link>
-                <span className="text-slate-300">/</span>
+                <span className="text-slate-600 dark:text-slate-300">/</span>
                 <span className="font-semibold">Transferts</span>
             </div>
         }>

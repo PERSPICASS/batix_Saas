@@ -30,7 +30,7 @@ export default function CreateFixedCost() {
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">{t.platformFixedCosts.create.title}</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.platformFixedCosts.create.title}</h1>
                     <Link
                         href={route('platform.fixed-costs.index')}
                         className="flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200"
@@ -46,23 +46,23 @@ export default function CreateFixedCost() {
             <div className="mx-auto max-w-2xl">
                 <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-white/10 bg-white/5 p-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.name}</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.platformFixedCosts.form.name}</label>
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                             placeholder={t.platformFixedCosts.form.namePlaceholder}
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.category}</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.platformFixedCosts.form.category}</label>
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >
                             {CATEGORIES.map((cat) => (
                                 <option key={cat.value} value={cat.value}>
@@ -74,23 +74,23 @@ export default function CreateFixedCost() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.amount}</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.platformFixedCosts.form.amount}</label>
                             <input
                                 type="number"
                                 step="0.01"
                                 value={formData.amount_monthly}
                                 onChange={(e) => setFormData({ ...formData, amount_monthly: e.target.value })}
-                                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                 placeholder="0.00"
                                 required
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.currency}</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.platformFixedCosts.form.currency}</label>
                             <select
                                 value={formData.currency}
                                 onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                             >
                                 {CURRENCIES.map((curr) => (
                                     <option key={curr.code} value={curr.code}>
@@ -102,11 +102,11 @@ export default function CreateFixedCost() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.billingCycle}</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.platformFixedCosts.form.billingCycle}</label>
                         <select
                             value={formData.billing_cycle}
                             onChange={(e) => setFormData({ ...formData, billing_cycle: e.target.value })}
-                            className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >
                             {BILLING_CYCLES.map((cycle) => (
                                 <option key={cycle.value} value={cycle.value}>
@@ -117,11 +117,11 @@ export default function CreateFixedCost() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300">{t.platformFixedCosts.form.description}</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.platformFixedCosts.form.description}</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                            className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                             rows={3}
                             placeholder={t.platformFixedCosts.form.descriptionPlaceholder}
                         />
@@ -135,7 +135,7 @@ export default function CreateFixedCost() {
                             onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                             className="rounded"
                         />
-                        <label htmlFor="is_active" className="text-sm text-slate-300">
+                        <label htmlFor="is_active" className="text-sm text-slate-600 dark:text-slate-300">
                             {t.platformFixedCosts.form.isActive}
                         </label>
                     </div>

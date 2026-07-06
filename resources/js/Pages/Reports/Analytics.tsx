@@ -59,21 +59,21 @@ export default function Analytics({ shop }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.reportsAnalytics.title}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.reportsAnalytics.title}</h1>}
         >
             <Head title={t.reportsAnalytics.title} />
 
             <div className="space-y-6">
                 {/* Formulaire d'export */}
-                <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/40">
+                    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                         <Calendar className="size-5 text-amber-300" /> {t.reportsAnalytics.generateReport}
                     </h2>
 
                     <form onSubmit={handleExport} className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     {t.reportsAnalytics.startDate}
                                 </label>
                                 <input
@@ -85,7 +85,7 @@ export default function Analytics({ shop }: Props) {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     {t.reportsAnalytics.endDate}
                                 </label>
                                 <input
@@ -111,8 +111,8 @@ export default function Analytics({ shop }: Props) {
 
                 {/* Information sur le rapport */}
                 <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                        <h3 className="font-semibold text-white mb-3">{t.reportsAnalytics.reportContent.title}</h3>
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/40">
+                        <h3 className="font-semibold text-slate-900 dark:text-white mb-3">{t.reportsAnalytics.reportContent.title}</h3>
                         <ul className="space-y-2 text-sm text-slate-300">
                             <li className="flex items-start gap-2">
                                 <span className="text-amber-300 mt-1">✓</span>
@@ -133,26 +133,26 @@ export default function Analytics({ shop }: Props) {
                         </ul>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                        <h3 className="font-semibold text-white mb-3">{t.reportsAnalytics.otherExports.title}</h3>
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/40">
+                        <h3 className="font-semibold text-slate-900 dark:text-white mb-3">{t.reportsAnalytics.otherExports.title}</h3>
                         <div className="space-y-3">
                             <a
                                 href={route('invoices.export', {})}
                                 className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 p-3 hover:bg-slate-900/70"
                             >
-                                <span className="text-slate-300">
+                                <span className="text-slate-600 dark:text-slate-300">
                                     <strong>{t.reportsAnalytics.otherExports.invoices}</strong> - {t.reportsAnalytics.otherExports.invoicesDesc}
                                 </span>
-                                <Download className="size-4 text-slate-400" />
+                                <Download className="size-4 text-slate-500 dark:text-slate-400" />
                             </a>
                             <a
                                 href={route('quotes.export', {})}
                                 className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 p-3 hover:bg-slate-900/70"
                             >
-                                <span className="text-slate-300">
+                                <span className="text-slate-600 dark:text-slate-300">
                                     <strong>{t.reportsAnalytics.otherExports.quotes}</strong> - {t.reportsAnalytics.otherExports.quotesDesc}
                                 </span>
-                                <Download className="size-4 text-slate-400" />
+                                <Download className="size-4 text-slate-500 dark:text-slate-400" />
                             </a>
                         </div>
                     </div>

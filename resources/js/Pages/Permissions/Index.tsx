@@ -78,8 +78,8 @@ export default function Index({ users, selectedUser, modules, permissions }: Pro
                             <Shield className="size-5 text-purple-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-semibold text-white">Gestion des permissions</h2>
-                            <p className="text-sm text-slate-400">Contrôle granulaire des accès par utilisateur</p>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Gestion des permissions</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Contrôle granulaire des accès par utilisateur</p>
                         </div>
                     </div>
                 </div>
@@ -89,7 +89,7 @@ export default function Index({ users, selectedUser, modules, permissions }: Pro
 
             <div className="space-y-6">
                 {/* User Selection */}
-                <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/50">
                     <label className="block text-sm font-medium text-slate-300 mb-3">Sélectionner un utilisateur</label>
                     <select
                         value={selectedUser?.id || ''}
@@ -113,12 +113,12 @@ export default function Index({ users, selectedUser, modules, permissions }: Pro
                 {selectedUser && (
                     <>
                         {/* User Info */}
-                        <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                        <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/50">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <h3 className="text-lg font-semibold text-white">{selectedUser.name}</h3>
-                                    <p className="text-sm text-slate-400">{selectedUser.email}</p>
-                                    <p className="text-sm text-slate-400 mt-1">Rôle : <span className="text-slate-300 font-medium">{selectedUser.role}</span></p>
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{selectedUser.name}</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{selectedUser.email}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Rôle : <span className="text-slate-300 font-medium">{selectedUser.role}</span></p>
                                 </div>
                                 <button
                                     onClick={handleReset}
@@ -138,16 +138,16 @@ export default function Index({ users, selectedUser, modules, permissions }: Pro
                         </div>
 
                         {/* Permissions Grid */}
-                        <div className="rounded-xl border border-white/10 bg-slate-900/50 overflow-hidden">
+                        <div className="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden dark:border-white/10 dark:bg-slate-900/50">
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-b border-white/10">
+                                        <tr className="border-b border-gray-200 dark:border-white/10">
                                             <th className="text-left py-3 px-4 font-semibold text-slate-300">Module</th>
-                                            <th className="text-center py-3 px-4 font-semibold text-slate-300">Voir</th>
-                                            <th className="text-center py-3 px-4 font-semibold text-slate-300">Créer</th>
-                                            <th className="text-center py-3 px-4 font-semibold text-slate-300">Modifier</th>
-                                            <th className="text-center py-3 px-4 font-semibold text-slate-300">Supprimer</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Voir</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Créer</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Modifier</th>
+                                            <th className="text-center py-3 px-4 font-semibold text-slate-600 dark:text-slate-300">Supprimer</th>
                                         </tr>
                                     </thead>
                                     <tbody>

@@ -87,7 +87,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                         <span className="font-medium">{supplier.name}</span>
                     </div>
                     {supplier.company_name && (
-                        <div className="mt-0.5 text-xs text-slate-400">{supplier.company_name}</div>
+                        <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{supplier.company_name}</div>
                     )}
                 </div>
             ),
@@ -103,7 +103,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                             {supplier.phone}
                         </div>
                     )}
-                    {supplier.email && <div className="text-xs text-slate-400">{supplier.email}</div>}
+                    {supplier.email && <div className="text-xs text-slate-500 dark:text-slate-400">{supplier.email}</div>}
                 </div>
             ),
         },
@@ -111,11 +111,11 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
             key: 'location',
             label: t.suppliers.location,
             render: (supplier: Supplier) => (
-                <div className="flex items-center gap-2 text-slate-300">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <MapPin className="size-4" />
                     <div>
                         {supplier.city && <div>{supplier.city}</div>}
-                        <div className="text-xs text-slate-400">{supplier.country}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{supplier.country}</div>
                     </div>
                 </div>
             ),
@@ -155,13 +155,13 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                 <TableActions>
                     <Link
                         href={route('suppliers.show', { supplier: supplier.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         <Eye className="size-3.5" /> {t.suppliers.actions.view}
                     </Link>
                     <Link
                         href={route('suppliers.edit', { supplier: supplier.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         <Pencil className="size-3.5" /> {t.suppliers.actions.edit}
                     </Link>
@@ -174,11 +174,11 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.suppliers.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.suppliers.title}</h1>}>
             <Head title={t.suppliers.title} />
             <section className="space-y-6">
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">{t.suppliers.subtitle}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">{t.suppliers.subtitle}</p>
                     <Link
                         href={route('suppliers.create')}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
@@ -187,14 +187,14 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                     </Link>
                 </div>
 
-                <form onSubmit={handleFilter} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <form onSubmit={handleFilter} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
-                            <label htmlFor="search" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="search" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.common.actions.search}
                             </label>
                             <div className="relative mt-1">
-                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                                 <input
                                     type="text"
                                     id="search"
@@ -207,14 +207,14 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
                         </div>
 
                         <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.common.misc.status}
                             </label>
                             <select
                                 id="status"
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             >
                                 <option value="">{t.suppliers.filterAll}</option>
                                 <option value="active">{t.suppliers.filterActive}</option>

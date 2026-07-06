@@ -136,8 +136,8 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                 <div className="flex items-center gap-3">
                     <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-9" />
                     <div>
-                        <p className="font-medium text-slate-200">{movement.product.name}</p>
-                        {movement.product.sku && <p className="text-xs text-slate-400">SKU: {movement.product.sku}</p>}
+                        <p className="font-medium text-slate-700 dark:text-slate-200">{movement.product.name}</p>
+                        {movement.product.sku && <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {movement.product.sku}</p>}
                     </div>
                 </div>
             ),
@@ -166,7 +166,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
             key: 'user',
             label: t.stocks.columns.user,
             render: (movement: StockMovement) => (
-                <span className="text-sm text-slate-300">{movement.user.name}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{movement.user.name}</span>
             ),
         },
         {
@@ -177,7 +177,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                 <TableActions>
                     <Link
                         href={route('stocks.show', { stockMovement: movement.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         {t.stocks.actions.view}
                     </Link>
@@ -190,12 +190,12 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.stocks.titleMovements}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.stocks.titleMovements}</h1>}>
             <Head title={t.stocks.titleMovements} />
 
             <section className="space-y-6">
                 {/* Filters */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                     <div className="grid gap-4 md:grid-cols-6">
                         <input
                             type="text"
@@ -208,7 +208,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                         <select
                             value={typeFilter}
                             onChange={(e) => setTypeFilter(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                         >
                             <option value="">{t.stocks.filters.allTypes}</option>
                             <option value="in">{t.stocks.types.in}</option>
@@ -219,7 +219,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                         <select
                             value={shopFilter}
                             onChange={(e) => setShopFilter(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                         >
                             <option value="">{t.stocks.filters.allShops}</option>
                             {shops.map((shop) => (
@@ -232,21 +232,21 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                             type="date"
                             value={dateFrom}
                             onChange={(e) => setDateFrom(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             placeholder="Date début"
                         />
                         <input
                             type="date"
                             value={dateTo}
                             onChange={(e) => setDateTo(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             placeholder="Date fin"
                         />
                     </div>
                     <div className="mt-4 flex justify-between">
                         <button
                             onClick={handleSearch}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             {t.common.actions.search}
                         </button>

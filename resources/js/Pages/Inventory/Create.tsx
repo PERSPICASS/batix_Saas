@@ -88,9 +88,9 @@ function ProductCombobox({
                 /* Produit sélectionné */
                 <div className="flex items-center justify-between rounded-lg border border-amber-500/50 bg-slate-950/70 px-3 py-2">
                     <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-slate-200">{selected.name}</span>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{selected.name}</span>
                         {selected.sku && (
-                            <span className="ml-2 text-xs text-slate-400">({selected.sku})</span>
+                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">({selected.sku})</span>
                         )}
                         <span className="ml-2 text-xs text-slate-500">
                             {t.inventory.form.stockLabel(selected.stock_quantity)}
@@ -100,7 +100,7 @@ function ProductCombobox({
                         <button
                             type="button"
                             onClick={() => setOpen(true)}
-                            className="rounded p-1 text-slate-400 hover:text-white transition-colors"
+                            className="rounded p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
                             title={t.inventory.form.change}
                         >
                             <ChevronDown className="h-3.5 w-3.5" />
@@ -108,7 +108,7 @@ function ProductCombobox({
                         <button
                             type="button"
                             onClick={clear}
-                            className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
+                            className="rounded p-1 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
                             title={t.inventory.form.clear}
                         >
                             <X className="h-3.5 w-3.5" />
@@ -158,7 +158,7 @@ function ProductCombobox({
                                     <div>
                                         <span className="font-medium">{product.name}</span>
                                         {product.sku && (
-                                            <span className="ml-2 text-xs text-slate-400">{product.sku}</span>
+                                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">{product.sku}</span>
                                         )}
                                         {isUsed && (
                                             <span className="ml-2 text-xs text-slate-500 italic">{t.inventory.form.alreadyAdded}</span>
@@ -226,24 +226,24 @@ export default function InventoryCreate({ shops, products }: Props) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.inventory.actions.new}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.inventory.actions.new}</h1>}>
             <Head title={t.inventory.actions.new} />
 
             <div className="mx-auto max-w-4xl">
                 <form onSubmit={submit} className="space-y-6">
                     {/* Info section */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                        <h2 className="mb-4 text-lg font-semibold text-white">{t.common.form.generalInfo}</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.generalInfo}</h2>
                         <div className="grid gap-6 md:grid-cols-2">
                             <div>
-                                <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="shop_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.common.form.shopField}
                                 </label>
                                 <select
                                     id="shop_id"
                                     value={data.shop_id}
                                     disabled
-                                    className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
+                                    className="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-slate-500 cursor-not-allowed dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-400"
                                 >
                                     {shops.map((shop) => (
                                         <option key={shop.id} value={shop.id}>
@@ -251,14 +251,14 @@ export default function InventoryCreate({ shops, products }: Props) {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="mt-1 text-xs text-slate-400">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     {t.common.form.shopHint}
                                 </p>
                                 <InputError message={errors.shop_id} />
                             </div>
 
                             <div>
-                                <label htmlFor="inventory_date" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="inventory_date" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.inventory.form.date}
                                 </label>
                                 <input
@@ -266,7 +266,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                     id="inventory_date"
                                     value={data.inventory_date}
                                     onChange={(e) => setData('inventory_date', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 {errors.inventory_date && (
                                     <p className="mt-1 text-sm text-red-400">{errors.inventory_date}</p>
@@ -274,7 +274,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label htmlFor="notes" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.common.form.notes}
                                 </label>
                                 <textarea
@@ -282,7 +282,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     rows={3}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     placeholder={t.inventory.form.notesPlaceholder}
                                 />
                                 <InputError message={errors.notes} />
@@ -291,12 +291,12 @@ export default function InventoryCreate({ shops, products }: Props) {
                     </div>
 
                     {/* Items section */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
                             <h2 className="flex items-center gap-1.5 text-lg font-semibold text-white">
                                 {t.inventory.form.productsCounted}
                                 <span title={t.inventory.show.helpText}>
-                                    <Info className="size-4 text-slate-400" />
+                                    <Info className="size-4 text-slate-500 dark:text-slate-400" />
                                 </span>
                             </h2>
                             <button
@@ -385,31 +385,31 @@ export default function InventoryCreate({ shops, products }: Props) {
                                             <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-3">
                                                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6 text-sm">
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-0.5">{t.inventory.show.expectedStock}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t.inventory.show.expectedStock}</p>
                                                         <p className="font-semibold text-blue-300">
                                                             {selectedProduct.stock_quantity}
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-0.5">{t.inventory.show.defective}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t.inventory.show.defective}</p>
                                                         <p className="font-semibold text-blue-300">
                                                             {selectedProduct.defective_stock_quantity}
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-0.5">{t.inventory.form.sold}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t.inventory.form.sold}</p>
                                                         <p className="font-semibold text-orange-300">
                                                             {selectedProduct.sold_since_last_inventory}
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-0.5">{t.inventory.form.purchased}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t.inventory.form.purchased}</p>
                                                         <p className="font-semibold text-green-300">
                                                             {selectedProduct.purchased_since_last_inventory}
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-0.5">{t.inventory.show.difference}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t.inventory.show.difference}</p>
                                                         <p
                                                             className={`font-semibold ${
                                                                 goodDifference === null
@@ -418,14 +418,14 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                                     ? 'text-green-400'
                                                                     : goodDifference < 0
                                                                     ? 'text-red-400'
-                                                                    : 'text-slate-400'
+                                                                    : 'text-slate-500 dark:text-slate-400'
                                                             }`}
                                                         >
                                                             {goodDifference === null ? '—' : `${goodDifference > 0 ? '+' : ''}${goodDifference}`}
                                                         </p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-400 mb-0.5">{t.inventory.show.defectiveDifference}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t.inventory.show.defectiveDifference}</p>
                                                         <p
                                                             className={`font-semibold ${
                                                                 defectiveDifference === null
@@ -434,7 +434,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                                     ? 'text-green-400'
                                                                     : defectiveDifference < 0
                                                                     ? 'text-red-400'
-                                                                    : 'text-slate-400'
+                                                                    : 'text-slate-500 dark:text-slate-400'
                                                             }`}
                                                         >
                                                             {defectiveDifference === null ? '—' : `${defectiveDifference > 0 ? '+' : ''}${defectiveDifference}`}
@@ -453,7 +453,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                     <div className="flex items-center justify-end gap-3">
                         <Link
                             href={route('inventory.index')}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             {t.common.actions.cancel}
                         </Link>

@@ -115,22 +115,22 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.products.actions.edit}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.products.actions.edit}</h1>}
         >
             <Head title={t.products.actions.edit} />
 
             <div className="mx-auto max-w-4xl">
-                <form onSubmit={submit} className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+                <form onSubmit={submit} className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                     <div className="grid gap-6 md:grid-cols-2">
                         <div>
-                            <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="shop_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.common.form.shopField}
                             </label>
                             <select
                                 id="shop_id"
                                 value={data.shop_id}
                                 disabled
-                                className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
+                                className="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-slate-500 cursor-not-allowed dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-400"
                             >
                                 {shops.map((shop) => (
                                     <option key={shop.id} value={shop.id}>
@@ -138,14 +138,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                     </option>
                                 ))}
                             </select>
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                 La boutique ne peut pas être modifiée
                             </p>
                             <InputError message={errors.shop_id} />
                         </div>
 
                         <div>
-                            <label htmlFor="category_id" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="category_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.products.form.category}
                             </label>
                             <select
@@ -155,7 +155,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                     setData('category_id', Number(e.target.value));
                                     setData('subcategory_id', ''); // Reset subcategory when category changes
                                 }}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             >
                                 <option value="">Sélectionner une catégorie</option>
                                 {categories.map((category) => (
@@ -168,7 +168,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                         </div>
 
                         <div>
-                            <label htmlFor="subcategory_id" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="subcategory_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.common.form.subcategory}
                             </label>
                             <select
@@ -189,7 +189,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                         </div>
 
                         <div>
-                            <label htmlFor="brand" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="brand" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Marque
                             </label>
                             <input
@@ -197,14 +197,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="brand"
                                 value={data.brand}
                                 onChange={(e) => setData('brand', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="Ex: Bosch, Stanley, Makita..."
                             />
                             <InputError message={errors.brand} />
                         </div>
 
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.products.form.name}
                             </label>
                             <input
@@ -212,14 +212,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="name"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="Ex: Marteau"
                             />
                             <InputError message={errors.name} />
                         </div>
 
                         <div>
-                            <label htmlFor="sku" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="sku" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.products.form.sku}
                             </label>
                             <input
@@ -227,14 +227,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="sku"
                                 value={data.sku}
                                 onChange={(e) => setData('sku', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="Ex: MAR-001"
                             />
                             <InputError message={errors.sku} />
                         </div>
 
                         <div>
-                            <label htmlFor="barcode" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="barcode" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.products.form.barcode}
                             </label>
                             <input
@@ -242,21 +242,21 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="barcode"
                                 value={data.barcode}
                                 onChange={(e) => setData('barcode', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="Ex: 1234567890123"
                             />
                             <InputError message={errors.barcode} />
                         </div>
 
                         <div>
-                            <label htmlFor="unit" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="unit" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Unité *
                             </label>
                             <select
                                 id="unit"
                                 value={data.unit}
                                 onChange={(e) => setData('unit', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             >
                                 <option value="piece">Pièce</option>
                                 <option value="kg">Kilogramme</option>
@@ -269,7 +269,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                         </div>
 
                         <div>
-                            <label htmlFor="purchase_price" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="purchase_price" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.products.form.costPrice} *
                             </label>
                             <input
@@ -279,14 +279,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="purchase_price"
                                 value={data.purchase_price}
                                 onChange={(e) => setData('purchase_price', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="0.00"
                             />
                             <InputError message={errors.purchase_price} />
                         </div>
 
                         <div>
-                            <label htmlFor="selling_price" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="selling_price" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.products.form.sellingPrice}
                             </label>
                             <input
@@ -296,7 +296,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="selling_price"
                                 value={data.selling_price}
                                 onChange={(e) => setData('selling_price', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="0.00"
                             />
                             <InputError message={errors.selling_price} />
@@ -304,7 +304,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         {/* Indicateur de marge bénéficiaire */}
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-slate-200">Marge bénéficiaire</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Marge bénéficiaire</label>
                             <div className={`mt-1 flex items-center gap-3 rounded-lg border px-4 py-3 ${
                                 profitMargin.percentage >= 20 
                                     ? 'border-green-500/30 bg-green-500/10' 
@@ -323,7 +323,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                     }`}>
                                         {profitMargin.amount.toFixed(2)} FCFA ({profitMargin.percentage.toFixed(1)}%)
                                     </p>
-                                    <p className="text-xs text-slate-400">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
                                         {profitMargin.percentage >= 20 
                                             ? 'Bonne marge' 
                                             : profitMargin.percentage >= 10 
@@ -335,7 +335,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                         </div>
 
                         <div>
-                            <label htmlFor="tax_rate" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="tax_rate" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Taux de TVA (%)
                             </label>
                             <input
@@ -346,14 +346,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="tax_rate"
                                 value={data.tax_rate}
                                 onChange={(e) => setData('tax_rate', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="20.00"
                             />
                             <InputError message={errors.tax_rate} />
                         </div>
 
                         <div>
-                            <label htmlFor="stock_quantity" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="stock_quantity" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Quantité en stock *
                             </label>
                             <input
@@ -361,14 +361,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="stock_quantity"
                                 value={data.stock_quantity}
                                 onChange={(e) => setData('stock_quantity', Number(e.target.value))}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="0"
                             />
                             <InputError message={errors.stock_quantity} />
                         </div>
 
                         <div>
-                            <label htmlFor="min_stock_alert" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="min_stock_alert" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Seuil d'alerte stock
                             </label>
                             <input
@@ -376,7 +376,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="min_stock_alert"
                                 value={data.min_stock_alert}
                                 onChange={(e) => setData('min_stock_alert', e.target.value ? Number(e.target.value) : '')}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="10"
                             />
                             <InputError message={errors.min_stock_alert} />
@@ -396,7 +396,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="description" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.products.form.description}
                             </label>
                             <textarea
@@ -404,14 +404,14 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 value={data.description}
                                 onChange={(e) => setData('description', e.target.value)}
                                 rows={3}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="Description du produit"
                             />
                             <InputError message={errors.description} />
                         </div>
 
                         <div>
-                            <label htmlFor="image" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="image" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Image du produit
                             </label>
                             <div className="mt-2 flex items-start gap-4">
@@ -423,7 +423,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                             alt={product.name}
                                             className="h-20 w-20 rounded-lg object-cover border border-white/15"
                                         />
-                                        <p className="mt-1 text-xs text-slate-400">
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                             {imagePreview ? 'Nouvelle image' : 'Image actuelle'}
                                         </p>
                                     </div>
@@ -436,7 +436,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                         onChange={handleImageChange}
                                         className="block w-full text-sm text-slate-200 file:mr-4 file:rounded-lg file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950 hover:file:bg-amber-200"
                                     />
-                                    <p className="mt-1 text-xs text-slate-400">
+                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                         Formats acceptés: JPG, PNG, GIF (max 2 Mo)
                                     </p>
                                 </div>
@@ -458,10 +458,10 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 border-t border-white/10 pt-4">
+                    <div className="flex items-center justify-end gap-3 border-t border-gray-200 dark:border-white/10 pt-4">
                         <Link
                             href={route('products.index')}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             {t.common.actions.cancel}
                         </Link>

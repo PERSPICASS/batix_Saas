@@ -110,7 +110,7 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                         <ShoppingCart className="size-4 text-amber-300" />
                         <span className="font-medium">{purchase.reference}</span>
                     </div>
-                    <div className="mt-0.5 text-xs text-slate-400">{t.purchases.items(purchase.items.length)}</div>
+                    <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{t.purchases.items(purchase.items.length)}</div>
                 </div>
             ),
         },
@@ -121,7 +121,7 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                 <div>
                     <div className="font-medium">{purchase.supplier.name}</div>
                     {purchase.supplier.company_name && (
-                        <div className="text-xs text-slate-400">{purchase.supplier.company_name}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{purchase.supplier.company_name}</div>
                     )}
                 </div>
             ),
@@ -131,12 +131,12 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
             label: t.purchases.columns.date,
             render: (purchase: Purchase) => (
                 <div className="space-y-1 text-sm">
-                    <div className="flex items-center gap-2 text-slate-300">
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                         <Calendar className="size-3.5" />
                         <span>{t.purchases.dates.order} {formatDate(purchase.order_date)}</span>
                     </div>
                     {purchase.expected_date && (
-                        <div className="text-xs text-slate-400">{t.purchases.dates.expected} {formatDate(purchase.expected_date)}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{t.purchases.dates.expected} {formatDate(purchase.expected_date)}</div>
                     )}
                     {purchase.received_date && (
                         <div className="text-xs text-green-400">{t.purchases.dates.received} {formatDate(purchase.received_date)}</div>
@@ -198,8 +198,8 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">{t.purchases.titleLong}</h1>
-                        <p className="mt-1 text-sm text-slate-400">{t.purchases.subtitle}</p>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.purchases.titleLong}</h1>
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.purchases.subtitle}</p>
                     </div>
                     <Link
                         href={route('purchases.create', { code_user })}
@@ -210,28 +210,28 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                     </Link>
                 </div>
 
-                <form onSubmit={handleFilter} className="rounded-xl bg-slate-800/50 p-4">
+                <form onSubmit={handleFilter} className="rounded-xl bg-gray-100 p-4 dark:bg-slate-800/50">
                     <div className="grid gap-4 md:grid-cols-4">
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-300">{t.common.actions.search}</label>
+                            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.common.actions.search}</label>
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                                 <input
                                     type="text"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
                                     placeholder={t.purchases.filters.searchPlaceholder}
-                                    className="w-full rounded-lg border-slate-700 bg-slate-900/50 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-amber-300 focus:ring-amber-300"
+                                    className="w-full rounded-lg border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:ring-amber-300 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder-slate-500"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-300">{t.common.misc.status}</label>
+                            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.common.misc.status}</label>
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value)}
-                                className="w-full rounded-lg border-slate-700 bg-slate-900/50 py-2 px-4 text-sm text-white focus:border-amber-300 focus:ring-amber-300"
+                                className="w-full rounded-lg border-gray-300 bg-white py-2 px-4 text-sm text-slate-900 focus:border-amber-300 focus:ring-amber-300 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
                             >
                                 <option value="all">{t.purchases.filters.allStatuses}</option>
                                 <option value="draft">{t.purchases.status.draft}</option>
@@ -243,11 +243,11 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                         </div>
 
                         <div>
-                            <label className="mb-1 block text-sm font-medium text-slate-300">{t.nav.suppliers}</label>
+                            <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.nav.suppliers}</label>
                             <select
                                 value={supplierId}
                                 onChange={(e) => setSupplierId(e.target.value)}
-                                className="w-full rounded-lg border-slate-700 bg-slate-900/50 py-2 px-4 text-sm text-white focus:border-amber-300 focus:ring-amber-300"
+                                className="w-full rounded-lg border-gray-300 bg-white py-2 px-4 text-sm text-slate-900 focus:border-amber-300 focus:ring-amber-300 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
                             >
                                 <option value="">{t.purchases.filters.allSuppliers}</option>
                                 {suppliers.map((supplier) => (
@@ -268,39 +268,39 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                 </form>
 
                 <div className="grid gap-4 md:grid-cols-4">
-                    <div className="rounded-xl bg-slate-800/50 p-4">
+                    <div className="rounded-xl bg-gray-100 p-4 dark:bg-slate-800/50">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-blue-500/10 p-3"><ShoppingCart className="size-6 text-blue-400" /></div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{purchases.total}</div>
-                                <div className="text-sm text-slate-400">{t.purchases.stats.total}</div>
+                                <div className="text-2xl font-bold text-slate-900 dark:text-white">{purchases.total}</div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400">{t.purchases.stats.total}</div>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl bg-slate-800/50 p-4">
+                    <div className="rounded-xl bg-gray-100 p-4 dark:bg-slate-800/50">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-yellow-500/10 p-3"><Package className="size-6 text-yellow-400" /></div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{pendingCount}</div>
-                                <div className="text-sm text-slate-400">{t.purchases.stats.pending}</div>
+                                <div className="text-2xl font-bold text-slate-900 dark:text-white">{pendingCount}</div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400">{t.purchases.stats.pending}</div>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl bg-slate-800/50 p-4">
+                    <div className="rounded-xl bg-gray-100 p-4 dark:bg-slate-800/50">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-green-500/10 p-3"><Package className="size-6 text-green-400" /></div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{receivedCount}</div>
-                                <div className="text-sm text-slate-400">{t.purchases.stats.received}</div>
+                                <div className="text-2xl font-bold text-slate-900 dark:text-white">{receivedCount}</div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400">{t.purchases.stats.received}</div>
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl bg-slate-800/50 p-4">
+                    <div className="rounded-xl bg-gray-100 p-4 dark:bg-slate-800/50">
                         <div className="flex items-center gap-3">
                             <div className="rounded-lg bg-amber-500/10 p-3"><DollarSign className="size-6 text-amber-400" /></div>
                             <div>
-                                <div className="text-2xl font-bold text-white">{formatCurrencyVal(totalValue, currency)}</div>
-                                <div className="text-sm text-slate-400">{t.purchases.stats.totalValue}</div>
+                                <div className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrencyVal(totalValue, currency)}</div>
+                                <div className="text-sm text-slate-500 dark:text-slate-400">{t.purchases.stats.totalValue}</div>
                             </div>
                         </div>
                     </div>
@@ -315,7 +315,7 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                                 return (
                                     <span
                                         key={index}
-                                        className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-500"
+                                        className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-slate-500 dark:border-white/10 dark:bg-white/5"
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
                                 );
@@ -329,7 +329,7 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                                     className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
                                         link.active
                                             ? 'border-amber-300 bg-amber-300 text-slate-950 font-semibold'
-                                            : 'border-white/10 bg-white/5 text-slate-200 hover:bg-white/10'
+                                            : 'border-gray-300 bg-white text-slate-600 hover:bg-gray-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10'
                                     }`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />

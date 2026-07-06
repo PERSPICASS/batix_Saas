@@ -189,14 +189,14 @@ export default function CreateQuote({ customers, products }: { customers: Custom
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.quotes.actions.new}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.quotes.actions.new}</h1>}>
             <Head title={t.quotes.form.createTitle} />
 
             <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
                     {/* Informations */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <div className="mb-4 flex items-center gap-2 text-white">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <div className="mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
                             <FileText className="size-5 text-amber-300" />
                             <h2 className="text-lg font-semibold">{t.quotes.form.quoteInfo}</h2>
                         </div>
@@ -204,7 +204,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         <div className="grid gap-4 md:grid-cols-2">
                             {/* Client Modal */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.customer} *</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">{t.quotes.form.customer} *</label>
                                 <button
                                     type="button"
                                     onClick={() => setShowCustomerModal(true)}
@@ -214,7 +214,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                         <UserRound className="size-4 text-amber-300" />
                                         {selectedCustomer ? selectedCustomer.name : t.quotes.form.selectCustomer}
                                     </span>
-                                    <span className="text-xs text-slate-400">{t.common.actions.open}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">{t.common.actions.open}</span>
                                 </button>
                                 {selectedCustomer && (
                                     <button
@@ -229,23 +229,23 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.quoteDate} *</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">{t.quotes.form.quoteDate} *</label>
                                 <input
                                     type="date"
                                     value={formData.quote_date}
                                     onChange={(e) => setFormData({ ...formData, quote_date: e.target.value })}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.expiryDate} *</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">{t.quotes.form.expiryDate} *</label>
                                 <input
                                     type="date"
                                     value={formData.expiry_date}
                                     onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     required
                                 />
                             </div>
@@ -253,16 +253,16 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                     </div>
 
                     {/* Articles */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-white">
+                            <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                                 <Plus className="size-5 text-amber-300" />
                                 <h2 className="text-lg font-semibold">{t.quotes.form.items}</h2>
                             </div>
                             <button
                                 type="button"
                                 onClick={handleAddItem}
-                                className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 text-sm text-slate-200 transition-colors hover:bg-white/5"
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                             >
                                 <Plus className="size-3.5" />
                                 {t.common.actions.add}
@@ -288,7 +288,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                         min="1"
                                         value={item.quantity}
                                         onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
-                                        className="w-20 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                        className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     />
 
                                     <input
@@ -296,11 +296,11 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                         step="0.01"
                                         value={item.unit_price}
                                         onChange={(e) => handleItemChange(index, 'unit_price', parseFloat(e.target.value))}
-                                        className="w-24 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                        className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     />
 
                                     <div className="text-right w-28">
-                                        <p className="font-semibold text-slate-200 text-sm">
+                                        <p className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
                                             <Currency amount={item.quantity * item.unit_price} />
                                         </p>
                                     </div>
@@ -320,27 +320,27 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                     </div>
 
                     {/* Notes */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 text-lg font-semibold text-white">{t.quotes.form.notesAndTerms}</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.quotes.form.notesAndTerms}</h2>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.notes}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">{t.quotes.form.notes}</label>
                                 <textarea
                                     value={formData.notes}
                                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                                     rows={2}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     placeholder={t.quotes.form.notesPlaceholder}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-200 mb-2">{t.quotes.form.terms}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">{t.quotes.form.terms}</label>
                                 <textarea
                                     value={formData.terms}
                                     onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
                                     rows={2}
-                                    className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     placeholder={t.quotes.form.termsPlaceholder}
                                 />
                             </div>
@@ -350,25 +350,25 @@ export default function CreateQuote({ customers, products }: { customers: Custom
 
                 {/* Sidebar */}
                 <aside className="xl:col-span-1">
-                    <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <div className="mb-4 flex items-center gap-2 text-white">
+                    <div className="sticky top-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <div className="mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
                             <Calculator className="size-5 text-amber-300" />
                             <h2 className="text-lg font-semibold">{t.quotes.form.summary}</h2>
                         </div>
 
-                        <div className="space-y-3 border-b border-white/10 pb-4 mb-4">
-                            <div className="flex justify-between text-slate-200">
+                        <div className="space-y-3 border-b border-gray-200 dark:border-white/10 pb-4 mb-4">
+                            <div className="flex justify-between text-slate-700 dark:text-slate-200">
                                 <span className="text-sm">{t.common.form.subtotal}:</span>
                                 <span className="font-semibold"><Currency amount={subtotal} /></span>
                             </div>
-                            <div className="flex justify-between text-slate-200">
+                            <div className="flex justify-between text-slate-700 dark:text-slate-200">
                                 <span className="text-sm">{t.quotes.form.taxLabel}:</span>
                                 <span className="font-semibold"><Currency amount={tax} /></span>
                             </div>
                         </div>
 
                         <div className="flex justify-between mb-6">
-                            <span className="font-semibold text-white">{t.common.form.total}:</span>
+                            <span className="font-semibold text-slate-900 dark:text-white">{t.common.form.total}:</span>
                             <span className="text-2xl font-bold text-amber-300"><Currency amount={total} /></span>
                         </div>
 
@@ -382,7 +382,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                             </button>
                             <a
                                 href={route('quotes.index')}
-                                className="flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+                                className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                             >
                                 <ArrowLeft className="size-4" />
                                 {t.common.actions.cancel}
@@ -400,14 +400,14 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         <button
                             type="button"
                             onClick={() => setShowCustomerModal(false)}
-                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                            className="rounded-md border border-gray-300 p-1 text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <X className="size-4" />
                         </button>
                     </div>
 
                     <div className="mb-3 shrink-0 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
-                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2">
+                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-slate-900">
                             <Search className="size-4 text-amber-300" />
                             <input
                                 value={customerSearch}
@@ -421,19 +421,19 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 <button
                                     type="button"
                                     onClick={() => setCustomerSearch('')}
-                                    className="rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                                    className="rounded-md p-1 text-slate-500 transition hover:bg-gray-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-200"
                                 >
                                     <X className="size-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
+                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-500 dark:text-slate-400">
                             <span>{t.quotes.form.useArrowKeys}</span>
                             <span>{filteredCustomers.length} {t.quotes.form.results}</span>
                         </div>
                     </div>
 
-                    <div className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-slate-900/40 p-2">
+                    <div className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-slate-900/40">
                         {filteredCustomers.length > 0 ? (
                             filteredCustomers.map((customer, index) => (
                                 <button
@@ -453,7 +453,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noCustomers}</p>
+                            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">{t.quotes.form.noCustomers}</p>
                         )}
                     </div>
                 </div>
@@ -467,14 +467,14 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         <button
                             type="button"
                             onClick={() => setShowProductModal(false)}
-                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                            className="rounded-md border border-gray-300 p-1 text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <X className="size-4" />
                         </button>
                     </div>
 
                     <div className="mb-3 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
-                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2">
+                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-slate-900">
                             <Search className="size-4 text-amber-300" />
                             <input
                                 value={productSearch}
@@ -488,19 +488,19 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 <button
                                     type="button"
                                     onClick={() => setProductSearch('')}
-                                    className="rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                                    className="rounded-md p-1 text-slate-500 transition hover:bg-gray-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-200"
                                 >
                                     <X className="size-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
+                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-500 dark:text-slate-400">
                             <span>{t.quotes.form.useArrowKeys}</span>
                             <span>{filteredProducts.length} {t.quotes.form.results}</span>
                         </div>
                     </div>
 
-                    <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-slate-900/40 p-2">
+                    <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-slate-900/40">
                         {filteredProducts.length > 0 ? (
                             filteredProducts.map((product, index) => (
                                 <button
@@ -518,7 +518,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">{t.quotes.form.noProducts}</p>
+                            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">{t.quotes.form.noProducts}</p>
                         )}
                     </div>
                 </div>

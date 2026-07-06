@@ -76,8 +76,8 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
             label: t.quotes.columns.customer,
             render: (quote: Quote) => (
                 <div>
-                    <p className="font-medium text-white">{quote.customer.name}</p>
-                    <p className="text-xs text-slate-400">{quote.customer.email}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{quote.customer.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{quote.customer.email}</p>
                 </div>
             ),
         },
@@ -99,7 +99,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
             key: 'expiry_date',
             label: t.quotes.columns.expiryDate,
             render: (quote: Quote) => (
-                <span className="text-sm text-slate-400">{new Date(quote.expiry_date).toLocaleDateString('fr-FR')}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">{new Date(quote.expiry_date).toLocaleDateString('fr-FR')}</span>
             ),
         },
         {
@@ -165,25 +165,25 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Devis</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Devis</h1>}
         >
             <Head title="Devis" />
 
             <section className="space-y-6">
                 {/* Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Total devis</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{quotes.total}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Total devis</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{quotes.total}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">En attente</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">En attente</p>
                         <p className="mt-1 text-2xl font-bold text-blue-400">
                             {quotes.data?.filter((q: Quote) => q.status === 'sent').length || 0}
                         </p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Acceptés</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Acceptés</p>
                         <p className="mt-1 text-2xl font-bold text-green-400">
                             {quotes.data?.filter((q: Quote) => q.status === 'accepted').length || 0}
                         </p>
@@ -207,7 +207,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                         >
                             <option value="">Tous les statuts</option>
                             <option value="draft">Brouillon</option>
@@ -218,7 +218,7 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                         </select>
                         <button
                             onClick={handleSearch}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             Rechercher
                         </button>
@@ -232,13 +232,13 @@ export default function QuotesIndex({ quotes, filters = {} }: { quotes: any; fil
                             </Link>
                             <a
                                 href={route('quotes.export', {})}
-                                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 <Download className="size-4" /> {t.common.actions.export}
                             </a>
                             <Link
                                 href={route('reports.analytics', {})}
-                                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 <BarChart3 className="size-4" /> {t.quotes.actions.reports}
                             </Link>

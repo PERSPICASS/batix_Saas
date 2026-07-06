@@ -85,11 +85,11 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Sous-catégories</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Sous-catégories</h1>}>
             <Head title="Sous categories" />
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">Gérez les sous-catégories de vos produits.</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">Gérez les sous-catégories de vos produits.</p>
                     <Link href={route('subcategories.create')} className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200">
                         <Plus className="size-4" /> Nouvelle sous-catégorie
                     </Link>

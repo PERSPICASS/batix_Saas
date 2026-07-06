@@ -53,7 +53,7 @@ export default function CreateShop() {
                     <div>
                         <InputLabel htmlFor="name" value={t.auth.shop.nameRequired} className="text-slate-700" />
                         <div className="relative mt-1">
-                            <Store className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+                            <Store className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                             <TextInput
                                 id="name"
                                 type="text"
@@ -73,7 +73,7 @@ export default function CreateShop() {
                     <div>
                         <InputLabel htmlFor="address" value={t.auth.shop.addressLabel} className="text-slate-700" />
                         <div className="relative mt-1">
-                            <MapPin className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+                            <MapPin className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                             <TextInput
                                 id="address"
                                 type="text"
@@ -123,7 +123,7 @@ export default function CreateShop() {
                     <div>
                         <InputLabel htmlFor="phone" value={t.auth.shop.phoneLabel} className="text-slate-700" />
                         <div className="relative mt-1">
-                            <Phone className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+                            <Phone className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                             <TextInput
                                 id="phone"
                                 type="tel"

@@ -24,20 +24,20 @@ export default function SubscriptionGraceBanner() {
     const isUrgent = daysRemaining <= 5;
 
     const bgColor = isUrgent
-        ? 'bg-gradient-to-r from-rose-500/20 to-orange-500/20 border-rose-500/30'
-        : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/30';
-    const textColor = isUrgent ? 'text-rose-200' : 'text-amber-200';
-    const iconColor = isUrgent ? 'text-rose-300' : 'text-amber-300';
+        ? 'bg-gradient-to-r from-rose-100 to-orange-100 border-rose-300 dark:from-rose-500/20 dark:to-orange-500/20 dark:border-rose-500/30'
+        : 'bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 dark:from-amber-500/20 dark:to-orange-500/20 dark:border-amber-500/30';
+    const textColor = isUrgent ? 'text-rose-700 dark:text-rose-200' : 'text-amber-700 dark:text-amber-200';
+    const iconColor = isUrgent ? 'text-rose-600 dark:text-rose-300' : 'text-amber-600 dark:text-amber-300';
 
     return (
         <div className={`rounded-xl border p-4 ${bgColor}`}>
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1">
-                    <div className={`rounded-lg bg-white/10 p-2 ${iconColor}`}>
+                    <div className={`rounded-lg bg-black/5 dark:bg-white/10 p-2 ${iconColor}`}>
                         <AlertTriangle className="size-5" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="font-semibold text-white">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">
                             {t.subscriptionGraceBanner.title(daysRemaining)}
                         </h3>
                         <p className={`mt-1 text-sm ${textColor}`}>

@@ -59,27 +59,27 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
     const roleLabels = t.users.roles as Record<string, string>;
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.users.form.editTitle}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.users.form.editTitle}</h1>}>
             <Head title={t.users.form.editTitle} />
 
             <div className="mx-auto max-w-4xl">
-                <form onSubmit={submit} className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+                <form onSubmit={submit} className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                     <div className="space-y-6">
-                        <h2 className="text-lg font-semibold text-white">{t.common.form.generalInfo}</h2>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.generalInfo}</h2>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-slate-200">{t.common.form.fullName}</label>
+                                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.fullName}</label>
                                 <input type="text" id="name" value={data.name} autoFocus
                                     onChange={(e) => setData('name', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
                                 <InputError message={errors.name} />
                             </div>
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-slate-200">{t.common.form.emailRequired}</label>
+                                <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.emailRequired}</label>
                                 <input type="email" id="email" value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
                                 <InputError message={errors.email} />
                             </div>
                         </div>
@@ -89,32 +89,32 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                             <p className="mb-4 text-xs text-slate-400">{t.users.form.passwordEditHint}</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label htmlFor="password" className="block text-sm font-medium text-slate-200">{t.users.form.newPassword}</label>
+                                    <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.users.form.newPassword}</label>
                                     <input type="password" id="password" value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                        className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                         placeholder={t.common.form.passwordMin} />
                                     <InputError message={errors.password} />
                                 </div>
                                 <div>
-                                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-200">
+                                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                         {t.users.form.confirmNewPassword}
                                     </label>
                                     <input type="password" id="password_confirmation" value={data.password_confirmation}
                                         onChange={(e) => setData('password_confirmation', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300" />
+                                        className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
                                     <InputError message={errors.password_confirmation} />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-6 border-t border-white/10 pt-6">
-                        <h2 className="text-lg font-semibold text-white">{t.common.form.assignment}</h2>
+                    <div className="space-y-6 border-t border-gray-200 dark:border-white/10 pt-6">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.assignment}</h2>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="shop_id" className={`block text-sm font-medium ${isSuperAdmin ? 'text-slate-200' : 'text-slate-400'}`}>
+                                <label htmlFor="shop_id" className={`block text-sm font-medium ${isSuperAdmin ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
                                     {t.common.misc.shop}
                                 </label>
                                 <select id="shop_id" value={data.shop_id} onChange={(e) => setData('shop_id', e.target.value)}
@@ -129,9 +129,9 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                 <InputError message={errors.shop_id} />
                             </div>
                             <div>
-                                <label htmlFor="role" className="block text-sm font-medium text-slate-200">{t.common.form.role}</label>
+                                <label htmlFor="role" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.role}</label>
                                 <select id="role" value={data.role} onChange={(e) => setData('role', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300">
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200">
                                     {ROLE_KEYS.map((key) => <option key={key} value={key}>{roleLabels[key] || key}</option>)}
                                 </select>
                                 <InputError message={errors.role} />
@@ -141,15 +141,15 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                         <div className="flex items-center gap-2">
                             <input type="checkbox" id="is_active" checked={data.is_active}
                                 onChange={(e) => setData('is_active', e.target.checked)}
-                                className="size-4 rounded border-white/15 bg-slate-900/70 text-amber-300 focus:ring-amber-300 focus:ring-offset-slate-950" />
-                            <label htmlFor="is_active" className="text-sm font-medium text-slate-200">{t.common.form.activeUser}</label>
+                                className="size-4 rounded border-gray-300 bg-white text-amber-300 focus:ring-amber-300 focus:ring-offset-white dark:border-white/15 dark:bg-slate-900/70 dark:focus:ring-offset-slate-950" />
+                            <label htmlFor="is_active" className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.activeUser}</label>
                         </div>
                     </div>
 
                     <div className="space-y-4 border-t border-white/10 pt-6">
                         <div className="flex items-center gap-2">
                             <Shield className="size-5 text-amber-300" />
-                            <h2 className="text-lg font-semibold text-white">{t.common.form.modulePermissions}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.modulePermissions}</h2>
                         </div>
 
                         <div className="space-y-3">
@@ -157,21 +157,21 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                 const isSelected = selectedModules.includes(key);
                                 const permission = getPermission(key);
                                 return (
-                                    <div key={key} className="rounded-lg border border-white/10 bg-white/5 p-4">
+                                    <div key={key} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                                         <div className="flex items-center justify-between">
                                             <button type="button" onClick={() => toggleModule(key)} className="flex items-center gap-3">
                                                 <div className={`flex size-5 items-center justify-center rounded border ${isSelected ? 'border-amber-300 bg-amber-300' : 'border-white/15 bg-slate-900/70'}`}>
                                                     {isSelected && <Check className="size-3 text-slate-950" />}
                                                 </div>
-                                                <span className="font-medium text-slate-200">{moduleLabels[key] || modules[key]}</span>
+                                                <span className="font-medium text-slate-700 dark:text-slate-200">{moduleLabels[key] || modules[key]}</span>
                                             </button>
                                             {isSelected && permission && (
                                                 <div className="flex items-center gap-4">
                                                     {(['can_view', 'can_create', 'can_edit', 'can_delete'] as const).map((action) => (
-                                                        <label key={action} className="flex items-center gap-2 text-sm text-slate-300">
+                                                        <label key={action} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                                             <input type="checkbox" checked={permission[action]}
                                                                 onChange={(e) => updatePermission(key, action, e.target.checked)}
-                                                                className="size-4 rounded border-white/15 bg-slate-900/70 text-amber-300 focus:ring-amber-300 focus:ring-offset-slate-950" />
+                                                                className="size-4 rounded border-gray-300 bg-white text-amber-300 focus:ring-amber-300 focus:ring-offset-white dark:border-white/15 dark:bg-slate-900/70 dark:focus:ring-offset-slate-950" />
                                                             {t.users.permActions[action]}
                                                         </label>
                                                     ))}
@@ -184,9 +184,9 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-3 border-t border-white/10 pt-4">
+                    <div className="flex items-center justify-end gap-3 border-t border-gray-200 dark:border-white/10 pt-4">
                         <Link href={route('users.index')}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5">
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5">
                             {t.common.form.cancel}
                         </Link>
                         <button type="submit" disabled={processing}

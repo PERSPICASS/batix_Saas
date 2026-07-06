@@ -1,15 +1,4 @@
-import {
-    BarChart3,
-    Building2,
-    HardHat,
-    Package,
-    Percent,
-    ShieldCheck,
-    Sparkles,
-    Users,
-    Zap,
-} from 'lucide-react';
-import type { FeatureItem, HeroSlide, Locale, PlanView } from './types';
+import type { HeroSlide, Locale, PlanView } from './types';
 
 // ─── Animations Framer Motion ──────────────────────────────────────────────
 export const fadeUp = {
@@ -158,6 +147,11 @@ export const copy = {
         },
         footerText: 'BATIX PRO, une gestion quincaillerie plus simple.',
         langLabel: 'Langue',
+        policies: {
+            terms: "Conditions d'utilisation",
+            privacy: 'Politique de confidentialité',
+            refund: 'Politique de remboursement',
+        },
     },
     en: {
         title: 'BATIX PRO – Hardware Store Management Software | Inventory, Sales & POS',
@@ -321,6 +315,11 @@ export const copy = {
         },
         footerText: 'BATIX PRO, simpler and more human hardware management.',
         langLabel: 'Language',
+        policies: {
+            terms: 'Terms of Service',
+            privacy: 'Privacy Policy',
+            refund: 'Refund Policy',
+        },
     },
 };
 
@@ -358,7 +357,7 @@ export const faqSchemaData = {
                 'name': 'Combien coûte BATIX PRO ?',
                 'acceptedAnswer': {
                     '@type': 'Answer',
-                    'text': 'BATIX PRO propose 4 plans : Free (gratuit), Growth, Pro, et Enterprise. Consultez notre page tarifs pour les détails complets.',
+                    'text': 'BATIX PRO propose 4 plans payants : Starter, Growth, Pro et Entreprise (sur devis). Consultez notre page tarifs pour les détails complets.',
                 },
             },
             {
@@ -382,7 +381,7 @@ export const faqSchemaData = {
                 'name': 'Combien de boutiques puis-je gérer avec BATIX PRO ?',
                 'acceptedAnswer': {
                     '@type': 'Answer',
-                    'text': 'Cela dépend de votre plan. Le plan Free permet 1 boutique, Growth 3 boutiques, Pro 6 boutiques, et Enterprise illimité.',
+                    'text': 'Cela dépend du plan choisi, d\'une seule boutique jusqu\'à un nombre illimité. Consultez notre page tarifs pour le détail par plan.',
                 },
             },
             {
@@ -395,146 +394,6 @@ export const faqSchemaData = {
             },
         ],
     },
-};
-
-// ─── Fonctionnalités ───────────────────────────────────────────────────────
-export const featuresByLocale: Record<Locale, FeatureItem[]> = {
-    fr: [
-        {
-            title: 'Vente rapide au comptoir',
-            description:
-                'Recherche produit par nom, code-barre ou référence. Ticket généré en quelques secondes, encaissement sans friction même en heure de pointe.',
-            icon: Zap,
-        },
-        {
-            title: 'Stock fiable en temps réel',
-            description:
-                'Chaque entrée et sortie est tracée instantanément. Alertes de rupture automatiques pour ne jamais manquer un réapprovisionnement critique.',
-            icon: Package,
-        },
-        {
-            title: 'Multi-boutiques, une seule vue',
-            description:
-                'Gérez toutes vos boutiques depuis un tableau de bord central. Comparez les performances, transférez du stock, pilotez à distance.',
-            icon: Building2,
-        },
-        {
-            title: 'Rapports qui déclenchent des décisions',
-            description:
-                "Marge brute, rotation des produits, chiffre d'affaires par boutique et par vendeur — des chiffres utiles, pas du remplissage.",
-            icon: BarChart3,
-        },
-        {
-            title: 'Gestion des achats fournisseurs',
-            description:
-                "Créez vos bons de commande, réceptionnez les livraisons et réconciliez vos factures fournisseurs directement dans l'application.",
-            icon: HardHat,
-        },
-        {
-            title: 'Équipe avec les bons accès',
-            description:
-                'Gérants, vendeurs, magasiniers et caissiers : chaque rôle voit exactement ce dont il a besoin. Rien de plus, rien de moins.',
-            icon: Users,
-        },
-        {
-            title: 'Traçabilité et historique complet',
-            description:
-                'Chaque action sensible est enregistrée : modification de prix, suppression, ajustement de stock. Retrouvez qui a fait quoi et quand.',
-            icon: ShieldCheck,
-        },
-        {
-            title: 'Gestion des crédits clients',
-            description:
-                'Suivez les ventes à crédit, les encours par client et les remboursements sans vous perdre dans des tableaux Excel.',
-            icon: Sparkles,
-        },
-        {
-            title: 'Dépôts et transferts de stock',
-            description:
-                'Organisez votre stock par dépôt, effectuez des transferts entre boutiques et gardez une visibilité complète sur chaque emplacement.',
-            icon: Package,
-        },
-        {
-            title: 'Factures et devis clients',
-            description:
-                'Générez des factures professionnelles, émettez des devis et suivez les statuts de paiement depuis un seul endroit, sans outil tiers.',
-            icon: BarChart3,
-        },
-        {
-            title: 'Promotions et prix flexibles',
-            description:
-                'Appliquez des remises par produit, catégorie ou période, sans casser votre politique tarifaire ni vos marges.',
-            icon: Percent,
-        },
-    ],
-    en: [
-        {
-            title: 'Fast checkout at the counter',
-            description:
-                'Find products by name, barcode, or reference. Generate receipts in seconds and handle payments without friction, even during rush hours.',
-            icon: Zap,
-        },
-        {
-            title: 'Reliable real-time stock',
-            description:
-                'Every stock movement is tracked instantly. Automatic low-stock alerts so you never miss a critical replenishment.',
-            icon: Package,
-        },
-        {
-            title: 'Multi-store, single dashboard',
-            description:
-                'Manage all your stores from one central view. Compare performance, transfer stock, and oversee operations remotely.',
-            icon: Building2,
-        },
-        {
-            title: 'Reports that drive real decisions',
-            description:
-                'Gross margin, product turnover, revenue by store and by seller — actionable numbers, not just filler data.',
-            icon: BarChart3,
-        },
-        {
-            title: 'Supplier purchase management',
-            description:
-                'Create purchase orders, receive deliveries, and reconcile supplier invoices directly inside the app.',
-            icon: HardHat,
-        },
-        {
-            title: 'Team with the right access',
-            description:
-                'Managers, sellers, stock clerks, and cashiers each see exactly what they need. Nothing more, nothing less.',
-            icon: Users,
-        },
-        {
-            title: 'Full traceability and audit trail',
-            description:
-                'Every sensitive action is logged: price changes, deletions, stock adjustments. Know who did what and when.',
-            icon: ShieldCheck,
-        },
-        {
-            title: 'Customer credit tracking',
-            description:
-                'Monitor credit sales, outstanding balances per customer, and repayments without drowning in spreadsheets.',
-            icon: Sparkles,
-        },
-        {
-            title: 'Depots and stock transfers',
-            description:
-                'Organize stock by depot, move inventory between stores, and maintain full visibility across every location.',
-            icon: Package,
-        },
-        {
-            title: 'Invoices and customer quotes',
-            description:
-                'Generate professional invoices, issue quotes, and track payment statuses in one place — no third-party tool needed.',
-            icon: BarChart3,
-        },
-        {
-            title: 'Flexible pricing and promotions',
-            description:
-                'Apply discounts by product, category, or period without breaking your pricing policy or your margins.',
-            icon: Percent,
-        },
-    ],
 };
 
 // ─── FAQ ───────────────────────────────────────────────────────────────────
@@ -609,69 +468,105 @@ export const faqsByLocale: Record<Locale, { question: string; answer: string }[]
     ],
 };
 
-// ─── Trust marks ───────────────────────────────────────────────────────────
-export const trustMarksByLocale: Record<Locale, string[]> = {
-    fr: [],
-    en: [],
-};
-
-// ─── Plans de repli ────────────────────────────────────────────────────────
+// ─── Plans de repli (affichés uniquement si aucun plan actif n'est en base) ─
+// Alignés sur les vrais plans DB (voir database/seeders/SubscriptionPlanSeeder.php) :
+// slugs free/starter/growth/pro/enterprise, noms Starter/Growth/Pro/Entreprise.
 export const fallbackPlansByLocale: Record<Locale, PlanView[]> = {
     fr: [
         {
             name: 'Starter',
-            price_eur: '29 EUR',
-            price_fcfa: '19 000 FCFA',
+            price_eur: '27 EUR',
+            price_fcfa: '18 000 FCFA',
+            price_eur_yearly: '270 EUR',
+            price_fcfa_yearly: '180 000 FCFA',
+            price_xaf: 18000,
+            price_xaf_yearly: 180000,
             subtitle: 'par mois',
             badge: "Jusqu'à 1 boutique",
-            points: ['1 boutique', '5 utilisateurs', '5 000 produits', '1 dépôt', 'Support standard'],
+            points: ['1 boutique', '3 utilisateurs', 'Produits illimités', '1 dépôt', 'Support standard'],
             highlighted: false,
         },
         {
             name: 'Growth',
-            price_eur: '79 EUR',
-            price_fcfa: '51 800 FCFA',
+            price_eur: '69 EUR',
+            price_fcfa: '45 000 FCFA',
+            price_eur_yearly: '690 EUR',
+            price_fcfa_yearly: '450 000 FCFA',
+            price_xaf: 45000,
+            price_xaf_yearly: 450000,
             subtitle: 'par mois',
-            badge: "Jusqu'à 5 boutiques",
-            points: ['5 boutiques', '20 utilisateurs', '50 000 produits', '5 dépôts', 'Support prioritaire'],
+            badge: "Jusqu'à 3 boutiques",
+            points: ['3 boutiques', '10 utilisateurs', 'Assistant IA', '3 dépôts', 'Support prioritaire'],
             highlighted: true,
         },
         {
-            name: 'Scale',
-            price_eur: '149 EUR',
-            price_fcfa: '97 700 FCFA',
+            name: 'Pro',
+            price_eur: '145 EUR',
+            price_fcfa: '95 000 FCFA',
+            price_eur_yearly: '1 450 EUR',
+            price_fcfa_yearly: '950 000 FCFA',
+            price_xaf: 95000,
+            price_xaf_yearly: 950000,
             subtitle: 'par mois',
+            badge: "Jusqu'à 6 boutiques",
+            points: ['6 boutiques', 'Utilisateurs illimités', 'Accès API', 'Dépôts illimités', 'Support dédié 24/7'],
+            highlighted: false,
+        },
+        {
+            name: 'Entreprise',
+            price_eur: 'Sur devis',
+            subtitle: '',
             badge: 'Boutiques illimitées',
-            points: ['Boutiques illimitées', 'Utilisateurs illimités', 'Produits illimités', 'Dépôts illimités', 'Support premium'],
+            points: ['Boutiques illimitées', 'Utilisateurs illimités', 'Configurations personnalisées', 'API accès complet', 'Support prioritaire dédié'],
             highlighted: false,
         },
     ],
     en: [
         {
             name: 'Starter',
-            price_eur: '29 EUR',
-            price_fcfa: '19 000 FCFA',
+            price_eur: '27 EUR',
+            price_fcfa: '18 000 FCFA',
+            price_eur_yearly: '270 EUR',
+            price_fcfa_yearly: '180 000 FCFA',
+            price_xaf: 18000,
+            price_xaf_yearly: 180000,
             subtitle: 'per month',
             badge: 'Up to 1 store',
-            points: ['1 store', '5 users', '5,000 products', '1 depot', 'Standard support'],
+            points: ['1 store', '3 users', 'Unlimited products', '1 depot', 'Standard support'],
             highlighted: false,
         },
         {
             name: 'Growth',
-            price_eur: '79 EUR',
-            price_fcfa: '51 800 FCFA',
+            price_eur: '69 EUR',
+            price_fcfa: '45 000 FCFA',
+            price_eur_yearly: '690 EUR',
+            price_fcfa_yearly: '450 000 FCFA',
+            price_xaf: 45000,
+            price_xaf_yearly: 450000,
             subtitle: 'per month',
-            badge: 'Up to 5 stores',
-            points: ['5 stores', '20 users', '50,000 products', '5 depots', 'Priority support'],
+            badge: 'Up to 3 stores',
+            points: ['3 stores', '10 users', 'AI Agent', '3 depots', 'Priority support'],
             highlighted: true,
         },
         {
-            name: 'Scale',
-            price_eur: '149 EUR',
-            price_fcfa: '97 700 FCFA',
+            name: 'Pro',
+            price_eur: '145 EUR',
+            price_fcfa: '95 000 FCFA',
+            price_eur_yearly: '1 450 EUR',
+            price_fcfa_yearly: '950 000 FCFA',
+            price_xaf: 95000,
+            price_xaf_yearly: 950000,
             subtitle: 'per month',
+            badge: 'Up to 6 stores',
+            points: ['6 stores', 'Unlimited users', 'API access', 'Unlimited depots', 'Dedicated 24/7 support'],
+            highlighted: false,
+        },
+        {
+            name: 'Entreprise',
+            price_eur: 'Custom pricing',
+            subtitle: '',
             badge: 'Unlimited stores',
-            points: ['Unlimited stores', 'Unlimited users', 'Unlimited products', 'Unlimited depots', 'Premium support'],
+            points: ['Unlimited stores', 'Unlimited users', 'Custom configurations', 'Full API access', 'Dedicated priority support'],
             highlighted: false,
         },
     ],
@@ -705,20 +600,6 @@ const getHeroCaptionFromPath = (path: string): Record<Locale, { title: string; d
             en: {
                 title: 'A sale in 30 seconds, even during rush hour.',
                 description: 'Scan, collect, next customer. BATIX PRO eliminates checkout queues and register errors once and for all.',
-            },
-        };
-    }
-
-    // portrait-of-one-happy-young-hispanic-waiter
-    if (key.includes('waiter') || key.includes('happy') || key.includes('portrait-of-one')) {
-        return {
-            fr: {
-                title: 'Votre équipe sait quoi faire, sans vous appeler.',
-                description: 'Chaque vendeur voit ses tâches, ses produits, ses ventes. Vous gérez moins d\'urgences, ils travaillent mieux en autonomie.',
-            },
-            en: {
-                title: 'Your team knows what to do — without calling you.',
-                description: 'Every seller sees their tasks, products, and sales. You handle fewer emergencies, they work with more confidence.',
             },
         };
     }

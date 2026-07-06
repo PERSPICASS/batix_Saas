@@ -55,7 +55,7 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.shops.titleLong}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.shops.titleLong}</h1>}>
             <Head title={t.shops.titleLong} />
 
             <section className="space-y-6">
@@ -63,12 +63,12 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-slate-300">{t.shops.subtitle}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">{t.shops.subtitle}</p>
                         {!canCreateShop && remainingShops === 0 && (
                             <p className="mt-1 text-xs text-amber-400">{t.shops.limitReached}</p>
                         )}
                         {remainingShops > 0 && (
-                            <p className="mt-1 text-xs text-slate-400">{t.shops.remaining(remainingShops)}</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.shops.remaining(remainingShops)}</p>
                         )}
                     </div>
                     <Link
@@ -133,7 +133,7 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                                                 <Building2 className="size-6 text-amber-300" />
                                             </div>
                                             <div className="flex-1">
-                                                <h3 className="text-lg font-semibold text-white">{shop.name}</h3>
+                                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{shop.name}</h3>
                                                 {shop.description && (
                                                     <p className="mt-1 line-clamp-1 text-xs text-slate-400">
                                                         {shop.description}
@@ -154,20 +154,20 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                                                         {shop.city && `, ${shop.city}`}
                                                         {shop.postal_code && ` ${shop.postal_code}`}
                                                     </p>
-                                                    <p className="text-xs text-slate-400">{shop.country}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">{shop.country}</p>
                                                 </div>
                                             </div>
                                         )}
 
                                         {shop.phone && (
-                                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                                 <Phone className="size-4 text-green-400" />
                                                 <span>{shop.phone}</span>
                                             </div>
                                         )}
 
                                         {shop.email && (
-                                            <div className="flex items-center gap-2 text-sm text-slate-300">
+                                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                                 <Mail className="size-4 text-blue-400" />
                                                 <span className="truncate">{shop.email}</span>
                                             </div>
@@ -177,7 +177,7 @@ export default function Index({ shops, canCreateShop, remainingShops }: ShopsPag
                                         <div className="flex items-center gap-3 border-t border-white/10 pt-3">
                                             {shop.tax_id && (
                                                 <div className="text-xs">
-                                                    <span className="text-slate-400">ICE: </span>
+                                                    <span className="text-slate-500 dark:text-slate-400">ICE: </span>
                                                     <span className="font-mono text-slate-300">
                                                         {shop.tax_id.slice(0, 8)}...
                                                     </span>

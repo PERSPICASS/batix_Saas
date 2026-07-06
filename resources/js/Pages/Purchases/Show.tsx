@@ -208,13 +208,13 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                     <div className="flex items-start gap-3">
                         <Link
                             href={route('purchases.index', { code_user })}
-                            className="rounded-lg p-2 transition hover:bg-white/5"
+                            className="rounded-lg p-2 transition hover:bg-gray-100 dark:hover:bg-white/5"
                         >
-                            <ArrowLeft className="size-5 text-slate-400" />
+                            <ArrowLeft className="size-5 text-slate-500 dark:text-slate-400" />
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-bold text-white">{purchase.reference}</h1>
-                            <p className="mt-1 text-sm text-slate-400">
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{purchase.reference}</h1>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                 Bon de commande fournisseur
                             </p>
                         </div>
@@ -278,67 +278,67 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                 {/* Informations principales */}
                 <div className="grid gap-6 md:grid-cols-2">
                     {/* Fournisseur */}
-                    <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                    <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                             <Building2 className="size-5 text-amber-300" />
                             Fournisseur
                         </h2>
                         <div className="space-y-2 text-sm">
                             <div>
-                                <span className="font-semibold text-white">{purchase.supplier.name}</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">{purchase.supplier.name}</span>
                             </div>
                             {purchase.supplier.company_name && (
-                                <div className="text-slate-400">{purchase.supplier.company_name}</div>
+                                <div className="text-slate-500 dark:text-slate-400">{purchase.supplier.company_name}</div>
                             )}
                             {purchase.supplier.email && (
-                                <div className="text-slate-300">📧 {purchase.supplier.email}</div>
+                                <div className="text-slate-600 dark:text-slate-300">📧 {purchase.supplier.email}</div>
                             )}
                             {purchase.supplier.phone && (
-                                <div className="text-slate-300">📞 {purchase.supplier.phone}</div>
+                                <div className="text-slate-600 dark:text-slate-300">📞 {purchase.supplier.phone}</div>
                             )}
                         </div>
                     </div>
 
                     {/* Dates et infos */}
-                    <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                    <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                             <Calendar className="size-5 text-amber-300" />
                             Informations
                         </h2>
                         <div className="space-y-3 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Date de commande:</span>
-                                <span className="font-medium text-white">
+                                <span className="text-slate-500 dark:text-slate-400">Date de commande:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">
                                     {formatDate(purchase.order_date)}
                                 </span>
                             </div>
                             {purchase.expected_date && (
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Livraison prévue:</span>
-                                    <span className="font-medium text-white">
+                                    <span className="text-slate-500 dark:text-slate-400">Livraison prévue:</span>
+                                    <span className="font-medium text-slate-900 dark:text-white">
                                         {formatDate(purchase.expected_date)}
                                     </span>
                                 </div>
                             )}
                             {purchase.received_date && (
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Date de réception:</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Date de réception:</span>
                                     <span className="font-medium text-green-400">
                                         {formatDate(purchase.received_date)}
                                     </span>
                                 </div>
                             )}
                             <div className="flex justify-between border-t border-white/10 pt-3">
-                                <span className="text-slate-400">Créé par:</span>
-                                <span className="font-medium text-white">{purchase.user.name}</span>
+                                <span className="text-slate-500 dark:text-slate-400">Créé par:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{purchase.user.name}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Articles */}
-                <div className="rounded-xl bg-slate-800/50 p-6">
-                    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                         <Package className="size-5 text-amber-300" />
                         Articles commandés
                     </h2>
@@ -356,14 +356,14 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                             </thead>
                             <tbody className="divide-y divide-white/10">
                                 {purchase.items.map((item) => (
-                                    <tr key={item.id} className="text-slate-200">
+                                    <tr key={item.id} className="text-slate-700 dark:text-slate-200">
                                         <td className="py-3">
                                             <div>
-                                                <div className="font-medium text-white">
+                                                <div className="font-medium text-slate-900 dark:text-white">
                                                     {item.product_name}
                                                 </div>
                                                 {item.product_sku && (
-                                                    <div className="text-xs text-slate-400">
+                                                    <div className="text-xs text-slate-500 dark:text-slate-400">
                                                         SKU: {item.product_sku}
                                                     </div>
                                                 )}
@@ -379,7 +379,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                                         ? 'text-green-400'
                                                         : item.quantity_received > 0
                                                         ? 'text-yellow-400'
-                                                        : 'text-slate-400'
+                                                        : 'text-slate-500 dark:text-slate-400'
                                                 }
                                             >
                                                 {item.quantity_received}
@@ -400,44 +400,44 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                 </div>
 
                 {/* Totaux */}
-                <div className="rounded-xl bg-slate-800/50 p-6">
-                    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                         <DollarSign className="size-5 text-amber-300" />
                         Récapitulatif financier
                     </h2>
 
                     <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Sous-total:</span>
-                            <span className="font-medium text-white">
+                            <span className="text-slate-500 dark:text-slate-400">Sous-total:</span>
+                            <span className="font-medium text-slate-900 dark:text-white">
                                 {formatCurrency(purchase.subtotal)}
                             </span>
                         </div>
 
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Remise totale:</span>
-                            <span className="font-medium text-white">
+                            <span className="text-slate-500 dark:text-slate-400">Remise totale:</span>
+                            <span className="font-medium text-slate-900 dark:text-white">
                                 -{formatCurrency(purchase.discount_amount)}
                             </span>
                         </div>
 
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Taxes totales:</span>
-                            <span className="font-medium text-white">
+                            <span className="text-slate-500 dark:text-slate-400">Taxes totales:</span>
+                            <span className="font-medium text-slate-900 dark:text-white">
                                 {formatCurrency(purchase.tax_amount)}
                             </span>
                         </div>
 
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Frais de port:</span>
-                            <span className="font-medium text-white">
+                            <span className="text-slate-500 dark:text-slate-400">Frais de port:</span>
+                            <span className="font-medium text-slate-900 dark:text-white">
                                 {formatCurrency(purchase.shipping_cost)}
                             </span>
                         </div>
 
-                        <div className="border-t border-white/10 pt-3">
+                        <div className="border-t border-gray-200 dark:border-white/10 pt-3">
                             <div className="flex justify-between">
-                                <span className="text-lg font-semibold text-white">Total:</span>
+                                <span className="text-lg font-semibold text-slate-900 dark:text-white">Total:</span>
                                 <span className="text-2xl font-bold text-amber-300">
                                     {formatCurrency(purchase.total)}
                                 </span>
@@ -448,8 +448,8 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
                 {/* Notes */}
                 {(purchase.notes || purchase.internal_notes) && (
-                    <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                    <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                             <FileText className="size-5 text-amber-300" />
                             Notes
                         </h2>
@@ -460,7 +460,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                     <h3 className="mb-2 text-sm font-medium text-slate-300">
                                         Notes (visibles)
                                     </h3>
-                                    <p className="text-sm text-slate-400">{purchase.notes}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{purchase.notes}</p>
                                 </div>
                             )}
 
@@ -469,7 +469,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                     <h3 className="mb-2 text-sm font-medium text-slate-300">
                                         Notes internes
                                     </h3>
-                                    <p className="text-sm text-slate-400">{purchase.internal_notes}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{purchase.internal_notes}</p>
                                 </div>
                             )}
                         </div>
@@ -487,30 +487,30 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         <div className="flex-1">
                             <h2 className="text-xl font-bold text-slate-500">Confirmer le bon de commande</h2>
                             <p className="text-sm text-slate-600">
-                                Vous êtes sur le point de confirmer le bon de commande <span className="font-bold text-white">{purchase.reference}</span>
+                                Vous êtes sur le point de confirmer le bon de commande <span className="font-bold text-slate-900 dark:text-white">{purchase.reference}</span>
                             </p>
                         </div>
                     </div>
 
                     <div className="mt-6 rounded-lg border border-white/20 bg-slate-900 p-5">
-                        <h3 className="mb-4 text-base font-bold text-white">Récapitulatif</h3>
+                        <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-white">Récapitulatif</h3>
                         <div className="space-y-3 text-base">
                             <div className="flex justify-between">
-                                <span className="text-slate-300">Fournisseur:</span>
-                                <span className="font-semibold text-white">{purchase.supplier.name}</span>
+                                <span className="text-slate-600 dark:text-slate-300">Fournisseur:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">{purchase.supplier.name}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-300">Nombre d'articles:</span>
-                                <span className="font-semibold text-white">{purchase.items.length}</span>
+                                <span className="text-slate-600 dark:text-slate-300">Nombre d'articles:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">{purchase.items.length}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-300">Quantité totale:</span>
-                                <span className="font-semibold text-white">
+                                <span className="text-slate-600 dark:text-slate-300">Quantité totale:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">
                                     {purchase.items.reduce((sum, item) => sum + item.quantity_ordered, 0)} unités
                                 </span>
                             </div>
                             <div className="flex justify-between border-t border-white/20 pt-3 mt-2">
-                                <span className="text-slate-200 font-medium">Montant total:</span>
+                                <span className="text-slate-700 dark:text-slate-200 font-medium">Montant total:</span>
                                 <span className="text-xl font-bold text-amber-400">{formatCurrency(purchase.total)}</span>
                             </div>
                         </div>
@@ -588,7 +588,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
-                                            <div className="text-base font-semibold text-white">
+                                            <div className="text-base font-semibold text-slate-900 dark:text-white">
                                                 {item.product_name}
                                             </div>
                                             {item.product_sku && (
@@ -618,20 +618,20 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                             </div>
 
                                             <div className="mt-3 flex gap-5 text-sm">
-                                                <span className="text-slate-300">
-                                                    Commandé: <span className="font-bold text-white">{item.quantity_ordered}</span>
+                                                <span className="text-slate-600 dark:text-slate-300">
+                                                    Commandé: <span className="font-bold text-slate-900 dark:text-white">{item.quantity_ordered}</span>
                                                 </span>
-                                                <span className="text-slate-300">
+                                                <span className="text-slate-600 dark:text-slate-300">
                                                     Reçu: <span className="font-bold text-green-400">{item.quantity_received}</span>
                                                 </span>
-                                                <span className="text-slate-300">
+                                                <span className="text-slate-600 dark:text-slate-300">
                                                     Restant: <span className="font-bold text-amber-400">{remaining}</span>
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div className="w-32">
-                                            <InputLabel value="Quantité" className="text-sm font-semibold text-white" />
+                                            <InputLabel value="Quantité" className="text-sm font-semibold text-slate-900 dark:text-white" />
                                             <TextInput
                                                 type="number"
                                                 min="0"
@@ -689,8 +689,8 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         </div>
                         <div className="flex-1 flex flex-col ">
                             <h2 className="text-lg font-bold text-slate-500">Annuler le bon de commande</h2>
-                            <p className="text-sm text-slate-400">
-                                Vous êtes sur le point d'annuler le bon de commande <span className="font-semibold text-white">{purchase.reference}</span>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Vous êtes sur le point d'annuler le bon de commande <span className="font-semibold text-slate-900 dark:text-white">{purchase.reference}</span>
                             </p>
                         </div>
                     </div>
@@ -699,20 +699,20 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         <h3 className="mb-3 text-sm font-semibold text-white">Informations de la commande</h3>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Fournisseur:</span>
-                                <span className="font-medium text-white">{purchase.supplier.name}</span>
+                                <span className="text-slate-500 dark:text-slate-400">Fournisseur:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{purchase.supplier.name}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Date de commande:</span>
-                                <span className="font-medium text-white">{formatDate(purchase.order_date)}</span>
+                                <span className="text-slate-500 dark:text-slate-400">Date de commande:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formatDate(purchase.order_date)}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Montant:</span>
-                                <span className="font-medium text-white">{formatCurrency(purchase.total)}</span>
+                                <span className="text-slate-500 dark:text-slate-400">Montant:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formatCurrency(purchase.total)}</span>
                             </div>
                             {purchase.status === 'partial' && (
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Articles reçus:</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Articles reçus:</span>
                                     <span className="font-medium text-yellow-400">
                                         {purchase.items.reduce((sum, item) => sum + item.quantity_received, 0)} / {purchase.items.reduce((sum, item) => sum + item.quantity_ordered, 0)}
                                     </span>
@@ -767,30 +767,30 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         <div className="flex-1">
                             <h2 className="text-xl font-bold text-slate-600">Supprimer le bon de commande</h2>
                             <p className="text-sm text-slate-700">
-                                Vous êtes sur le point de supprimer définitivement le bon de commande <span className="font-bold text-white">{purchase.reference}</span>
+                                Vous êtes sur le point de supprimer définitivement le bon de commande <span className="font-bold text-slate-900 dark:text-white">{purchase.reference}</span>
                             </p>
                         </div>
                     </div>
 
                     <div className="mt-6 rounded-lg border border-white/20 bg-slate-900 p-5">
-                        <h3 className="mb-4 text-base font-bold text-white">Informations</h3>
+                        <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-white">Informations</h3>
                         <div className="space-y-3 text-base">
                             <div className="flex justify-between">
-                                <span className="text-slate-300">Fournisseur:</span>
-                                <span className="font-semibold text-white">{purchase.supplier.name}</span>
+                                <span className="text-slate-600 dark:text-slate-300">Fournisseur:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">{purchase.supplier.name}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-300">Date de commande:</span>
-                                <span className="font-semibold text-white">{formatDate(purchase.order_date)}</span>
+                                <span className="text-slate-600 dark:text-slate-300">Date de commande:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">{formatDate(purchase.order_date)}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-300">Statut:</span>
-                                <span className="font-semibold text-white">
+                                <span className="text-slate-600 dark:text-slate-300">Statut:</span>
+                                <span className="font-semibold text-slate-900 dark:text-white">
                                     {purchase.status === 'draft' ? 'Brouillon' : 'Annulé'}
                                 </span>
                             </div>
                             <div className="flex justify-between border-t border-white/20 pt-3 mt-2">
-                                <span className="text-slate-200 font-medium">Montant:</span>
+                                <span className="text-slate-700 dark:text-slate-200 font-medium">Montant:</span>
                                 <span className="text-xl font-bold text-amber-400">{formatCurrency(purchase.total)}</span>
                             </div>
                         </div>

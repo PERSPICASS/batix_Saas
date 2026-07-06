@@ -1,10 +1,8 @@
-import { Link } from '@inertiajs/react';
 import { SeoHead } from '@/Components/SeoHead';
-import { useState, useEffect } from 'react';
-import WelcomeHeader from '@/Components/Welcome/WelcomeHeader';
-import WelcomeFooter from '@/Components/Welcome/WelcomeFooter';
+import PublicLayout from '@/Layouts/PublicLayout';
 import type { Locale } from '@/types/types';
 import { PageProps } from '@/types';
+import { useDashboardUrl } from '@/hooks/useDashboardUrl';
 import { Calendar, User, Tag, ArrowLeft } from 'lucide-react';
 
 interface Post {
@@ -24,28 +22,18 @@ interface Post {
 
 interface Props extends PageProps {
     post: Post;
+    locale: Locale;
+    localeLinks: Record<Locale, string>;
 }
 
-export default function BlogShow({ auth, post }: Props) {
-    const [locale, setLocale] = useState<Locale>('fr');
-    const [scrolled] = useState(false);
-
-    useEffect(() => {
-        const saved = typeof window !== 'undefined' ? window.localStorage.getItem('landing_locale') : null;
-        if (saved === 'en') setLocale('en');
-    }, []);
-
-    const getDashboardUrl = () => {
-        if (!auth.user) return route('register');
-        if (auth.user.role === 'admin_platforme') return route('platform.dashboard');
-        return route('register');
-    };
+export default function BlogShow({ auth, post, locale, localeLinks }: Props) {
+    const getDashboardUrl = useDashboardUrl(auth);
 
     const postTitle = (locale === 'en' && post.title_en) ? post.title_en : post.title_fr;
     const postContent = (locale === 'en' && post.content_en) ? post.content_en : post.content_fr;
 
     const postExcerpt = (locale === 'en' && post.excerpt_en) ? post.excerpt_en : (post.excerpt_fr ?? postTitle);
-    const canonicalUrl = `https://batixpro.com/blog/${post.slug}`;
+    const canonicalUrl = localeLinks[locale];
 
     return (
         <>
@@ -58,20 +46,23 @@ export default function BlogShow({ auth, post }: Props) {
                 ogType="article"
                 publishedAt={post.published_at ?? undefined}
                 author={post.author_name}
+                hreflangAlternates={[
+                    { locale: 'fr', href: localeLinks.fr },
+                    { locale: 'en', href: localeLinks.en },
+                    { locale: 'x-default', href: localeLinks.fr },
+                ]}
             />
-            <div className="min-h-screen bg-[#efe7db]">
-                <WelcomeHeader
-                    locale={locale}
-                    setLocale={setLocale}
-                    scrolled={scrolled}
-                    getDashboardUrl={getDashboardUrl}
-                    isAuthenticated={!!auth.user}
-                />
 
+            <PublicLayout
+                locale={locale}
+                localeLinks={localeLinks}
+                isAuthenticated={!!auth.user}
+                getDashboardUrl={getDashboardUrl}
+            >
                 <main className="mx-auto max-w-3xl px-6 py-20 lg:px-8">
                     {/* Retour */}
                     <a
-                        href="/#blog"
+                        href={route('blog.index')}
                         className="mb-8 inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-slate-900"
                     >
                         <ArrowLeft className="size-4" />
@@ -91,7 +82,7 @@ export default function BlogShow({ auth, post }: Props) {
                     {/* Meta */}
                     <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-500">
                         {post.category && (
-                            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                            <span className="flex items-center gap-1 rounded-full bg-terre-50 px-3 py-1 text-xs font-medium text-terre-700">
                                 <Tag className="size-3" />
                                 {post.category}
                             </span>
@@ -124,7 +115,7 @@ export default function BlogShow({ auth, post }: Props) {
                             margin-top: 2.5rem;
                             margin-bottom: 1rem;
                             padding-bottom: 0.5rem;
-                            border-bottom: 2px solid #fcd34d;
+                            border-bottom: 2px solid #D69A6B;
                         }
                         .blog-content h3 {
                             font-size: 1.15rem;
@@ -160,7 +151,7 @@ export default function BlogShow({ auth, post }: Props) {
                             width: 8px;
                             height: 8px;
                             border-radius: 50%;
-                            background: #fbbf24;
+                            background: #B06333;
                             flex-shrink: 0;
                             margin-top: 0.5rem;
                         }
@@ -169,11 +160,11 @@ export default function BlogShow({ auth, post }: Props) {
                             font-weight: 700;
                         }
                         .blog-content a {
-                            color: #b45309;
+                            color: #7E4024;
                             text-decoration: underline;
                         }
                         .blog-content a:hover {
-                            color: #92400e;
+                            color: #5C2F1B;
                         }
                     `}</style>
                     <article
@@ -182,9 +173,9 @@ export default function BlogShow({ auth, post }: Props) {
                     />
 
                     {/* Retour bas */}
-                    <div className="mt-14 border-t border-[#d8cfbe] pt-8">
+                    <div className="mt-14 border-t border-gray-200 pt-8">
                         <a
-                            href="/#blog"
+                            href={route('blog.index')}
                             className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-amber-400"
                         >
                             <ArrowLeft className="size-4" />
@@ -192,9 +183,7 @@ export default function BlogShow({ auth, post }: Props) {
                         </a>
                     </div>
                 </main>
-
-                <WelcomeFooter footerText={locale === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'} nav={{ demo: 'Demo', features: locale === 'fr' ? 'Fonctionnalités' : 'Features', pricing: locale === 'fr' ? 'Tarifs' : 'Pricing', faq: 'FAQ', contact: 'Contact' }} />
-            </div>
+            </PublicLayout>
         </>
     );
 }

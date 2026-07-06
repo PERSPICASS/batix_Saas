@@ -14,7 +14,7 @@ export default function Placeholder({
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{title}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h1>}
         >
             <Head title={title} />
 

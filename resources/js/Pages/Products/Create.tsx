@@ -118,16 +118,16 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.products.actions.new}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.products.actions.new}</h1>}
         >
             <Head title={t.products.actions.new} />
 
             <form
                 onSubmit={onSubmit}
-                className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6"
+                className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5"
             >
                 <div className="grid gap-4 md:grid-cols-2">
-                    <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
                         <span>{t.common.form.shopField} *</span>
                         <select
                             value={data.shop_id}
@@ -140,23 +140,23 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 </option>
                             ))}
                         </select>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             {t.common.form.shopHint}
                         </p>
                         <InputError message={errors.shop_id} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.name} *</span>
                         <input
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.name} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.sku}</span>
                         <input
                             value={data.sku}
@@ -164,13 +164,13 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             placeholder={t.products.form.skuPlaceholder}
                             className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-400"
                         />
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             {t.products.form.skuHint}
                         </p>
                         <InputError message={errors.sku} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.barcode}</span>
                         <div className="flex gap-2">
                             <input
@@ -189,7 +189,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 {t.products.form.preview}
                             </button>
                         </div>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             {scannedBarcode
                                 ? t.products.form.barcodeScanned
                                 : t.products.form.barcodeHint}
@@ -197,12 +197,12 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <InputError message={errors.barcode} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.category}</span>
                         <select
                             value={data.category_id}
                             onChange={(e) => setData('category_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         >
                             <option value="">{t.products.form.selectCategory}</option>
                             {filteredCategories.map((category) => (
@@ -214,12 +214,12 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <InputError message={errors.category_id} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.subcategory}</span>
                         <select
                             value={data.subcategory_id}
                             onChange={(e) => setData('subcategory_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             disabled={!data.category_id}
                         >
                             <option value="">{t.products.form.selectSubcategory}</option>
@@ -232,23 +232,23 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <InputError message={errors.subcategory_id} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.brand}</span>
                         <input
                             value={data.brand}
                             onChange={(e) => setData('brand', e.target.value)}
                             placeholder="Ex: Bosch, Stanley, Makita..."
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.brand} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.unit}</span>
                         <select
                             value={data.unit}
                             onChange={(e) => setData('unit', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         >
                             <option value="piece">Pièce</option>
                             <option value="kg">Kilogramme</option>
@@ -262,7 +262,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         <InputError message={errors.unit} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.costPrice} *</span>
                         <input
                             type="number"
@@ -270,12 +270,12 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             min="0"
                             value={data.purchase_price}
                             onChange={(e) => setData('purchase_price', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.purchase_price} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.sellingPrice} *</span>
                         <input
                             type="number"
@@ -283,13 +283,13 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             min="0"
                             value={data.selling_price}
                             onChange={(e) => setData('selling_price', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.selling_price} />
                     </label>
 
                     {/* Indicateur de marge bénéficiaire */}
-                    <div className="space-y-1 text-sm text-slate-200 md:col-span-2">
+                    <div className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
                         <span>{t.products.form.profitMargin}</span>
                         <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
                             profitMargin.percentage >= 20 
@@ -309,7 +309,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 }`}>
                                     {profitMargin.amount.toFixed(2)} FCFA ({profitMargin.percentage.toFixed(1)}%)
                                 </p>
-                                <p className="text-xs text-slate-400">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {profitMargin.percentage >= 20
                                         ? t.products.form.goodMargin
                                         : profitMargin.percentage >= 10
@@ -320,7 +320,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         </div>
                     </div>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>Taux de TVA (%)</span>
                         <input
                             type="number"
@@ -329,51 +329,51 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             max="100"
                             value={data.tax_rate}
                             onChange={(e) => setData('tax_rate', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.tax_rate} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.stock}</span>
                         <input
                             type="number"
                             value={data.stock_quantity}
                             onChange={(e) => setData('stock_quantity', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.stock_quantity} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.minStockAlert}</span>
                         <input
                             type="number"
                             value={data.min_stock_alert}
                             onChange={(e) => setData('min_stock_alert', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.min_stock_alert} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
                         <span>{t.products.form.description}</span>
                         <textarea
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.description} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
                         <span>{t.products.form.image}</span>
                         <input
                             type="file"
                             accept="image/*"
                             onChange={handleImageChange}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         {imagePreview && (
                             <div className="mt-2">
@@ -384,7 +384,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 />
                             </div>
                         )}
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             {t.products.form.imageFormats}
                         </p>
                         <InputError message={errors.image} />

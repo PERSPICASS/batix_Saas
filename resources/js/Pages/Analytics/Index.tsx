@@ -223,7 +223,7 @@ export default function Index({
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.analytics.title}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.analytics.title}</h1>}
         >
             <Head title={t.analytics.title} />
 
@@ -283,14 +283,14 @@ export default function Index({
                 </div>
 
                 {/* Graphique des ventes */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="rounded-lg bg-amber-300/15 p-2">
                             <BarChart3 className="size-5 text-amber-300" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.salesEvolution}</h2>
-                            <p className="text-sm text-slate-400">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.analytics.sections.salesEvolution}</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                                 Total: {formatCurrency(salesChart.reduce((sum, item) => sum + item.value, 0), currencySymbol)}
                             </p>
                         </div>
@@ -314,8 +314,8 @@ export default function Index({
 
                 {/* Section Comparaison */}
                 <div className="space-y-4">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="text-lg font-semibold text-white mb-4">{t.analytics.sections.comparison}</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">{t.analytics.sections.comparison}</h2>
 
                         {/* Contrôles */}
                         <div className="space-y-4 mb-6">
@@ -347,11 +347,11 @@ export default function Index({
                             {compareMode === 'year' && (
                                 <div className="flex gap-4 items-end">
                                     <div className="flex-1">
-                                        <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year1Label}</label>
+                                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.analytics.comparison.year1Label}</label>
                                         <select
                                             value={year1}
                                             onChange={(e) => setYear1(parseInt(e.target.value))}
-                                            className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                         >
                                             {yearOptions.map(year => (
                                                 <option key={year} value={year}>{year}</option>
@@ -359,11 +359,11 @@ export default function Index({
                                         </select>
                                     </div>
                                     <div className="flex-1">
-                                        <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year2Label}</label>
+                                        <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.analytics.comparison.year2Label}</label>
                                         <select
                                             value={year2}
                                             onChange={(e) => setYear2(parseInt(e.target.value))}
-                                            className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                         >
                                             {yearOptions.map(year => (
                                                 <option key={year} value={year}>{year}</option>
@@ -383,11 +383,11 @@ export default function Index({
                                 <div className="space-y-4">
                                     <div className="grid gap-4 sm:grid-cols-4">
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.month1Label}</label>
+                                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.analytics.comparison.month1Label}</label>
                                             <select
                                                 value={month1}
                                                 onChange={(e) => setMonth1(parseInt(e.target.value))}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                             >
                                                 {monthOptions.map(m => (
                                                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -395,11 +395,11 @@ export default function Index({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year1Label}</label>
+                                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.analytics.comparison.year1Label}</label>
                                             <select
                                                 value={monthYear1}
                                                 onChange={(e) => setMonthYear1(parseInt(e.target.value))}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                             >
                                                 {yearOptions.map(year => (
                                                     <option key={year} value={year}>{year}</option>
@@ -407,11 +407,11 @@ export default function Index({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.month2Label}</label>
+                                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.analytics.comparison.month2Label}</label>
                                             <select
                                                 value={month2}
                                                 onChange={(e) => setMonth2(parseInt(e.target.value))}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                             >
                                                 {monthOptions.map(m => (
                                                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -419,11 +419,11 @@ export default function Index({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-slate-400 mb-1">{t.analytics.comparison.year2Label}</label>
+                                            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">{t.analytics.comparison.year2Label}</label>
                                             <select
                                                 value={monthYear2}
                                                 onChange={(e) => setMonthYear2(parseInt(e.target.value))}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white text-sm"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white"
                                             >
                                                 {yearOptions.map(year => (
                                                     <option key={year} value={year}>{year}</option>
@@ -444,8 +444,8 @@ export default function Index({
                         {/* Cartes métriques */}
                         <div className="grid gap-4 sm:grid-cols-3 mb-6">
                             {/* CA */}
-                            <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
-                                <p className="text-xs text-slate-400 mb-2">{t.analytics.comparison.revenueLabel}</p>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-slate-900/50">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t.analytics.comparison.revenueLabel}</p>
                                 <div className="space-y-2">
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label1}</span>
@@ -455,7 +455,7 @@ export default function Index({
                                     </div>
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label2}</span>
-                                        <p className="text-lg font-bold text-slate-300">
+                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">
                                             {formatCurrency(comparisonData.totals.revenue.v2, currencySymbol)}
                                         </p>
                                     </div>
@@ -466,8 +466,8 @@ export default function Index({
                             </div>
 
                             {/* Ventes */}
-                            <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
-                                <p className="text-xs text-slate-400 mb-2">{t.analytics.comparison.salesLabel}</p>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-slate-900/50">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t.analytics.comparison.salesLabel}</p>
                                 <div className="space-y-2">
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label1}</span>
@@ -477,7 +477,7 @@ export default function Index({
                                     </div>
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label2}</span>
-                                        <p className="text-lg font-bold text-slate-300">
+                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">
                                             {comparisonData.totals.sales.v2}
                                         </p>
                                     </div>
@@ -488,8 +488,8 @@ export default function Index({
                             </div>
 
                             {/* Bénéfice */}
-                            <div className="rounded-lg border border-white/10 bg-slate-900/50 p-4">
-                                <p className="text-xs text-slate-400 mb-2">{t.analytics.comparison.profitLabel}</p>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-slate-900/50">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t.analytics.comparison.profitLabel}</p>
                                 <div className="space-y-2">
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label1}</span>
@@ -499,7 +499,7 @@ export default function Index({
                                     </div>
                                     <div>
                                         <span className="text-xs text-slate-500">{comparisonData.label2}</span>
-                                        <p className="text-lg font-bold text-slate-300">
+                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">
                                             {formatCurrency(comparisonData.totals.profit.v2, currencySymbol)}
                                         </p>
                                     </div>
@@ -512,7 +512,7 @@ export default function Index({
 
                         {/* Graphique recharts */}
                         <div className="mt-6">
-                            <p className="text-sm text-slate-400 mb-4">{t.analytics.comparison.revenueLabel} {t.analytics.comparison.byMonthOrDay(compareMode)}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{t.analytics.comparison.revenueLabel} {t.analytics.comparison.byMonthOrDay(compareMode)}</p>
                             <ResponsiveContainer width="100%" height={300}>
                                 <BarChart data={comparisonData.chart} barGap={4} barSize={14}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
@@ -555,16 +555,16 @@ export default function Index({
                 {/* Grille des analyses */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Top Produits */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="rounded-lg bg-emerald-400/15 p-2">
                                 <Package className="size-5 text-emerald-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.topProducts}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.analytics.sections.topProducts}</h2>
                         </div>
 
                         {topProducts.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noSales}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">{t.analytics.noSales}</p>
                         ) : (
                             <div className="space-y-3">
                                 {topProducts.map((product, index) => (
@@ -576,8 +576,8 @@ export default function Index({
                                         </span>
                                         <ProductImage src={product.image} name={product.name} thumbnailClass="size-9" />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-white truncate">{product.name}</p>
-                                            <p className="text-xs text-slate-400">{product.quantity} vendus</p>
+                                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{product.name}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{product.quantity} vendus</p>
                                         </div>
                                         <span className="text-sm font-semibold text-emerald-400 shrink-0">
                                             {formatCurrency(product.revenue, currencySymbol)}
@@ -589,23 +589,23 @@ export default function Index({
                     </div>
 
                     {/* Ventes par catégorie */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="rounded-lg bg-purple-400/15 p-2">
                                 <BarChart3 className="size-5 text-purple-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.byCategory}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.analytics.sections.byCategory}</h2>
                         </div>
 
                         {salesByCategory.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noSales}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">{t.analytics.noSales}</p>
                         ) : (
                             <div className="space-y-3">
                                 {salesByCategory.map((category, index) => (
                                     <div key={category.name} className="space-y-1">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm text-white">{category.name}</span>
-                                            <span className="text-sm text-slate-400">
+                                            <span className="text-sm text-slate-900 dark:text-white">{category.name}</span>
+                                            <span className="text-sm text-slate-500 dark:text-slate-400">
                                                 {formatCurrency(category.revenue, currencySymbol)} ({category.percentage}%)
                                             </span>
                                         </div>
@@ -622,16 +622,16 @@ export default function Index({
                     </div>
 
                     {/* Top Clients */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="rounded-lg bg-blue-400/15 p-2">
                                 <Users className="size-5 text-blue-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.topCustomers}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.analytics.sections.topCustomers}</h2>
                         </div>
 
                         {topCustomers.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noCustomers}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">{t.analytics.noCustomers}</p>
                         ) : (
                             <div className="space-y-3">
                                 {topCustomers.slice(0, 5).map((customer, index) => (
@@ -642,8 +642,8 @@ export default function Index({
                                             {index + 1}
                                         </span>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-white truncate">{customer.name}</p>
-                                            <p className="text-xs text-slate-400">{customer.salesCount} achats</p>
+                                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{customer.name}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{customer.salesCount} achats</p>
                                         </div>
                                         <span className="text-sm font-semibold text-blue-400">
                                             {formatCurrency(customer.totalSpent, currencySymbol)}
@@ -655,23 +655,23 @@ export default function Index({
                     </div>
 
                     {/* Méthodes de paiement */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="rounded-lg bg-rose-400/15 p-2">
                                 <CreditCard className="size-5 text-rose-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.paymentMethods}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.analytics.sections.paymentMethods}</h2>
                         </div>
 
                         {paymentMethods.length === 0 ? (
-                            <p className="text-sm text-slate-400 text-center py-8">{t.analytics.noSales}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">{t.analytics.noSales}</p>
                         ) : (
                             <div className="space-y-3">
                                 {paymentMethods.map((method, index) => (
                                     <div key={method.method} className="space-y-1">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-sm text-white">{method.method}</span>
-                                            <span className="text-sm text-slate-400">
+                                            <span className="text-sm text-slate-900 dark:text-white">{method.method}</span>
+                                            <span className="text-sm text-slate-500 dark:text-slate-400">
                                                 {method.count} ({method.percentage}%)
                                             </span>
                                         </div>
@@ -690,12 +690,12 @@ export default function Index({
 
                 {/* Performance par boutique */}
                 {shopPerformance.length > 1 && (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="rounded-lg bg-cyan-400/15 p-2">
                                 <Store className="size-5 text-cyan-400" />
                             </div>
-                            <h2 className="text-lg font-semibold text-white">{t.analytics.sections.shopPerformance}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.analytics.sections.shopPerformance}</h2>
                         </div>
                         
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -714,14 +714,14 @@ export default function Index({
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-slate-400">CA</span>
+                                            <span className="text-slate-500 dark:text-slate-400">CA</span>
                                             <span className="font-semibold text-emerald-400">
                                                 {formatCurrency(shop.revenue, currencySymbol)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between text-sm">
-                                            <span className="text-slate-400">Ventes</span>
-                                            <span className="text-white">{shop.salesCount}</span>
+                                            <span className="text-slate-500 dark:text-slate-400">Ventes</span>
+                                            <span className="text-slate-900 dark:text-white">{shop.salesCount}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -761,14 +761,14 @@ function KPICard({
     return (
         <article className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
             <div className="flex items-start justify-between">
-                <p className="text-xs text-slate-400">{label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
                 <div className={`rounded-lg p-2 ${colorClasses[color]}`}>
                     <Icon className="size-4" />
                 </div>
             </div>
-            <p className="mt-2 text-2xl font-bold text-white">{value}</p>
+            <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
             {subValue && (
-                <p className="mt-0.5 text-xs text-slate-400">{subValue}</p>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{subValue}</p>
             )}
             {growth !== undefined && (
                 <p className={`mt-1 inline-flex items-center gap-1 text-xs ${growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>

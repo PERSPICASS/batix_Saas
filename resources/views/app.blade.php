@@ -7,8 +7,8 @@
         <meta name="theme-color" content="#FBBF24">
         <meta name="author" content="BATIX PRO">
         <meta name="robots" content="index, follow">
-        <meta name="description" content="BATIX PRO est le logiciel de gestion de quincaillerie pensé pour les équipes terrain. Ventes, stock, achats fournisseurs et rapports en temps réel. Essai gratuit 14 jours, sans carte bancaire.">
-        <meta name="keywords" content="logiciel quincaillerie, gestion stock quincaillerie, caisse quincaillerie, logiciel vente comptoir, gestion boutique, BATIX PRO, SaaS quincaillerie">
+        {{-- description/keywords are set per-page via Inertia's <Head> (Welcome.tsx, Blog pages, etc.)
+             to stay locale-aware and avoid duplicate/conflicting <meta> tags in the rendered HTML. --}}
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 

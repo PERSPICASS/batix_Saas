@@ -137,7 +137,7 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.dashboard.title}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.dashboard.title}</h1>}
         >
             <Head title={t.dashboard.title} />
 
@@ -150,16 +150,16 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                     {kpis.map((kpi) => (
                         <article
                             key={kpi.label}
-                            className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl"
+                            className="rounded-2xl border border-gray-200 bg-white p-5 backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
                         >
                             <div className="flex items-start justify-between">
-                                <p className="text-sm text-slate-300">{kpi.label}</p>
-                                <div className={`rounded-lg p-2 ${kpi.positive ? 'bg-amber-300/15 text-amber-200' : 'bg-red-400/15 text-red-300'}`}>
+                                <p className="text-sm text-slate-600 dark:text-slate-300">{kpi.label}</p>
+                                <div className={`rounded-lg p-2 ${kpi.positive ? 'bg-amber-100 text-amber-700 dark:bg-amber-300/15 dark:text-amber-200' : 'bg-red-100 text-red-600 dark:bg-red-400/15 dark:text-red-300'}`}>
                                     <kpi.icon className="size-4" />
                                 </div>
                             </div>
-                            <p className="mt-3 text-3xl font-bold text-white">{kpi.value}</p>
-                            <p className={`mt-1 inline-flex items-center gap-1 text-xs ${kpi.positive ? 'text-emerald-300' : 'text-red-300'}`}>
+                            <p className="mt-3 text-3xl font-bold text-slate-900 dark:text-white">{kpi.value}</p>
+                            <p className={`mt-1 inline-flex items-center gap-1 text-xs ${kpi.positive ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
                                 {kpi.trend !== null && (
                                     kpi.positive ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />
                                 )}
@@ -170,11 +170,11 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-3">
-                    <article className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl xl:col-span-2">
+                    <article className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 xl:col-span-2">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h2 className="text-lg font-semibold text-white">{t.dashboard.performance.title}</h2>
-                                <p className="mt-1 flex items-center gap-2 text-sm text-slate-300">
+                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.dashboard.performance.title}</h2>
+                                <p className="mt-1 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                     <Calendar className="size-4" />
                                     {performanceData.periodLabel}
                                 </p>
@@ -188,7 +188,7 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                                         className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                                             currentPeriod === period.value
                                                 ? 'bg-amber-300 text-slate-900'
-                                                : 'bg-white/5 text-slate-300 hover:bg-white/10'
+                                                : 'bg-gray-100 text-slate-600 hover:bg-gray-200 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10'
                                         }`}
                                     >
                                         <span className="hidden sm:inline">{period.label}</span>
@@ -202,7 +202,7 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                             <div className={`grid gap-1 ${currentPeriod === 'day' ? 'min-w-[800px] grid-cols-12' : getGridCols()}`}>
                                 {performanceData.items.map((item, index) => (
                                     <div key={index} className="flex flex-col items-center gap-2">
-                                        <div className="flex h-32 w-full items-end rounded-lg bg-slate-900/60 p-1">
+                                        <div className="flex h-32 w-full items-end rounded-lg bg-gray-100 p-1 dark:bg-slate-900/60">
                                             <div
                                                 className="w-full rounded-md bg-gradient-to-t from-amber-300 to-orange-300 transition-all duration-300"
                                                 style={{ height: `${Math.max(item.percentage, 5)}%` }}
@@ -210,7 +210,7 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                                             />
                                         </div>
                                         <div className="text-center">
-                                            <p className="text-[10px] font-medium text-slate-300 truncate max-w-[60px]">
+                                            <p className="text-[10px] font-medium text-slate-600 dark:text-slate-300 truncate max-w-[60px]">
                                                 {item.shortLabel}
                                             </p>
                                         </div>
@@ -226,22 +226,22 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                         </div>
 
                         {performanceData.items.length > 0 && (
-                            <div className="mt-4 flex items-center justify-between text-sm border-t border-white/10 pt-4">
-                                <span className="text-slate-400">{t.dashboard.performance.totalLabel}</span>
-                                <span className="font-semibold text-white text-lg">
+                            <div className="mt-4 flex items-center justify-between text-sm border-t border-gray-200 pt-4 dark:border-white/10">
+                                <span className="text-slate-500 dark:text-slate-400">{t.dashboard.performance.totalLabel}</span>
+                                <span className="font-semibold text-slate-900 dark:text-white text-lg">
                                     {formatCurrency(performanceData.total, currencySymbol)}
                                 </span>
                             </div>
                         )}
                     </article>
 
-                    <article className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="text-lg font-semibold text-white">{t.dashboard.recentActivity.title}</h2>
+                    <article className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.dashboard.recentActivity.title}</h2>
                         {recentActivities.length === 0 ? (
                             <div className="mt-4 flex flex-col items-center justify-center py-8 text-center">
-                                <Package className="size-12 text-slate-600" />
-                                <p className="mt-2 text-sm text-slate-400">{t.dashboard.recentActivity.empty}</p>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <Package className="size-12 text-slate-300 dark:text-slate-600" />
+                                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t.dashboard.recentActivity.empty}</p>
+                                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                                     {t.dashboard.recentActivity.emptyHint}
                                 </p>
                             </div>
@@ -250,15 +250,15 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                                 {recentActivities.map((event, index) => (
                                     <li
                                         key={index}
-                                        className="rounded-xl border border-white/10 bg-slate-900/70 p-3"
+                                        className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-white/10 dark:bg-slate-900/70"
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="mt-0.5">
                                                 {getActivityIcon(event.type)}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-white">{event.title}</p>
-                                                <p className="mt-1 text-xs text-slate-300 truncate">{event.description}</p>
+                                                <p className="text-sm font-medium text-slate-900 dark:text-white">{event.title}</p>
+                                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 truncate">{event.description}</p>
                                                 {event.shop && (
                                                     <p className="mt-1 text-[11px] text-slate-500">{event.shop}</p>
                                                 )}

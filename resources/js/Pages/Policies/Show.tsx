@@ -68,7 +68,7 @@ export default function PolicyShow({ policyType, locale = 'en' }: Props) {
           <div className="space-y-8 rounded-lg border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
             {Object.entries(policy.sections).map(([key, section]) => (
               <section key={key}>
-                <h2 className="text-xl font-bold text-white">{section.heading}</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{section.heading}</h2>
                 <p className="mt-3 text-slate-300 leading-relaxed">{section.content}</p>
               </section>
             ))}
@@ -76,7 +76,7 @@ export default function PolicyShow({ policyType, locale = 'en' }: Props) {
 
           {/* Navigation Links */}
           <div className="mt-12 space-y-4 rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-            <p className="text-sm font-medium text-slate-300">Other Policies:</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Other Policies:</p>
             <div className="flex flex-wrap gap-3">
               {policyType !== 'terms' && (
                 <a

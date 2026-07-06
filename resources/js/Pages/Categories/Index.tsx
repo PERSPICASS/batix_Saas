@@ -88,11 +88,11 @@ export default function CategoriesIndex({ categories, shops }: PageProps<{ categ
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.categories.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.categories.title}</h1>}>
             <Head title={t.categories.title} />
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">{t.categories.title}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">{t.categories.title}</p>
                     <Link href={route('categories.create')} className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200">
                         <Plus className="size-4" /> {t.categories.actions.new}
                     </Link>

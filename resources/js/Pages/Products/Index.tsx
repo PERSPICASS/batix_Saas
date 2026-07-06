@@ -187,7 +187,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                                     <AlertTriangle className="size-3.5 shrink-0 text-amber-400" />
                                 </span>
                             )}
-                            <span className="font-medium text-white truncate">{product.name}</span>
+                            <span className="font-medium text-slate-900 dark:text-white truncate">{product.name}</span>
                         </div>
                         {product.sku && <span className="text-xs text-slate-500 font-mono">{product.sku}</span>}
                     </div>
@@ -273,24 +273,24 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.products.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.products.title}</h1>}>
             <Head title={t.products.title} />
 
             <section className="space-y-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-sm text-slate-300">{t.products.description}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">{t.products.description}</p>
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setShowImportModal(true)}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                             >
                                 <Upload className="size-4" />
                                 {t.products.actions.import}
                             </button>
                             <a
                                 href={route('products.export')}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                             >
                                 <Download className="size-4" />
                                 {t.products.actions.export}
@@ -309,7 +309,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             <div className="group relative">
                                 <button
                                     disabled
-                                    className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-slate-400 opacity-60"
+                                    className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-gray-300 px-4 py-2 text-sm font-semibold text-gray-500 opacity-60 dark:bg-slate-600 dark:text-slate-400"
                                 >
                                     <Plus className="size-4" />
                                     {t.products.actions.new}
@@ -322,7 +322,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                     </div>
                 </div>
 
-                <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
@@ -331,14 +331,14 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder={t.products.filters.searchPlaceholder}
-                                className="w-full rounded-lg border border-white/15 bg-white/5 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white"
                             />
                         </div>
 
                         <select
                             value={categoryId}
                             onChange={(e) => setCategoryId(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-sm text-white focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-slate-800 dark:text-white"
                         >
                             <option value="">{t.products.filters.allCategories}</option>
                             {categories.map((category) => (
@@ -349,7 +349,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         <select
                             value={status}
                             onChange={(e) => setStatus(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-sm text-white focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-slate-800 dark:text-white"
                         >
                             <option value="">{t.products.filters.allStatuses}</option>
                             <option value="active">{t.products.filters.active}</option>
@@ -361,7 +361,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                             >
                                 <X className="size-4" />
                                 {t.products.filters.clear}
@@ -372,21 +372,21 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
 
                 {hasActiveFilters && (
                     <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <span className="text-slate-400">{t.products.filters.activeLabel} :</span>
+                        <span className="text-slate-500 dark:text-slate-400">{t.products.filters.activeLabel} :</span>
                         {search && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-300/20 dark:text-amber-300">
                                 {t.products.filters.searchLabel}: "{search}"
                                 <button onClick={() => setSearch('')}><X className="size-3" /></button>
                             </span>
                         )}
                         {categoryId && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-300/20 dark:text-amber-300">
                                 {categories.find(c => c.id.toString() === categoryId)?.name}
                                 <button onClick={() => setCategoryId('')}><X className="size-3" /></button>
                             </span>
                         )}
                         {status && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/20 px-2 py-0.5 text-amber-300">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-300/20 dark:text-amber-300">
                                 {status === 'active' ? t.products.filters.active : status === 'inactive' ? t.products.filters.inactive : t.products.filters.lowStock}
                                 <button onClick={() => setStatus('')}><X className="size-3" /></button>
                             </span>
@@ -397,7 +397,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                 <Table columns={columns} data={products.data} emptyMessage={t.products.emptyMessage} />
 
                 {products.last_page > 1 && (
-                    <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+                    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                         <div>
                             {t.products.pagination.page(products.current_page, products.last_page, products.total)}
                         </div>
@@ -405,7 +405,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             {products.current_page > 1 && (
                                 <Link
                                     href={route('products.index', { page: products.current_page - 1, search: search || undefined, category_id: categoryId || undefined, status: status || undefined })}
-                                    className="rounded-lg border border-white/15 px-3 py-1.5 hover:bg-white/10"
+                                    className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-100 dark:border-white/15 dark:hover:bg-white/10"
                                 >
                                     {t.common.table.previous}
                                 </Link>
@@ -413,7 +413,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             {products.current_page < products.last_page && (
                                 <Link
                                     href={route('products.index', { page: products.current_page + 1, search: search || undefined, category_id: categoryId || undefined, status: status || undefined })}
-                                    className="rounded-lg border border-white/15 px-3 py-1.5 hover:bg-white/10"
+                                    className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-100 dark:border-white/15 dark:hover:bg-white/10"
                                 >
                                     {t.common.table.next}
                                 </Link>
@@ -427,34 +427,34 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
 
             {showImportModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-                    <div className="w-full max-w-lg rounded-xl border border-white/10 bg-slate-900 p-6">
+                    <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-slate-900">
                         <div className="mb-6 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">{t.products.importModal.title}</h2>
-                            <button onClick={() => setShowImportModal(false)} className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.products.importModal.title}</h2>
+                            <button onClick={() => setShowImportModal(false)} className="rounded-lg p-1 text-slate-500 hover:bg-gray-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white">
                                 <X className="size-5" />
                             </button>
                         </div>
 
                         <form onSubmit={handleImport} className="space-y-6">
-                            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                                <h3 className="mb-2 flex items-center gap-2 font-medium text-white">
-                                    <FileSpreadsheet className="size-5 text-amber-300" />
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/5">
+                                <h3 className="mb-2 flex items-center gap-2 font-medium text-slate-900 dark:text-white">
+                                    <FileSpreadsheet className="size-5 text-amber-500 dark:text-amber-300" />
                                     {t.products.importModal.instructionsTitle}
                                 </h3>
-                                <ul className="space-y-1 text-sm text-slate-300">
+                                <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
                                     <li>• {t.products.importModal.instruction1}</li>
                                     <li>• {t.products.importModal.instruction2}</li>
                                     <li>• {t.products.importModal.instruction3}</li>
                                     <li>• {t.products.importModal.instruction4}</li>
                                 </ul>
-                                <a href={route('products.template')} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-amber-300 hover:text-amber-200">
+                                <a href={route('products.template')} className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-300 dark:hover:text-amber-200">
                                     <Download className="size-4" />
                                     {t.products.importModal.templateLink}
                                 </a>
                             </div>
 
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-slate-300">
+                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
                                     {t.products.importModal.fileLabel}
                                 </label>
                                 <input
@@ -462,7 +462,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                                     type="file"
                                     accept=".xlsx,.xls,.csv"
                                     onChange={(e) => setData('file', e.target.files?.[0] || null)}
-                                    className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white file:mr-4 file:rounded-lg file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950 hover:file:bg-amber-200"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 file:mr-4 file:rounded-lg file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-950 hover:file:bg-amber-200 dark:border-white/15 dark:bg-white/5 dark:text-white"
                                 />
                                 <InputError message={errors.file} />
                             </div>
@@ -471,7 +471,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                                 <button
                                     type="button"
                                     onClick={() => setShowImportModal(false)}
-                                    className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-300 hover:bg-white/10"
+                                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
                                     {t.products.importModal.cancel}
                                 </button>

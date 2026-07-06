@@ -15,7 +15,7 @@ export default function Confirmation({ planName, message, status = 'confirmed', 
     const isPending = status === 'pending';
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">{isPending ? t.plans.checkout.confirmation.pendingHeadTitle : t.plans.checkout.confirmation.headTitle}</h2>}>
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-slate-900 dark:text-white">{isPending ? t.plans.checkout.confirmation.pendingHeadTitle : t.plans.checkout.confirmation.headTitle}</h2>}>
             <Head title={isPending ? t.plans.checkout.confirmation.pendingHeadTitle : t.plans.checkout.confirmation.headTitle} />
 
             <div className="mx-auto max-w-lg">
@@ -28,7 +28,7 @@ export default function Confirmation({ planName, message, status = 'confirmed', 
 
                     {/* Titre */}
                     <div>
-                        <h1 className="text-2xl font-bold text-white">{isPending ? t.plans.checkout.confirmation.pendingTitle : t.plans.checkout.confirmation.title}</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{isPending ? t.plans.checkout.confirmation.pendingTitle : t.plans.checkout.confirmation.title}</h1>
                         <p className="mt-2 text-slate-400">
                             {message || (isPending
                                 ? t.plans.checkout.confirmation.pendingMessage

@@ -80,8 +80,8 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
             label: 'Boutique',
             render: (shop: Shop) => (
                 <div>
-                    <p className="font-medium text-white">{shop.name}</p>
-                    <p className="text-xs text-slate-400">/{shop.slug}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{shop.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">/{shop.slug}</p>
                     {shop.address && (
                         <p className="mt-1 text-xs text-slate-500">
                             {shop.address}, {shop.city}
@@ -95,8 +95,8 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
             label: 'Propriétaire',
             render: (shop: Shop) => (
                 <div>
-                    <p className="font-medium text-white">{shop.owner.name}</p>
-                    <p className="text-xs text-slate-400">{shop.owner.email}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{shop.owner.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{shop.owner.email}</p>
                     <p className="text-xs text-slate-500">Code: {shop.owner.code_user}</p>
                 </div>
             ),
@@ -114,7 +114,7 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
             key: 'created_at',
             label: 'Créée le',
             render: (shop: Shop) => (
-                <span className="text-sm text-slate-400">{shop.created_at}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">{shop.created_at}</span>
             ),
         },
         {
@@ -150,7 +150,7 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Gestion des boutiques</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Gestion des boutiques</h1>
                     <Link
                         href={route('platform.dashboard')}
                         className="text-sm text-amber-300 hover:text-amber-200"
@@ -164,17 +164,17 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
 
             <div className="space-y-6">
                 {/* Filtres et recherche */}
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <form onSubmit={handleSearch} className="flex-1">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                                 <input
                                     type="text"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Rechercher par nom, slug ou propriétaire..."
-                                    className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-2 focus:ring-amber-300/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                 />
                             </div>
                         </form>
@@ -219,17 +219,17 @@ export default function PlatformAdminShops({ shops, filters }: Props) {
 
                 {/* Stats rapides */}
                 <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Total boutiques</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{shops.total}</p>
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Total boutiques</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{shops.total}</p>
                     </div>
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Sur cette page</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{shops.data.length}</p>
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Sur cette page</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{shops.data.length}</p>
                     </div>
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Page actuelle</p>
-                        <p className="mt-1 text-2xl font-bold text-white">
+                    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Page actuelle</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
                             {shops.current_page} / {shops.last_page}
                         </p>
                     </div>

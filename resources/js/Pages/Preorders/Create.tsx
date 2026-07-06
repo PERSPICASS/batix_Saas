@@ -174,11 +174,11 @@ export default function Create({ shops, customers, products }: Props) {
                 <div className="flex items-center gap-3">
                     <a
                         href={route('preorders.index')}
-                        className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition"
+                        className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition"
                     >
                         <ArrowLeft className="size-4" />
                     </a>
-                    <h2 className="text-xl font-semibold text-white">{t.preorders.form.pageTitle}</h2>
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t.preorders.form.pageTitle}</h2>
                 </div>
             }
         >
@@ -189,13 +189,13 @@ export default function Create({ shops, customers, products }: Props) {
                     {/* Boutique et client */}
                     <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6 grid gap-4 sm:grid-cols-2">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                 {t.preorders.form.shop}
                             </label>
                             <select
                                 value={data.shop_id}
                                 onChange={(e) => setData('shop_id', e.target.value)}
-                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 required
                             >
                                 <option value="">{t.preorders.form.selectShop}</option>
@@ -209,13 +209,13 @@ export default function Create({ shops, customers, products }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                 {t.preorders.form.customer}
                             </label>
                             <select
                                 value={data.customer_id}
                                 onChange={(e) => setData('customer_id', e.target.value)}
-                                className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 required
                             >
                                 <option value="">{t.preorders.form.selectCustomer}</option>
@@ -230,13 +230,13 @@ export default function Create({ shops, customers, products }: Props) {
                     </div>
 
                     {/* Produits */}
-                    <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/50">
                         <div className="mb-4 flex items-center justify-between">
                             <h3 className="text-sm font-semibold text-slate-200">{t.preorders.form.productsSectionTitle}</h3>
                             <button
                                 type="button"
                                 onClick={addItem}
-                                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 <Plus className="size-3.5" /> {t.preorders.form.addProduct}
                             </button>
@@ -251,14 +251,14 @@ export default function Create({ shops, customers, products }: Props) {
                                     <div key={index} className="rounded-xl border border-white/10 bg-slate-950/40 p-4 space-y-3">
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="flex-1 space-y-1">
-                                                <label className="text-xs text-slate-400">{t.preorders.form.product(index + 1)}</label>
+                                                <label className="text-xs text-slate-500 dark:text-slate-400">{t.preorders.form.product(index + 1)}</label>
                                                 <button
                                                     type="button"
                                                     onClick={() => openProductModal(index)}
                                                     className="flex h-10 w-full items-center justify-between rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-left text-sm text-slate-200 transition hover:border-amber-300/40"
                                                 >
                                                     <span>{item.product_name || t.preorders.form.selectProduct}</span>
-                                                    <span className="text-xs text-slate-400">{t.common.actions.open}</span>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400">{t.common.actions.open}</span>
                                                 </button>
                                             </div>
                                             <button
@@ -273,54 +273,54 @@ export default function Create({ shops, customers, products }: Props) {
 
                                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                             <div>
-                                                <label className="text-xs text-slate-400">{t.preorders.form.quantity}</label>
+                                                <label className="text-xs text-slate-500 dark:text-slate-400">{t.preorders.form.quantity}</label>
                                                 <input
                                                     type="number"
                                                     min="1"
                                                     value={item.quantity_ordered}
                                                     onChange={(e) => updateItem(index, 'quantity_ordered', parseInt(e.target.value) || 1)}
-                                                    className="mt-1 h-10 w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 text-sm text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                                    className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                     required
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs text-slate-400">{t.preorders.form.unitPrice}</label>
+                                                <label className="text-xs text-slate-500 dark:text-slate-400">{t.preorders.form.unitPrice}</label>
                                                 <input
                                                     type="number"
                                                     step="0.01"
                                                     min="0"
                                                     value={item.unit_price}
                                                     onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                                                    className="mt-1 h-10 w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 text-sm text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                                    className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                     required
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs text-slate-400">{t.preorders.form.deliveryDate}</label>
+                                                <label className="text-xs text-slate-500 dark:text-slate-400">{t.preorders.form.deliveryDate}</label>
                                                 <input
                                                     type="date"
                                                     value={item.expected_delivery_date}
                                                     onChange={(e) => updateItem(index, 'expected_delivery_date', e.target.value)}
-                                                    className="mt-1 h-10 w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 text-sm text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                                    className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                     required
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs text-slate-400">{t.preorders.form.deposit}</label>
+                                                <label className="text-xs text-slate-500 dark:text-slate-400">{t.preorders.form.deposit}</label>
                                                 <input
                                                     type="number"
                                                     step="0.01"
                                                     min="0"
                                                     value={item.deposit_amount}
                                                     onChange={(e) => updateItem(index, 'deposit_amount', parseFloat(e.target.value) || 0)}
-                                                    className="mt-1 h-10 w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 text-sm text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                                    className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                 />
                                             </div>
                                         </div>
 
                                         {lineTotal > 0 && (
                                             <div className="flex justify-between border-t border-white/10 pt-2 text-xs text-slate-400">
-                                                <span>{t.preorders.form.lineTotal} <span className="text-slate-200 font-medium">{lineTotal.toFixed(2)} FCFA</span></span>
+                                                <span>{t.preorders.form.lineTotal} <span className="text-slate-700 dark:text-slate-200 font-medium">{lineTotal.toFixed(2)} FCFA</span></span>
                                                 <span>{t.preorders.form.lineRemaining} <span className="text-amber-300 font-medium">{lineRemaining.toFixed(2)} FCFA</span></span>
                                             </div>
                                         )}
@@ -334,7 +334,7 @@ export default function Create({ shops, customers, products }: Props) {
                             <div className="mt-4 border-t border-white/10 pt-4 space-y-1">
                                 <div className="flex justify-between text-sm text-slate-300">
                                     <span>{t.preorders.form.totalAmount(items.length)}</span>
-                                    <span className="font-semibold text-white">{totalAmount.toFixed(2)} FCFA</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{totalAmount.toFixed(2)} FCFA</span>
                                 </div>
                                 <div className="flex justify-between text-sm text-slate-300">
                                     <span>{t.preorders.form.remaining}</span>
@@ -345,15 +345,15 @@ export default function Create({ shops, customers, products }: Props) {
                     </div>
 
                     {/* Notes */}
-                    <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/50">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             {t.preorders.form.notes}
                         </label>
                         <textarea
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white dark:placeholder-slate-500"
                             placeholder={t.preorders.form.notesPlaceholder}
                         />
                     </div>
@@ -385,14 +385,14 @@ export default function Create({ shops, customers, products }: Props) {
                         <button
                             type="button"
                             onClick={() => setShowProductModal(false)}
-                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                            className="rounded-md border border-gray-300 p-1 text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <X className="size-4" />
                         </button>
                     </div>
 
                     <div className="mb-3 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
-                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2">
+                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-slate-900">
                             <Search className="size-4 text-amber-300" />
                             <input
                                 value={productSearch}
@@ -406,26 +406,26 @@ export default function Create({ shops, customers, products }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setProductSearch('')}
-                                    className="rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                                    className="rounded-md p-1 text-slate-500 transition hover:bg-gray-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-200"
                                 >
                                     <X className="size-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
+                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-500 dark:text-slate-400">
                             <span>{t.preorders.form.productModal.keyboardHint}</span>
                             <span>{t.preorders.form.productModal.results(filteredProducts.length)}</span>
                         </div>
                     </div>
 
-                    <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-slate-900/40 p-2">
+                    <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-slate-900/40">
                         {filteredProducts.length > 0 ? (
                             filteredProducts.map((product, index) => (
                                 <div key={product.id}>
                                     {product.has_variations && product.variations?.length > 0 ? (
                                         <div>
                                             <div className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-400">
-                                                <span className="font-medium text-slate-300">{product.name}</span>
+                                                <span className="font-medium text-slate-700 dark:text-slate-300">{product.name}</span>
                                                 <span className="rounded-full bg-amber-300/15 px-1.5 py-0.5 text-xs text-amber-400">
                                                     {t.preorders.form.productModal.variations(product.variations.length)}
                                                 </span>
@@ -461,7 +461,7 @@ export default function Create({ shops, customers, products }: Props) {
                                 </div>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">{t.preorders.form.productModal.noResults}</p>
+                            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">{t.preorders.form.productModal.noResults}</p>
                         )}
                     </div>
                 </div>

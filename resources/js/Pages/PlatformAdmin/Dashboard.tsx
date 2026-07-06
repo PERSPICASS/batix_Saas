@@ -174,9 +174,9 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
         if (active && payload && payload.length) {
             return (
                 <div className="rounded-lg border border-white/10 bg-slate-900 p-3 shadow-lg">
-                    <p className="text-sm text-slate-400">{label}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
                     {payload.map((entry: any, index: number) => (
-                        <p key={index} className="text-sm font-semibold text-white">
+                        <p key={index} className="text-sm font-semibold text-slate-900 dark:text-white">
                             {entry.name}: {entry.value.toLocaleString()}
                         </p>
                     ))}
@@ -190,7 +190,7 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">Administration Plateforme</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Administration Plateforme</h1>
                     <div className="flex items-center gap-2 rounded-lg bg-purple-500/20 px-3 py-1.5 text-sm text-purple-200">
                         <Building2 className="size-4" />
                         Admin Plateforme
@@ -206,11 +206,11 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     {kpis.map((kpi) => (
                         <div
                             key={kpi.label}
-                            className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl"
+                            className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
                         >
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <p className="text-sm text-slate-400">{kpi.label}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{kpi.label}</p>
                                     <p className="mt-2 text-3xl font-bold text-white">{kpi.value}</p>
                                 </div>
                                 <div className={`rounded-lg ${kpi.bgColor} p-2.5 ${kpi.color}`}>
@@ -222,15 +222,15 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                 </div>
 
                 {/* Statistiques des abonnements */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                    <h2 className="mb-4 text-lg font-semibold text-white">Statut des abonnements</h2>
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                    <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Statut des abonnements</h2>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         {subscriptionStats.map((stat) => (
                             <div key={stat.label} className="flex items-center gap-3 rounded-xl bg-white/5 p-4">
                                 <stat.icon className={`size-8 ${stat.color}`} />
                                 <div>
-                                    <p className="text-2xl font-bold text-white">{stat.value}</p>
-                                    <p className="text-sm text-slate-400">{stat.label}</p>
+                                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{stat.label}</p>
                                 </div>
                             </div>
                         ))}
@@ -240,8 +240,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                 {/* Graphiques - Rangée 1 */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Évolution des comptes */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Évolution des comptes</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Évolution des comptes</h2>
                         <ResponsiveContainer width="100%" height={300}>
                             <AreaChart data={charts.accounts_growth}>
                                 <defs>
@@ -274,8 +274,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     </div>
 
                     {/* Évolution des boutiques */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Évolution des boutiques</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Évolution des boutiques</h2>
                         <ResponsiveContainer width="100%" height={300}>
                             <AreaChart data={charts.shops_growth}>
                                 <defs>
@@ -311,8 +311,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                 {/* Graphiques - Rangée 2 */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Répartition des abonnements */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Répartition par plan</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Répartition par plan</h2>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
@@ -340,9 +340,9 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                                             className="h-3 w-3 rounded-full" 
                                             style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
                                         />
-                                        <span className="text-slate-300">{plan.name}</span>
+                                        <span className="text-slate-600 dark:text-slate-300">{plan.name}</span>
                                     </div>
-                                    <span className="font-semibold text-white">
+                                    <span className="font-semibold text-slate-900 dark:text-white">
                                         {plan.revenue.toLocaleString()} FCFA
                                     </span>
                                 </div>
@@ -351,8 +351,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     </div>
 
                     {/* Évolution des revenus */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-                        <h2 className="mb-4 text-lg font-semibold text-white">Évolution des revenus</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Évolution des revenus</h2>
                         <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={charts.revenue_growth}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
@@ -385,8 +385,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-semibold text-white">Comptes</h3>
-                                <p className="mt-1 text-sm text-slate-400">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Comptes</h3>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                     Gérer les comptes
                                 </p>
                             </div>
@@ -400,8 +400,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-semibold text-white">Boutiques</h3>
-                                <p className="mt-1 text-sm text-slate-400">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Boutiques</h3>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                     Voir les boutiques
                                 </p>
                             </div>
@@ -415,8 +415,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-semibold text-white">Plans</h3>
-                                <p className="mt-1 text-sm text-slate-400">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Plans</h3>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                     Gérer les plans
                                 </p>
                             </div>
@@ -430,8 +430,8 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-semibold text-white">Abonnements</h3>
-                                <p className="mt-1 text-sm text-slate-400">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Abonnements</h3>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                     Gérer les abonnements
                                 </p>
                             </div>
@@ -443,9 +443,9 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                 {/* Comptes et Boutiques récents */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Comptes récents */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-white">Comptes récents</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Comptes récents</h3>
                             <Link
                                 href={route('platform.accounts')}
                                 className="text-sm text-amber-300 hover:text-amber-200"
@@ -457,11 +457,11 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                             {recent_accounts.map((account) => (
                                 <div
                                     key={account.id}
-                                    className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3"
+                                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-white/5 dark:bg-white/5"
                                 >
                                     <div className="flex-1">
-                                        <p className="font-medium text-white">{account.name}</p>
-                                        <p className="text-xs text-slate-400">{account.email}</p>
+                                        <p className="font-medium text-slate-900 dark:text-white">{account.name}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{account.email}</p>
                                         <p className="mt-1 text-xs text-slate-500">
                                             Code: {account.code_user}
                                         </p>
@@ -480,9 +480,9 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                     </div>
 
                     {/* Boutiques récentes */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-white">Boutiques récentes</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Boutiques récentes</h3>
                             <Link
                                 href={route('platform.shops')}
                                 className="text-sm text-amber-300 hover:text-amber-200"
@@ -494,11 +494,11 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                             {recent_shops.map((shop) => (
                                 <div
                                     key={shop.id}
-                                    className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 p-3"
+                                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-white/5 dark:bg-white/5"
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2">
-                                            <p className="font-medium text-white">{shop.name}</p>
+                                            <p className="font-medium text-slate-900 dark:text-white">{shop.name}</p>
                                             {shop.is_active ? (
                                                 <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
                                                     Active
@@ -509,7 +509,7 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-xs text-slate-400">{shop.owner.name}</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">{shop.owner.name}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-xs text-slate-500">

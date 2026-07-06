@@ -92,7 +92,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
             key: 'email',
             label: t.users.columns.email,
             render: (user: User) => (
-                <div className="flex items-center gap-2 text-slate-300">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <Mail className="size-4" />
                     {user.email}
                 </div>
@@ -102,7 +102,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
             key: 'shop',
             label: t.users.columns.shop,
             render: (user: User) => (
-                <div className="flex items-center gap-2 text-slate-300">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     {user.shop ? (
                         <>
                             <Store className="size-4" />
@@ -143,7 +143,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
                 <TableActions>
                     <Link
                         href={route('users.edit', { user: user.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         <Pencil className="size-3.5" /> {t.users.actions.edit}
                     </Link>
@@ -156,7 +156,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.users.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.users.title}</h1>}>
             <Head title={t.users.title} />
 
             <section className="space-y-6">
@@ -164,12 +164,12 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
 
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="text-sm text-slate-300">{t.users.subtitle}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">{t.users.subtitle}</p>
                         {!canCreateUser && remainingUsers === 0 && (
                             <p className="mt-1 text-xs text-amber-400">{t.users.limitReached}</p>
                         )}
                         {remainingUsers > 0 && (
-                            <p className="mt-1 text-xs text-slate-400">{t.users.remaining(remainingUsers)}</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.users.remaining(remainingUsers)}</p>
                         )}
                     </div>
                     <Link

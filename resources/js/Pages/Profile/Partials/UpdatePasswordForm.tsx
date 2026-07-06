@@ -54,31 +54,31 @@ export default function UpdatePasswordForm({
     return (
         <section className={className}>
             <header className="mb-6">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                     <Lock className="h-5 w-5 text-amber-300" />
                     {t.profile.form.password.title}
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-300">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                     {t.profile.form.password.description}
                 </p>
             </header>
 
             <form onSubmit={updatePassword} className="mt-6 space-y-6">
                 <div>
-                    <label htmlFor="current_password" className="block text-sm font-medium text-slate-200">
+                    <label htmlFor="current_password" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t.profile.form.password.currentPassword}
                     </label>
 
                     <div className="relative mt-1">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Lock className="h-5 w-5 text-slate-400" />
+                            <Lock className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                         </div>
                         <input
                             id="current_password"
                             ref={currentPasswordInput}
                             type="password"
-                            className="block w-full pl-10 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="block w-full pl-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             value={data.current_password}
                             onChange={(e) => setData('current_password', e.target.value)}
                             autoComplete="current-password"
@@ -91,19 +91,19 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-slate-200">
+                    <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t.profile.form.password.newPassword}
                     </label>
 
                     <div className="relative mt-1">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Lock className="h-5 w-5 text-slate-400" />
+                            <Lock className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                         </div>
                         <input
                             id="password"
                             ref={passwordInput}
                             type="password"
-                            className="block w-full pl-10 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="block w-full pl-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             autoComplete="new-password"
@@ -114,18 +114,18 @@ export default function UpdatePasswordForm({
                 </div>
 
                 <div>
-                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-200">
+                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t.profile.form.password.confirmPassword}
                     </label>
 
                     <div className="relative mt-1">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Lock className="h-5 w-5 text-slate-400" />
+                            <Lock className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                         </div>
                         <input
                             id="password_confirmation"
                             type="password"
-                            className="block w-full pl-10 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="block w-full pl-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             value={data.password_confirmation}
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             autoComplete="new-password"

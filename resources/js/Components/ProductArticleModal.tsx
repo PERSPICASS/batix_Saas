@@ -106,9 +106,9 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
     if (!isOpen) return null;
 
     const statusColors = {
-        available: 'bg-green-500/20 text-green-400',
-        sold: 'bg-gray-500/20 text-gray-400',
-        archived: 'bg-amber-500/20 text-amber-400',
+        available: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400',
+        sold: 'bg-gray-200 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400',
+        archived: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400',
     };
 
     const statusLabels = {
@@ -119,21 +119,21 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-slate-950 p-6">
+            <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-slate-950">
                 {/* Header */}
                 <div className="mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Tag className="size-5 text-amber-300" />
+                        <Tag className="size-5 text-amber-500 dark:text-amber-300" />
                         <div>
-                            <h2 className="text-xl font-semibold text-white">
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                                 Articles
                             </h2>
-                            <p className="text-sm text-slate-400">{productName}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{productName}</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="rounded p-2 hover:bg-white/10"
+                        className="rounded p-2 text-slate-500 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-white/10"
                     >
                         <X className="size-5" />
                     </button>
@@ -141,19 +141,19 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
 
                 {/* Messages */}
                 {error && (
-                    <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+                    <div className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400">
                         {error}
                     </div>
                 )}
                 {success && (
-                    <div className="mb-4 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+                    <div className="mb-4 rounded-lg border border-green-300 bg-green-50 p-3 text-sm text-green-700 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-400">
                         {success}
                     </div>
                 )}
 
                 {/* Add Article */}
-                <div className="mb-6 space-y-3 rounded-lg border border-white/10 bg-slate-900/40 p-4">
-                    <label className="block text-sm font-medium text-slate-200">
+                <div className="mb-6 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-slate-900/40">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                         Ajouter un article
                     </label>
                     <div className="flex gap-2">
@@ -165,7 +165,7 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
                                 e.key === 'Enter' && handleAddArticle()
                             }
                             placeholder="Ex: Chaise IKEA - Lot février 2024 - Blanche"
-                            className="flex-1 rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-slate-200 placeholder-slate-600 focus:border-amber-300 focus:outline-none"
+                            className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:outline-none dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:placeholder-slate-600"
                             disabled={loading}
                         />
                         <button
@@ -181,17 +181,17 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
                 {/* Articles List */}
                 <div className="max-h-96 space-y-2 overflow-y-auto">
                     {articles.length === 0 ? (
-                        <p className="py-8 text-center text-slate-500">
+                        <p className="py-8 text-center text-slate-500 dark:text-slate-500">
                             Aucun article
                         </p>
                     ) : (
                         articles.map((article) => (
                             <div
                                 key={article.id}
-                                className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/40 p-4"
+                                className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-slate-900/40"
                             >
                                 <div className="flex-1">
-                                    <p className="text-slate-200">{article.name}</p>
+                                    <p className="text-slate-800 dark:text-slate-200">{article.name}</p>
                                     <p className="text-xs text-slate-500">
                                         {new Date(article.created_at).toLocaleDateString('fr-FR')}
                                     </p>
@@ -222,7 +222,7 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
                                     {/* Delete Button */}
                                     <button
                                         onClick={() => handleDeleteArticle(article.id)}
-                                        className="rounded p-2 text-slate-400 hover:bg-red-500/20 hover:text-red-400"
+                                        className="rounded p-2 text-slate-500 hover:bg-red-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/20 dark:hover:text-red-400"
                                     >
                                         <Trash2 className="size-4" />
                                     </button>
@@ -236,7 +236,7 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
                 <div className="mt-6 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="rounded-lg border border-white/15 px-6 py-2 text-slate-200 hover:bg-white/5"
+                        className="rounded-lg border border-gray-300 px-6 py-2 text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                     >
                         Fermer
                     </button>

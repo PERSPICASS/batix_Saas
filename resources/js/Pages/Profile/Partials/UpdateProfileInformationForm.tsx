@@ -35,30 +35,30 @@ export default function UpdateProfileInformation({
     return (
         <section className={className}>
             <header className="mb-6">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                     <User className="h-5 w-5 text-amber-300" />
                     {t.profile.form.info.title}
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-300">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                     {t.profile.form.info.description}
                 </p>
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
                 <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-slate-200">
+                    <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t.profile.form.info.name}
                     </label>
 
                     <div className="relative mt-1">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <User className="h-5 w-5 text-slate-400" />
+                            <User className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                         </div>
                         <input
                             id="name"
                             type="text"
-                            className="block w-full pl-10 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="block w-full pl-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             required
@@ -71,18 +71,18 @@ export default function UpdateProfileInformation({
                 </div>
 
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-slate-200">
+                    <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t.profile.form.info.email}
                     </label>
 
                     <div className="relative mt-1">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Mail className="h-5 w-5 text-slate-400" />
+                            <Mail className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                         </div>
                         <input
                             id="email"
                             type="email"
-                            className="block w-full pl-10 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="block w-full pl-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                             required

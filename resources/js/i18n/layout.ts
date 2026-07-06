@@ -10,6 +10,8 @@ export const layout = {
         theme: {
             light: 'Mode clair',
             dark: 'Mode sombre',
+            system: 'Mode système',
+            label: 'Thème',
         },
         subscription: {
             title: 'Abonnement',
@@ -44,6 +46,8 @@ export const layout = {
         theme: {
             light: 'Light mode',
             dark: 'Dark mode',
+            system: 'System mode',
+            label: 'Theme',
         },
         subscription: {
             title: 'Subscription',

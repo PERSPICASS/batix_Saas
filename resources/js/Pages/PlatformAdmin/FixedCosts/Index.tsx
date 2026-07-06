@@ -43,9 +43,9 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
             label: t.platformFixedCosts.index.columns.name,
             render: (cost: FixedCost) => (
                 <div>
-                    <p className="font-medium text-white">{cost.name}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{cost.name}</p>
                     {cost.description && (
-                        <p className="text-xs text-slate-400">{cost.description}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{cost.description}</p>
                     )}
                 </div>
             ),
@@ -67,7 +67,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                     <DollarSign className="size-4" />
                     <div>
                         <div>{parseFloat(cost.amount_monthly.toString()).toFixed(2)} {cost.currency}</div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                             {cost.billing_cycle === 'monthly' ? t.platformFixedCosts.billingCycles.monthly : t.platformFixedCosts.billingCycles.annual}
                         </div>
                     </div>
@@ -112,7 +112,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-white">{t.platformFixedCosts.index.title}</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.platformFixedCosts.index.title}</h1>
                     <Link
                         href={route('platform.dashboard')}
                         className="text-sm text-amber-300 hover:text-amber-200"
@@ -128,8 +128,8 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                 {/* Boutons et stats */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1">
-                        <p className="text-sm text-slate-400">{t.platformFixedCosts.index.activeCostsLabel} <span className="font-semibold text-white">{activeCosts.length}</span></p>
-                        <p className="text-sm text-slate-400">{t.platformFixedCosts.index.totalMonthlyLabel} <span className="font-semibold text-amber-300">€{total_monthly.toFixed(2)}</span></p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.platformFixedCosts.index.activeCostsLabel} <span className="font-semibold text-slate-900 dark:text-white">{activeCosts.length}</span></p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.platformFixedCosts.index.totalMonthlyLabel} <span className="font-semibold text-amber-300">€{total_monthly.toFixed(2)}</span></p>
                     </div>
                     <Link
                         href={route('platform.fixed-costs.create')}

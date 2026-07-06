@@ -59,7 +59,7 @@ export default function BlogEdit({ post }: Props) {
                         <ArrowLeft className="size-5" />
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-white">{t.platformBlog.edit.title}</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.platformBlog.edit.title}</h1>
                         <p className="mt-1 text-sm text-white/60">{post.slug}</p>
                     </div>
                 </div>
@@ -68,7 +68,7 @@ export default function BlogEdit({ post }: Props) {
                     <div className="grid gap-6 lg:grid-cols-3">
                         {/* Contenu principal */}
                         <div className="space-y-5 lg:col-span-2">
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
+                            <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5 dark:border-white/10 dark:bg-white/5">
                                 <h2 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t.platformBlog.form.content}</h2>
 
                                 <div className="grid gap-5 sm:grid-cols-2">
@@ -131,7 +131,7 @@ export default function BlogEdit({ post }: Props) {
 
                         {/* Sidebar */}
                         <div className="space-y-5">
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
+                            <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5 dark:border-white/10 dark:bg-white/5">
                                 <h2 className="text-sm font-semibold uppercase tracking-wider text-white/40">{t.platformBlog.form.settings}</h2>
 
                                 <Field label={t.platformBlog.form.author} error={errors.author_name}>

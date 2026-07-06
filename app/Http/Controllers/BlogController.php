@@ -17,6 +17,10 @@ class BlogController extends Controller
 
         return Inertia::render('Blog/Index', [
             'posts' => $posts,
+            'localeLinks' => [
+                'fr' => route('blog.index'),
+                'en' => route('en.blog.index'),
+            ],
         ]);
     }
 
@@ -26,6 +30,10 @@ class BlogController extends Controller
 
         return Inertia::render('Blog/Show', [
             'post' => $this->formatPost($post, true),
+            'localeLinks' => [
+                'fr' => route('blog.show', $slug),
+                'en' => route('en.blog.show', $slug),
+            ],
         ]);
     }
 

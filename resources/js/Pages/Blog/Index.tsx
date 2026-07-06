@@ -1,10 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
-import WelcomeHeader from '@/Components/Welcome/WelcomeHeader';
-import WelcomeFooter from '@/Components/Welcome/WelcomeFooter';
+import PublicLayout from '@/Layouts/PublicLayout';
 import { PageProps } from '@/types';
-import { Calendar, User, Tag, ArrowRight } from 'lucide-react';
-import { useState, useEffect } from 'react';
 import type { Locale } from '@/types/types';
+import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import { Calendar, User, Tag, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
 
 interface Post {
     id: number;
@@ -21,22 +21,12 @@ interface Post {
 
 interface Props extends PageProps {
     posts: Post[];
+    locale: Locale;
+    localeLinks: Record<Locale, string>;
 }
 
-export default function BlogIndex({ auth, posts }: Props) {
-    const [locale, setLocale] = useState<Locale>('fr');
-    const [scrolled] = useState(false);
-
-    useEffect(() => {
-        const saved = typeof window !== 'undefined' ? window.localStorage.getItem('landing_locale') : null;
-        if (saved === 'en') setLocale('en');
-    }, []);
-
-    const getDashboardUrl = () => {
-        if (!auth.user) return route('register');
-        if (auth.user.role === 'admin_platforme') return route('platform.dashboard');
-        return route('register');
-    };
+export default function BlogIndex({ auth, posts, locale, localeLinks }: Props) {
+    const getDashboardUrl = useDashboardUrl(auth);
 
     const getTitle = (post: Post) => (locale === 'en' && post.title_en) ? post.title_en : post.title_fr;
     const getExcerpt = (post: Post) => (locale === 'en' && post.excerpt_en) ? post.excerpt_en : post.excerpt_fr;
@@ -45,31 +35,28 @@ export default function BlogIndex({ auth, posts }: Props) {
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
     const filtered = activeCategory ? posts.filter(p => p.category === activeCategory) : posts;
 
-    const nav = {
-        demo: 'Démo',
-        features: locale === 'fr' ? 'Fonctionnalités' : 'Features',
-        pricing: locale === 'fr' ? 'Tarifs' : 'Pricing',
-        faq: 'FAQ',
-        contact: 'Contact',
-    };
+    const canonicalUrl = localeLinks[locale];
 
     return (
         <>
-            <Head title={locale === 'fr' ? 'Blog – Conseils quincaillerie | BATIX PRO' : 'Blog – Hardware Store Tips | BATIX PRO'} />
+            <Head title={locale === 'fr' ? 'Blog – Conseils quincaillerie | BATIX PRO' : 'Blog – Hardware Store Tips | BATIX PRO'}>
+                <link rel="canonical" href={canonicalUrl} />
+                <link rel="alternate" hrefLang="fr" href={localeLinks.fr} />
+                <link rel="alternate" hrefLang="en" href={localeLinks.en} />
+                <link rel="alternate" hrefLang="x-default" href={localeLinks.fr} />
+                <meta property="og:locale" content={locale === 'fr' ? 'fr_FR' : 'en_US'} />
+            </Head>
 
-            <div className="min-h-screen bg-[#faf6f0]">
-                <WelcomeHeader
-                    locale={locale}
-                    setLocale={setLocale}
-                    scrolled={scrolled}
-                    getDashboardUrl={getDashboardUrl}
-                    isAuthenticated={!!auth.user}
-                />
-
-                <main className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+            <PublicLayout
+                locale={locale}
+                localeLinks={localeLinks}
+                isAuthenticated={!!auth.user}
+                getDashboardUrl={getDashboardUrl}
+            >
+                <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
                     {/* En-tête */}
                     <div className="mb-12">
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-700">
                             {locale === 'fr' ? 'Ressources' : 'Resources'}
                         </p>
                         <h1 className="mt-2 text-4xl font-extrabold text-slate-900">
@@ -87,8 +74,8 @@ export default function BlogIndex({ auth, posts }: Props) {
                                     onClick={() => setActiveCategory(null)}
                                     className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                                         activeCategory === null
-                                            ? 'bg-amber-400 text-slate-900'
-                                            : 'bg-white border border-[#d8cfbe] text-slate-600 hover:border-amber-300'
+                                            ? 'bg-terre-600 text-white'
+                                            : 'bg-white border border-gray-200 text-slate-600 hover:border-terre-300'
                                     }`}
                                 >
                                     {locale === 'fr' ? 'Tous' : 'All'}
@@ -99,8 +86,8 @@ export default function BlogIndex({ auth, posts }: Props) {
                                         onClick={() => setActiveCategory(cat)}
                                         className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                                             activeCategory === cat
-                                                ? 'bg-amber-400 text-slate-900'
-                                                : 'bg-white border border-[#d8cfbe] text-slate-600 hover:border-amber-300'
+                                                ? 'bg-terre-600 text-white'
+                                                : 'bg-white border border-gray-200 text-slate-600 hover:border-terre-300'
                                         }`}
                                     >
                                         {cat}
@@ -112,7 +99,7 @@ export default function BlogIndex({ auth, posts }: Props) {
 
                     {/* Grille */}
                     {filtered.length === 0 ? (
-                        <div className="rounded-2xl border border-dashed border-[#c8bfaf] bg-white/40 py-16 text-center text-slate-500">
+                        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 py-16 text-center text-slate-500">
                             <p>{locale === 'fr' ? 'Aucun article dans cette catégorie.' : 'No articles in this category.'}</p>
                         </div>
                     ) : (
@@ -121,7 +108,7 @@ export default function BlogIndex({ auth, posts }: Props) {
                                 <Link
                                     key={post.id}
                                     href={route('blog.show', post.slug)}
-                                    className="group flex flex-col overflow-hidden rounded-2xl border border-[#d8cfbe] bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                    className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                                 >
                                     {post.cover_image ? (
                                         <img
@@ -130,18 +117,18 @@ export default function BlogIndex({ auth, posts }: Props) {
                                             className="h-44 w-full object-cover"
                                         />
                                     ) : (
-                                        <div className="flex h-44 items-center justify-center bg-amber-100 text-4xl">🔧</div>
+                                        <div className="flex h-44 items-center justify-center bg-terre-50 text-4xl">🔧</div>
                                     )}
 
                                     <div className="flex flex-1 flex-col gap-3 p-5">
                                         {post.category && (
-                                            <div className="flex items-center gap-1 text-xs font-medium text-amber-700">
+                                            <div className="flex items-center gap-1 text-xs font-medium text-terre-700">
                                                 <Tag className="size-3" />
                                                 {post.category}
                                             </div>
                                         )}
 
-                                        <h2 className="text-base font-semibold leading-snug text-slate-900 transition group-hover:text-amber-700">
+                                        <h2 className="text-base font-semibold leading-snug text-slate-900 transition group-hover:text-terre-700">
                                             {getTitle(post)}
                                         </h2>
 
@@ -165,7 +152,7 @@ export default function BlogIndex({ auth, posts }: Props) {
                                             )}
                                         </div>
 
-                                        <div className="flex items-center gap-1 text-sm font-medium text-amber-700">
+                                        <div className="flex items-center gap-1 text-sm font-medium text-terre-700">
                                             {locale === 'fr' ? "Lire l'article" : 'Read more'}
                                             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                                         </div>
@@ -174,13 +161,8 @@ export default function BlogIndex({ auth, posts }: Props) {
                             ))}
                         </div>
                     )}
-                </main>
-
-                <WelcomeFooter
-                    footerText={locale === 'fr' ? 'Tous droits réservés.' : 'All rights reserved.'}
-                    nav={nav}
-                />
-            </div>
+                </div>
+            </PublicLayout>
         </>
     );
 }

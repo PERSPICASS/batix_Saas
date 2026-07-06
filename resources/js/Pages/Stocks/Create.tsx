@@ -84,21 +84,21 @@ export default function StocksCreate({ shops, products }: Props) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Nouveau mouvement de stock</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Nouveau mouvement de stock</h1>}>
             <Head title="Nouveau mouvement de stock" />
 
             <div className="mx-auto max-w-2xl">
-                <form onSubmit={submit} className="space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+                <form onSubmit={submit} className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                     <div className="grid gap-6 md:grid-cols-2">
                         <div>
-                            <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="shop_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.common.form.shopField}
                             </label>
                             <select
                                 id="shop_id"
                                 value={data.shop_id}
                                 disabled
-                                className="mt-1 block w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
+                                className="mt-1 block w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-slate-500 cursor-not-allowed dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-400"
                             >
                                 {shops.map((shop) => (
                                     <option key={shop.id} value={shop.id}>
@@ -106,21 +106,21 @@ export default function StocksCreate({ shops, products }: Props) {
                                     </option>
                                 ))}
                             </select>
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                 Boutique sélectionnée via le switcher
                             </p>
                             <InputError message={errors.shop_id} />
                         </div>
 
                         <div>
-                            <label htmlFor="type" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="type" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.stocks.form.type}
                             </label>
                             <select
                                 id="type"
                                 value={data.type}
                                 onChange={(e) => setData('type', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             >
                                 <option value="in">Entrée (+)</option>
                                 <option value="out">Sortie (-)</option>
@@ -131,7 +131,7 @@ export default function StocksCreate({ shops, products }: Props) {
                         </div>
 
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-slate-200">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {t.stocks.form.product}
                             </label>
 
@@ -142,11 +142,11 @@ export default function StocksCreate({ shops, products }: Props) {
                                 {selectedProduct && !dropdownOpen ? (
                                     <div className="flex items-center justify-between rounded-lg border border-amber-500/50 bg-slate-900/70 px-3 py-2">
                                         <div>
-                                            <span className="text-sm font-medium text-slate-200">
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                                                 {selectedProduct.name}
                                             </span>
                                             {selectedProduct.sku && (
-                                                <span className="ml-2 text-xs text-slate-400">
+                                                <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
                                                     ({selectedProduct.sku})
                                                 </span>
                                             )}
@@ -158,7 +158,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                             <button
                                                 type="button"
                                                 onClick={() => setDropdownOpen(true)}
-                                                className="rounded p-1 text-slate-400 hover:text-white transition-colors"
+                                                className="rounded p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
                                                 title="Changer de produit"
                                             >
                                                 <ChevronDown className="h-4 w-4" />
@@ -166,7 +166,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                             <button
                                                 type="button"
                                                 onClick={clearProduct}
-                                                className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
+                                                className="rounded p-1 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
                                                 title="Supprimer"
                                             >
                                                 <X className="h-4 w-4" />
@@ -208,13 +208,13 @@ export default function StocksCreate({ shops, products }: Props) {
                                                     className={`w-full flex items-center justify-between px-4 py-2.5 text-left text-sm hover:bg-white/5 transition-colors border-b border-white/5 last:border-0 ${
                                                         data.product_id === product.id.toString()
                                                             ? 'bg-amber-500/10 text-amber-300'
-                                                            : 'text-slate-200'
+                                                            : 'text-slate-700 dark:text-slate-200'
                                                     }`}
                                                 >
                                                     <div>
                                                         <span className="font-medium">{product.name}</span>
                                                         {product.sku && (
-                                                            <span className="ml-2 text-xs text-slate-400">
+                                                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
                                                                 {product.sku}
                                                             </span>
                                                         )}
@@ -250,7 +250,7 @@ export default function StocksCreate({ shops, products }: Props) {
                         </div>
 
                         <div>
-                            <label htmlFor="quantity" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="quantity" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Quantité * {data.type === 'out' ? '(sera soustraite)' : '(sera ajoutée)'}
                             </label>
                             <input
@@ -258,14 +258,14 @@ export default function StocksCreate({ shops, products }: Props) {
                                 id="quantity"
                                 value={data.quantity}
                                 onChange={(e) => setData('quantity', Number(e.target.value))}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 min="1"
                             />
                             <InputError message={errors.quantity} />
                         </div>
 
                         <div>
-                            <label htmlFor="unit_cost" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="unit_cost" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Coût unitaire (DH)
                             </label>
                             <input
@@ -274,14 +274,14 @@ export default function StocksCreate({ shops, products }: Props) {
                                 id="unit_cost"
                                 value={data.unit_cost}
                                 onChange={(e) => setData('unit_cost', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="0.00"
                             />
                             <InputError message={errors.unit_cost} />
                         </div>
 
                         <div>
-                            <label htmlFor="movement_date" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="movement_date" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Date du mouvement *
                             </label>
                             <input
@@ -289,13 +289,13 @@ export default function StocksCreate({ shops, products }: Props) {
                                 id="movement_date"
                                 value={data.movement_date}
                                 onChange={(e) => setData('movement_date', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             />
                             <InputError message={errors.movement_date} />
                         </div>
 
                         <div className="md:col-span-2">
-                            <label htmlFor="notes" className="block text-sm font-medium text-slate-200">
+                            <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Notes
                             </label>
                             <textarea
@@ -303,7 +303,7 @@ export default function StocksCreate({ shops, products }: Props) {
                                 value={data.notes}
                                 onChange={(e) => setData('notes', e.target.value)}
                                 rows={3}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="Raison du mouvement, détails..."
                             />
                             <InputError message={errors.notes} />
@@ -324,10 +324,10 @@ export default function StocksCreate({ shops, products }: Props) {
                         </div>
                     )}
 
-                    <div className="flex items-center justify-end gap-3 border-t border-white/10 pt-4">
+                    <div className="flex items-center justify-end gap-3 border-t border-gray-200 dark:border-white/10 pt-4">
                         <Link
                             href={route('stocks.index')}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             Annuler
                         </Link>

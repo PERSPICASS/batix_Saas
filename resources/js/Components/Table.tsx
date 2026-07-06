@@ -37,10 +37,10 @@ export default function Table<T extends Record<string, any>>({
     };
 
     return (
-        <div className={`overflow-hidden rounded-2xl border border-white/10 bg-white/5 ${className}`}>
+        <div className={`overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5 ${className}`}>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                    <thead className="bg-slate-900/80 text-slate-300">
+                    <thead className="bg-gray-50 text-slate-600 dark:bg-slate-900/80 dark:text-slate-300">
                         <tr>
                             {columns.map((column) => (
                                 <th
@@ -57,7 +57,7 @@ export default function Table<T extends Record<string, any>>({
                             <tr>
                                 <td
                                     colSpan={columns.length}
-                                    className="px-4 py-8 text-center text-slate-400"
+                                    className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                                 >
                                     {emptyMessage}
                                 </td>
@@ -66,9 +66,9 @@ export default function Table<T extends Record<string, any>>({
                             data.map((item) => (
                                 <tr
                                     key={keyExtractor(item)}
-                                    className={`border-t border-white/10 text-slate-200 transition-colors ${
+                                    className={`border-t border-gray-200 text-slate-700 transition-colors dark:border-white/10 dark:text-slate-200 ${
                                         onRowClick
-                                            ? 'cursor-pointer hover:bg-white/5'
+                                            ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5'
                                             : ''
                                     }`}
                                     onClick={() => onRowClick?.(item)}
@@ -121,9 +121,9 @@ export function TableActionButton({
     className = '',
 }: TableActionButtonProps) {
     const variantClasses = {
-        default: 'border-white/15 text-slate-200 hover:bg-white/10',
-        danger: 'border-rose-300/30 text-rose-200 hover:bg-rose-300/10',
-        success: 'border-emerald-300/30 text-emerald-200 hover:bg-emerald-300/10',
+        default: 'border-gray-300 text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10',
+        danger: 'border-rose-300 text-rose-600 hover:bg-rose-50 dark:border-rose-300/30 dark:text-rose-200 dark:hover:bg-rose-300/10',
+        success: 'border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-300/30 dark:text-emerald-200 dark:hover:bg-emerald-300/10',
     };
 
     return (
@@ -148,11 +148,11 @@ interface TableBadgeProps {
 
 export function TableBadge({ variant = 'default', children }: TableBadgeProps) {
     const variantClasses = {
-        success: 'bg-green-500/20 text-green-300',
-        danger: 'bg-red-500/20 text-red-300',
-        warning: 'bg-amber-500/20 text-amber-300',
-        info: 'bg-blue-500/20 text-blue-300',
-        default: 'bg-slate-500/20 text-slate-300',
+        success: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300',
+        danger: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+        warning: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+        info: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+        default: 'bg-slate-200 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300',
     };
 
     return (

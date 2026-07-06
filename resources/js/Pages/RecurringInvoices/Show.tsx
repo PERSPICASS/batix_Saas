@@ -25,15 +25,15 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.recurringInvoices.columns.cycle}: {recurringInvoice.invoice_prefix}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.recurringInvoices.columns.cycle}: {recurringInvoice.invoice_prefix}</h1>}>
             <Head title={`${t.recurringInvoices.columns.cycle} ${recurringInvoice.invoice_prefix}`} />
 
             <div className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
                     {/* En-tête */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-white">
+                            <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                                 <FileText className="size-5 text-amber-300" />
                                 <h2 className="text-lg font-semibold">{recurringInvoice.invoice_prefix}</h2>
                             </div>
@@ -48,50 +48,50 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.customer}</p>
-                                <p className="text-white font-medium">{recurringInvoice.customer.name}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{t.recurringInvoices.form.customer}</p>
+                                <p className="text-slate-900 dark:text-white font-medium">{recurringInvoice.customer.name}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.frequency}</p>
-                                <p className="text-white font-medium">{t.recurringInvoices.frequency[recurringInvoice.frequency as keyof typeof t.recurringInvoices.frequency]}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{t.recurringInvoices.form.frequency}</p>
+                                <p className="text-slate-900 dark:text-white font-medium">{t.recurringInvoices.frequency[recurringInvoice.frequency as keyof typeof t.recurringInvoices.frequency]}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.startDate}</p>
-                                <p className="text-white font-medium">{new Date(recurringInvoice.start_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{t.recurringInvoices.form.startDate}</p>
+                                <p className="text-slate-900 dark:text-white font-medium">{new Date(recurringInvoice.start_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">{t.recurringInvoices.form.nextInvoiceDate}</p>
-                                <p className="text-white font-medium">{new Date(recurringInvoice.next_invoice_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{t.recurringInvoices.form.nextInvoiceDate}</p>
+                                <p className="text-slate-900 dark:text-white font-medium">{new Date(recurringInvoice.next_invoice_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
                             </div>
                             {recurringInvoice.end_date && (
                                 <div>
-                                    <p className="text-sm text-slate-400 mb-1">{t.invoices.form.dueDate}</p>
-                                    <p className="text-white font-medium">{new Date(recurringInvoice.end_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">{t.invoices.form.dueDate}</p>
+                                    <p className="text-slate-900 dark:text-white font-medium">{new Date(recurringInvoice.end_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* Articles */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <h2 className="mb-4 text-lg font-semibold text-white">{t.invoices.form.invoiceLines}</h2>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.invoices.form.invoiceLines}</h2>
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-white/10">
+                                    <tr className="border-b border-gray-200 dark:border-white/10">
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">{t.invoices.form.product}</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">{t.invoices.form.quantity}</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">{t.invoices.form.unitPrice}</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">{t.invoices.form.price}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">{t.invoices.form.quantity}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">{t.invoices.form.unitPrice}</th>
+                                        <th className="px-4 py-3 text-right text-sm font-semibold text-slate-600 dark:text-slate-300">{t.invoices.form.price}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/10">
                                     {recurringInvoice.items.map((item: any, index: number) => (
                                         <tr key={index} className="hover:bg-white/5">
-                                            <td className="px-4 py-3 text-white">{item.product_name}</td>
-                                            <td className="px-4 py-3 text-right text-white">{item.quantity}</td>
-                                            <td className="px-4 py-3 text-right text-white"><Currency amount={parseFloat(item.unit_price)} /></td>
-                                            <td className="px-4 py-3 text-right text-white font-medium"><Currency amount={parseFloat(item.unit_price) * item.quantity} /></td>
+                                            <td className="px-4 py-3 text-slate-900 dark:text-white">{item.product_name}</td>
+                                            <td className="px-4 py-3 text-right text-slate-900 dark:text-white">{item.quantity}</td>
+                                            <td className="px-4 py-3 text-right text-slate-900 dark:text-white"><Currency amount={parseFloat(item.unit_price)} /></td>
+                                            <td className="px-4 py-3 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(item.unit_price) * item.quantity} /></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -101,15 +101,15 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                         {/* Totaux */}
                         <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
                             <div className="flex justify-end gap-8">
-                                <span className="text-slate-300">{t.invoices.form.subtotal}:</span>
-                                <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(recurringInvoice.subtotal)} /></span>
+                                <span className="text-slate-600 dark:text-slate-300">{t.invoices.form.subtotal}:</span>
+                                <span className="w-24 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(recurringInvoice.subtotal)} /></span>
                             </div>
                             <div className="flex justify-end gap-8">
-                                <span className="text-slate-300">{t.invoices.form.taxAmount} (18%):</span>
-                                <span className="w-24 text-right text-white font-medium"><Currency amount={parseFloat(recurringInvoice.tax_amount)} /></span>
+                                <span className="text-slate-600 dark:text-slate-300">{t.invoices.form.taxAmount} (18%):</span>
+                                <span className="w-24 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(recurringInvoice.tax_amount)} /></span>
                             </div>
                             <div className="flex justify-end gap-8 border-t border-white/10 pt-2">
-                                <span className="text-white font-bold">{t.invoices.form.total}:</span>
+                                <span className="text-slate-900 dark:text-white font-bold">{t.invoices.form.total}:</span>
                                 <span className="w-24 text-right text-xl font-bold text-amber-300"><Currency amount={parseFloat(recurringInvoice.total)} /></span>
                             </div>
                         </div>
@@ -117,16 +117,16 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
 
                     {/* Notes */}
                     {recurringInvoice.notes && (
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                            <h2 className="mb-4 text-lg font-semibold text-white">{t.invoices.form.notes}</h2>
-                            <p className="text-white whitespace-pre-wrap text-sm">{recurringInvoice.notes}</p>
+                        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.invoices.form.notes}</h2>
+                            <p className="text-slate-900 dark:text-white whitespace-pre-wrap text-sm">{recurringInvoice.notes}</p>
                         </div>
                     )}
 
                     {/* Historique */}
                     {recurringInvoice.invoices && recurringInvoice.invoices.length > 0 && (
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                                 <Calendar className="size-5 text-amber-300" />
                                 {t.recurringInvoices.form.createTitle}
                             </h2>
@@ -139,7 +139,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
                                     >
                                         <div>
                                             <p className="font-medium text-amber-300">{invoice.invoice_number}</p>
-                                            <p className="text-xs text-slate-400">{new Date(invoice.invoice_date).toLocaleDateString('fr-FR')}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(invoice.invoice_date).toLocaleDateString('fr-FR')}</p>
                                         </div>
                                         <span className="text-sm font-semibold text-green-400"><Currency amount={parseFloat(invoice.total)} /></span>
                                     </Link>
@@ -151,7 +151,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
 
                 {/* Actions */}
                 <aside className="xl:col-span-1">
-                    <div className="sticky top-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="sticky top-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <h2 className="mb-4 text-base font-semibold text-slate-300">{t.invoices.columns.actions}</h2>
 
                         <div className="space-y-3">

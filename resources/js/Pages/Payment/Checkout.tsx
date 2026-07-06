@@ -355,18 +355,18 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
     if (plan.price === 0) {
         return (
-            <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">{t.plans.checkout.freePlanTitle}</h2>}>
+            <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t.plans.checkout.freePlanTitle}</h2>}>
                 <Head title={t.plans.checkout.freePlanHeadTitle} />
                 <div className="mx-auto max-w-md space-y-6">
-                    <Link href="/plans" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">
+                    <Link href="/plans" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">
                         <ArrowLeft className="size-4" /> {t.plans.checkout.backToPlans}
                     </Link>
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center space-y-4">
                         <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-500/20">
                             <Check className="size-7 text-emerald-400" />
                         </div>
-                        <h2 className="text-xl font-bold text-white">{t.plans.checkout.freePlanName(plan.name)}</h2>
-                        <p className="text-slate-400">{t.plans.checkout.freePlanNoPaymentRequired}</p>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t.plans.checkout.freePlanName(plan.name)}</h2>
+                        <p className="text-slate-500 dark:text-slate-400">{t.plans.checkout.freePlanNoPaymentRequired}</p>
                         <form method="POST" action={`/plans/${plan.id}/process`}>
                             <input type="hidden" name="_token" value={getCsrfToken()} />
                             <input type="hidden" name="payment_method" value="wave" />
@@ -384,11 +384,11 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
     /* ── Main render ──────────────────────────────────────────────────── */
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-white">{t.plans.checkout.title}</h2>}>
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t.plans.checkout.title}</h2>}>
             <Head title={`${t.plans.checkout.title} — ${plan.name}`} />
 
             <div className="mx-auto max-w-5xl space-y-6">
-                <Link href="/plans" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">
+                <Link href="/plans" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition">
                     <ArrowLeft className="size-4" /> {t.plans.checkout.backToPlans}
                 </Link>
 
@@ -403,11 +403,11 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                     {/* ── Récapitulatif ── */}
                     <aside className="lg:col-span-2 space-y-4">
-                        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5 dark:border-white/10 dark:bg-white/5">
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-widest text-amber-200">{t.plans.checkout.selectedPlan}</p>
-                                <h3 className="mt-1 text-2xl font-bold text-white">{plan.name}</h3>
-                                {plan.description && <p className="mt-1 text-sm text-slate-400">{plan.description}</p>}
+                                <h3 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{plan.name}</h3>
+                                {plan.description && <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{plan.description}</p>}
                             </div>
 
                             {/* Cycle de facturation */}
@@ -433,15 +433,15 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                             {/* Prix */}
                             <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-1">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-slate-400">{billingCycle === 'yearly' ? t.plans.checkout.amountYearly : t.plans.checkout.amountMonthly}</span>
-                                    <span className="text-lg font-bold text-white">{formatPrice(displayPrice)} {currencyLabel}</span>
+                                    <span className="text-sm text-slate-500 dark:text-slate-400">{billingCycle === 'yearly' ? t.plans.checkout.amountYearly : t.plans.checkout.amountMonthly}</span>
+                                    <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(displayPrice)} {currencyLabel}</span>
                                 </div>
                                 {billingCycle === 'yearly' && (
                                     <p className="text-xs text-right text-slate-500 line-through">{formatPrice(basePrice * 12)} {currencyLabel}</p>
                                 )}
                                 {isLocalCurrency && (
                                     <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
-                                        <span className="text-sm text-slate-400">{t.plans.checkout.inEuros}</span>
+                                        <span className="text-sm text-slate-500 dark:text-slate-400">{t.plans.checkout.inEuros}</span>
                                         <span className="text-lg font-bold text-amber-300">
                                             €{billingCycle === 'yearly'
                                                 ? (parseFloat(plan.price_eur?.replace(/[^0-9.]/g, '') || '0') * 10).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -474,7 +474,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         {/* ── Sélection du mode de paiement ── */}
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
-                            <p className="text-sm font-medium text-slate-300">{t.plans.checkout.paymentModeLabel}</p>
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.plans.checkout.paymentModeLabel}</p>
                             <div className="grid grid-cols-2 gap-3">
                                 <button
                                     type="button"
@@ -510,8 +510,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         {/* ══════════════════ PAWAPAY FLOW (HIDDEN) ══════════════════ */}
                         {false && paymentMode === 'pawapay' && (
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
-                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-6 dark:border-white/10 dark:bg-white/5">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                     <Zap className="size-5 text-amber-300" />
                                     Paiement mobile automatique
                                 </h3>
@@ -524,10 +524,10 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                             <Smartphone className="absolute inset-0 m-auto size-6 text-amber-300" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-white">Confirmation en attente</p>
-                                            <p className="mt-1 text-sm text-slate-400">
+                                            <p className="font-semibold text-slate-900 dark:text-white">Confirmation en attente</p>
+                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                                 Vérifiez votre téléphone et confirmez le paiement de{' '}
-                                                <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong> via USSD.
+                                                <strong className="text-slate-900 dark:text-white">{formatPrice(displayPrice)} {currencyLabel}</strong> via USSD.
                                             </p>
                                         </div>
                                         {isSandbox && (
@@ -555,8 +555,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                 {pawaPayStatus === 'completed' && (
                                     <div className="flex flex-col items-center gap-3 py-8 text-center">
                                         <CheckCircle2 className="size-14 text-emerald-400" />
-                                        <p className="font-semibold text-white">Paiement confirmé !</p>
-                                        <p className="text-sm text-slate-400">Redirection en cours…</p>
+                                        <p className="font-semibold text-slate-900 dark:text-white">Paiement confirmé !</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Redirection en cours…</p>
                                     </div>
                                 )}
 
@@ -589,7 +589,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                                         {/* Étape 1 — Pays */}
                                         <div className="space-y-2">
-                                            <p className="text-sm font-medium text-slate-300">
+                                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                                 Étape 1 — Votre pays <span className="text-red-400">*</span>
                                             </p>
                                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -618,7 +618,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                         {/* Étape 2 — Opérateur (visible uniquement si pays sélectionné) */}
                                         {selectedCountry && (
                                             <div className="space-y-2">
-                                                <p className="text-sm font-medium text-slate-300">
+                                                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                                     Étape 2 — Votre opérateur <span className="text-red-400">*</span>
                                                 </p>
                                                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -636,7 +636,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                                             {op.logo ? (
                                                                 <img src={op.logo} alt={op.label} className="h-7 w-auto object-contain" />
                                                             ) : (
-                                                                <Smartphone className="size-6 text-slate-400" />
+                                                                <Smartphone className="size-6 text-slate-500 dark:text-slate-400" />
                                                             )}
                                                             {op.label}
                                                         </button>
@@ -648,7 +648,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                         {/* Numéro (visible si opérateur sélectionné) */}
                                         {correspondent && (
                                             <div className="space-y-1.5">
-                                                <label className="block text-sm font-medium text-slate-300">
+                                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                                     Numéro Mobile Money <span className="text-red-400">*</span>
                                                 </label>
                                                 <div className="flex overflow-hidden rounded-xl border border-white/15 bg-white/5 focus-within:border-amber-300/50 focus-within:ring-1 focus-within:ring-amber-300/50">
@@ -689,8 +689,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         {/* ══════════════════ JÈKO FLOW (HIDDEN) ══════════════════ */}
                         {false && paymentMode === 'jeko' && (
-                            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
-                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-6 dark:border-white/10 dark:bg-white/5">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                     <Zap className="size-5 text-amber-300" />
                                     Paiement Jèko
                                 </h3>
@@ -719,7 +719,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                                         {/* Méthode de paiement Jèko */}
                                         <div className="space-y-2">
-                                            <p className="text-sm font-medium text-slate-300">Opérateur mobile</p>
+                                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Opérateur mobile</p>
                                             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                                                 {JEKO_METHODS.map(method => (
                                                     <button
@@ -764,8 +764,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                             <Zap className="absolute inset-0 m-auto size-6 text-amber-300" />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-white">Redirection vers Jèko</p>
-                                            <p className="mt-1 text-sm text-slate-400">Veuillez patienter…</p>
+                                            <p className="font-semibold text-slate-900 dark:text-white">Redirection vers Jèko</p>
+                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Veuillez patienter…</p>
                                         </div>
                                     </div>
                                 )}
@@ -784,8 +784,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                     <CheckCircle2 className="size-8 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <p className="text-lg font-semibold text-white">{t.plans.checkout.manual.successTitle}</p>
-                                    <p className="mt-1 text-sm text-slate-300">{t.plans.checkout.manual.successMessage}</p>
+                                    <p className="text-lg font-semibold text-slate-900 dark:text-white">{t.plans.checkout.manual.successTitle}</p>
+                                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t.plans.checkout.manual.successMessage}</p>
                                 </div>
                                 <a
                                     href={`/${auth.user?.code_user}/dashboard`}
@@ -799,8 +799,8 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
 
                         {/* ══════════════════ MANUAL FLOW ══════════════════ */}
                         {paymentMode === 'manual' && !manualSuccess && (
-                            <form onSubmit={handleManualSubmit} className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-6">
-                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                            <form onSubmit={handleManualSubmit} className="rounded-2xl border border-gray-200 bg-white p-6 space-y-6 dark:border-white/10 dark:bg-white/5">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                     <CreditCard className="size-5 text-amber-200" />
                                     {t.plans.checkout.manual.title}
                                 </h3>
@@ -838,30 +838,30 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                             <Smartphone className="size-4" /> {t.plans.checkout.manual.instructions}
                                         </p>
                                         {paymentNumbers[manualMethod] ? (
-                                            <p>{t.plans.checkout.manual.sendTo} <strong className="text-white">{paymentNumbers[manualMethod]}</strong></p>
+                                            <p>{t.plans.checkout.manual.sendTo} <strong className="text-slate-900 dark:text-white">{paymentNumbers[manualMethod]}</strong></p>
                                         ) : (
                                             <p className="text-amber-200">{t.plans.checkout.manual.contactSupportForDetails}</p>
                                         )}
-                                        <p>{t.plans.checkout.manual.amountColon} <strong className="text-white">{formatPrice(displayPrice)} {currencyLabel}</strong></p>
-                                        <p>{t.plans.checkout.manual.referenceColon} <strong className="text-white">BTX-{plan.id}-{Date.now().toString().slice(-6)}</strong></p>
+                                        <p>{t.plans.checkout.manual.amountColon} <strong className="text-slate-900 dark:text-white">{formatPrice(displayPrice)} {currencyLabel}</strong></p>
+                                        <p>{t.plans.checkout.manual.referenceColon} <strong className="text-slate-900 dark:text-white">BTX-{plan.id}-{Date.now().toString().slice(-6)}</strong></p>
                                     </div>
                                 )}
 
                                 {/* Téléphone */}
                                 <div className="space-y-1.5">
-                                    <label className="block text-sm font-medium text-slate-300">{t.plans.checkout.manual.phoneUsedLabel}</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.plans.checkout.manual.phoneUsedLabel}</label>
                                     <input
                                         type="tel"
                                         value={phone}
                                         onChange={e => setPhone(e.target.value)}
                                         placeholder="ex: +221 77 000 00 00"
-                                        className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                     />
                                 </div>
 
                                 {/* Référence */}
                                 <div className="space-y-1.5">
-                                    <label className="block text-sm font-medium text-slate-300">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                         {t.plans.checkout.manual.transactionRefLabel}
                                         <span className="ml-1 text-xs text-slate-500">{t.plans.checkout.manual.optionalRecommended}</span>
                                     </label>
@@ -870,7 +870,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                         value={transactionRef}
                                         onChange={e => setTransactionRef(e.target.value)}
                                         placeholder="ex: TXN-123456789"
-                                        className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                     />
                                 </div>
 

@@ -28,23 +28,23 @@ export default function FreeTrialBanner() {
     const isWarning = daysRemaining > 7 && daysRemaining <= 14;
 
     const bgColor = isUrgent
-        ? 'bg-gradient-to-r from-rose-500/20 to-orange-500/20 border-rose-500/30'
+        ? 'bg-gradient-to-r from-rose-100 to-orange-100 border-rose-300 dark:from-rose-500/20 dark:to-orange-500/20 dark:border-rose-500/30'
         : isWarning
-        ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/30'
-        : 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-blue-500/30';
+        ? 'bg-gradient-to-r from-amber-100 to-orange-100 border-amber-300 dark:from-amber-500/20 dark:to-orange-500/20 dark:border-amber-500/30'
+        : 'bg-gradient-to-r from-blue-100 to-purple-100 border-blue-300 dark:from-blue-500/20 dark:to-purple-500/20 dark:border-blue-500/30';
 
-    const textColor = isUrgent ? 'text-rose-200' : isWarning ? 'text-amber-200' : 'text-blue-200';
-    const iconColor = isUrgent ? 'text-rose-300' : isWarning ? 'text-amber-300' : 'text-blue-300';
+    const textColor = isUrgent ? 'text-rose-700 dark:text-rose-200' : isWarning ? 'text-amber-700 dark:text-amber-200' : 'text-blue-700 dark:text-blue-200';
+    const iconColor = isUrgent ? 'text-rose-600 dark:text-rose-300' : isWarning ? 'text-amber-600 dark:text-amber-300' : 'text-blue-600 dark:text-blue-300';
 
     return (
         <div className={`rounded-xl border p-4 ${bgColor}`}>
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1">
-                    <div className={`rounded-lg bg-white/10 p-2 ${iconColor}`}>
+                    <div className={`rounded-lg bg-black/5 dark:bg-white/10 p-2 ${iconColor}`}>
                         <Clock className="size-5" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="font-semibold text-white">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">
                             {t.freeTrialBanner.title(daysRemaining)}
                         </h3>
                         <p className={`mt-1 text-sm ${textColor}`}>

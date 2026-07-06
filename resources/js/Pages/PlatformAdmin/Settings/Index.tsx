@@ -41,8 +41,8 @@ export default function PlatformSettings({ settings }: Props) {
         <AuthenticatedLayout
             header={
                 <div>
-                    <h1 className="text-xl font-semibold text-white">Paramètres de la plateforme</h1>
-                    <p className="mt-1 text-sm text-slate-300">Configuration générale et numéros de paiement</p>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Paramètres de la plateforme</h1>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Configuration générale et numéros de paiement</p>
                 </div>
             }
         >
@@ -58,61 +58,61 @@ export default function PlatformSettings({ settings }: Props) {
                 )}
 
                 {/* ── Informations générales ── */}
-                <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
-                    <h2 className="flex items-center gap-2 text-base font-semibold text-white">
+                <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5 dark:border-white/10 dark:bg-white/5">
+                    <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
                         <Settings className="size-5 text-amber-200" />
                         Informations générales
                     </h2>
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 Nom de la plateforme
                             </label>
                             <input
                                 type="text"
                                 value={data.general.platform_name}
                                 onChange={e => setData('general', { ...data.general, platform_name: e.target.value })}
-                                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                 placeholder="Batix SaaS"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 <span className="inline-flex items-center gap-1.5"><Globe className="size-3.5" /> URL du site</span>
                             </label>
                             <input
                                 type="url"
                                 value={data.general.website_url}
                                 onChange={e => setData('general', { ...data.general, website_url: e.target.value })}
-                                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                 placeholder="https://batixpro.com"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 <span className="inline-flex items-center gap-1.5"><Mail className="size-3.5" /> Email support</span>
                             </label>
                             <input
                                 type="email"
                                 value={data.general.support_email}
                                 onChange={e => setData('general', { ...data.general, support_email: e.target.value })}
-                                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                 placeholder="support@batixpro.com"
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-slate-300">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 <span className="inline-flex items-center gap-1.5"><Phone className="size-3.5" /> Téléphone support</span>
                             </label>
                             <input
                                 type="tel"
                                 value={data.general.support_phone}
                                 onChange={e => setData('general', { ...data.general, support_phone: e.target.value })}
-                                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                 placeholder="+221 77 000 00 00"
                             />
                         </div>
@@ -120,13 +120,13 @@ export default function PlatformSettings({ settings }: Props) {
                 </section>
 
                 {/* ── Numéros de paiement ── */}
-                <section className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-5">
+                <section className="rounded-2xl border border-gray-200 bg-white p-6 space-y-5 dark:border-white/10 dark:bg-white/5">
                     <div>
-                        <h2 className="flex items-center gap-2 text-base font-semibold text-white">
+                        <h2 className="flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white">
                             <CreditCard className="size-5 text-amber-200" />
                             Numéros de paiement
                         </h2>
-                        <p className="mt-1 text-xs text-slate-400">Ces numéros sont affichés sur la page de paiement lors de la souscription à un plan.</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Ces numéros sont affichés sur la page de paiement lors de la souscription à un plan.</p>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -139,14 +139,14 @@ export default function PlatformSettings({ settings }: Props) {
                             { key: 'carte',        label: 'Carte bancaire',   icon: '💳', placeholder: 'Lien ou info carte' },
                         ].map(({ key, label, icon, placeholder }) => (
                             <div key={key} className="space-y-1.5">
-                                <label className="block text-sm font-medium text-slate-300">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                     {icon} {label}
                                 </label>
                                 <input
                                     type="text"
                                     value={(data.payment as any)[key]}
                                     onChange={e => setData('payment', { ...data.payment, [key]: e.target.value })}
-                                    className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50"
+                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
                                     placeholder={placeholder}
                                 />
                             </div>

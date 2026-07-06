@@ -100,7 +100,7 @@ export default function Edit({
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
-                                        <h3 className="text-2xl font-bold text-white">{user.name}</h3>
+                                        <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{user.name}</h3>
                                         {user.is_active ? (
                                             <CheckCircle className="h-6 w-6 text-green-500" />
                                         ) : (
@@ -112,7 +112,7 @@ export default function Edit({
                                     <div className="flex flex-wrap gap-3">
                                         <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
                                             <Shield className="h-5 w-5 text-amber-300" />
-                                            <span className="text-sm font-medium text-slate-200">{t.profile.overview.role}</span>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.profile.overview.role}</span>
                                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(user.role)}`}>
                                                 {getRoleLabel(user.role)}
                                             </span>
@@ -121,15 +121,15 @@ export default function Edit({
                                         {user.shop && (
                                             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">
                                                 <Store className="h-5 w-5 text-amber-300" />
-                                                <span className="text-sm font-medium text-slate-200">{t.profile.overview.shop}</span>
-                                                <span className="text-sm text-white font-semibold">{user.shop.name}</span>
+                                                <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{t.profile.overview.shop}</span>
+                                                <span className="text-sm text-slate-900 dark:text-white font-semibold">{user.shop.name}</span>
                                             </div>
                                         )}
                                     </div>
 
                                     {user.shop && (user.shop.address || user.shop.city || user.shop.phone) && (
                                         <div className="mt-4 bg-white/10 backdrop-blur-sm px-4 py-3 rounded-lg border border-white/20">
-                                            <p className="text-sm text-slate-300">
+                                            <p className="text-sm text-slate-600 dark:text-slate-300">
                                                 {user.shop.address && <span>{user.shop.address}</span>}
                                                 {user.shop.city && <span className="ml-2">{user.shop.city}</span>}
                                                 {user.shop.phone && <span className="ml-4">📞 {user.shop.phone}</span>}
@@ -145,11 +145,11 @@ export default function Edit({
                     {user.permissions && user.permissions.length > 0 && (
                         <div className="rounded-2xl border border-white/10 bg-white/5 shadow-lg overflow-hidden">
                             <div className="px-8 py-6 border-b border-white/10">
-                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                     <Shield className="h-5 w-5 text-amber-300" />
                                     {t.profile.sections.permissions}
                                 </h3>
-                                <p className="mt-1 text-sm text-slate-300">
+                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                                     {t.profile.overview.permissionsDescription}
                                 </p>
                             </div>
@@ -160,7 +160,7 @@ export default function Edit({
                                             key={permission.id}
                                             className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-amber-300/50 transition-colors"
                                         >
-                                            <h4 className="font-semibold text-white mb-3">
+                                            <h4 className="font-semibold text-slate-900 dark:text-white mb-3">
                                                 {getModuleLabel(permission.module)}
                                             </h4>
                                             <div className="flex flex-wrap gap-2">
@@ -193,7 +193,7 @@ export default function Edit({
                     )}
 
                     {/* Profile Information Form */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 shadow-lg">
+                    <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
                         <div className="p-8">
                             <UpdateProfileInformationForm
                                 mustVerifyEmail={mustVerifyEmail}
@@ -204,14 +204,14 @@ export default function Edit({
                     </div>
 
                     {/* Password Form */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 shadow-lg">
+                    <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
                         <div className="p-8">
                             <UpdatePasswordForm className="max-w-xl" />
                         </div>
                     </div>
 
                     {/* Delete Account Form */}
-                    <div className="rounded-2xl border border-white/10 bg-white/5 shadow-lg">
+                    <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
                         <div className="p-8">
                             <DeleteUserForm className="max-w-xl" />
                         </div>

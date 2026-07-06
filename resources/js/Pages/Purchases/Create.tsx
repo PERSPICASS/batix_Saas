@@ -95,9 +95,9 @@ function PurchaseProductCombobox({
                 /* Produit sélectionné */
                 <div className="mt-1 flex items-center justify-between rounded-lg border border-amber-300/40 bg-slate-900 px-3 py-2">
                     <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-white">{selected.name}</span>
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">{selected.name}</span>
                         {selected.sku && (
-                            <span className="ml-2 text-xs text-slate-400">({selected.sku})</span>
+                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">({selected.sku})</span>
                         )}
                         {selected.category && (
                             <span className="ml-2 text-xs text-slate-500">{selected.category.name}</span>
@@ -107,7 +107,7 @@ function PurchaseProductCombobox({
                         <button
                             type="button"
                             onClick={() => setOpen(true)}
-                            className="rounded p-1 text-slate-400 hover:text-white transition-colors"
+                            className="rounded p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
                             title={t.purchases.form.changeProduct || 'Changer'}
                         >
                             <ChevronDown className="h-3.5 w-3.5" />
@@ -115,7 +115,7 @@ function PurchaseProductCombobox({
                         <button
                             type="button"
                             onClick={clear}
-                            className="rounded p-1 text-slate-400 hover:text-red-400 transition-colors"
+                            className="rounded p-1 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors"
                             title={t.purchases.form.clearProduct || 'Effacer'}
                         >
                             <X className="h-3.5 w-3.5" />
@@ -132,7 +132,7 @@ function PurchaseProductCombobox({
                         onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
                         onFocus={() => setOpen(true)}
                         placeholder={t.purchases.form.search}
-                        className="w-full rounded-lg border-slate-700 bg-slate-900 pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                        className="w-full rounded-lg border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
                         autoComplete="off"
                     />
                 </div>
@@ -165,7 +165,7 @@ function PurchaseProductCombobox({
                                     <div>
                                         <span className="font-medium">{product.name}</span>
                                         {product.sku && (
-                                            <span className="ml-2 text-xs text-slate-400">{product.sku}</span>
+                                            <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">{product.sku}</span>
                                         )}
                                         {product.category && (
                                             <span className="ml-2 text-xs text-slate-500">
@@ -315,13 +315,13 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                         <div className="flex items-center gap-3">
                             <Link
                                 href={route('purchases.index', { code_user })}
-                                className="rounded-lg p-2 transition hover:bg-white/5"
+                                className="rounded-lg p-2 transition hover:bg-gray-100 dark:hover:bg-white/5"
                             >
-                                <ArrowLeft className="size-5 text-slate-400" />
+                                <ArrowLeft className="size-5 text-slate-500 dark:text-slate-400" />
                             </Link>
                             <div>
-                                <h1 className="text-2xl font-bold text-white">{t.purchases.form.createTitle}</h1>
-                                <p className="mt-1 text-sm text-slate-400">
+                                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t.purchases.form.createTitle}</h1>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                                     {t.purchases.form.subtitle}
                                 </p>
                             </div>
@@ -331,8 +331,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
                 <form onSubmit={submit} className="space-y-6">
                     {/* Informations générales */}
-                    <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                    <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                             <ShoppingCart className="size-5" />
                             {t.purchases.form.generalInfo}
                         </h2>
@@ -344,7 +344,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     id="supplier_id"
                                     value={data.supplier_id}
                                     onChange={(e) => setData('supplier_id', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border-slate-700 bg-slate-900/50 text-white focus:border-amber-300 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white text-slate-900 focus:border-amber-300 focus:ring-amber-300 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
                                     required
                                 >
                                     <option value="">{t.purchases.form.selectSupplier}</option>
@@ -400,9 +400,9 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                     </div>
 
                     {/* Articles */}
-                    <div className="rounded-xl bg-slate-800/50 p-6">
+                    <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
+                            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                                 <Package className="size-5" />
                                 {t.purchases.form.articles}
                             </h2>
@@ -420,10 +420,10 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             {items.map((item, index) => (
                                 <div
                                     key={index}
-                                    className="rounded-lg border border-white/10 bg-slate-900/50 p-4"
+                                    className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-slate-900/50"
                                 >
                                     <div className="mb-3 flex items-center justify-between">
-                                        <span className="text-sm font-medium text-slate-300">
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                             {t.purchases.form.article} #{index + 1}
                                         </span>
                                         {items.length > 1 && (
@@ -491,7 +491,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     </div>
 
                                     <div className="mt-3 flex items-center justify-between text-sm">
-                                        <span className="text-slate-400">{t.purchases.form.lineTotal}:</span>
+                                        <span className="text-slate-500 dark:text-slate-400">{t.purchases.form.lineTotal}:</span>
                                         <span className="font-semibold text-amber-300">
                                             {formatCurrency(calculateLineTotal(item))}
                                         </span>
@@ -502,13 +502,13 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                     </div>
 
                     {/* Totaux */}
-                    <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 text-lg font-semibold text-white">{t.purchases.form.summary}</h2>
+                    <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.purchases.form.summary}</h2>
 
                         <div className="space-y-4">
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">{t.purchases.form.subtotal}:</span>
-                                <span className="font-medium text-white">{formatCurrency(totals.subtotal)}</span>
+                                <span className="text-slate-500 dark:text-slate-400">{t.purchases.form.subtotal}:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formatCurrency(totals.subtotal)}</span>
                             </div>
 
                             {/* Remise globale */}
@@ -529,8 +529,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">{t.purchases.form.discountAmount}:</span>
-                                <span className="font-medium text-white">
+                                <span className="text-slate-500 dark:text-slate-400">{t.purchases.form.discountAmount}:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">
                                     -{formatCurrency(totals.totalDiscount)}
                                 </span>
                             </div>
@@ -553,20 +553,20 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">{t.purchases.form.taxAmount}:</span>
-                                <span className="font-medium text-white">{formatCurrency(totals.totalTax)}</span>
+                                <span className="text-slate-500 dark:text-slate-400">{t.purchases.form.taxAmount}:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">{formatCurrency(totals.totalTax)}</span>
                             </div>
 
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">{t.purchases.form.shippingCost}:</span>
-                                <span className="font-medium text-white">
+                                <span className="text-slate-500 dark:text-slate-400">{t.purchases.form.shippingCost}:</span>
+                                <span className="font-medium text-slate-900 dark:text-white">
                                     {formatCurrency(totals.shipping)}
                                 </span>
                             </div>
 
-                            <div className="border-t border-white/10 pt-3">
+                            <div className="border-t border-gray-200 dark:border-white/10 pt-3">
                                 <div className="flex justify-between">
-                                    <span className="text-lg font-semibold text-white">{t.purchases.form.total}:</span>
+                                    <span className="text-lg font-semibold text-slate-900 dark:text-white">{t.purchases.form.total}:</span>
                                     <span className="text-2xl font-bold text-amber-300">
                                         {formatCurrency(totals.grandTotal)}
                                     </span>
@@ -576,8 +576,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                     </div>
 
                     {/* Notes */}
-                    <div className="rounded-xl bg-slate-800/50 p-6">
-                        <h2 className="mb-4 text-lg font-semibold text-white">{t.purchases.form.notes}</h2>
+                    <div className="rounded-xl bg-gray-100 p-6 dark:bg-slate-800/50">
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.purchases.form.notes}</h2>
 
                         <div className="space-y-4">
                             <div>
@@ -587,7 +587,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     rows={3}
-                                    className="mt-1 block w-full rounded-lg border-slate-700 bg-slate-900/50 text-white focus:border-amber-300 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white text-slate-900 focus:border-amber-300 focus:ring-amber-300 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
                                     placeholder={t.purchases.form.supplierNotes}
                                 />
                                 <InputError message={errors.notes} className="mt-2" />
@@ -603,7 +603,7 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     value={data.internal_notes}
                                     onChange={(e) => setData('internal_notes', e.target.value)}
                                     rows={3}
-                                    className="mt-1 block w-full rounded-lg border-slate-700 bg-slate-900/50 text-white focus:border-amber-300 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border-gray-300 bg-white text-slate-900 focus:border-amber-300 focus:ring-amber-300 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white"
                                     placeholder={t.purchases.form.internalPlaceholder}
                                 />
                                 <InputError message={errors.internal_notes} className="mt-2" />

@@ -30,12 +30,12 @@ export default function HeroSection({
     const hasHeroSlides = heroSlides.length > 0;
 
     return (
-        <motion.section className="w-full py-10 md:py-16" initial="hidden" animate="show" variants={stagger}>
+        <motion.section className="w-full bg-terre-50 py-10 md:py-16" initial="hidden" animate="show" variants={stagger}>
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="grid items-center gap-12 lg:grid-cols-2">
                     {/* Colonne gauche — texte */}
                     <motion.div variants={fadeUp} transition={{ duration: 0.6 }}>
-                        <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-amber-800">
+                        <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-terre-200 bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-terre-700">
                             <Sparkles className="size-3.5" />
                             {t.hero.badge}
                         </p>
@@ -50,7 +50,7 @@ export default function HeroSection({
                             {heroHeadline}
                         </motion.h1>
 
-                        <div className="mt-4 h-1 w-16 rounded-full bg-amber-400" />
+                        <div className="mt-4 h-1 w-16 rounded-full bg-terre-500" />
 
                         <motion.p
                             key={`${locale}-${heroSlides[activeHeroSlide]?.src ?? 'default'}-desc`}
@@ -65,16 +65,16 @@ export default function HeroSection({
                         <div className="mt-8 flex flex-wrap items-center gap-3">
                             <Link
                                 href={getDashboardUrl()}
-                                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 font-bold text-slate-900 shadow-md transition hover:bg-amber-300 hover:shadow-lg"
+                                className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3.5 font-bold text-slate-900 shadow-md transition hover:bg-amber-400 hover:shadow-lg"
                             >
                                 {t.hero.primary}
                                 <ArrowRight className="size-4" />
                             </Link>
                             <a
                                 href="#demo"
-                                className="inline-flex items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-6 py-3.5 font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
+                                className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-6 py-3.5 font-semibold text-slate-800 shadow-sm transition hover:border-gray-300 hover:bg-gray-50"
                             >
-                                <PlayCircle className="size-4 text-amber-600" />
+                                <PlayCircle className="size-4 text-terre-600" />
                                 {t.hero.secondary}
                             </a>
                         </div>
@@ -95,7 +95,7 @@ export default function HeroSection({
 
                     {/* Colonne droite — slider */}
                     <motion.div className="space-y-4" variants={fadeUp} transition={{ duration: 0.6, delay: 0.15 }}>
-                        <div className="relative overflow-hidden rounded-3xl border border-[#e0d5c5] bg-[#f4ede2] shadow-2xl ring-1 ring-black/5">
+                        <div className="relative overflow-hidden rounded-3xl border border-terre-100 bg-white shadow-2xl ring-1 ring-black/5">
                             <div className="relative aspect-[5/4]">
                                 {hasHeroSlides ? (
                                     heroSlides.map((slide, index) => (
@@ -142,7 +142,7 @@ export default function HeroSection({
                                         key={`${slide.src}-dot`}
                                         type="button"
                                         onClick={() => setActiveHeroSlide(index)}
-                                        className={`h-2 rounded-full transition-all ${index === activeHeroSlide ? 'w-8 bg-slate-900' : 'w-2 bg-slate-300 hover:bg-slate-500'}`}
+                                        className={`h-2 rounded-full transition-all ${index === activeHeroSlide ? 'w-8 bg-terre-600' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
                                         aria-label={`Slide ${index + 1}`}
                                     />
                                 ))}
@@ -151,7 +151,7 @@ export default function HeroSection({
 
                         <div className="grid grid-cols-3 gap-3">
                             {t.stats.map((stat) => (
-                                <div key={stat.label} className="rounded-2xl border border-[#e0d5c5] bg-white px-4 py-3 text-center shadow-sm">
+                                <div key={stat.label} className="rounded-2xl border border-terre-100 bg-white px-4 py-3 text-center shadow-sm">
                                     <p className="text-xl font-extrabold text-slate-900">{stat.value}</p>
                                     <p className="mt-0.5 text-xs text-slate-500">{stat.label}</p>
                                 </div>

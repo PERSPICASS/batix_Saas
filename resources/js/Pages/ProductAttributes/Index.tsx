@@ -150,12 +150,12 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Attributs de produits</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Attributs de produits</h1>}>
             <Head title="Attributs de produits" />
             
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
                         Gérez les attributs de variation de vos produits (couleur, taille, poids, etc.)
                     </p>
                     <button
@@ -185,13 +185,13 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                             className="flex items-center gap-3 flex-1"
                                         >
                                             {expandedAttributes.includes(attribute.id) ? (
-                                                <ChevronDown className="size-5 text-slate-400" />
+                                                <ChevronDown className="size-5 text-slate-500 dark:text-slate-400" />
                                             ) : (
-                                                <ChevronRight className="size-5 text-slate-400" />
+                                                <ChevronRight className="size-5 text-slate-500 dark:text-slate-400" />
                                             )}
                                             <div className="text-left">
-                                                <h3 className="font-medium text-white">{attribute.name}</h3>
-                                                <p className="text-sm text-slate-400">
+                                                <h3 className="font-medium text-slate-900 dark:text-white">{attribute.name}</h3>
+                                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                                     {attribute.values.length} valeur{attribute.values.length !== 1 ? 's' : ''}
                                                 </p>
                                             </div>
@@ -235,7 +235,7 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                                             key={value.id}
                                                             className="group inline-flex items-center gap-1 rounded-full bg-slate-700 px-3 py-1.5 text-sm"
                                                         >
-                                                            <span className="text-white">{value.value}</span>
+                                                            <span className="text-slate-900 dark:text-white">{value.value}</span>
                                                             <button
                                                                 onClick={() => openEditValue(attribute, value)}
                                                                 className="ml-1 p-0.5 text-slate-400 hover:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -264,11 +264,11 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
             {/* Modal: Ajouter un attribut */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                    <div className="w-full max-w-md rounded-lg bg-slate-800 p-6 shadow-xl">
-                        <h2 className="text-lg font-semibold text-white mb-4">Nouvel attribut</h2>
+                    <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Nouvel attribut</h2>
                         <form onSubmit={handleAddAttribute} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Nom de l'attribut
                                 </label>
                                 <input
@@ -276,7 +276,7 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                     value={addForm.data.name}
                                     onChange={(e) => addForm.setData('name', e.target.value)}
                                     placeholder="Ex: Couleur, Taille, Poids..."
-                                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-amber-400 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                     autoFocus
                                 />
                                 {addForm.errors.name && (
@@ -287,7 +287,7 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                 <button
                                     type="button"
                                     onClick={() => setShowAddModal(false)}
-                                    className="px-4 py-2 text-sm text-slate-300 hover:text-white"
+                                    className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                                 >
                                     Annuler
                                 </button>
@@ -307,18 +307,18 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
             {/* Modal: Modifier un attribut */}
             {editingAttribute && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                    <div className="w-full max-w-md rounded-lg bg-slate-800 p-6 shadow-xl">
-                        <h2 className="text-lg font-semibold text-white mb-4">Modifier l'attribut</h2>
+                    <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Modifier l'attribut</h2>
                         <form onSubmit={handleEditAttribute} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Nom de l'attribut
                                 </label>
                                 <input
                                     type="text"
                                     value={editForm.data.name}
                                     onChange={(e) => editForm.setData('name', e.target.value)}
-                                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-amber-400 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                     autoFocus
                                 />
                                 {editForm.errors.name && (
@@ -329,7 +329,7 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                 <button
                                     type="button"
                                     onClick={() => setEditingAttribute(null)}
-                                    className="px-4 py-2 text-sm text-slate-300 hover:text-white"
+                                    className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                                 >
                                     Annuler
                                 </button>
@@ -349,13 +349,13 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
             {/* Modal: Ajouter une valeur */}
             {addingValueTo && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                    <div className="w-full max-w-md rounded-lg bg-slate-800 p-6 shadow-xl">
-                        <h2 className="text-lg font-semibold text-white mb-4">
+                    <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                             Ajouter une valeur à "{addingValueTo.name}"
                         </h2>
                         <form onSubmit={handleAddValue} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Valeur
                                 </label>
                                 <input
@@ -363,7 +363,7 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                     value={valueForm.data.value}
                                     onChange={(e) => valueForm.setData('value', e.target.value)}
                                     placeholder="Ex: Rouge, XL, 500g..."
-                                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-amber-400 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                     autoFocus
                                 />
                                 {valueForm.errors.value && (
@@ -374,7 +374,7 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                 <button
                                     type="button"
                                     onClick={() => setAddingValueTo(null)}
-                                    className="px-4 py-2 text-sm text-slate-300 hover:text-white"
+                                    className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                                 >
                                     Annuler
                                 </button>
@@ -394,18 +394,18 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
             {/* Modal: Modifier une valeur */}
             {editingValue && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                    <div className="w-full max-w-md rounded-lg bg-slate-800 p-6 shadow-xl">
-                        <h2 className="text-lg font-semibold text-white mb-4">Modifier la valeur</h2>
+                    <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-slate-800">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Modifier la valeur</h2>
                         <form onSubmit={handleEditValue} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-1">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                                     Valeur
                                 </label>
                                 <input
                                     type="text"
                                     value={editValueForm.data.value}
                                     onChange={(e) => editValueForm.setData('value', e.target.value)}
-                                    className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-white placeholder-slate-400 focus:border-amber-400 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-400 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                     autoFocus
                                 />
                                 {editValueForm.errors.value && (
@@ -416,7 +416,7 @@ export default function ProductAttributesIndex({ attributes }: PageProps<{ attri
                                 <button
                                     type="button"
                                     onClick={() => setEditingValue(null)}
-                                    className="px-4 py-2 text-sm text-slate-300 hover:text-white"
+                                    className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                                 >
                                     Annuler
                                 </button>

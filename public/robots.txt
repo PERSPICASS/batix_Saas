@@ -2,8 +2,22 @@
 
 User-agent: *
 Allow: /
+Allow: /en
+Allow: /fonctionnalites
+Allow: /en/features
+Allow: /tarifs
+Allow: /en/pricing
+Allow: /clients
+Allow: /en/customers
+Allow: /ressources
+Allow: /en/resources
+Allow: /a-propos
+Allow: /en/about
+Allow: /contact
+Allow: /en/contact
 Allow: /plans
 Allow: /blog
+Allow: /en/blog
 Allow: /login
 Allow: /register
 Disallow: /admin
@@ -13,8 +27,6 @@ Disallow: /uploads/
 Disallow: *?lang=
 Disallow: *?page=
 Disallow: /search
-Disallow: /cart
-Disallow: /checkout
 
 # Crawler-specific rules
 User-agent: Googlebot

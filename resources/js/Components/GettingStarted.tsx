@@ -50,11 +50,11 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
     const progressPct = Math.round((completedCount / steps.length) * 100);
 
     return (
-        <div className="rounded-2xl border border-amber-300/20 bg-gradient-to-br from-amber-300/10 via-amber-200/5 to-transparent p-6">
+        <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-amber-50/60 to-transparent p-6 dark:border-amber-300/20 dark:from-amber-300/10 dark:via-amber-200/5 dark:to-transparent">
             <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-base font-bold text-white">{t.gettingStarted.title}</h2>
-                    <p className="mt-0.5 text-sm text-slate-400">
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">{t.gettingStarted.title}</h2>
+                    <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                         {completedCount === 0
                             ? t.gettingStarted.progressZero
                             : t.gettingStarted.progressN(completedCount, steps.length)}
@@ -63,13 +63,13 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                 <button
                     type="button"
                     onClick={() => setDismissed(true)}
-                    className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/10 hover:text-slate-300"
+                    className="rounded-lg p-1.5 text-slate-400 transition hover:bg-gray-200 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300"
                 >
                     <X className="size-4" />
                 </button>
             </div>
 
-            <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-white/10">
                 <div
                     className="h-full rounded-full bg-amber-300 transition-all duration-500"
                     style={{ width: `${progressPct}%` }}
@@ -87,26 +87,26 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                             key={step.key}
                             className={`flex items-center gap-4 rounded-xl border px-4 py-3.5 transition ${
                                 done
-                                    ? 'border-emerald-500/20 bg-emerald-500/5 opacity-70'
+                                    ? 'border-emerald-300 bg-emerald-50 opacity-70 dark:border-emerald-500/20 dark:bg-emerald-500/5'
                                     : isNext
-                                    ? 'border-amber-300/30 bg-amber-300/10'
-                                    : 'border-white/5 bg-white/3'
+                                    ? 'border-amber-300 bg-amber-50 dark:border-amber-300/30 dark:bg-amber-300/10'
+                                    : 'border-gray-200 bg-gray-50 dark:border-white/5 dark:bg-white/3'
                             }`}
                         >
                             <div className={`flex size-8 shrink-0 items-center justify-center rounded-full ${
-                                done ? 'bg-emerald-500/20' : isNext ? 'bg-amber-300/20' : 'bg-white/5'
+                                done ? 'bg-emerald-100 dark:bg-emerald-500/20' : isNext ? 'bg-amber-100 dark:bg-amber-300/20' : 'bg-gray-200 dark:bg-white/5'
                             }`}>
                                 {done ? (
-                                    <CheckCircle2 className="size-5 text-emerald-400" />
+                                    <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
                                 ) : (
-                                    <span className={`text-sm font-bold ${isNext ? 'text-amber-300' : 'text-slate-500'}`}>
+                                    <span className={`text-sm font-bold ${isNext ? 'text-amber-600 dark:text-amber-300' : 'text-slate-500'}`}>
                                         {idx + 1}
                                     </span>
                                 )}
                             </div>
 
                             <div className="min-w-0 flex-1">
-                                <p className={`text-sm font-semibold ${done ? 'text-slate-400 line-through' : 'text-white'}`}>
+                                <p className={`text-sm font-semibold ${done ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
                                     {step.label}
                                 </p>
                                 {!done && (
@@ -120,7 +120,7 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                                     className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                                         isNext
                                             ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
-                                            : 'border border-white/10 text-slate-400 hover:bg-white/5'
+                                            : 'border border-gray-300 text-slate-500 hover:bg-gray-100 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5'
                                     }`}
                                 >
                                     {step.cta}

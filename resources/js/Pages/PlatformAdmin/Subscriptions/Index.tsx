@@ -219,8 +219,8 @@ export default function Index({ subscriptions, plans, filters }: Props) {
         <AuthenticatedLayout
             header={
                 <div>
-                    <h1 className="text-xl font-semibold text-white">Abonnements Actifs</h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Abonnements Actifs</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         Gérer tous les abonnements des comptes
                     </p>
                 </div>
@@ -230,7 +230,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
 
             <section className="space-y-4">
                 {/* Filtres */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                     <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1 relative">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -276,7 +276,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
                         {subscriptions.total} abonnement{subscriptions.total > 1 ? 's' : ''}
                     </p>
                 </div>
@@ -289,8 +289,8 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                             label: 'Compte',
                             render: (subscription) => (
                                 <div className="flex flex-col">
-                                    <span className="font-medium text-white">{subscription.user.name}</span>
-                                    <span className="text-xs text-slate-400">{subscription.user.email}</span>
+                                    <span className="font-medium text-slate-900 dark:text-white">{subscription.user.name}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">{subscription.user.email}</span>
                                     <span className="text-xs text-slate-500">Code: {subscription.user.code_user}</span>
                                 </div>
                             ),
@@ -299,7 +299,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                             key: 'plan',
                             label: 'Plan',
                             render: (subscription) => (
-                                <span className="text-slate-300">{subscription.plan.name}</span>
+                                <span className="text-slate-600 dark:text-slate-300">{subscription.plan.name}</span>
                             ),
                         },
                         {
@@ -309,7 +309,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                             render: (subscription) => (
                                 <div className="flex flex-col items-end">
                                     <Currency amount={subscription.amount} className="font-semibold text-emerald-400" />
-                                    <span className="text-xs text-slate-400">{subscription.billing_cycle}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">{subscription.billing_cycle}</span>
                                 </div>
                             ),
                         },
@@ -318,11 +318,11 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                             label: 'Dates',
                             render: (subscription) => (
                                 <div className="flex flex-col text-xs">
-                                    <span className="text-slate-300">
+                                    <span className="text-slate-600 dark:text-slate-300">
                                         Début: {formatDate(subscription.started_at)}
                                     </span>
                                     {subscription.expires_at && (
-                                        <span className="text-slate-400">
+                                        <span className="text-slate-500 dark:text-slate-400">
                                             Expire: {formatDate(subscription.expires_at)}
                                         </span>
                                     )}
@@ -352,7 +352,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                 <TableActions>
                                     <button
                                         onClick={() => confirmEditDates(subscription)}
-                                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                                     >
                                         <Edit className="size-3.5" /> Dates
                                     </button>
@@ -368,7 +368,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                         <>
                                             <button
                                                 onClick={() => confirmRenew(subscription)}
-                                                className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                                                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                                             >
                                                 <RotateCw className="size-3.5" /> Renouveler
                                             </button>
@@ -383,7 +383,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                     {subscription.status === 'expired' && (
                                         <button
                                             onClick={() => confirmRenew(subscription)}
-                                            className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                                            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                                         >
                                             <RotateCw className="size-3.5" /> Réactiver
                                         </button>
@@ -443,10 +443,10 @@ export default function Index({ subscriptions, plans, filters }: Props) {
             {showRenewModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                             Renouveler l'abonnement
                         </h3>
-                        <p className="text-sm text-slate-400 mb-4">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                             Compte: {selectedSubscription?.user.name}
                             <br />
                             Plan: {selectedSubscription?.plan.name}
@@ -459,7 +459,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                 max="12"
                                 value={renewMonths}
                                 onChange={(e) => setRenewMonths(parseInt(e.target.value))}
-                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             />
                         </label>
                         <div className="flex justify-end gap-2">
@@ -468,7 +468,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                     setShowRenewModal(false);
                                     setSelectedSubscription(null);
                                 }}
-                                className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 Annuler
                             </button>
@@ -487,16 +487,16 @@ export default function Index({ subscriptions, plans, filters }: Props) {
             {showEditDatesModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                     <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6">
-                        <h3 className="text-lg font-semibold text-white mb-4">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                             Modifier les dates d'abonnement
                         </h3>
-                        <p className="text-sm text-slate-400 mb-4">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                             Compte: {selectedSubscription?.user.name}
                             <br />
                             Plan: {selectedSubscription?.plan.name}
                         </p>
                         <div className="space-y-4 mb-4">
-                            <label className="block space-y-1 text-sm text-slate-200">
+                            <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                                 <span>Date de début</span>
                                 <input
                                     type="date"
@@ -505,7 +505,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                 />
                             </label>
-                            <label className="block space-y-1 text-sm text-slate-200">
+                            <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                                 <span>Date d'expiration</span>
                                 <input
                                     type="date"
@@ -513,7 +513,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                     onChange={(e) => setEditDates({ ...editDates, expires_at: e.target.value })}
                                     className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
                                 />
-                                <p className="text-xs text-slate-400">Laisser vide pour aucune expiration</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Laisser vide pour aucune expiration</p>
                             </label>
                         </div>
                         <div className="flex justify-end gap-2">
@@ -522,7 +522,7 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                     setShowEditDatesModal(false);
                                     setSelectedSubscription(null);
                                 }}
-                                className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 Annuler
                             </button>

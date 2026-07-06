@@ -85,12 +85,12 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.apiTokens.title}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.apiTokens.title}</h1>}
         >
             <Head title={t.apiTokens.title} />
 
             <div className="max-w-3xl space-y-6">
-                <p className="text-sm text-slate-300">{t.apiTokens.subtitle}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{t.apiTokens.subtitle}</p>
 
                 {/* Révélation unique du token en clair */}
                 {revealedToken && (
@@ -121,7 +121,7 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
                 )}
 
                 {/* Création d'un nouveau token */}
-                <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/50">
                     <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-200">
                         <Plus className="size-4 text-amber-300" />
                         {t.apiTokens.createTitle}
@@ -129,23 +129,23 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.nameLabel}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.apiTokens.nameLabel}</label>
                                 <input
                                     type="text"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
                                     placeholder={t.apiTokens.namePlaceholder}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white placeholder-slate-500 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white dark:placeholder-slate-500"
                                     required
                                 />
                                 <InputError message={errors.name} />
                             </div>
                             <div className="sm:w-52">
-                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.expiryLabel}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.apiTokens.expiryLabel}</label>
                                 <select
                                     value={data.expires_in_days}
                                     onChange={(e) => setData('expires_in_days', e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-4 py-2 text-white focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 >
                                     <option value="">{t.apiTokens.expiryNever}</option>
                                     <option value="30">{t.apiTokens.expiryDays(30)}</option>
@@ -156,7 +156,7 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">{t.apiTokens.scopesLabel}</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.apiTokens.scopesLabel}</label>
                             <p className="mb-2 text-xs text-slate-500">{t.apiTokens.scopesHint}</p>
                             <div className="grid gap-2 sm:grid-cols-3">
                                 {resources.map((resource) => (
@@ -199,12 +199,12 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
                 </div>
 
                 {/* Liste des tokens existants */}
-                <div className="rounded-xl border border-white/10 bg-slate-900/50 overflow-hidden">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden dark:border-white/10 dark:bg-slate-900/50">
                     {tokens.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 px-6">
                             <Key className="size-12 text-slate-400 mb-4" />
-                            <p className="text-lg font-medium text-slate-300 mb-2">{t.apiTokens.emptyTitle}</p>
-                            <p className="text-sm text-slate-400">{t.apiTokens.emptySubtitle}</p>
+                            <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">{t.apiTokens.emptyTitle}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t.apiTokens.emptySubtitle}</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-white/10">

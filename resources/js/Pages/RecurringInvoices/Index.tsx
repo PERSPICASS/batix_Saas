@@ -57,8 +57,8 @@ export default function RecurringInvoicesIndex({ recurringInvoices, filters = {}
             label: t.recurringInvoices.columns.customer,
             render: (ri: RecurringInvoice) => (
                 <div>
-                    <p className="font-medium text-white">{ri.customer.name}</p>
-                    <p className="text-xs text-slate-400">{ri.customer.email}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{ri.customer.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{ri.customer.email}</p>
                 </div>
             ),
         },
@@ -75,7 +75,7 @@ export default function RecurringInvoicesIndex({ recurringInvoices, filters = {}
             key: 'next_invoice_date',
             label: t.recurringInvoices.columns.nextInvoiceDate,
             render: (ri: RecurringInvoice) => (
-                <span className="text-sm text-slate-400">{new Date(ri.next_invoice_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">{new Date(ri.next_invoice_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}</span>
             ),
         },
         {
@@ -149,22 +149,22 @@ export default function RecurringInvoicesIndex({ recurringInvoices, filters = {}
     const inactiveCount = recurringInvoices.data?.filter((ri: RecurringInvoice) => !ri.is_active).length || 0;
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.recurringInvoices.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.recurringInvoices.title}</h1>}>
             <Head title={t.recurringInvoices.title} />
 
             <section className="space-y-6">
                 {/* Stats */}
                 <div className="grid gap-4 md:grid-cols-3">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.recurringInvoices.stats.totalCycles}</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{recurringInvoices.total}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.recurringInvoices.stats.totalCycles}</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{recurringInvoices.total}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.recurringInvoices.stats.active}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.recurringInvoices.stats.active}</p>
                         <p className="mt-1 text-2xl font-bold text-green-400">{activeCount}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.recurringInvoices.stats.inactive}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.recurringInvoices.stats.inactive}</p>
                         <p className="mt-1 text-2xl font-bold text-slate-400">{inactiveCount}</p>
                     </div>
                 </div>
@@ -186,7 +186,7 @@ export default function RecurringInvoicesIndex({ recurringInvoices, filters = {}
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                         >
                             <option value="">{t.recurringInvoices.filters.allStatuses}</option>
                             <option value="active">{t.recurringInvoices.filters.activeStatus}</option>
@@ -194,7 +194,7 @@ export default function RecurringInvoicesIndex({ recurringInvoices, filters = {}
                         </select>
                         <button
                             onClick={handleSearch}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             {t.recurringInvoices.filters.search}
                         </button>

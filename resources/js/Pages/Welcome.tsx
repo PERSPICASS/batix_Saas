@@ -1,18 +1,18 @@
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { copy, fallbackPlansByLocale, faqsByLocale, featuresByLocale, heroSlides, trustMarksByLocale, localBusinessData, faqSchemaData } from '@/types/data';
-import type { Locale, PlanView, SubscriptionPlan } from '@/types/types';
+import { copy, faqsByLocale, heroSlides, localBusinessData, faqSchemaData } from '@/types/data';
+import type { Locale } from '@/types/types';
+import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import PublicLayout from '@/Layouts/PublicLayout';
+import AiShowcase from '@/Components/Welcome/AiShowcase';
+import AudienceSwitcher from '@/Components/Welcome/AudienceSwitcher';
 import BlogSection from '@/Components/Welcome/BlogSection';
-import ContactSection from '@/Components/Welcome/ContactSection';
 import DemoSection from '@/Components/Welcome/DemoSection';
 import FaqSection from '@/Components/Welcome/FaqSection';
-import FeaturesSection from '@/Components/Welcome/FeaturesSection';
+import FeaturesTeaser from '@/Components/Welcome/FeaturesTeaser';
+import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
 import HeroSection from '@/Components/Welcome/HeroSection';
-import PricingSection from '@/Components/Welcome/PricingSection';
-import TestimonialsSection from '@/Components/Welcome/TestimonialsSection';
-import WelcomeFooter from '@/Components/Welcome/WelcomeFooter';
-import WelcomeHeader from '@/Components/Welcome/WelcomeHeader';
 
 interface BlogPost {
     id: number;
@@ -28,111 +28,24 @@ interface BlogPost {
 }
 
 interface WelcomeProps extends PageProps {
-    subscriptionPlans: SubscriptionPlan[];
     appUrl: string;
     latestPosts: BlogPost[];
+    locale: Locale;
+    localeLinks: Record<Locale, string>;
 }
 
-export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts = [] }: WelcomeProps) {
-    const [locale, setLocale] = useState<Locale>('fr');
+export default function Welcome({ auth, appUrl, latestPosts = [], locale, localeLinks }: WelcomeProps) {
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
-    const [scrolled, setScrolled] = useState(false);
-
-    // ── Scroll detection ───────────────────────────────────────────────────
-    useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 60);
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => window.removeEventListener('scroll', onScroll);
-    }, []);
-
-    // ── Persist locale ─────────────────────────────────────────────────────
-    useEffect(() => {
-        const saved = window.localStorage.getItem('landing_locale');
-        if (saved === 'fr' || saved === 'en') setLocale(saved as Locale);
-    }, []);
-
-    useEffect(() => {
-        window.localStorage.setItem('landing_locale', locale);
-    }, [locale]);
-
-    // ── Dashboard URL ──────────────────────────────────────────────────────
-    const getDashboardUrl = () => {
-        if (!auth.user) return route('register');
-        if (auth.user.role === 'admin_platforme') return route('platform.dashboard');
-        if (auth.code_user) return route('dashboard', { code_user: auth.code_user });
-        return route('register');
-    };
+    const getDashboardUrl = useDashboardUrl(auth);
 
     // ── Derived data ───────────────────────────────────────────────────────
     const t = copy[locale];
-    const features = useMemo(() => featuresByLocale[locale], [locale]);
     const faqs = useMemo(() => faqsByLocale[locale], [locale]);
-    const trustMarks = useMemo(() => trustMarksByLocale[locale], [locale]);
 
     const hasHeroSlides = heroSlides.length > 0;
     const activeHeroCaption = hasHeroSlides ? heroSlides[activeHeroSlide]?.caption?.[locale] : null;
     const heroHeadline = activeHeroCaption?.title ?? t.hero.title;
     const heroDescription = activeHeroCaption?.description ?? t.hero.description;
-
-    const filteredSubscriptionPlans = useMemo(() => {
-        return subscriptionPlans.filter((plan) => {
-            const slug = (plan.slug ?? '').toLowerCase().trim();
-            const isFree = slug === 'free';
-            return !isFree;
-        });
-    }, [subscriptionPlans]);
-
-    const hasDynamicPlans = filteredSubscriptionPlans.length > 0;
-
-    const plans = useMemo<PlanView[]>(() => {
-        if (filteredSubscriptionPlans.length === 0) return fallbackPlansByLocale[locale];
-        return filteredSubscriptionPlans.map((plan) => {
-            const isFr = locale === 'fr';
-            const subtitle = isFr ? 'par mois' : 'per month';
-            const rawEur = plan.price_eur?.trim() || plan.formatted_price?.trim();
-            const badge = isFr
-                ? plan.shop_limit_text
-                : plan.has_unlimited_shops
-                  ? 'Unlimited stores'
-                  : `Up to ${plan.max_shops} store${plan.max_shops > 1 ? 's' : ''}`;
-            const shopsLabel = plan.has_unlimited_shops
-                ? isFr ? 'Boutiques illimitées' : 'Unlimited stores'
-                : isFr ? `${plan.max_shops} boutique${plan.max_shops > 1 ? 's' : ''}` : `${plan.max_shops} store${plan.max_shops > 1 ? 's' : ''}`;
-            const usersLabel = plan.has_unlimited_users
-                ? isFr ? 'Utilisateurs illimités' : 'Unlimited users'
-                : isFr ? `${plan.max_users} utilisateur${plan.max_users > 1 ? 's' : ''}` : `${plan.max_users} user${plan.max_users > 1 ? 's' : ''}`;
-            const productsLabel = plan.has_unlimited_products
-                ? isFr ? 'Produits illimités' : 'Unlimited products'
-                : isFr ? `${plan.max_products} produits par boutique` : `${plan.max_products} products per store`;
-            const depotsLabel = plan.max_depots === 0
-                ? isFr ? 'Sans dépôt' : 'No depot'
-                : plan.has_unlimited_depots
-                  ? isFr ? 'Dépôts illimités' : 'Unlimited depots'
-                  : isFr ? `${plan.max_depots} dépôt${plan.max_depots > 1 ? 's' : ''}` : `${plan.max_depots} depot${plan.max_depots > 1 ? 's' : ''}`;
-            const baseFeatures = isFr
-                ? ['Ventes et caisse', 'Gestion des achats', 'Rapports et statistiques']
-                : ['Sales and POS', 'Purchase management', 'Reports and analytics'];
-            const extraFeatures = Array.isArray(plan.features)
-                ? plan.features.filter((f) => f && f.trim().length > 0).slice(0, 2)
-                : [];
-
-            // Add AI Agent for Growth, Pro, and Enterprise plans
-            const allFeatures = [shopsLabel, usersLabel, productsLabel, depotsLabel, ...baseFeatures, ...extraFeatures];
-            if (['growth', 'pro', 'enterprise'].includes(plan.slug)) {
-                allFeatures.push(isFr ? 'Agent IA' : 'AI Agent');
-            }
-
-            return {
-                name: plan.name,
-                price_eur: rawEur || `${plan.price} EUR`,
-                price_fcfa: plan.price_fcfa,
-                subtitle,
-                badge,
-                points: allFeatures,
-                highlighted: plan.slug === 'growth',
-            };
-        });
-    }, [filteredSubscriptionPlans, locale]);
 
     // ── Hero auto-advance ──────────────────────────────────────────────────
     useEffect(() => {
@@ -143,8 +56,8 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
         return () => window.clearInterval(timer);
     }, []);
 
-    const canonicalUrl = appUrl || 'https://batixpro.com';
-    const ogImage = `${canonicalUrl}${t.seo.ogImage}`;
+    const canonicalUrl = localeLinks[locale];
+    const ogImage = `${appUrl}${t.seo.ogImage}`;
     const ogLocale = locale === 'fr' ? 'fr_FR' : 'en_US';
     const ogLocaleAlt = locale === 'fr' ? 'en_US' : 'fr_FR';
 
@@ -153,12 +66,12 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
         '@graph': [
             {
                 '@type': 'Organization',
-                '@id': `${canonicalUrl}/#organization`,
+                '@id': `${appUrl}/#organization`,
                 name: 'BATIX PRO',
-                url: canonicalUrl,
+                url: appUrl,
                 logo: {
                     '@type': 'ImageObject',
-                    url: `${canonicalUrl}/favicon.svg`,
+                    url: `${appUrl}/favicon.svg`,
                 },
                 sameAs: [],
                 contactPoint: {
@@ -169,11 +82,11 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
             },
             {
                 '@type': 'WebSite',
-                '@id': `${canonicalUrl}/#website`,
-                url: canonicalUrl,
+                '@id': `${appUrl}/#website`,
+                url: appUrl,
                 name: 'BATIX PRO',
                 description: t.seo.description,
-                publisher: { '@id': `${canonicalUrl}/#organization` },
+                publisher: { '@id': `${appUrl}/#organization` },
                 inLanguage: locale === 'fr' ? 'fr-FR' : 'en-US',
             },
             {
@@ -188,7 +101,7 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                     offerCount: '4',
                 },
                 description: t.seo.description,
-                url: canonicalUrl,
+                url: appUrl,
             },
         ],
     };
@@ -220,10 +133,10 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                 <meta name="twitter:description" content={t.seo.description} />
                 <meta name="twitter:image" content={ogImage} />
 
-                {/* hreflang for multilingual SEO */}
-                <link rel="alternate" hrefLang="fr" href="https://batixpro.com/" />
-                <link rel="alternate" hrefLang="en" href="https://batixpro.com/en/" />
-                <link rel="alternate" hrefLang="x-default" href="https://batixpro.com/" />
+                {/* hreflang for multilingual SEO — real per-locale URLs, resolved server-side */}
+                <link rel="alternate" hrefLang="fr" href={localeLinks.fr} />
+                <link rel="alternate" hrefLang="en" href={localeLinks.en} />
+                <link rel="alternate" hrefLang="x-default" href={localeLinks.fr} />
 
                 {/* JSON-LD - Organization & WebSite & SoftwareApplication */}
                 <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
@@ -234,100 +147,72 @@ export default function Welcome({ auth, subscriptionPlans, appUrl, latestPosts =
                 {/* JSON-LD - FAQ Schema for rich snippets */}
                 <script type="application/ld+json">{JSON.stringify((faqSchemaData as any)[locale] || (faqSchemaData as any).fr)}</script>
             </Head>
-            <div className="relative min-h-screen overflow-x-clip bg-[#f9f5ef] text-slate-900 selection:bg-amber-300 selection:text-slate-900">
-                {/* H1 for SEO - visually hidden but accessible */}
-                <h1 className="sr-only">
-                    BATIX PRO - Logiciel de gestion de quincaillerie avec ventes, stock et caisse en temps réel
-                </h1>
 
-                <div className="pointer-events-none absolute inset-0 -z-10">
-                    <div className="h-full w-full bg-gradient-to-br from-[#fdf8f0] via-[#f9f5ef] to-[#f2ebe0]" />
-                </div>
-                <div className="w-full">
-                    <WelcomeHeader
-                        locale={locale}
-                        setLocale={setLocale}
-                        scrolled={scrolled}
-                        getDashboardUrl={getDashboardUrl}
-                        isAuthenticated={!!auth.user}
-                    />
+            {/* H1 for SEO - visually hidden but accessible */}
+            <h1 className="sr-only">
+                BATIX PRO - Logiciel de gestion de quincaillerie avec ventes, stock et caisse en temps réel
+            </h1>
 
-                    <main className="pt-10">
-                        <HeroSection
-                            locale={locale}
-                            t={t}
-                            heroHeadline={heroHeadline}
-                            heroDescription={heroDescription}
-                            activeHeroSlide={activeHeroSlide}
-                            getDashboardUrl={getDashboardUrl}
-                            setActiveHeroSlide={setActiveHeroSlide}
-                        />
+            <PublicLayout
+                locale={locale}
+                localeLinks={localeLinks}
+                isAuthenticated={!!auth.user}
+                getDashboardUrl={getDashboardUrl}
+            >
+                <HeroSection
+                    locale={locale}
+                    t={t}
+                    heroHeadline={heroHeadline}
+                    heroDescription={heroDescription}
+                    activeHeroSlide={activeHeroSlide}
+                    getDashboardUrl={getDashboardUrl}
+                    setActiveHeroSlide={setActiveHeroSlide}
+                />
 
-                        <FeaturesSection
-                            locale={locale}
-                            featuresTitle={t.featuresTitle}
-                            features={features}
-                        />
+                <FeaturesTeaser locale={locale} featuresTitle={t.featuresTitle} />
 
-                        <DemoSection
-                            locale={locale}
-                            t={{ demo: t.demo, videoFaqs: t.videoFaqs }}
-                            getDashboardUrl={getDashboardUrl}
-                        />
+                <AudienceSwitcher locale={locale} />
 
-                        <TestimonialsSection
-                            locale={locale}
-                            promises={t.promises}
-                            trustReasons={t.trustReasons}
-                        />
+                <AiShowcase locale={locale} />
 
-                        <PricingSection
-                            pricingTitle={t.pricingTitle}
-                            pricingLabel={t.pricingLabel}
-                            pricingFallback={t.pricingFallback}
-                            planCta={t.planCta}
-                            plans={plans}
-                            hasDynamicPlans={hasDynamicPlans}
-                            getDashboardUrl={getDashboardUrl}
-                        />
+                <DemoSection
+                    locale={locale}
+                    t={{ demo: t.demo, videoFaqs: t.videoFaqs }}
+                    getDashboardUrl={getDashboardUrl}
+                />
 
-                        {/* ── Séparateur Pricing / FAQ ── */}
-                        <div className="bg-slate-900 px-6 lg:px-8">
-                            <div className="mx-auto max-w-7xl">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-amber-400/60" />
-                                    <span className="shrink-0 rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-400">
-                                        FAQ
-                                    </span>
-                                    <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-700 to-amber-400/60" />
-                                </div>
-                            </div>
+               
+
+                <BlogSection
+                    locale={locale}
+                    posts={latestPosts}
+                />
+
+                <FinalCtaSection
+                    title={t.contact.title}
+                    description={t.contact.description}
+                    cta={t.contact.cta}
+                    getDashboardUrl={getDashboardUrl}
+                />
+                 {/* ── Séparateur / FAQ ── */}
+                {/* <div className="bg-white px-6 lg:px-8">
+                    <div className="mx-auto max-w-7xl">
+                        <div className="flex items-center gap-4">
+                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-200 to-terre-300" />
+                            <span className="shrink-0 rounded-full border border-terre-200 bg-terre-50 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-terre-700">
+                                FAQ
+                            </span>
+                            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-gray-200 to-terre-300" />
                         </div>
+                    </div>
+                </div> */}
 
-                        <FaqSection
-                            locale={locale}
-                            faqTitle={t.faqTitle}
-                            faqs={faqs}
-                        />
-
-                        <BlogSection
-                            locale={locale}
-                            posts={latestPosts}
-                        />
-
-                        <ContactSection
-                            locale={locale}
-                            t={{ contact: t.contact }}
-                            getDashboardUrl={getDashboardUrl}
-                        />
-                    </main>
-
-                    <WelcomeFooter
-                        footerText={t.footerText}
-                        nav={t.nav}
-                    />
-                </div>
-            </div>
+                <FaqSection
+                    locale={locale}
+                    faqTitle={t.faqTitle}
+                    faqs={faqs}
+                />
+            </PublicLayout>
         </>
     );
 }

@@ -314,27 +314,27 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Nouvelle facture</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Nouvelle facture</h1>}>
             <Head title="Nouvelle facture" />
 
             <form onSubmit={submit} className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <div className="mb-4 flex items-center gap-2 text-white">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <div className="mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
                             <FileText className="size-5 text-amber-200" />
                             <h2 className="text-lg font-semibold">Informations facture</h2>
                         </div>
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="shop_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.invoices.form.shop} *
                                 </label>
                                 <select
                                     id="shop_id"
                                     value={data.shop_id}
                                     onChange={(e) => handleShopChange(e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
                                     <option value="">{t.invoices.form.selectShop}</option>
                                     {shops.map((shop) => (
@@ -347,7 +347,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-200">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.invoices.form.customer} *
                                 </label>
                                 <div className="mt-1 space-y-2">
@@ -360,7 +360,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                             <UserRound className="size-4 text-amber-300" />
                                             {selectedCustomer ? selectedCustomer.name : t.invoices.form.selectCustomer}
                                         </span>
-                                        <span className="text-xs text-slate-400">{t.common.actions.open}</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400">{t.common.actions.open}</span>
                                     </button>
 
                                     {selectedCustomer && (
@@ -378,14 +378,14 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             </div>
 
                             <div>
-                                <label htmlFor="status" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.invoices.form.status} *
                                 </label>
                                 <select
                                     id="status"
                                     value={data.status}
                                     onChange={(e) => setData('status', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
                                     <option value="draft">Brouillon</option>
                                     <option value="sent">Envoyée</option>
@@ -396,14 +396,14 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             </div>
 
                             <div>
-                                <label htmlFor="payment_method" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="payment_method" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.invoices.form.paymentMethod}
                                 </label>
                                 <select
                                     id="payment_method"
                                     value={data.payment_method}
                                     onChange={(e) => setData('payment_method', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
                                     <option value="">Non payée</option>
                                     <option value="cash">Espèces</option>
@@ -416,7 +416,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             </div>
 
                             <div>
-                                <label htmlFor="invoice_date" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="invoice_date" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.invoices.form.invoiceDate} *
                                 </label>
                                 <input
@@ -424,13 +424,13 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                     id="invoice_date"
                                     value={data.invoice_date}
                                     onChange={(e) => setData('invoice_date', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.invoice_date} />
                             </div>
 
                             <div>
-                                <label htmlFor="due_date" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="due_date" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.invoices.form.dueDate}
                                 </label>
                                 <input
@@ -438,13 +438,13 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                     id="due_date"
                                     value={data.due_date}
                                     onChange={(e) => setData('due_date', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.due_date} />
                             </div>
 
                             <div>
-                                <label htmlFor="discount_amount" className="block text-sm font-medium text-slate-200">
+                                <label htmlFor="discount_amount" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                     {t.invoices.form.discount}
                                 </label>
                                 <input
@@ -454,20 +454,20 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                     step="0.01"
                                     value={data.discount_amount}
                                     onChange={(e) => setData('discount_amount', Math.max(Number(e.target.value) || 0, 0))}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
                                 <InputError message={errors.discount_amount} />
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">{t.invoices.form.invoiceLines}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.invoices.form.invoiceLines}</h2>
                             <button
                                 type="button"
                                 onClick={addItem}
-                                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 <Plus className="size-3.5" />
                                 {t.invoices.form.addLine}
@@ -479,19 +479,19 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 <div key={index} className="rounded-xl border border-white/10 bg-slate-900/60 p-3 space-y-3">
                                     <div className="grid items-end gap-2 md:grid-cols-12">
                                         <div className="md:col-span-7 space-y-1">
-                                            <label className="text-xs text-slate-300">{t.invoices.form.product} #{index + 1}</label>
+                                            <label className="text-xs text-slate-600 dark:text-slate-300">{t.invoices.form.product} #{index + 1}</label>
                                             <button
                                                 type="button"
                                                 onClick={() => openProductModal(index)}
                                                 className="flex h-10 w-full items-center justify-between rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-left text-sm text-slate-200 transition hover:border-amber-300/40"
                                             >
                                                 <span>{item.product_name || t.invoices.form.selectProduct}</span>
-                                                <span className="text-xs text-slate-400">{t.common.actions.open}</span>
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">{t.common.actions.open}</span>
                                             </button>
                                         </div>
 
                                         <div className="md:col-span-1 space-y-1">
-                                            <label className="text-xs text-slate-300">Qté</label>
+                                            <label className="text-xs text-slate-600 dark:text-slate-300">Qté</label>
                                             <input
                                                 type="number"
                                                 min="1"
@@ -502,7 +502,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                         </div>
 
                                         <div className="md:col-span-2 space-y-1">
-                                            <label className="text-xs text-slate-300">Prix U. ({currencySymbol})</label>
+                                            <label className="text-xs text-slate-600 dark:text-slate-300">Prix U. ({currencySymbol})</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
@@ -526,13 +526,13 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                     </div>
 
                                     <div className="space-y-1">
-                                        <label className="text-xs text-slate-300">Description</label>
+                                        <label className="text-xs text-slate-600 dark:text-slate-300">Description</label>
                                         <input
                                             type="text"
                                             value={item.description}
                                             onChange={(e) => updateItem(index, 'description', e.target.value)}
                                             placeholder="Description optionnelle"
-                                            className="w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-200"
                                         />
                                     </div>
                                 </div>
@@ -541,14 +541,14 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                         <InputError message={errors.items} />
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <label className="space-y-1 text-sm text-slate-200">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                             <span>Note interne</span>
                             <textarea
                                 value={data.notes}
                                 onChange={(e) => setData('notes', e.target.value)}
                                 rows={4}
-                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                 placeholder="{t.invoices.form.additionalInfo}..."
                             />
                         </label>
@@ -574,7 +574,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 -<Currency amount={discountAmount} />
                             </span>
                         </div>
-                        <div className="mt-3 border-t border-white/15 pt-3 text-base font-semibold text-white">
+                        <div className="mt-3 border-t border-gray-200 dark:border-white/15 pt-3 text-base font-semibold text-slate-900 dark:text-white">
                             <div className="flex justify-between">
                                 <span>Total</span>
                                 <span>
@@ -609,14 +609,14 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                         <button
                             type="button"
                             onClick={() => setShowCustomerModal(false)}
-                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                            className="rounded-md border border-gray-300 p-1 text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <X className="size-4" />
                         </button>
                     </div>
 
                     <div className="mb-3 shrink-0 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
-                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2">
+                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-slate-900">
                             <Search className="size-4 text-amber-300" />
                             <input
                                 value={customerSearch}
@@ -629,19 +629,19 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setCustomerSearch('')}
-                                    className="rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                                    className="rounded-md p-1 text-slate-500 transition hover:bg-gray-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-200"
                                 >
                                     <X className="size-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
+                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-500 dark:text-slate-400">
                             <span>{t.invoices.form.useArrowKeys}</span>
                             <span>{filteredCustomers.length} {t.invoices.form.results}</span>
                         </div>
                     </div>
 
-                    <div className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-slate-900/40 p-2">
+                    <div className="min-h-0 flex-1 space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-slate-900/40">
                         {filteredCustomers.length > 0 ? (
                             filteredCustomers.map((customer, index) => (
                                 <button
@@ -661,7 +661,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 </button>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">
+                            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
                                 {t.invoices.form.noCustomers}
                             </p>
                         )}
@@ -676,14 +676,14 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                         <button
                             type="button"
                             onClick={() => setShowProductModal(false)}
-                            className="rounded-md border border-white/15 p-1 text-slate-300 hover:bg-white/10"
+                            className="rounded-md border border-gray-300 p-1 text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <X className="size-4" />
                         </button>
                     </div>
 
                     <div className="mb-3 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
-                        <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2">
+                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-slate-900">
                             <Search className="size-4 text-amber-300" />
                             <input
                                 value={productSearch}
@@ -696,19 +696,19 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 <button
                                     type="button"
                                     onClick={() => setProductSearch('')}
-                                    className="rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-200"
+                                    className="rounded-md p-1 text-slate-500 transition hover:bg-gray-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-slate-200"
                                 >
                                     <X className="size-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
+                        <div className="mt-2 flex items-center justify-between px-1 text-xs text-slate-500 dark:text-slate-400">
                             <span>{t.invoices.form.useArrowKeys}</span>
                             <span>{filteredProductsBySearch.length} {t.invoices.form.results}</span>
                         </div>
                     </div>
 
-                    <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-white/10 bg-slate-900/40 p-2">
+                    <div className="h-[420px] space-y-1 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-2 dark:border-white/10 dark:bg-slate-900/40">
                         {filteredProductsBySearch.length > 0 ? (
                             filteredProductsBySearch.map((product, index) => (
                                 <div key={product.id}>
@@ -716,7 +716,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                     {product.has_variations && product.variations?.length > 0 ? (
                                         <div>
                                             <div className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-400">
-                                                <span className="font-medium text-slate-300">{product.name}</span>
+                                                <span className="font-medium text-slate-700 dark:text-slate-300">{product.name}</span>
                                                 <span className="rounded-full bg-amber-300/15 px-1.5 py-0.5 text-xs text-amber-400">
                                                     {product.variations.length} {t.invoices.form.variations}
                                                 </span>
@@ -752,7 +752,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 </div>
                             ))
                         ) : (
-                            <p className="px-3 py-2 text-sm text-slate-400">
+                            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
                                 {t.invoices.form.noProducts}
                             </p>
                         )}

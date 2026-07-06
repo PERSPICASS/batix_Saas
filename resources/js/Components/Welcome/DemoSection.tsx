@@ -56,11 +56,11 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 {/* En-tête */}
                 <motion.div className="mb-8" variants={fadeUp}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-600">
                         {locale === 'fr' ? 'Tutoriels video' : 'Video tutorials'}
                     </p>
                     <h2 className="mt-2 text-3xl font-extrabold text-slate-900">{t.demo.sectionTitle}</h2>
-                    <div className="mt-3 h-1 w-12 rounded-full bg-amber-400" />
+                    <div className="mt-3 h-1 w-12 rounded-full bg-terre-500" />
                     <p className="mt-3 max-w-xl text-slate-600">{t.demo.sectionSubtitle}</p>
                 </motion.div>
 
@@ -74,8 +74,8 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                                     key={item.id}
                                     className={`overflow-hidden rounded-2xl border transition-all duration-200 ${
                                         isOpen
-                                            ? 'border-slate-900 bg-slate-900 shadow-lg'
-                                            : 'border-[#d6c9b2] bg-[#fbf7ef] hover:border-amber-300'
+                                            ? 'border-terre-600 bg-terre-600 shadow-lg'
+                                            : 'border-gray-200 bg-white hover:border-terre-300'
                                     }`}
                                 >
                                     <button
@@ -84,7 +84,7 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                                         className="flex w-full items-center gap-3 px-5 py-4 text-left"
                                     >
                                         {/* Numéro */}
-                                        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isOpen ? 'bg-amber-300 text-slate-900' : 'bg-slate-100 text-slate-600'}`}>
+                                        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isOpen ? 'bg-white text-terre-700' : 'bg-gray-100 text-slate-600'}`}>
                                             {index + 1}
                                         </span>
 
@@ -92,13 +92,13 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                                             <span className={`block text-sm font-semibold leading-snug ${isOpen ? 'text-white' : 'text-slate-800'}`}>
                                                 {item.question}
                                             </span>
-                                            <span className={`mt-1 flex items-center gap-1 text-xs ${isOpen ? 'text-amber-300' : 'text-slate-400'}`}>
+                                            <span className={`mt-1 flex items-center gap-1 text-xs ${isOpen ? 'text-terre-100' : 'text-slate-400'}`}>
                                                 <Clock className="size-3" />
                                                 {item.duration}
                                             </span>
                                         </span>
 
-                                        <ChevronDown className={`size-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-300' : 'text-slate-400'}`} />
+                                        <ChevronDown className={`size-4 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-white' : 'text-slate-400'}`} />
                                     </button>
 
                                     {/* Vidéo inline sur mobile */}
@@ -135,7 +135,7 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                         <div className="pt-3">
                             <Link
                                 href={getDashboardUrl()}
-                                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 font-bold text-slate-900 shadow-sm transition hover:bg-amber-300"
+                                className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 font-bold text-slate-900 shadow-sm transition hover:bg-amber-400"
                             >
                                 {t.demo.cta}
                                 <ArrowRight className="size-4" />
@@ -145,7 +145,7 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
 
                     {/* Lecteur vidéo desktop */}
                     <motion.div className="hidden lg:col-span-7 lg:block" variants={fadeUp}>
-                        <div className="sticky top-28 overflow-hidden rounded-3xl border border-[#d6c9b2] bg-slate-900 shadow-2xl">
+                        <div className="sticky top-28 overflow-hidden rounded-3xl border border-gray-200 bg-slate-900 shadow-2xl">
                             {openId ? (
                                 (() => {
                                     const active = t.videoFaqs.find((v) => v.id === openId);
@@ -154,9 +154,9 @@ export default function DemoSection({ locale, t, getDashboardUrl }: DemoSectionP
                                         <>
                                             {/* Badge titre */}
                                             <div className="flex items-center gap-3 border-b border-white/10 px-5 py-3">
-                                                <PlayCircle className="size-4 shrink-0 text-amber-300" />
+                                                <PlayCircle className="size-4 shrink-0 text-terre-300" />
                                                 <p className="truncate text-sm font-medium text-white">{active.question}</p>
-                                                <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-amber-200">
+                                                <span className="ml-auto flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-terre-200">
                                                     <Clock className="size-3" />
                                                     {active.duration}
                                                 </span>

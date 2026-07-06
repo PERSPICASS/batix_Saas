@@ -128,7 +128,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
             cancelled: t.inventory.status.cancelled,
         };
         const statuses: Record<string, { label: string; bg: string; text: string }> = {
-            draft: { label: statusLabels.draft, bg: 'bg-slate-500/20', text: 'text-slate-300' },
+            draft: { label: statusLabels.draft, bg: 'bg-slate-500/20', text: 'text-slate-600 dark:text-slate-300' },
             in_progress: { label: statusLabels.in_progress, bg: 'bg-blue-500/20', text: 'text-blue-300' },
             completed: { label: statusLabels.completed, bg: 'bg-green-500/20', text: 'text-green-300' },
             cancelled: { label: statusLabels.cancelled, bg: 'bg-red-500/20', text: 'text-red-300' },
@@ -188,7 +188,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
             key: 'user',
             label: t.inventory.createdBy,
             render: (inventory: Inventory) => (
-                <span className="text-sm text-slate-300">{inventory.user.name}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{inventory.user.name}</span>
             ),
         },
         {
@@ -199,7 +199,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                 <TableActions>
                     <Link
                         href={route('inventory.show', { inventory: inventory.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         <Eye className="size-3.5" /> {t.inventory.actions.view}
                     </Link>
@@ -207,7 +207,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                         <>
                             <Link
                                 href={route('inventory.edit', { inventory: inventory.id })}
-                                className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 <Pencil className="size-3.5" /> {t.inventory.actions.edit}
                             </Link>
@@ -225,7 +225,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.inventory.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.inventory.title}</h1>}>
             <Head title={t.inventory.title} />
 
             <section className="space-y-6">
@@ -234,7 +234,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                         >
                             <option value="">{t.inventory.filters.allStatuses}</option>
                             <option value="draft">{t.inventory.status.draft}</option>
@@ -244,7 +244,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                         </select>
                         <button
                             onClick={handleSearch}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
                             {t.inventory.filters.filter}
                         </button>
@@ -294,8 +294,8 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                                 <CheckCircle className="size-6 text-green-400" />
                             </div>
                             <div className="min-w-0 flex-1">
-                                <h3 className="text-lg font-semibold text-white">{t.inventory.completeModal.title}</h3>
-                                <p className="mt-2 text-sm text-slate-300">{t.inventory.completeModal.previewIntro}</p>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.inventory.completeModal.title}</h3>
+                                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t.inventory.completeModal.previewIntro}</p>
 
                                 {previewLoading ? (
                                     <p className="mt-4 text-sm text-slate-400">{t.common.misc.loading}</p>
@@ -310,7 +310,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                                 type="button"
                                 onClick={() => setCompleteModal({ show: false, inventory: null })}
                                 disabled={processing}
-                                className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10 disabled:opacity-50"
+                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                             >
                                 {t.common.actions.cancel}
                             </button>

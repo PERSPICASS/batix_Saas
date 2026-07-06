@@ -10,6 +10,8 @@ interface SeoHeadProps {
     ogType?: 'website' | 'article';
     publishedAt?: string;
     author?: string;
+    /** Real per-locale URLs for this page, e.g. { fr: '/blog/x', en: '/en/blog/x' } */
+    hreflangAlternates?: { locale: string; href: string }[];
 }
 
 export function SeoHead({
@@ -22,6 +24,7 @@ export function SeoHead({
     ogType = 'website',
     publishedAt,
     author,
+    hreflangAlternates,
 }: SeoHeadProps) {
     const fullTitle = `${title} | BATIX PRO`;
 
@@ -32,6 +35,9 @@ export function SeoHead({
 
             {noIndex && <meta name="robots" content="noindex,nofollow" />}
             {canonical && <link rel="canonical" href={canonical} />}
+            {hreflangAlternates?.map((alt) => (
+                <link key={alt.locale} rel="alternate" hrefLang={alt.locale} href={alt.href} />
+            ))}
 
             {/* Open Graph */}
             <meta property="og:title" content={fullTitle} />

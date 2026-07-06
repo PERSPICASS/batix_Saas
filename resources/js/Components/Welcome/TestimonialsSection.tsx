@@ -44,10 +44,10 @@ export default function TestimonialsSection({ locale, promises, trustReasons }: 
 
             <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
                 <motion.div className="mb-10" variants={fadeUp}>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-400">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-400">
                         {sectionLabel}
                     </p>
-                    <div className="mt-2 h-1 w-12 rounded-full bg-amber-400" />
+                    <div className="mt-2 h-1 w-12 rounded-full bg-terre-500" />
                 </motion.div>
 
                 {/* 3 promesses mesurables */}
@@ -57,7 +57,7 @@ export default function TestimonialsSection({ locale, promises, trustReasons }: 
                             key={p.label}
                             className="flex items-center gap-4 rounded-2xl border border-slate-700 bg-slate-800 px-5 py-5 shadow-md"
                         >
-                            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-400/10 text-amber-400">
+                            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-terre-500/10 text-terre-400">
                                 <DynamicIcon name={p.icon} className="size-5" />
                             </span>
                             <div>

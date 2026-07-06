@@ -99,7 +99,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.auth.pages.twoFactor.heading}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.auth.pages.twoFactor.heading}</h1>}
         >
             <Head title={t.auth.pages.twoFactor.title} />
 
@@ -108,10 +108,10 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-slate-900/50 to-slate-800/50 p-6">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Shield className={`size-8 ${twoFactorEnabled ? 'text-green-500' : 'text-slate-400'}`} />
+                            <Shield className={`size-8 ${twoFactorEnabled ? 'text-green-500' : 'text-slate-500 dark:text-slate-400'}`} />
                             <div>
-                                <h2 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.heading}</h2>
-                                <p className="text-sm text-slate-400">
+                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.auth.pages.twoFactor.heading}</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {twoFactorEnabled
                                         ? t.auth.pages.twoFactor.statusEnabled
                                         : t.auth.pages.twoFactor.statusDisabled}
@@ -144,8 +144,8 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                 {!twoFactorEnabled ? (
                     <>
                         {/* Setup Instructions */}
-                        <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                            <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.setupSection}</h3>
+                        <div className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/40">
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.auth.pages.twoFactor.setupSection}</h3>
 
                             <div className="space-y-3 text-sm text-slate-300">
                                 <p>{t.auth.pages.twoFactor.setupDescription}</p>
@@ -170,8 +170,8 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
 
                         {/* QR Code Setup */}
                         {showSetup && !showRecoveryCodes && (
-                            <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                                <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.step1Title}</h3>
+                            <div className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/40">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.auth.pages.twoFactor.step1Title}</h3>
 
                                 {qrCode && (
                                     <div className="flex flex-col items-center gap-4">
@@ -180,14 +180,14 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                             alt="QR Code"
                                             className="rounded-lg border border-white/10 p-2"
                                         />
-                                        <p className="text-sm text-slate-400">
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {t.auth.pages.twoFactor.manualSecretLabel} <code className="font-mono text-amber-300">{secret}</code>
                                         </p>
                                     </div>
                                 )}
 
                                 <div className="space-y-3">
-                                    <label className="block text-sm font-medium text-slate-200">
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                         {t.auth.pages.twoFactor.step2Title}
                                     </label>
                                     <input
@@ -212,9 +212,9 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
 
                         {/* Recovery Codes */}
                         {showRecoveryCodes && recoveryCodes && recoveryCodes.length > 0 && (
-                            <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-                                <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.recoveryCodes}</h3>
-                                <p className="text-sm text-slate-400">
+                            <div className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/40">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.auth.pages.twoFactor.recoveryCodes}</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
                                     {t.auth.pages.twoFactor.recoveryCodesDescription}
                                 </p>
 
@@ -232,7 +232,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                                                 {copiedIndex === index ? (
                                                     <Check className="size-4 text-green-400" />
                                                 ) : (
-                                                    <Copy className="size-4 text-slate-400" />
+                                                    <Copy className="size-4 text-slate-500 dark:text-slate-400" />
                                                 )}
                                             </button>
                                         </div>
@@ -264,7 +264,7 @@ export default function TwoFactor({ twoFactorEnabled, hasSecret }: Props) {
                 {showDisableModal && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                         <div className="rounded-2xl border border-white/10 bg-slate-950 p-6 max-w-md">
-                            <h3 className="text-lg font-semibold text-white">{t.auth.pages.twoFactor.disableModalTitle}</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.auth.pages.twoFactor.disableModalTitle}</h3>
                             <p className="mt-2 text-sm text-slate-400">
                                 {t.auth.pages.twoFactor.disableModalDescription}
                             </p>

@@ -79,8 +79,8 @@ export default function Index({ plans }: Props) {
             header={
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-xl font-semibold text-white">{t.platformSubscriptionPlans.index.title}</h1>
-                        <p className="text-sm text-slate-400 mt-1">
+                        <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.platformSubscriptionPlans.index.title}</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                             {t.platformSubscriptionPlans.index.subtitle}
                         </p>
                     </div>
@@ -91,7 +91,7 @@ export default function Index({ plans }: Props) {
 
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
                         {t.platformSubscriptionPlans.index.planCount(plans.total)}
                     </p>
                     <Link
@@ -110,7 +110,7 @@ export default function Index({ plans }: Props) {
                             label: t.platformSubscriptionPlans.index.columns.plan,
                             render: (plan) => (
                                 <div className="flex flex-col">
-                                    <span className="font-medium text-white">{plan.name}</span>
+                                    <span className="font-medium text-slate-900 dark:text-white">{plan.name}</span>
                                     {plan.description && (
                                         <span className="text-xs text-slate-400 mt-0.5">
                                             {plan.description}
@@ -132,8 +132,8 @@ export default function Index({ plans }: Props) {
                             label: t.platformSubscriptionPlans.index.columns.limits,
                             render: (plan) => (
                                 <div className="flex flex-col text-sm">
-                                    <span className="text-slate-300">{plan.shop_limit_text}</span>
-                                    <span className="text-xs text-slate-400">
+                                    <span className="text-slate-600 dark:text-slate-300">{plan.shop_limit_text}</span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
                                         {plan.max_users === -1 ? t.platformSubscriptionPlans.index.unlimitedUsers : t.platformSubscriptionPlans.index.usersCount(plan.max_users)}
                                     </span>
                                 </div>
@@ -144,7 +144,7 @@ export default function Index({ plans }: Props) {
                             label: t.platformSubscriptionPlans.index.columns.subscriptions,
                             align: 'center',
                             render: (plan) => (
-                                <span className="text-slate-300">{plan.subscriptions_count}</span>
+                                <span className="text-slate-600 dark:text-slate-300">{plan.subscriptions_count}</span>
                             ),
                         },
                         {
@@ -170,7 +170,7 @@ export default function Index({ plans }: Props) {
                                 <TableActions>
                                     <Link
                                         href={route('platform.subscriptions.edit', plan.id)}
-                                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                                     >
                                         <Pencil className="size-3.5" /> {t.platformSubscriptionPlans.index.edit}
                                     </Link>

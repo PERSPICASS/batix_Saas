@@ -56,7 +56,7 @@ export default function InvoicesIndex({ invoices }: Props) {
 
     const getStatusBadge = (status: string) => {
         const badges: Record<string, { bg: string; text: string }> = {
-            draft: { bg: 'bg-slate-500/20', text: 'text-slate-300' },
+            draft: { bg: 'bg-slate-500/20', text: 'text-slate-600 dark:text-slate-300' },
             sent: { bg: 'bg-blue-500/20', text: 'text-blue-300' },
             paid: { bg: 'bg-green-500/20', text: 'text-green-300' },
             overdue: { bg: 'bg-red-500/20', text: 'text-red-300' },
@@ -118,13 +118,13 @@ export default function InvoicesIndex({ invoices }: Props) {
                 <TableActions>
                     <Link
                         href={route('invoices.show', { invoice: invoice.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         <Eye className="size-3.5" /> {t.invoices.actions.view}
                     </Link>
                     <Link
                         href={route('invoices.edit', { invoice: invoice.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         <Pencil className="size-3.5" /> {t.invoices.actions.edit}
                     </Link>
@@ -144,25 +144,25 @@ export default function InvoicesIndex({ invoices }: Props) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">{t.invoices.title}</h1>}>
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.invoices.title}</h1>}>
             <Head title={t.invoices.title} />
 
             <section className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-4">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.invoices.title}</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{statCounts.total}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.title}</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{statCounts.total}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.invoices.status.paid}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.status.paid}</p>
                         <p className="mt-1 text-2xl font-bold text-green-400">{statCounts.paid}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.invoices.status.sent}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.status.sent}</p>
                         <p className="mt-1 text-2xl font-bold text-blue-400">{statCounts.sent}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">{t.invoices.status.overdue}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.status.overdue}</p>
                         <p className="mt-1 text-2xl font-bold text-red-400">{statCounts.overdue}</p>
                     </div>
                 </div>
@@ -179,7 +179,7 @@ export default function InvoicesIndex({ invoices }: Props) {
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                     >
                         <option value="">{t.invoices.filters.allStatuses}</option>
                         <option value="draft">{t.invoices.status.draft}</option>
@@ -190,7 +190,7 @@ export default function InvoicesIndex({ invoices }: Props) {
                     </select>
                     <button
                         onClick={handleSearch}
-                        className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                     >
                         {t.common.actions.search}
                     </button>
@@ -203,13 +203,13 @@ export default function InvoicesIndex({ invoices }: Props) {
                         </Link>
                         <a
                             href={route('invoices.export', {})}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             <Download className="size-4" /> {t.common.actions.export}
                         </a>
                         <Link
                             href={route('reports.analytics', {})}
-                            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             <BarChart3 className="size-4" /> {t.invoices.actions.reports}
                         </Link>

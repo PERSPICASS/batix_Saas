@@ -106,8 +106,8 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                             <History className="size-5 text-blue-400" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-semibold text-white">{t.activityLogs.title}</h2>
-                            <p className="text-sm text-slate-400">{t.activityLogs.subtitle}</p>
+                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t.activityLogs.title}</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{t.activityLogs.subtitle}</p>
                         </div>
                     </div>
                 </div>
@@ -117,11 +117,11 @@ export default function Index({ activities, filters, filterOptions }: Props) {
 
             <div className="space-y-6">
                 {/* Search & Filters */}
-                <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/50">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         {/* Search */}
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                             <input
                                 type="text"
                                 placeholder={t.activityLogs.filters.searchPlaceholder}
@@ -156,11 +156,11 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                         <div className="mt-4 grid gap-4 sm:grid-cols-3 border-t border-white/10 pt-4">
                             {/* User Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.activityLogs.filters.user}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.activityLogs.filters.user}</label>
                                 <select
                                     value={filters.user_id || ''}
                                     onChange={(e) => handleFilter('user_id', e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 >
                                     <option value="">{t.activityLogs.filters.allUsers}</option>
                                     {filterOptions.users.map((user) => (
@@ -173,11 +173,11 @@ export default function Index({ activities, filters, filterOptions }: Props) {
 
                             {/* Action Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.activityLogs.filters.action}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.activityLogs.filters.action}</label>
                                 <select
                                     value={filters.action || ''}
                                     onChange={(e) => handleFilter('action', e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 >
                                     <option value="">{t.activityLogs.filters.allActions}</option>
                                     {filterOptions.actions.map((action: any) => (
@@ -190,11 +190,11 @@ export default function Index({ activities, filters, filterOptions }: Props) {
 
                             {/* Subject Type Filter */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">{t.activityLogs.filters.type}</label>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t.activityLogs.filters.type}</label>
                                 <select
                                     value={filters.subject_type || ''}
                                     onChange={(e) => handleFilter('subject_type', e.target.value)}
-                                    className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                 >
                                     <option value="">{t.activityLogs.filters.allTypes}</option>
                                     {filterOptions.subjectTypes.map((type: any) => (
@@ -209,7 +209,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                             <div className="sm:col-span-3 flex justify-end">
                                 <button
                                     onClick={clearFilters}
-                                    className="text-sm text-slate-400 hover:text-white transition"
+                                    className="text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition"
                                 >
                                     {t.activityLogs.filters.resetFilters}
                                 </button>
@@ -225,8 +225,8 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                             <div className="flex items-center justify-center w-16 h-16 rounded-full bg-slate-800/50 mb-4">
                                 <History className="size-8 text-slate-400" />
                             </div>
-                            <p className="text-lg font-medium text-slate-300 mb-2">{t.activityLogs.emptyMessage}</p>
-                            <p className="text-sm text-slate-400">
+                            <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">{t.activityLogs.emptyMessage}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {t.activityLogs.emptySubtitle}
                             </p>
                         </div>
@@ -248,7 +248,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                                         {activity.action_label}
                                                     </span>
                                                     {activity.subject_label && (
-                                                        <span className="text-sm text-slate-400">
+                                                        <span className="text-sm text-slate-500 dark:text-slate-400">
                                                             · {activity.subject_label}
                                                         </span>
                                                     )}
@@ -267,7 +267,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                             <p className="text-sm text-slate-300 mb-2">{activity.description}</p>
 
                                             {activity.changes_summary && (
-                                                <p className="text-xs text-slate-400 mb-2">{activity.changes_summary}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{activity.changes_summary}</p>
                                             )}
 
                                             <div className="flex items-center gap-4 text-xs text-slate-500">

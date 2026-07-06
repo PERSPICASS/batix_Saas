@@ -62,62 +62,62 @@ export default function Create() {
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
-                    <h1 className="text-xl font-semibold text-white">{t.platformSubscriptionPlans.create.title}</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.platformSubscriptionPlans.create.title}</h1>
                 </div>
             }
         >
             <Head title={t.platformSubscriptionPlans.create.headTitle} />
 
-            <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
+            <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                 {/* Nom et Slug */}
                 <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block space-y-1 text-sm text-slate-200">
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.platformSubscriptionPlans.form.name}</span>
                         <input
                             type="text"
                             value={data.name}
                             onChange={(e) => handleNameChange(e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             required
                         />
                         <InputError message={errors.name} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.platformSubscriptionPlans.form.slug}</span>
                         <input
                             type="text"
                             value={data.slug}
                             onChange={(e) => setData('slug', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             required
                         />
-                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.slugHint}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.slugHint}</p>
                         <InputError message={errors.slug} />
                     </label>
                 </div>
 
                 {/* Description */}
-                <label className="block space-y-1 text-sm text-slate-200">
+                <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                     <span>{t.platformSubscriptionPlans.form.description}</span>
                     <textarea
                         value={data.description}
                         onChange={(e) => setData('description', e.target.value)}
                         rows={3}
-                        className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                     />
                     <InputError message={errors.description} />
                 </label>
 
                 {/* Prix */}
-                <label className="block space-y-1 text-sm text-slate-200">
+                <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                     <span>{t.platformSubscriptionPlans.form.price}</span>
                     <input
                         type="number"
                         step="0.01"
                         value={data.price}
                         onChange={(e) => setData('price', e.target.value)}
-                        className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         required
                     />
                     <InputError message={errors.price} />
@@ -125,55 +125,55 @@ export default function Create() {
 
                 {/* Limites */}
                 <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block space-y-1 text-sm text-slate-200">
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.platformSubscriptionPlans.form.maxShops}</span>
                         <input
                             type="number"
                             value={data.max_shops}
                             onChange={(e) => setData('max_shops', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             required
                         />
-                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                         <InputError message={errors.max_shops} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.platformSubscriptionPlans.form.maxUsers}</span>
                         <input
                             type="number"
                             value={data.max_users}
                             onChange={(e) => setData('max_users', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             required
                         />
-                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                         <InputError message={errors.max_users} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.platformSubscriptionPlans.form.maxProducts}</span>
                         <input
                             type="number"
                             value={data.max_products}
                             onChange={(e) => setData('max_products', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             required
                         />
-                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.unlimitedHint}</p>
                         <InputError message={errors.max_products} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.platformSubscriptionPlans.form.maxDepots}</span>
                         <input
                             type="number"
                             value={data.max_depots}
                             onChange={(e) => setData('max_depots', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             required
                         />
-                        <p className="text-xs text-slate-400">{t.platformSubscriptionPlans.form.unlimitedOrNoneHint}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.unlimitedOrNoneHint}</p>
                         <InputError message={errors.max_depots} />
                     </label>
                 </div>
@@ -212,7 +212,7 @@ export default function Create() {
                                     key={index}
                                     className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900/50 px-4 py-2"
                                 >
-                                    <span className="text-slate-200">{feature}</span>
+                                    <span className="text-slate-700 dark:text-slate-200">{feature}</span>
                                     <button
                                         type="button"
                                         onClick={() => removeFeature(index)}
@@ -227,7 +227,7 @@ export default function Create() {
                 </label>
 
                 {/* Statut */}
-                <label className="flex items-center gap-2 text-sm text-slate-200">
+                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                     <input
                         type="checkbox"
                         checked={data.is_active}

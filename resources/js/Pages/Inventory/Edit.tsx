@@ -186,25 +186,25 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">{t.inventory.form.editTitle} {inventory.inventory_number}</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.inventory.form.editTitle} {inventory.inventory_number}</h1>}
         >
             <Head title={`${t.inventory.form.editTitle} ${inventory.inventory_number}`} />
 
             <form onSubmit={submit} className="space-y-6">
                 {/* Informations générales */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h2 className="mb-4 text-lg font-semibold text-white">{t.common.form.generalInfo}</h2>
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.generalInfo}</h2>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">{t.common.form.shopField}</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.shopField}</label>
                             <select
                                 value={data.shop_id}
                                 onChange={(e) => {
                                     setData('shop_id', e.target.value);
                                     setData('items', []);
                                 }}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 disabled={inventory.status === 'completed'}
                             >
                                 {shops.map((shop) => (
@@ -217,23 +217,23 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">{t.inventory.form.date}</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.inventory.form.date}</label>
                             <input
                                 type="date"
                                 value={data.inventory_date}
                                 onChange={(e) => setData('inventory_date', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 disabled={inventory.status === 'completed'}
                             />
                             <InputError message={errors.inventory_date} />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-200">{t.common.misc.status}</label>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.misc.status}</label>
                             <select
                                 value={data.status}
                                 onChange={(e) => setData('status', e.target.value)}
-                                className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 disabled={inventory.status === 'completed'}
                             >
                                 <option value="draft">{t.inventory.status.draft}</option>
@@ -245,12 +245,12 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                     </div>
 
                     <div className="mt-4">
-                        <label className="block text-sm font-medium text-slate-200">{t.common.form.notes}</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.notes}</label>
                         <textarea
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                             rows={3}
-                            className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200"
+                            className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             placeholder={t.inventory.form.notesOptionalPlaceholder}
                         />
                     </div>
@@ -258,9 +258,9 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
 
                 {/* Ajout de produits */}
                 {inventory.status !== 'completed' && (
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">{t.inventory.form.addProducts}</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.inventory.form.addProducts}</h2>
                             <button
                                 type="button"
                                 onClick={() => setShowScanner(true)}
@@ -287,7 +287,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                         )}
 
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                             <input
                                 type="text"
                                 value={searchProduct}
@@ -307,8 +307,8 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                         className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-white/10"
                                     >
                                         <div>
-                                            <p className="text-white">{product.name}</p>
-                                            <p className="text-xs text-slate-400">SKU: {product.sku} • Stock: {product.stock_quantity}</p>
+                                            <p className="text-slate-900 dark:text-white">{product.name}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {product.sku} • Stock: {product.stock_quantity}</p>
                                         </div>
                                         <Plus className="size-4 text-amber-300" />
                                     </button>
@@ -323,11 +323,11 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                 )}
 
                 {/* Liste des produits à inventorier */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h2 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-white">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h2 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-slate-900 dark:text-white">
                         {t.inventory.form.productsToInventory(data.items.length)}
                         <span title={t.inventory.show.helpText}>
-                            <Info className="size-4 text-slate-400" />
+                            <Info className="size-4 text-slate-500 dark:text-slate-400" />
                         </span>
                     </h2>
 
@@ -360,8 +360,8 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                             >
                                                 <td className="py-3 pr-4">
                                                     <div>
-                                                        <p className="font-medium text-white">{item.product_name}</p>
-                                                        <p className="text-xs text-slate-400">SKU: {item.product_sku}</p>
+                                                        <p className="font-medium text-slate-900 dark:text-white">{item.product_name}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {item.product_sku}</p>
                                                         {(() => {
                                                             const product = products.find((p) => p.id === item.product_id);
                                                             if (product?.sold_since_last_inventory || product?.purchased_since_last_inventory) {
@@ -391,7 +391,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                                 e.target.value ? parseInt(e.target.value) : null
                                                             )
                                                         }
-                                                        className="w-20 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-1 text-right text-white"
+                                                        className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                                         placeholder="-"
                                                         disabled={inventory.status === 'completed'}
                                                     />
@@ -407,7 +407,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                                 parseInt(e.target.value) || 0
                                                             )
                                                         }
-                                                        className="w-20 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-1 text-right text-white"
+                                                        className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                                         placeholder="0"
                                                         disabled={inventory.status === 'completed'}
                                                     />
@@ -417,7 +417,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                         <span
                                                             className={`font-medium ${
                                                                 difference === 0
-                                                                    ? 'text-slate-400'
+                                                                    ? 'text-slate-500 dark:text-slate-400'
                                                                     : difference > 0
                                                                     ? 'text-green-300'
                                                                     : 'text-red-300'
@@ -432,7 +432,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                     <span
                                                         className={`font-medium ${
                                                             defectiveDifference === 0
-                                                                ? 'text-slate-400'
+                                                                ? 'text-slate-500 dark:text-slate-400'
                                                                 : defectiveDifference > 0
                                                                 ? 'text-green-300'
                                                                 : 'text-red-300'
@@ -467,7 +467,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                 <div className="flex items-center justify-between">
                     <Link
                         href={route('inventory.index')}
-                        className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
                     >
                         <ArrowLeft className="size-4" />
                         {t.common.actions.cancel}

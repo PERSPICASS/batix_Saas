@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'platform.admin' => \App\Http\Middleware\EnsurePlatformAdmin::class,
+            'setlocale' => \App\Http\Middleware\SetPublicLocale::class,
         ]);
 
         //
