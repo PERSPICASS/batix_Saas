@@ -38,8 +38,13 @@ export interface FeaturePageContent {
     icon: Icon;
     title: Record<Locale, string>;
     tagline: Record<Locale, string>;
+    /** Court — utilisé aussi comme meta description SEO, ne pas allonger. */
     description: Record<Locale, string>;
+    /** Paragraphe plus riche, pour l'affichage sur la page uniquement (pas le SEO). */
+    longDescription: Record<Locale, string>;
     benefits: Record<Locale, { title: string; description: string; icon: Icon }[]>;
+    /** 3 questions/réponses propres à la fonctionnalité, pour enrichir la page. */
+    faqs: Record<Locale, { question: string; answer: string }[]>;
 }
 
 // Contenu ancré sur les modules réellement implémentés (voir app/Http/Controllers/*
@@ -56,6 +61,22 @@ export const featurePages: FeaturePageContent[] = [
         description: {
             fr: "Le comptoir est le cœur de votre quincaillerie. BATIX PRO le rend rapide, fiable et sans erreur — du scan du code-barre à l'encaissement.",
             en: 'The counter is the heart of your hardware store. BATIX PRO makes it fast, reliable and error-free — from barcode scan to checkout.',
+        },
+        longDescription: {
+            fr: "Au comptoir, chaque seconde compte. BATIX PRO est conçu pour qu'un vendeur enregistre une vente sans réfléchir : recherche instantanée du produit, scan ou saisie manuelle du code-barre, ajustement du prix si besoin, puis ticket imprimé ou transmis au client. Que la vente soit payée comptant, à crédit ou via l'acompte d'une pré-commande, tout est enregistré au même endroit — sans tableur, sans cahier, sans double saisie.",
+            en: "At the counter, every second counts. BATIX PRO is built so a seller can log a sale without thinking twice: instant product search, barcode scan or manual entry, price adjustment if needed, then a printed or shared receipt. Whether the sale is paid in cash, on credit or through a pre-order deposit, everything is recorded in one place — no spreadsheet, no notebook, no double entry.",
+        },
+        faqs: {
+            fr: [
+                { question: 'Puis-je vendre un produit sans code-barre ?', answer: 'Oui — la recherche fonctionne aussi par nom ou référence produit, pratique pour les articles qui n\'ont pas encore d\'étiquette.' },
+                { question: 'Un caissier peut-il annuler une vente ?', answer: 'Non, par défaut. Les restrictions par rôle empêchent un caissier d\'annuler ou de restaurer une vente sans validation d\'un gérant ou super admin.' },
+                { question: 'Comment gérer un client qui paie en plusieurs fois ?', answer: 'Enregistrez la vente à crédit avec un acompte : le solde restant apparaît automatiquement dans le suivi des créances clients.' },
+            ],
+            en: [
+                { question: 'Can I sell a product without a barcode?', answer: 'Yes — search also works by product name or reference, handy for items that don\'t have a label yet.' },
+                { question: 'Can a cashier cancel a sale?', answer: 'Not by default. Role restrictions prevent a cashier from cancelling or restoring a sale without a manager\'s or super admin\'s approval.' },
+                { question: 'How do I handle a customer paying in installments?', answer: 'Record the sale as credit with a deposit — the remaining balance automatically appears in customer receivables tracking.' },
+            ],
         },
         benefits: {
             fr: [
@@ -90,6 +111,22 @@ export const featurePages: FeaturePageContent[] = [
             fr: "Sachez exactement ce qu'il y a dans chaque boutique et chaque dépôt, en temps réel — sans recompter à la main.",
             en: 'Know exactly what is in every store and depot, in real time — without recounting by hand.',
         },
+        longDescription: {
+            fr: "Rien ne coûte plus cher qu'une rupture de stock découverte trop tard — ou un inventaire qui ne correspond plus à la réalité. BATIX PRO centralise vos dépôts et boutiques dans une seule vue : vous savez exactement combien il reste de chaque produit, où il se trouve, et quand il a bougé. Les transferts entre dépôt et boutique se font en quelques clics, les alertes de stock bas se déclenchent avant la rupture, et l'inventaire physique se réconcilie sans recompter à la main.",
+            en: "Nothing costs more than a stock-out discovered too late — or an inventory that no longer matches reality. BATIX PRO centralizes your depots and stores in a single view: you know exactly how much of each product is left, where it is, and when it last moved. Transfers between depot and store take a few clicks, low-stock alerts fire before you run out, and physical inventory counts reconcile without recounting by hand.",
+        },
+        faqs: {
+            fr: [
+                { question: 'Puis-je avoir plusieurs dépôts pour une seule boutique ?', answer: "Oui, un dépôt est indépendant des boutiques : organisez-le comme vous le souhaitez, puis transférez le stock vers la boutique concernée au besoin." },
+                { question: 'Comment savoir si un produit va bientôt manquer ?', answer: 'Les alertes de stock bas se basent sur un seuil que vous définissez par produit, et remontent directement dans votre tableau de bord.' },
+                { question: "L'inventaire physique remplace-t-il le stock théorique ?", answer: 'Non — il vous permet de comparer le stock réel compté avec le stock théorique enregistré, et d\'ajuster les écarts.' },
+            ],
+            en: [
+                { question: 'Can I have several depots for a single store?', answer: 'Yes, a depot is independent from stores: organize it however you like, then transfer stock to the relevant store when needed.' },
+                { question: 'How do I know a product is about to run out?', answer: 'Low-stock alerts are based on a threshold you set per product, and show up directly on your dashboard.' },
+                { question: 'Does physical inventory replace theoretical stock?', answer: 'No — it lets you compare the actual counted stock against the recorded theoretical stock, and adjust any discrepancies.' },
+            ],
+        },
         benefits: {
             fr: [
                 { title: 'Multi-dépôts', description: 'Organisez votre stock par entrepôt, indépendamment de vos boutiques.', icon: Warehouse },
@@ -122,6 +159,22 @@ export const featurePages: FeaturePageContent[] = [
         description: {
             fr: 'Pilotez plusieurs points de vente depuis une seule vue, avec des accès précis pour chaque membre de votre équipe.',
             en: 'Run several stores from a single view, with precise access for every team member.',
+        },
+        longDescription: {
+            fr: "Dès la deuxième boutique, la question n'est plus « comment vendre » mais « comment garder le contrôle ». BATIX PRO donne une vue unique sur toutes vos boutiques, avec des permissions précises par utilisateur : un caissier ne voit que la caisse, un gérant voit tout sauf les réglages sensibles, et chaque action reste tracée dans un journal d'activité. Ajoutez un nouveau vendeur en quelques minutes, sans craindre qu'il touche à ce qui ne le regarde pas.",
+            en: "From your second store onward, the question shifts from \"how do I sell\" to \"how do I stay in control\". BATIX PRO gives you a single view across all your stores, with precise per-user permissions: a cashier only sees the register, a manager sees everything except sensitive settings, and every action stays logged in an activity trail. Add a new seller in minutes, without worrying they'll touch what isn't theirs to touch.",
+        },
+        faqs: {
+            fr: [
+                { question: 'Combien de boutiques puis-je gérer ?', answer: 'Cela dépend de votre plan — Starter (1 boutique), Growth (3), Pro (6), Entreprise (illimité).' },
+                { question: "Un vendeur peut-il voir les chiffres d'une autre boutique ?", answer: 'Non, sauf si vous lui accordez explicitement cet accès via les permissions par module.' },
+                { question: 'Que se passe-t-il si un poste de caisse reste sans surveillance ?', answer: 'Le verrouillage d\'écran protège la session en cours sans déconnecter l\'utilisateur, le temps qu\'il revienne.' },
+            ],
+            en: [
+                { question: 'How many stores can I manage?', answer: 'It depends on your plan — Starter (1 store), Growth (3), Pro (6), Enterprise (unlimited).' },
+                { question: "Can a seller see another store's numbers?", answer: 'No, unless you explicitly grant that access through per-module permissions.' },
+                { question: 'What happens if a checkout station is left unattended?', answer: "Screen lock protects the current session without logging the user out while they're away." },
+            ],
         },
         benefits: {
             fr: [
@@ -156,6 +209,22 @@ export const featurePages: FeaturePageContent[] = [
             fr: 'Marge, rotation des produits, chiffre d\'affaires par boutique — et une facturation professionnelle, sans outil tiers.',
             en: 'Margin, product turnover, revenue by store — and professional invoicing, with no third-party tool.',
         },
+        longDescription: {
+            fr: "Vendre, c'est une chose ; savoir si vous gagnez de l'argent, c'en est une autre. BATIX PRO transforme vos ventes, achats et dépenses en indicateurs clairs — chiffre d'affaires, marge, meilleurs produits — visibles en temps réel, sans attendre la fin du mois. Et quand un client professionnel demande une facture en bonne et due forme, vous la générez en quelques secondes, avec un suivi des paiements et des relances automatiques pour vos clients réguliers.",
+            en: "Selling is one thing; knowing whether you're actually making money is another. BATIX PRO turns your sales, purchases and expenses into clear indicators — revenue, margin, top products — visible in real time, without waiting for month-end. And when a business customer asks for a proper invoice, you generate one in seconds, with payment tracking and automated billing for your regular customers.",
+        },
+        faqs: {
+            fr: [
+                { question: 'Puis-je facturer un client sans passer par une vente en caisse ?', answer: 'Oui, la facturation et les devis fonctionnent indépendamment de la caisse, pour vos clients professionnels ou vos commandes sur mesure.' },
+                { question: 'Les rapports sont-ils disponibles par boutique ?', answer: 'Oui, vous consultez vos indicateurs boutique par boutique ou consolidés sur l\'ensemble de votre activité.' },
+                { question: 'Comment suivre mes dépenses fournisseurs ?', answer: 'Le suivi des achats couvre bons de commande, réceptions et rapprochement des factures, en complément du suivi des dépenses générales.' },
+            ],
+            en: [
+                { question: 'Can I invoice a customer without a POS sale?', answer: 'Yes, invoicing and quotes work independently from the register, for business customers or custom orders.' },
+                { question: 'Are reports available per store?', answer: 'Yes, you can view your metrics store by store or consolidated across your whole business.' },
+                { question: 'How do I track supplier expenses?', answer: 'Purchase tracking covers purchase orders, deliveries and invoice reconciliation, alongside general expense tracking.' },
+            ],
+        },
         benefits: {
             fr: [
                 { title: 'Tableau de bord temps réel', description: 'Vos indicateurs clés visibles en permanence.', icon: LayoutDashboard },
@@ -188,6 +257,22 @@ export const featurePages: FeaturePageContent[] = [
         description: {
             fr: 'Un assistant conversationnel qui connaît vos données du jour : ventes, stock et alertes, directement en langage naturel.',
             en: 'A conversational assistant that knows your daily data: sales, stock and alerts, in plain language.',
+        },
+        longDescription: {
+            fr: "Poser une question et obtenir une réponse immédiate, en langage naturel, plutôt que de fouiller dans un rapport — c'est tout l'intérêt de l'Assistant IA. Demandez votre chiffre d'affaires du jour, vos produits les plus vendus ou l'état de vos stocks, à l'écrit ou à l'oral, et l'assistant répond directement avec vos vraies données, sans configuration ni tableau croisé dynamique. Disponible dès le plan Growth, pensé pour votre équipe terrain — pas pour des développeurs.",
+            en: "Asking a question and getting an instant answer in plain language, instead of digging through a report — that's the whole point of the AI Assistant. Ask for today's revenue, your best-selling products or current stock levels, by typing or speaking, and the assistant answers directly with your real data — no setup, no pivot table. Available from the Growth plan onward, built for your field team, not for developers.",
+        },
+        faqs: {
+            fr: [
+                { question: "L'assistant a-t-il accès à toutes mes données ?", answer: 'Il répond à partir de vos ventes, votre stock et vos alertes — les données réellement liées à votre activité, rien d\'externe.' },
+                { question: 'Dois-je taper ma question ou puis-je parler ?', answer: 'Les deux : la dictée vocale est pratique au comptoir, quand vous avez les mains prises.' },
+                { question: "L'assistant est-il inclus dans tous les plans ?", answer: 'Il est disponible à partir du plan Growth, ainsi que Pro et Entreprise.' },
+            ],
+            en: [
+                { question: 'Does the assistant have access to all my data?', answer: 'It answers from your sales, stock and alerts — the data genuinely tied to your business, nothing external.' },
+                { question: 'Do I have to type my question, or can I speak?', answer: "Both: voice input is handy at the counter when your hands are full." },
+                { question: 'Is the assistant included in every plan?', answer: 'It is available from the Growth plan onward, as well as Pro and Enterprise.' },
+            ],
         },
         benefits: {
             fr: [

@@ -6,9 +6,12 @@ import PublicLayout from '@/Layouts/PublicLayout';
 import { SeoHead } from '@/Components/SeoHead';
 import { PageProps } from '@/types';
 import type { Locale } from '@/types/types';
-import { fadeUp, stagger } from '@/types/data';
+import { copy, fadeUp, faqsByLocale, stagger } from '@/types/data';
 import { featurePages } from '@/types/featurePages';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import FaqSection from '@/Components/Welcome/FaqSection';
+import { useMemo } from 'react';
+import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
 
 interface Props extends PageProps {
     locale: Locale;
@@ -18,6 +21,8 @@ interface Props extends PageProps {
 export default function FeaturesIndex({ auth, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const isFr = locale === 'fr';
+    const t = copy[locale];
+    const faqs = useMemo(() => faqsByLocale[locale], [locale]);
 
     const title = isFr
         ? 'Fonctionnalités BATIX PRO — Caisse, stocks, multi-boutiques, rapports, IA'
@@ -64,7 +69,7 @@ export default function FeaturesIndex({ auth, locale, localeLinks }: Props) {
 
                 <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
                     <motion.div
-                        className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                        className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5"
                         initial="hidden"
                         whileInView="show"
                         viewport={{ once: true, amount: 0.1 }}
@@ -79,7 +84,7 @@ export default function FeaturesIndex({ auth, locale, localeLinks }: Props) {
                                     <div className="mb-5 inline-flex w-fit rounded-2xl bg-terre-50 p-3 text-terre-600">
                                         <page.icon className="size-6" />
                                     </div>
-                                    <h2 className="text-lg font-extrabold text-slate-900">{page.title[locale]}</h2>
+                                    <h2 className="text-md font-extrabold text-slate-900">{page.title[locale]}</h2>
                                     <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-500">{page.tagline[locale]}</p>
                                     <div className="mt-4 flex items-center gap-1 text-sm font-medium text-terre-700">
                                         {isFr ? 'Découvrir' : 'Discover'}
@@ -90,6 +95,17 @@ export default function FeaturesIndex({ auth, locale, localeLinks }: Props) {
                         ))}
                     </motion.div>
                 </section>
+                <FaqSection
+                    locale={locale}
+                    faqTitle={t.faqTitle}
+                    faqs={faqs}
+                />
+                <FinalCtaSection
+                    title={t.contact.title}
+                    description={t.contact.description}
+                    cta={t.contact.cta}
+                    getDashboardUrl={getDashboardUrl}
+                />
             </PublicLayout>
         </>
     );

@@ -9,6 +9,7 @@ import type { Locale } from '@/types/types';
 import { copy, fadeUp, stagger } from '@/types/data';
 import { featurePages, getFeaturePage } from '@/types/featurePages';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import FaqSection from '@/Components/Welcome/FaqSection';
 
 interface Props extends PageProps {
     slug: string;
@@ -43,44 +44,58 @@ export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) 
 
             <PublicLayout locale={locale} localeLinks={localeLinks} isAuthenticated={!!auth.user} getDashboardUrl={getDashboardUrl}>
                 {/* Hero centré, simple */}
-                <section className="bg-terre-600 py-16">
+                <section className="bg-terre-50 py-16 rounded-br-lg lg:rounded-br-[10rem]">
                     <motion.div
-                        className="mx-auto max-w-2xl px-6 text-center lg:px-8"
+                        className="mx-auto max-w-7xl px-6 lg:px-8 flex justify-between"
                         initial="hidden"
                         whileInView="show"
                         viewport={{ once: true }}
                         variants={fadeUp}
                     >
-                        <Link
+                        <div>
+                            <Link
                             href={isFr ? route('features.index') : route('en.features.index')}
-                            className="mb-6 inline-flex items-center gap-2 text-sm text-terre-100 transition hover:text-white"
-                        >
-                            <ArrowRight className="size-4 rotate-180" />
-                            {isFr ? 'Toutes les fonctionnalités' : 'All features'}
-                        </Link>
+                            className="mb-6 inline-flex items-center gap-2 text-sm text-terre-600 transition hover:text-white"
+                            >
+                                <ArrowRight className="size-4 rotate-180" />
+                                {isFr ? 'Toutes les fonctionnalités' : 'All features'}
+                            </Link>
 
-                        <div className="mx-auto mb-6 inline-flex w-fit rounded-2xl bg-white/15 p-4 text-white">
-                            <page.icon className="size-7" />
+                            {/* <div className="rounded-xl bg-terre-700 w-10 h-10 text-white flex items-center justify-center ">
+                                <page.icon className="size-5" />
+                            </div> */}
+                            <h1 className="text-3xl mt-10 font-extrabold text-terre-700 sm:text-4xl">{page.title[locale]}</h1>
+                            <p className="mt-3 text-md text-black">{page.tagline[locale]}</p>
+                            <p className="mt-4 max-w-lg text-sm leading-relaxed text-terre-600">{page.description[locale]}</p>
+
+                            <Link
+                                href={getDashboardUrl()}
+                                className="mt-8 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-amber-400"
+                            >
+                                {isFr ? 'Démarrer mon essai' : 'Start my free trial'}
+                                <ArrowRight className="size-4" />
+                            </Link>
                         </div>
-                        <h1 className="text-3xl font-extrabold text-white sm:text-4xl">{page.title[locale]}</h1>
-                        <p className="mt-3 text-lg text-terre-100">{page.tagline[locale]}</p>
-                        <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-terre-50">{page.description[locale]}</p>
-
-                        <Link
-                            href={getDashboardUrl()}
-                            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-900 shadow-md transition hover:bg-amber-400"
-                        >
-                            {isFr ? 'Démarrer mon essai' : 'Start my free trial'}
-                            <ArrowRight className="size-4" />
-                        </Link>
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 w-96 hidden lg:block">
+                            <div className="mb-3 flex items-center gap-1.5">
+                                <span className="size-3 rounded-full bg-red-500" />
+                                <span className="size-3 rounded-full bg-amber-300" />
+                                <span className="size-3 rounded-full bg-green-300" />
+                            </div>
+                            
+                        </div>
+                        
                     </motion.div>
+                    
                 </section>
+
+                
 
                 {/* Tous les bénéfices — une seule grille uniforme */}
                 <section className="bg-white py-16">
-                    <div className="mx-auto max-w-5xl px-6 lg:px-8">
+                    <div className="mx-auto max-w-7xl px-6 lg:px-8">
                         <motion.div
-                            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
                             initial="hidden"
                             whileInView="show"
                             viewport={{ once: true, amount: 0.1 }}
@@ -104,7 +119,7 @@ export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) 
                 </section>
 
                 {/* Découvrir aussi */}
-                <section className="bg-gray-50 py-14">
+                {/* <section className="bg-gray-50 py-14">
                     <div className="mx-auto max-w-6xl px-6 lg:px-8">
                         <h2 className="mb-6 text-2xl font-extrabold text-slate-900">
                             {isFr ? 'Continuez votre découverte' : 'Keep exploring'}
@@ -129,8 +144,12 @@ export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) 
                             ))}
                         </div>
                     </div>
-                </section>
-
+                </section> */}
+                 <FaqSection
+                    locale={locale}
+                    faqTitle={t.faqTitle}
+                    faqs={page.faqs[locale]}
+                />
                 <FinalCtaSection
                     title={t.contact.title}
                     description={t.contact.description}
