@@ -50,8 +50,8 @@ class ActivityLogger
             $data['user_email'] = $user->email;
             $data['user_role'] = $user->role;
             
-            if ($user->code_user) {
-                $data['account_code'] = $user->code_user;
+            if ($accountCode = $user->accountCode()) {
+                $data['account_code'] = $accountCode;
             }
         }
 

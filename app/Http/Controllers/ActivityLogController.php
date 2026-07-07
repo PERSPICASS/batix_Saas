@@ -25,7 +25,7 @@ class ActivityLogController extends Controller
         // Filter by account (code_user) - TOUS les utilisateurs sauf admin_platforme
         // voient uniquement les logs de leur compte
         if ($user->role !== 'admin_platforme') {
-            $query->where('account_code', $user->code_user);
+            $query->where('account_code', $user->accountCode());
         }
         // admin_platforme peut voir tous les logs de tous les comptes
 
@@ -94,13 +94,16 @@ class ActivityLogController extends Controller
         ]);
 
         // Get filter options - filter by account
-        $accountCode = $user->role === 'admin_platforme' ? null : $user->code_user;
-        
+        $accountCode = $user->role === 'admin_platforme' ? null : $user->accountCode();
+        $ownerId = $user->role === 'admin_platforme' ? null : $user->ownerId();
+
         $usersQuery = User::query();
         if ($accountCode) {
             // Exclude admin_platforme from user filters
-            $usersQuery->where('code_user', $accountCode)
-                       ->where('role', '!=', 'admin_platforme');
+            $usersQuery->where(function ($q) use ($ownerId) {
+                $q->where('id', $ownerId)
+                    ->orWhereHas('shop', fn ($sq) => $sq->where('user_id', $ownerId));
+            })->where('role', '!=', 'admin_platforme');
         } else {
             // admin_platforme sees all users except other admin_platforme
             $usersQuery->where('role', '!=', 'admin_platforme');
@@ -152,7 +155,7 @@ class ActivityLogController extends Controller
         // Check permission
         if ($user->role !== 'admin_platforme') {
             // Non admin_platforme users can only view logs from their account
-            if ($activityLog->account_code !== $user->code_user) {
+            if ($activityLog->account_code !== $user->accountCode()) {
                 abort(403, 'Vous n\'avez pas accès à cet historique.');
             }
         }
