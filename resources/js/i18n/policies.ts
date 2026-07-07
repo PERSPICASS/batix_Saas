@@ -58,28 +58,32 @@ export const policies = {
           heading: '3. Use of Data',
           content: 'BATIXPRO uses the collected data for various purposes: to provide and maintain our service, to notify you about changes to our service, to provide customer support, to gather analysis or valuable information so we can improve our service, and to monitor the usage of our service.',
         },
+        serviceProviders: {
+          heading: '4. Service Providers & Payment Processors',
+          content: 'We share limited data with trusted service providers who help us run BATIXPRO: Google Analytics (site usage measurement, only after you accept cookies), and payment processors — Paddle, LemonSqueezy, PawaPay and Jèko — who handle subscription billing and may process mobile money payments via Wave, Orange Money, MTN Money or Moov Money. These providers only receive the data they need to perform their service and are bound by their own privacy policies.',
+        },
         security: {
-          heading: '4. Security of Data',
+          heading: '5. Security of Data',
           content: 'The security of your data is important to us but remember that no method of transmission over the Internet or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to protect your Personal Data, we cannot guarantee its absolute security.',
         },
         cookies: {
-          heading: '5. Cookies',
-          content: 'We use cookies and similar tracking technologies to track activity on our service and to hold certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.',
+          heading: '6. Cookies',
+          content: 'We use essential cookies to run the service and, only with your consent, Google Analytics cookies to understand how visitors use our site. On your first visit, a banner lets you accept or decline analytics cookies; you can change your choice at any time by clearing your browser\'s local storage for this site, or by adjusting your browser\'s cookie settings.',
         },
         thirdParties: {
-          heading: '6. Third-Party Links',
+          heading: '7. Third-Party Links',
           content: 'Our service may contain links to other sites that are not operated by us. This Privacy Policy applies only to information collected through our service. We have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites.',
         },
         childrenPrivacy: {
-          heading: '7. Children\'s Privacy',
+          heading: '8. Children\'s Privacy',
           content: 'Our service does not address anyone under the age of 18 ("Children"). We do not knowingly collect personally identifiable information from children under 18. If we become aware that a child has provided us with personal information, we immediately delete such information.',
         },
         changes: {
-          heading: '8. Changes to This Privacy Policy',
+          heading: '9. Changes to This Privacy Policy',
           content: 'We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.',
         },
         contact: {
-          heading: '9. Contact Us',
+          heading: '10. Contact Us',
           content: 'If you have any questions about this Privacy Policy, please contact us at contact@batixpro.com',
         },
       },
@@ -182,28 +186,32 @@ export const policies = {
           heading: '3. Utilisation des données',
           content: 'BATIXPRO utilise les données collectées à diverses fins : fournir et maintenir notre service, vous notifier des modifications apportées à notre service, fournir un support client, recueillir des analyses ou des informations précieuses pour améliorer notre service, et surveiller l\'utilisation de notre service.',
         },
+        serviceProviders: {
+          heading: '4. Prestataires et processeurs de paiement',
+          content: 'Nous partageons des données limitées avec des prestataires de confiance qui nous aident à faire fonctionner BATIXPRO : Google Analytics (mesure d\'audience, uniquement après acceptation des cookies), et nos processeurs de paiement — Paddle, LemonSqueezy, PawaPay et Jèko — qui gèrent la facturation des abonnements et peuvent traiter les paiements mobile money via Wave, Orange Money, MTN Money ou Moov Money. Ces prestataires ne reçoivent que les données nécessaires à leur service et sont soumis à leurs propres politiques de confidentialité.',
+        },
         security: {
-          heading: '4. Sécurité des données',
+          heading: '5. Sécurité des données',
           content: 'La sécurité de vos données est importante pour nous, mais rappelez-vous qu\'aucune méthode de transmission sur Internet ou méthode de stockage électronique n\'est 100% sécurisée. Bien que nous nous efforcions d\'utiliser des moyens commercialement acceptables pour protéger vos Données personnelles, nous ne pouvons pas garantir sa sécurité absolue.',
         },
         cookies: {
-          heading: '5. Cookies',
-          content: 'Nous utilisons des cookies et des technologies de suivi similaires pour suivre l\'activité sur notre service et conserver certaines informations. Vous pouvez demander à votre navigateur de refuser tous les cookies ou de vous indiquer quand un cookie est envoyé.',
+          heading: '6. Cookies',
+          content: 'Nous utilisons des cookies essentiels au fonctionnement du service et, uniquement avec votre consentement, des cookies Google Analytics pour comprendre comment les visiteurs utilisent notre site. Lors de votre première visite, un bandeau vous permet d\'accepter ou de refuser les cookies de mesure d\'audience ; vous pouvez modifier votre choix à tout moment en effaçant le stockage local de votre navigateur pour ce site, ou via les réglages de cookies de votre navigateur.',
         },
         thirdParties: {
-          heading: '6. Liens tiers',
+          heading: '7. Liens tiers',
           content: 'Notre service peut contenir des liens vers d\'autres sites qui ne sont pas exploités par nous. Cette Politique de confidentialité s\'applique uniquement aux informations collectées via notre service. Nous n\'avons aucun contrôle et n\'assumons aucune responsabilité quant au contenu, aux politiques de confidentialité ou aux pratiques de tout site tiers.',
         },
         childrenPrivacy: {
-          heading: '7. Confidentialité des enfants',
+          heading: '8. Confidentialité des enfants',
           content: 'Notre service ne s\'adresse pas aux personnes de moins de 18 ans ("Enfants"). Nous ne collectons pas sciemment d\'informations personnelles identifiables auprès d\'enfants de moins de 18 ans. Si nous apprenons qu\'un enfant nous a fourni des informations personnelles, nous supprimons immédiatement ces informations.',
         },
         changes: {
-          heading: '8. Modifications de cette Politique de confidentialité',
+          heading: '9. Modifications de cette Politique de confidentialité',
           content: 'Nous pouvons mettre à jour notre Politique de confidentialité de temps à autre. Nous vous notifierons de tout changement en publiant la nouvelle Politique de confidentialité sur cette page et en mettant à jour la date "Dernière mise à jour".',
         },
         contact: {
-          heading: '9. Nous contacter',
+          heading: '10. Nous contacter',
           content: 'Si vous avez des questions sur cette Politique de confidentialité, veuillez nous contacter à contact@batixpro.com',
         },
       },

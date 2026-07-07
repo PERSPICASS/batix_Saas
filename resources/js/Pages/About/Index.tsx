@@ -31,13 +31,13 @@ export default function AboutIndex({ auth, locale, localeLinks }: Props) {
             { icon: HardHat, title: 'Conçu pour le terrain', text: 'Pas pour des informaticiens : pour des gérants, vendeurs et caissiers qui n\'ont pas le temps à perdre.' },
             { icon: MapPin, title: 'Multi-devises et bilingue', text: 'Prix affichés en EUR, USD, CAD ou FCFA, interface disponible en français et en anglais.' },
             { icon: ShieldCheck, title: 'Vos données vous appartiennent', text: 'Exportables à tout moment (Excel, CSV), sans vous enfermer dans un outil que vous ne maîtrisez pas.' },
-            { icon: Users, title: 'Support humain', text: 'Une équipe joignable par WhatsApp et email, pas un simple centre de tickets automatisé.' },
+            { icon: Users, title: 'Support Technique', text: 'Une équipe joignable par WhatsApp et email, pas un simple centre de tickets automatisé.' },
         ]
         : [
             { icon: HardHat, title: 'Built for the field', text: 'Not for IT teams — for managers, sellers and cashiers who have no time to lose.' },
             { icon: MapPin, title: 'Multi-currency and bilingual', text: 'Prices shown in EUR, USD, CAD or FCFA, interface available in French and English.' },
             { icon: ShieldCheck, title: 'Your data is yours', text: 'Exportable anytime (Excel, CSV), without locking you into a tool you don\'t control.' },
-            { icon: Users, title: 'Human support', text: 'A team reachable on WhatsApp and email, not just an automated ticket queue.' },
+            { icon: Users, title: 'Technical support', text: 'A team reachable on WhatsApp and email, not just an automated ticket queue.' },
         ];
 
     const problemSolution = isFr

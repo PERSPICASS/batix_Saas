@@ -69,6 +69,10 @@ Route::middleware('setlocale:fr')->group(function () {
     Route::get('/ressources', [SitePageController::class, 'resources'])->name('resources');
     Route::get('/a-propos', [SitePageController::class, 'about'])->name('about');
     Route::get('/contact', [SitePageController::class, 'contactShow'])->name('contact.show');
+    Route::get('/politiques/{type}', [SitePageController::class, 'policy'])->name('policies.show')->where('type', 'terms|privacy|refund');
+    Route::get('/securite', [SitePageController::class, 'security'])->name('security');
+    Route::get('/sous-traitants', [SitePageController::class, 'subprocessors'])->name('subprocessors');
+    Route::get('/fiabilite', [SitePageController::class, 'reliability'])->name('reliability');
 });
 
 Route::prefix('en')->name('en.')->middleware('setlocale:en')->group(function () {
@@ -82,15 +86,14 @@ Route::prefix('en')->name('en.')->middleware('setlocale:en')->group(function () 
     Route::get('/resources', [SitePageController::class, 'resources'])->name('resources');
     Route::get('/about', [SitePageController::class, 'about'])->name('about');
     Route::get('/contact', [SitePageController::class, 'contactShow'])->name('contact.show');
+    Route::get('/policies/{type}', [SitePageController::class, 'policy'])->name('policies.show')->where('type', 'terms|privacy|refund');
+    Route::get('/security', [SitePageController::class, 'security'])->name('security');
+    Route::get('/subprocessors', [SitePageController::class, 'subprocessors'])->name('subprocessors');
+    Route::get('/reliability', [SitePageController::class, 'reliability'])->name('reliability');
 });
 
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
-
-// Routes des politiques (pages statiques)
-Route::get('/policies/terms', fn() => Inertia::render('Policies/Show', ['policyType' => 'terms']))->name('policies.terms');
-Route::get('/policies/privacy', fn() => Inertia::render('Policies/Show', ['policyType' => 'privacy']))->name('policies.privacy');
-Route::get('/policies/refund', fn() => Inertia::render('Policies/Show', ['policyType' => 'refund']))->name('policies.refund');
 
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');

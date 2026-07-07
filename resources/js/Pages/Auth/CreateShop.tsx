@@ -59,7 +59,7 @@ export default function CreateShop() {
                                 type="text"
                                 name="name"
                                 value={data.name}
-                                className="mt-1 block w-full border border-[#cfc3ac] bg-white pl-10 text-slate-900 placeholder-slate-400"
+                                className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="organization"
                                 isFocused={true}
                                 onChange={(e) => setData('name', e.target.value)}
@@ -79,7 +79,7 @@ export default function CreateShop() {
                                 type="text"
                                 name="address"
                                 value={data.address}
-                                className="mt-1 block w-full border border-[#cfc3ac] bg-white pl-10 text-slate-900 placeholder-slate-400"
+                                className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="street-address"
                                 onChange={(e) => setData('address', e.target.value)}
                                 placeholder={t.auth.shop.addressPlaceholder}
@@ -96,7 +96,7 @@ export default function CreateShop() {
                                 type="text"
                                 name="city"
                                 value={data.city}
-                                className="mt-1 block w-full border border-[#cfc3ac] bg-white text-slate-900 placeholder-slate-400"
+                                className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="address-level2"
                                 onChange={(e) => setData('city', e.target.value)}
                                 placeholder={t.auth.shop.cityPlaceholder}
@@ -111,7 +111,7 @@ export default function CreateShop() {
                                 type="text"
                                 name="postal_code"
                                 value={data.postal_code}
-                                className="mt-1 block w-full border border-[#cfc3ac] bg-white text-slate-900 placeholder-slate-400"
+                                className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="postal-code"
                                 onChange={(e) => setData('postal_code', e.target.value)}
                                 placeholder={t.auth.shop.postalCodePlaceholder}
@@ -129,7 +129,7 @@ export default function CreateShop() {
                                 type="tel"
                                 name="phone"
                                 value={data.phone}
-                                className="mt-1 block w-full border border-[#cfc3ac] bg-white pl-10 text-slate-900 placeholder-slate-400"
+                                className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="tel"
                                 onChange={(e) => setData('phone', e.target.value)}
                                 placeholder={t.auth.shop.phonePlaceholder}

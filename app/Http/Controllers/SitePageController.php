@@ -21,6 +21,8 @@ class SitePageController extends Controller
         'assistant-ia',
     ];
 
+    private const POLICY_TYPES = ['terms', 'privacy', 'refund'];
+
     public function features(): Response
     {
         return Inertia::render('Features/Index', [
@@ -93,6 +95,49 @@ class SitePageController extends Controller
             'localeLinks' => [
                 'fr' => route('contact.show'),
                 'en' => route('en.contact.show'),
+            ],
+        ]);
+    }
+
+    public function policy(string $type): Response
+    {
+        abort_unless(in_array($type, self::POLICY_TYPES, true), 404);
+
+        return Inertia::render('Policies/Show', [
+            'policyType' => $type,
+            'localeLinks' => [
+                'fr' => route('policies.show', $type),
+                'en' => route('en.policies.show', $type),
+            ],
+        ]);
+    }
+
+    public function security(): Response
+    {
+        return Inertia::render('Security/Index', [
+            'localeLinks' => [
+                'fr' => route('security'),
+                'en' => route('en.security'),
+            ],
+        ]);
+    }
+
+    public function subprocessors(): Response
+    {
+        return Inertia::render('Subprocessors/Index', [
+            'localeLinks' => [
+                'fr' => route('subprocessors'),
+                'en' => route('en.subprocessors'),
+            ],
+        ]);
+    }
+
+    public function reliability(): Response
+    {
+        return Inertia::render('Reliability/Index', [
+            'localeLinks' => [
+                'fr' => route('reliability'),
+                'en' => route('en.reliability'),
             ],
         ]);
     }

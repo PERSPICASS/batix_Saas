@@ -1,5 +1,5 @@
 import Modal from '@/Components/Modal';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 
 interface ConfirmDeleteModalProps {
@@ -11,6 +11,8 @@ interface ConfirmDeleteModalProps {
     confirmText?: string;
     cancelText?: string;
     processing?: boolean;
+    /** 'danger' (default) for destructive actions; 'success' for positive ones like activation. */
+    tone?: 'danger' | 'success';
 }
 
 export default function ConfirmDeleteModal({
@@ -22,6 +24,7 @@ export default function ConfirmDeleteModal({
     confirmText,
     cancelText,
     processing = false,
+    tone = 'danger',
 }: ConfirmDeleteModalProps) {
     const { t } = useLocale();
 
@@ -29,12 +32,27 @@ export default function ConfirmDeleteModal({
     const resolvedConfirmText = confirmText ?? t.common.actions.delete;
     const resolvedCancelText = cancelText ?? t.common.actions.cancel;
 
+    const toneClasses = {
+        danger: {
+            iconWrap: 'bg-red-100 dark:bg-red-500/20',
+            icon: 'text-red-600 dark:text-red-400',
+            Icon: AlertTriangle,
+            button: 'bg-red-600 hover:bg-red-700',
+        },
+        success: {
+            iconWrap: 'bg-emerald-100 dark:bg-emerald-500/20',
+            icon: 'text-emerald-600 dark:text-emerald-400',
+            Icon: CheckCircle,
+            button: 'bg-emerald-600 hover:bg-emerald-700',
+        },
+    }[tone];
+
     return (
         <Modal show={show} onClose={onClose} maxWidth="md">
             <div className="bg-white p-6 dark:bg-slate-900">
                 <div className="flex items-start gap-4">
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
-                        <AlertTriangle className="size-6 text-red-600 dark:text-red-400" />
+                    <div className={`flex size-12 shrink-0 items-center justify-center rounded-full ${toneClasses.iconWrap}`}>
+                        <toneClasses.Icon className={`size-6 ${toneClasses.icon}`} />
                     </div>
                     <div className="flex-1">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{resolvedTitle}</h3>
@@ -55,7 +73,7 @@ export default function ConfirmDeleteModal({
                         type="button"
                         onClick={onConfirm}
                         disabled={processing}
-                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+                        className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50 ${toneClasses.button}`}
                     >
                         {processing ? t.common.actions.deleting : resolvedConfirmText}
                     </button>

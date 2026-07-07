@@ -54,7 +54,7 @@ export default function ResetPassword({
                             type="email"
                             name="email"
                             value={data.email}
-                            className="mt-1 block w-full border border-[#cfc3ac] bg-white text-slate-900 placeholder-slate-400"
+                            className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                             autoComplete="username"
                             onChange={(e) => setData('email', e.target.value)}
                         />
@@ -69,7 +69,7 @@ export default function ResetPassword({
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
                                 value={data.password}
-                                className="block w-full border border-[#cfc3ac] bg-white pr-10 text-slate-900 placeholder-slate-400"
+                                className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="new-password"
                                 isFocused={true}
                                 onChange={(e) => setData('password', e.target.value)}
@@ -93,7 +93,7 @@ export default function ResetPassword({
                                 type={showPasswordConfirmation ? 'text' : 'password'}
                                 name="password_confirmation"
                                 value={data.password_confirmation}
-                                className="block w-full border border-[#cfc3ac] bg-white pr-10 text-slate-900 placeholder-slate-400"
+                                className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="new-password"
                                 onChange={(e) => setData('password_confirmation', e.target.value)}
                             />

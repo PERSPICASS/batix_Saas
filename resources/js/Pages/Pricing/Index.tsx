@@ -8,6 +8,7 @@ import type { Locale, SubscriptionPlan } from '@/types/types';
 import { copy, faqsByLocale } from '@/types/data';
 import { buildPlanViews } from '@/utils/planViews';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
 
 interface Props extends PageProps {
     subscriptionPlans: SubscriptionPlan[];
@@ -62,6 +63,12 @@ export default function PricingIndex({ auth, subscriptionPlans, locale, localeLi
                 />
 
                 <FaqSection locale={locale} faqTitle={t.faqTitle} faqs={faqs} />
+                <FinalCtaSection
+                    title={t.contact.title}
+                    description={t.contact.description}
+                    cta={t.contact.cta}
+                    getDashboardUrl={getDashboardUrl}
+                />
             </PublicLayout>
         </>
     );

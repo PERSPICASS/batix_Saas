@@ -60,7 +60,7 @@ export default function Login({
                             type="email"
                             name="email"
                             value={data.email}
-                            className="mt-1 block w-full border border-[#cfc3ac] bg-white text-slate-900 placeholder-slate-400"
+                            className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                             autoComplete="username"
                             isFocused={true}
                             onChange={(e) => setData('email', e.target.value)}
@@ -78,7 +78,7 @@ export default function Login({
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
                                 value={data.password}
-                                className="block w-full border border-[#cfc3ac] bg-white pr-10 text-slate-900 placeholder-slate-400"
+                                className="block w-full rounded-xl border border-gray-200 bg-gray-50 pr-10 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
                                 autoComplete="current-password"
                                 onChange={(e) => setData('password', e.target.value)}
                             />
@@ -99,7 +99,7 @@ export default function Login({
                             <Checkbox
                                 name="remember"
                                 checked={data.remember}
-                                className="border-[#cfc3ac] bg-white text-amber-600 focus:ring-amber-300"
+                                className="border-gray-300 bg-white text-terre-600 focus:ring-terre-300"
                                 onChange={(e) => setData('remember', e.target.checked)}
                             />
                             <span className="ms-2 text-sm text-slate-700">{t.auth.form.rememberMe}</span>
@@ -108,7 +108,7 @@ export default function Login({
                         {canResetPassword && (
                             <Link
                                 href={route('password.request')}
-                                className="text-sm text-slate-600 underline underline-offset-4 transition hover:text-slate-900"
+                                className="text-sm text-slate-600 underline underline-offset-4 transition hover:text-terre-700"
                             >
                                 {t.auth.links.forgotPassword}
                             </Link>
@@ -116,12 +116,12 @@ export default function Login({
                     </div>
 
                     <div className="space-y-2 pt-1">
-                        <PrimaryButton className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800" disabled={processing}>
+                        <PrimaryButton className="w-full justify-center rounded-xl !bg-amber-300 py-2.5 text-sm font-bold normal-case tracking-normal !text-slate-900 shadow-md hover:!bg-amber-400 focus:!ring-amber-300" disabled={processing}>
                             {t.auth.actions.signIn}
                         </PrimaryButton>
 
                         <div className="text-center">
-                            <Link href={route('register')} className="text-xs text-slate-600 underline underline-offset-4 transition hover:text-slate-900 sm:text-sm">
+                            <Link href={route('register')} className="text-xs text-slate-600 underline underline-offset-4 transition hover:text-terre-700 sm:text-sm">
                                 {t.auth.links.noAccount}
                             </Link>
                         </div>

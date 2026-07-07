@@ -4,6 +4,8 @@ import { copy } from '@/types/data';
 import WelcomeHeader from '@/Components/Welcome/WelcomeHeader';
 import WelcomeFooter from '@/Components/Welcome/WelcomeFooter';
 import GoogleAnalytics from '@/Components/GoogleAnalytics';
+import CookieConsentBanner from '@/Components/CookieConsentBanner';
+import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 interface PublicLayoutProps extends PropsWithChildren {
     locale: Locale;
@@ -27,10 +29,11 @@ export default function PublicLayout({ locale, localeLinks, isAuthenticated, get
     }, []);
 
     const t = copy[locale];
+    const { consent, setConsent, ready } = useCookieConsent();
 
     return (
         <div className="relative min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-terre-200 selection:text-terre-900">
-            <GoogleAnalytics />
+            <GoogleAnalytics consent={consent} />
 
             <WelcomeHeader
                 locale={locale}
@@ -43,6 +46,17 @@ export default function PublicLayout({ locale, localeLinks, isAuthenticated, get
             <main>{children}</main>
 
             <WelcomeFooter locale={locale} footerText={t.footerText} />
+
+            <CookieConsentBanner
+                locale={locale}
+                consent={consent}
+                setConsent={setConsent}
+                ready={ready}
+                message={t.cookieConsent.message}
+                accept={t.cookieConsent.accept}
+                decline={t.cookieConsent.decline}
+                learnMore={t.cookieConsent.learnMore}
+            />
         </div>
     );
 }

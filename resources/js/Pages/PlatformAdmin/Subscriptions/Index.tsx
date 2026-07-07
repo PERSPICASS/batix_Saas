@@ -432,6 +432,8 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                 show={showActivateModal}
                 title="Activer l'abonnement"
                 message={`Confirmer l'activation de l'abonnement de "${selectedSubscription?.user.name}" au plan "${selectedSubscription?.plan.name}" ?`}
+                confirmText="Activer"
+                tone="success"
                 onConfirm={handleActivate}
                 onClose={() => {
                     setShowActivateModal(false);

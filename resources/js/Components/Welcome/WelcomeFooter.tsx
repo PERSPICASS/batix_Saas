@@ -33,9 +33,12 @@ export default function WelcomeFooter({ locale, footerText }: WelcomeFooterProps
     ];
 
     const legalLinks = [
-        { label: policies.terms, href: '/policies/terms' },
-        { label: policies.privacy, href: '/policies/privacy' },
-        { label: policies.refund, href: '/policies/refund' },
+        { label: policies.terms, href: isFr ? route('policies.show', 'terms') : route('en.policies.show', 'terms') },
+        { label: policies.privacy, href: isFr ? route('policies.show', 'privacy') : route('en.policies.show', 'privacy') },
+        { label: policies.refund, href: isFr ? route('policies.show', 'refund') : route('en.policies.show', 'refund') },
+        { label: isFr ? 'Sécurité' : 'Security', href: isFr ? route('security') : route('en.security') },
+        { label: isFr ? 'Sous-traitants' : 'Subprocessors', href: isFr ? route('subprocessors') : route('en.subprocessors') },
+        { label: isFr ? 'Fiabilité' : 'Reliability', href: isFr ? route('reliability') : route('en.reliability') },
     ];
 
     return (

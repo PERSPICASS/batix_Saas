@@ -1,5 +1,5 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
+import { HardHat } from 'lucide-react';
 import { ReactNode } from 'react';
 import defaultHeroImage from '/resources/images/bath-saloon-2026-03-19-23-10-32-utc.jpg';
 
@@ -34,29 +34,31 @@ export default function AuthSplitLayout({
     sideImageSrc = defaultHeroImage,
 }: AuthSplitLayoutProps) {
     return (
-        <div className="h-dvh overflow-hidden bg-[#f5efe4] text-slate-900">
+        <div className="h-dvh overflow-hidden bg-terre-50 text-slate-900">
             <div className="grid h-full lg:grid-cols-2">
                 <section className="flex h-full items-center justify-center px-4 py-3 sm:px-8 lg:px-10">
                     <div className="w-full max-w-lg flex flex-col">
                         <Link href="/" className="inline-flex items-center gap-3">
-                            <ApplicationLogo className="h-12 w-12 fill-current text-amber-600" />
-                            
+                            <div className="rounded-lg bg-amber-300 p-2 text-slate-900">
+                                <HardHat className="size-5" />
+                            </div>
+                            <p className="text-sm font-bold tracking-wide text-slate-900">BATIX PRO</p>
                         </Link>
 
                         {topLink && (
                             <Link
                                 href={topLink.href}
-                                className="mt-2 inline-flex text-sm text-slate-600 underline underline-offset-4 transition hover:text-slate-900"
+                                className="mt-2 inline-flex text-sm text-slate-600 underline underline-offset-4 transition hover:text-terre-700"
                             >
                                 {topLink.label}
                             </Link>
                         )}
 
-                        <div className="mt-4 rounded-3xl border border-[#d6c9b2] bg-[#fbf7ef] p-5 shadow-xl sm:p-6">
+                        <div className="mt-4 rounded-3xl border border-gray-200 bg-white p-5 shadow-xl sm:p-6">
                             {stepper}
 
                             {icon && (
-                                <div className="mb-2 flex size-11 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                                <div className="mb-2 flex size-11 items-center justify-center rounded-full bg-terre-50 text-terre-600">
                                     {icon}
                                 </div>
                             )}

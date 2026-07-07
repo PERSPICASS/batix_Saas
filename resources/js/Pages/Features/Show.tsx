@@ -25,6 +25,8 @@ export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) 
 
     if (!page) return null;
 
+    console.log('page', isFr);
+
     const otherPages = featurePages.filter((p) => p.slug !== slug);
     const seoTitle = `${page.title[locale]} — BATIX PRO`;
 
@@ -76,15 +78,26 @@ export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) 
                                 <ArrowRight className="size-4" />
                             </Link>
                         </div>
-                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 w-96 hidden lg:block">
-                            <div className="mb-3 flex items-center gap-1.5">
-                                <span className="size-3 rounded-full bg-red-500" />
-                                <span className="size-3 rounded-full bg-amber-300" />
-                                <span className="size-3 rounded-full bg-green-300" />
-                            </div>
-                            
-                        </div>
-                        
+                        {(page.image_fr || page.image_en) && (
+                            isFr ? (
+                                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-1 w-[600px] hidden lg:block">
+                                    <img
+                                        src={page.image_fr}
+                                        alt={page.title[locale]}
+                                        className="rounded-xl object-cover"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-1 w-[600px] hidden lg:block">
+                                    <img
+                                        src={page.image_en}
+                                        alt={page.title[locale]}
+                                        className="rounded-xl object-cover"
+                                    />
+                                </div>
+                            )
+                        )}
+
                     </motion.div>
                     
                 </section>

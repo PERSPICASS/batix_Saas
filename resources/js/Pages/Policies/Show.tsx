@@ -1,111 +1,129 @@
-import { Head } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
+import { motion } from 'framer-motion';
+import { FileText, RotateCcw, ShieldCheck } from 'lucide-react';
+import PublicLayout from '@/Layouts/PublicLayout';
+import { SeoHead } from '@/Components/SeoHead';
+import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
 import { PageProps } from '@/types';
-import { useEffect, useState } from 'react';
+import type { Locale } from '@/types/types';
+import { copy, fadeUp, stagger } from '@/types/data';
 import { policies } from '@/i18n/policies';
+import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+
+type PolicyType = 'terms' | 'privacy' | 'refund';
 
 interface Props extends PageProps {
-  policyType: 'terms' | 'privacy' | 'refund';
-  locale?: string;
+    policyType: PolicyType;
+    locale: Locale;
+    localeLinks: Record<Locale, string>;
 }
 
-export default function PolicyShow({ policyType, locale = 'en' }: Props) {
-  const [lang, setLang] = useState(locale as 'en' | 'fr');
-  const policyKey = policyType === 'terms'
-    ? 'termsOfService'
-    : policyType === 'privacy'
-    ? 'privacyPolicy'
-    : 'refundPolicy';
+const policyIcons: Record<PolicyType, typeof FileText> = {
+    terms: FileText,
+    privacy: ShieldCheck,
+    refund: RotateCcw,
+};
 
-  const policy = policies[lang][policyKey as keyof typeof policies['en']];
+const policyKeys: Record<PolicyType, keyof (typeof policies)['en']> = {
+    terms: 'termsOfService',
+    privacy: 'privacyPolicy',
+    refund: 'refundPolicy',
+};
 
-  if (!policy) {
-    return <div>Policy not found</div>;
-  }
+export default function PolicyShow({ auth, policyType, locale, localeLinks }: Props) {
+    const getDashboardUrl = useDashboardUrl(auth);
+    const isFr = locale === 'fr';
+    const t = copy[locale];
 
-  return (
-    <>
-      <Head title={policy.title} />
+    const policy = policies[locale][policyKeys[policyType]];
+    const Icon = policyIcons[policyType];
 
-      <div className="min-h-screen bg-gradient-to-b from-slate-950 to-slate-900">
-        {/* Header */}
-        <div className="border-b border-white/10 bg-slate-900/50 backdrop-blur-sm">
-          <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-white">{policy.title}</h1>
-                <p className="mt-2 text-sm text-slate-400">{policy.lastUpdated}</p>
-              </div>
+    const otherPolicies = (['terms', 'privacy', 'refund'] as PolicyType[]).filter((type) => type !== policyType);
+    const otherPolicyLabels = t.policies;
 
-              {/* Language Toggle */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setLang('en')}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                    lang === 'en'
-                      ? 'bg-amber-300 text-slate-950'
-                      : 'bg-white/10 text-white hover:bg-white/15'
-                  }`}
-                >
-                  English
-                </button>
-                <button
-                  onClick={() => setLang('fr')}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                    lang === 'fr'
-                      ? 'bg-amber-300 text-slate-950'
-                      : 'bg-white/10 text-white hover:bg-white/15'
-                  }`}
-                >
-                  Français
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    return (
+        <>
+            <SeoHead
+                title={policy.title}
+                description={policy.title}
+                canonical={localeLinks[locale]}
+                ogLocale={isFr ? 'fr_FR' : 'en_US'}
+                noIndex
+                hreflangAlternates={[
+                    { locale: 'fr', href: localeLinks.fr },
+                    { locale: 'en', href: localeLinks.en },
+                    { locale: 'x-default', href: localeLinks.fr },
+                ]}
+            />
 
-        {/* Content */}
-        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="space-y-8 rounded-lg border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
-            {Object.entries(policy.sections).map(([key, section]) => (
-              <section key={key}>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{section.heading}</h2>
-                <p className="mt-3 text-slate-300 leading-relaxed">{section.content}</p>
-              </section>
-            ))}
-          </div>
+            <PublicLayout locale={locale} localeLinks={localeLinks} isAuthenticated={!!auth.user} getDashboardUrl={getDashboardUrl}>
+                {/* Hero */}
+                <section className="bg-terre-50 py-16">
+                    <motion.div
+                        className="mx-auto max-w-4xl px-6 text-center lg:px-8"
+                        initial="hidden"
+                        whileInView="show"
+                        viewport={{ once: true }}
+                        variants={fadeUp}
+                    >
+                        <div className="mx-auto mb-5 inline-flex size-14 items-center justify-center rounded-2xl bg-terre-700 text-white">
+                            <Icon className="size-6" />
+                        </div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-terre-600">
+                            {isFr ? 'Informations légales' : 'Legal'}
+                        </p>
+                        <h1 className="mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">{policy.title}</h1>
+                        <p className="mt-4 text-sm text-slate-500">{policy.lastUpdated}</p>
+                    </motion.div>
+                </section>
 
-          {/* Navigation Links */}
-          <div className="mt-12 space-y-4 rounded-lg border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Other Policies:</p>
-            <div className="flex flex-wrap gap-3">
-              {policyType !== 'terms' && (
-                <a
-                  href="/policies/terms"
-                  className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/15"
-                >
-                  Terms of Service
-                </a>
-              )}
-              {policyType !== 'privacy' && (
-                <a
-                  href="/policies/privacy"
-                  className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/15"
-                >
-                  Privacy Policy
-                </a>
-              )}
-              {policyType !== 'refund' && (
-                <a
-                  href="/policies/refund"
-                  className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/15"
-                >
-                  Refund Policy
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+                {/* Content */}
+                <section className="bg-white py-16">
+                    <div className="mx-auto max-w-4xl px-6 lg:px-8">
+                        <motion.div
+                            className="space-y-8 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm sm:p-10"
+                            initial="hidden"
+                            whileInView="show"
+                            viewport={{ once: true, amount: 0.05 }}
+                            variants={stagger}
+                        >
+                            {Object.entries(policy.sections).map(([key, section]) => (
+                                <motion.div key={key} variants={fadeUp} className="border-b border-gray-100 pb-8 last:border-0 last:pb-0">
+                                    <h2 className="text-lg font-bold text-slate-900">{section.heading}</h2>
+                                    <p className="mt-3 text-base leading-relaxed text-slate-600">{section.content}</p>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </div>
+                </section>
+
+                {/* Other policies */}
+                <section className="border-y border-gray-200 bg-gray-50 py-12">
+                    <div className="mx-auto max-w-4xl px-6 text-center lg:px-8">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-600">
+                            {isFr ? 'Autres politiques' : 'Other policies'}
+                        </p>
+                        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                            {otherPolicies.map((type) => (
+                                <Link
+                                    key={type}
+                                    href={isFr ? route('policies.show', type) : route('en.policies.show', type)}
+                                    className="rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-terre-200 hover:text-terre-700 hover:shadow-md"
+                                >
+                                    {otherPolicyLabels[type]}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <FinalCtaSection
+                    title={t.contact.title}
+                    description={t.contact.description}
+                    cta={t.contact.cta}
+                    getDashboardUrl={getDashboardUrl}
+                />
+            </PublicLayout>
+        </>
+    );
 }

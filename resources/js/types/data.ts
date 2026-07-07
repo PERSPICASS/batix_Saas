@@ -152,6 +152,12 @@ export const copy = {
             privacy: 'Politique de confidentialité',
             refund: 'Politique de remboursement',
         },
+        cookieConsent: {
+            message: 'Nous utilisons des cookies de mesure d\'audience (Google Analytics) pour comprendre comment vous utilisez le site.',
+            accept: 'Accepter',
+            decline: 'Refuser',
+            learnMore: 'En savoir plus',
+        },
     },
     en: {
         title: 'BATIX PRO – Hardware Store Management Software | Inventory, Sales & POS',
@@ -319,6 +325,12 @@ export const copy = {
             terms: 'Terms of Service',
             privacy: 'Privacy Policy',
             refund: 'Refund Policy',
+        },
+        cookieConsent: {
+            message: 'We use audience-measurement cookies (Google Analytics) to understand how you use the site.',
+            accept: 'Accept',
+            decline: 'Decline',
+            learnMore: 'Learn more',
         },
     },
 };

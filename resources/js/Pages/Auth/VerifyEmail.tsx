@@ -172,13 +172,13 @@ export default function VerifyEmail({ email, canResend }: Props) {
                                 onKeyDown={(e) => handleKeyDown(index, e)}
                                 onPaste={index === 0 ? handlePaste : undefined}
                                 disabled={isVerifying}
-                                className={`h-12 w-full rounded-lg border text-center text-xl font-semibold transition-all ${
+                                className={`h-12 w-full rounded-xl border text-center text-xl font-semibold transition-all ${
                                     verificationError
                                         ? 'border-red-300 bg-red-50 text-red-700'
                                         : digit
                                           ? 'border-amber-300 bg-amber-50 text-amber-800'
-                                          : 'border-[#cfc3ac] bg-white text-slate-800'
-                                } focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200`}
+                                          : 'border-[#cfc3ac] bg-white text-slate-900'
+                                } focus:border-terre-400 focus:ring-terre-400/20 focus:outline-none focus:ring-2`}
                                 autoFocus={index === 0}
                             />
                         ))}

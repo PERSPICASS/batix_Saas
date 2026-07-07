@@ -30,12 +30,24 @@ import {
     Zap,
 } from 'lucide-react';
 import type { Locale } from './types';
+import venteCaisseImage from '/resources/images/features/vente-caisse.png';
+import venteCaisseImageEn from '/resources/images/features/vente-caisse-en.png';
+import stockDepotImage from '/resources/images/features/stock-depot.png';
+import stockDepotImageEn from '/resources/images/features/stock-depot-en.png';
+import multiBoutiquesImage from '/resources/images/features/multi-boutiques.png';
+import multiBoutiquesImageEn from '/resources/images/features/multi-boutiques-en.png';
+import rapportFacturation from '/resources/images/features/rapport-facturation.png';
+import rapportFacturationEn from '/resources/images/features/rapport-facturation-en.png';
+
 
 type Icon = ComponentType<{ className?: string }>;
 
 export interface FeaturePageContent {
     slug: string;
     icon: Icon;
+    /** Screenshot shown on the feature page hero. Omitted when no real screenshot exists yet — don't fall back to a generic stock photo. */
+    image_fr?: string;
+    image_en?: string;
     title: Record<Locale, string>;
     tagline: Record<Locale, string>;
     /** Court — utilisé aussi comme meta description SEO, ne pas allonger. */
@@ -53,6 +65,8 @@ export const featurePages: FeaturePageContent[] = [
     {
         slug: 'vente-caisse',
         icon: ScanBarcode,
+        image_fr: venteCaisseImage,
+        image_en: venteCaisseImageEn,
         title: { fr: 'Vente & Caisse', en: 'Sales & POS' },
         tagline: {
             fr: 'Une vente en 30 secondes, même en heure de pointe.',
@@ -101,6 +115,8 @@ export const featurePages: FeaturePageContent[] = [
     },
     {
         slug: 'stocks-depots',
+        image_fr: stockDepotImage,
+        image_en: stockDepotImageEn,
         icon: Boxes,
         title: { fr: 'Stocks & Dépôts', en: 'Stock & Depots' },
         tagline: {
@@ -151,6 +167,8 @@ export const featurePages: FeaturePageContent[] = [
     {
         slug: 'multi-boutiques',
         icon: Store,
+        image_fr: multiBoutiquesImage,
+        image_en: multiBoutiquesImageEn,
         title: { fr: 'Multi-boutiques & Équipe', en: 'Multi-store & Team' },
         tagline: {
             fr: 'Votre équipe sait quoi faire, sans vous appeler.',
@@ -200,6 +218,8 @@ export const featurePages: FeaturePageContent[] = [
     {
         slug: 'rapports',
         icon: FileText,
+        image_fr: rapportFacturation,
+        image_en: rapportFacturationEn,
         title: { fr: 'Rapports & Facturation', en: 'Reports & Invoicing' },
         tagline: {
             fr: 'Des chiffres qui déclenchent des décisions.',

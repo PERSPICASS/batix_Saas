@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useEffect } from 'react';
+import type { CookieConsentValue } from '@/hooks/useCookieConsent';
 
 declare global {
     interface Window {
@@ -10,6 +11,11 @@ declare global {
 
 const GA4_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined;
 
+interface GoogleAnalyticsProps {
+    /** Only loads once the visitor has explicitly accepted cookies via CookieConsentBanner. */
+    consent: CookieConsentValue | null;
+}
+
 /**
  * Google Analytics 4 loader — mounted once from PublicLayout, so it only ever
  * runs on the public marketing site (Home, Blog, Fonctionnalités, Tarifs,
@@ -19,8 +25,8 @@ const GA4_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID as string | undefined;
  * clicks, trial signups, video plays), call `window.gtag?.('event', name, params)`
  * from the relevant component — the loader below already exposes `gtag` globally.
  */
-export default function GoogleAnalytics() {
-    const enabled = Boolean(GA4_ID) && import.meta.env.PROD;
+export default function GoogleAnalytics({ consent }: GoogleAnalyticsProps) {
+    const enabled = Boolean(GA4_ID) && import.meta.env.PROD && consent === 'granted';
 
     useEffect(() => {
         if (!enabled) return;
