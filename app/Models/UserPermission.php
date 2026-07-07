@@ -93,7 +93,6 @@ class UserPermission extends Model
             'cashier', 'caisse' => [
                 'sales' => ['can_view' => true, 'can_create' => true, 'can_edit' => false, 'can_delete' => false],
                 'quotes' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
-                'preorders' => ['can_view' => true, 'can_create' => true, 'can_edit' => false, 'can_delete' => false],
                 'returns' => ['can_view' => true, 'can_create' => true, 'can_edit' => false, 'can_delete' => false],
                 'credits' => ['can_view' => true, 'can_create' => false, 'can_edit' => false, 'can_delete' => false],
                 'customers' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],

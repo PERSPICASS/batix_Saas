@@ -19,6 +19,7 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SupplierController;
@@ -398,6 +399,12 @@ Route::prefix('{code_user}')
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users,edit');
     Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users,edit');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users,delete');
+
+    // Gestion granulaire des permissions par utilisateur (accès restreint à super_admin/manager,
+    // vérifié dans PermissionController — pas de middleware permission: dédié pour cet écran).
+    Route::get('permissions', [PermissionController::class, 'index'])->name('permissions.index');
+    Route::patch('permissions/{user}', [PermissionController::class, 'update'])->name('permissions.update');
+    Route::post('permissions/{user}/reset', [PermissionController::class, 'resetToDefault'])->name('permissions.reset');
 
     // Fournisseurs
     Route::resource('suppliers', SupplierController::class)->parameters([

@@ -193,15 +193,20 @@ export default function Edit({
                     )}
 
                     {/* Profile Information Form */}
-                    <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
-                        <div className="p-8">
-                            <UpdateProfileInformationForm
-                                mustVerifyEmail={mustVerifyEmail}
-                                status={status}
-                                className="max-w-xl"
-                            />
-                        </div>
-                    </div>
+                    {
+                        user.role === 'super_admin' || user.role === 'admin' && (
+                            <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
+                                <div className="p-8">
+                                    <UpdateProfileInformationForm
+                                        mustVerifyEmail={mustVerifyEmail}
+                                        status={status}
+                                        className="max-w-xl"
+                                    />
+                                </div>
+                            </div>
+                        )
+                    }
+                    
 
                     {/* Password Form */}
                     <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
@@ -211,11 +216,16 @@ export default function Edit({
                     </div>
 
                     {/* Delete Account Form */}
-                    <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
-                        <div className="p-8">
-                            <DeleteUserForm className="max-w-xl" />
-                        </div>
-                    </div>
+                    {
+                        user.role === 'super_admin' || user.role === 'admin' && (
+                            <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
+                                <div className="p-8">
+                                    <DeleteUserForm className="max-w-xl" />
+                                </div>
+                            </div>
+                        )
+                    }
+                    
                 </div>
             </div>
         </AuthenticatedLayout>

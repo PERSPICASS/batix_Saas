@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import axios from 'axios';
 import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
@@ -103,6 +104,11 @@ export default function SalesShow({ sale, auth }: Props) {
         && auth.user?.role !== 'cashier'
         && auth.user?.role !== 'caisse'
         && (isAdmin || sale.status === 'completed');
+
+    const canCreateReturn = auth.user?.role === 'super_admin'
+        || auth.user?.role === 'admin_platforme'
+        || auth.user?.permissions?.find(p => p.module === 'returns')?.can_create === true;
+    const [showReturnPermissionDenied, setShowReturnPermissionDenied] = useState(false);
 
     const handleCancelSale = () => {
         setCancelling(true);
@@ -220,22 +226,9 @@ export default function SalesShow({ sale, auth }: Props) {
                 notes: returnForm.data.notes,
             };
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
-            fetch(route('returns.store', { sale: sale.id }), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-Token': csrfToken,
-                },
-                body: JSON.stringify(postData),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Réponse du serveur:', data);
+            axios.post(route('returns.store', { sale: sale.id }), postData)
+            .then(({ data }) => {
                 if (data.success && data.sale) {
-                    console.log('Mise à jour displayedSale avec:', data.sale);
                     setDisplayedSale(data.sale);
                     successCount++;
                     submitNextItem();
@@ -320,7 +313,7 @@ export default function SalesShow({ sale, auth }: Props) {
                             <Download className="size-4" /> {t.common.actions.download || "Télécharger"}
                         </button>
                         <button
-                            onClick={() => setShowReturnModal(true)}
+                            onClick={() => canCreateReturn ? setShowReturnModal(true) : setShowReturnPermissionDenied(true)}
                             className="inline-flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-400/20"
                         >
                             <RotateCcw className="size-4" /> Retourner
@@ -648,6 +641,28 @@ export default function SalesShow({ sale, auth }: Props) {
                                 Fermer
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {showReturnPermissionDenied && (
+                <div className="print:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+                    <div className="w-full max-w-sm rounded-2xl bg-slate-900 p-6 shadow-xl border border-white/10">
+                        <div className="mb-4 flex items-center gap-3">
+                            <div className="flex size-10 items-center justify-center rounded-full bg-amber-400/10">
+                                <RotateCcw className="size-5 text-amber-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Accès refusé</h3>
+                        </div>
+                        <p className="mb-6 text-sm text-slate-300">
+                            Vous n'avez pas la permission d'effectuer un retour. Contactez votre administrateur si vous pensez qu'il s'agit d'une erreur.
+                        </p>
+                        <button
+                            onClick={() => setShowReturnPermissionDenied(false)}
+                            className="w-full rounded-xl border border-gray-300 py-2.5 text-sm text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/5"
+                        >
+                            Fermer
+                        </button>
                     </div>
                 </div>
             )}

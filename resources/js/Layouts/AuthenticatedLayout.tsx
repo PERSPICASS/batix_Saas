@@ -269,7 +269,7 @@ export default function Authenticated({
                 href: buildRoute('dashboard'),
                 active: route().current('dashboard'),
                 icon: LayoutDashboard,
-                module: 'dashboard',
+                module: null,
             },
             {
                 label: t.nav.shops,
@@ -347,7 +347,7 @@ export default function Authenticated({
                 href: buildRoute('returned-inventory.index'),
                 active: route().current('returned-inventory.*'),
                 icon: ClipboardList,
-                module: 'returns',
+                module: 'returned_inventory',
             }]),
             {
                 label: t.nav.suppliers,
@@ -363,6 +363,13 @@ export default function Authenticated({
                 icon: Users,
                 module: 'users',
             },
+            ...(isAdmin() ? [{
+                label: t.nav.permissions,
+                href: buildRoute('permissions.index'),
+                active: route().current('permissions.*'),
+                icon: Shield,
+                module: null,
+            }] : []),
             {
                 label: t.nav.customers,
                 href: buildRoute('customers.index'),
@@ -375,29 +382,29 @@ export default function Authenticated({
                 href: buildRoute('quotes.index'),
                 active: route().current('quotes.*'),
                 icon: Receipt,
-                module: 'invoices',
+                module: 'quotes',
             },
-            {
+            ...(isCashier() ? [] : [{
                 label: t.nav.preorders,
                 href: buildRoute('preorders.index'),
                 active: route().current('preorders.*'),
                 icon: Calendar,
-                module: 'sales',
-            },
-            {
+                module: 'preorders',
+            }]),
+            ...(isCashier() ? [] : [{
                 label: t.nav.recurringInvoices,
                 href: buildRoute('recurring-invoices.index'),
                 active: route().current('recurring-invoices.*'),
                 icon: Receipt,
-                module: 'invoices',
-            },
-            {
+                module: 'recurring_invoices',
+            }]),
+            ...(isCashier() ? [] : [{
                 label: t.nav.invoices,
                 href: buildRoute('invoices.index'),
                 active: route().current('invoices.*'),
                 icon: FileText,
                 module: 'invoices',
-            },
+            }]),
             {
                 label: t.nav.analytics,
                 href: buildRoute('analytics.index'),
@@ -405,20 +412,20 @@ export default function Authenticated({
                 icon: BarChart3,
                 module: 'analytics',
             },
-            ...((user as any)?.role === 'super_admin' ? [{
+            {
                 label: t.nav.history,
                 href: buildRoute('activity-logs.index'),
                 active: route().current('activity-logs.*'),
                 icon: History,
-                module: null,
-            }] : []),
-            ...(isSuperAdmin ? [{
+                module: 'activity_logs',
+            },
+            {
                 label: t.nav.settings,
                 href: buildRoute('settings.index'),
                 active: route().current('settings.*'),
                 icon: Settings,
-                module: null,
-            }] : []),
+                module: 'settings',
+            },
             ...(isSuperAdmin ? [{
                 label: t.apiTokens.title,
                 href: buildRoute('api-tokens.index'),
@@ -435,13 +442,13 @@ export default function Authenticated({
                 module: null,
             }]
             : []),
-            {
+            ...(isCashier() ? [] : [{
                 label: t.nav.billing,
                 href: buildRoute('billing.index'),
                 active: route().current('billing.*'),
                 icon: Receipt,
                 module: null,
-            },
+            }]),
         ]),
     ];
 
@@ -753,14 +760,16 @@ export default function Authenticated({
                                                             <User className="size-4" />
                                                             <span>{t.layout.userMenu.profile}</span>
                                                         </Link>
-                                                        <Link
-                                                            href={buildRoute('settings.index')}
-                                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
-                                                            onClick={() => setUserMenuOpen(false)}
-                                                        >
-                                                            <Settings className="size-4" />
-                                                            <span>{t.layout.userMenu.settings}</span>
-                                                        </Link>
+                                                        {canViewModule('settings') && (
+                                                            <Link
+                                                                href={buildRoute('settings.index')}
+                                                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                                onClick={() => setUserMenuOpen(false)}
+                                                            >
+                                                                <Settings className="size-4" />
+                                                                <span>{t.layout.userMenu.settings}</span>
+                                                            </Link>
+                                                        )}
                                                         <Link
                                                             href={buildRoute('two-factor.index')}
                                                             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"

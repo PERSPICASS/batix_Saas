@@ -56,6 +56,7 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $sku           = $this->clean($this->get($data, ['sku', 'reference', 'ref', 'code']));
         $barcode       = $this->clean($this->get($data, ['code_barres', 'barcode', 'ean']));
         $name          = $this->clean($this->get($data, ['nom', 'name', 'produit', 'product']));
+        $brand         = $this->clean($this->get($data, ['marque', 'brand', 'fabricant']));
         $quantity      = (int) $this->get($data, ['quantite', 'quantity', 'qte', 'qty', 'stock'], 0);
         $minAlert      = $this->get($data, ['stock_minimum', 'stock_min', 'min_stock', 'seuil', 'alerte'], null);
         $purchasePrice = $this->get($data, ['prix_achat', 'purchase_price', 'prix_d_achat', 'cout', 'cost'], null);
@@ -79,13 +80,29 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         if (!$product && $barcode) {
             $product = Product::whereIn('shop_id', $this->shopIds)->where('barcode', $barcode)->first();
         }
+        // Le nom seul ne suffit pas : deux produits différents partagent souvent le même
+        // nom sous des marques différentes (ex. "Perceuse 500W" Bosch vs Makita) — la marque
+        // fait partie du critère de correspondance dès qu'elle est renseignée, sinon des
+        // lignes distinctes finissent par s'écraser les unes les autres (cf. ProductsImport).
         if (!$product && $name) {
-            $product = Product::whereIn('shop_id', $this->shopIds)->where('name', $name)->first();
+            $nameQuery = Product::whereIn('shop_id', $this->shopIds)->where('name', $name);
+            if ($brand) {
+                $nameQuery->where('brand', $brand);
+            } else {
+                $nameQuery->whereNull('brand');
+            }
+            $product = $nameQuery->first();
         }
         // Chercher aussi par slug généré automatiquement pour éviter les doublons
         if (!$product && $name) {
             $slug = Str::slug($name);
-            $product = Product::whereIn('shop_id', $this->shopIds)->where('slug', $slug)->first();
+            $slugQuery = Product::whereIn('shop_id', $this->shopIds)->where('slug', $slug);
+            if ($brand) {
+                $slugQuery->where('brand', $brand);
+            } else {
+                $slugQuery->whereNull('brand');
+            }
+            $product = $slugQuery->first();
         }
 
         // 2. Si introuvable, créer le produit dans la boutique par défaut
@@ -99,10 +116,11 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 // undo the poisoned transaction state on its own — without an explicit
                 // savepoint here, the recovery lookup right below would itself fail with
                 // "current transaction is aborted".
-                $product = DB::transaction(function () use ($name, $sku, $purchasePrice) {
+                $product = DB::transaction(function () use ($name, $sku, $brand, $purchasePrice) {
                     return Product::create([
                         'name'           => $name,
                         'sku'            => $sku ?? ('SKU-' . strtoupper(substr(uniqid(), -8))),
+                        'brand'          => $brand,
                         'shop_id'        => $this->defaultShopId,
                         'stock_quantity' => 0,
                         'selling_price'  => 0,
