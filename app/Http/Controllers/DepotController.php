@@ -27,7 +27,7 @@ class DepotController extends Controller
         $user = Auth::user();
         $search = $request->input('search');
 
-        $query = Depot::where('code_user', $user->code_user)
+        $query = Depot::where('code_user', $codeUser)
             ->withCount('depotProducts')
             ->with('user')
             ->latest();
@@ -86,13 +86,13 @@ class DepotController extends Controller
 
         $depot = Depot::create([
             ...$validated,
-            'code_user' => $user->code_user,
+            'code_user' => $codeUser,
             'user_id' => $user->id,
             'is_active' => true,
         ]);
 
         return redirect()->route('depots.show', [
-            'code_user' => $user->code_user,
+            'code_user' => $codeUser,
             'depot' => $depot->id,
         ])->with('success', 'Dépôt créé avec succès.');
     }
@@ -101,7 +101,7 @@ class DepotController extends Controller
     {
         $user = Auth::user();
 
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -171,7 +171,7 @@ class DepotController extends Controller
             ->get();
 
         // Autres dépôts du même compte (pour transfert dépôt → dépôt)
-        $otherDepots = Depot::where('code_user', $user->code_user)
+        $otherDepots = Depot::where('code_user', $codeUser)
             ->where('id', '!=', $depot->id)
             ->where('is_active', true)
             ->get(['id', 'name']);
@@ -204,9 +204,7 @@ class DepotController extends Controller
 
     public function edit(string $codeUser, Depot $depot): Response
     {
-        $user = Auth::user();
-
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -217,9 +215,7 @@ class DepotController extends Controller
 
     public function update(Request $request, string $codeUser, Depot $depot)
     {
-        $user = Auth::user();
-
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -235,22 +231,20 @@ class DepotController extends Controller
         $depot->update($validated);
 
         return redirect()->route('depots.show', [
-            'code_user' => $user->code_user,
+            'code_user' => $codeUser,
             'depot' => $depot->id,
         ])->with('success', 'Dépôt mis à jour.');
     }
 
     public function destroy(string $codeUser, Depot $depot)
     {
-        $user = Auth::user();
-
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
         $depot->delete();
 
-        return redirect()->route('depots.index', ['code_user' => $user->code_user])
+        return redirect()->route('depots.index', ['code_user' => $codeUser])
             ->with('success', 'Dépôt supprimé.');
     }
 
@@ -260,7 +254,7 @@ class DepotController extends Controller
     {
         $user = Auth::user();
 
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -339,9 +333,7 @@ class DepotController extends Controller
 
     public function updateStock(Request $request, string $codeUser, Depot $depot, DepotProduct $depotProduct)
     {
-        $user = Auth::user();
-
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -394,9 +386,7 @@ class DepotController extends Controller
 
     public function removeStock(string $codeUser, Depot $depot, DepotProduct $depotProduct)
     {
-        $user = Auth::user();
-
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -415,7 +405,7 @@ class DepotController extends Controller
     {
         $user = Auth::user();
 
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -517,7 +507,7 @@ class DepotController extends Controller
     {
         $user = Auth::user();
 
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -531,7 +521,7 @@ class DepotController extends Controller
 
         $targetDepot = Depot::findOrFail($validated['target_depot_id']);
 
-        if ($targetDepot->code_user !== $user->code_user) {
+        if ($targetDepot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -589,9 +579,7 @@ class DepotController extends Controller
 
     public function transfers(Request $request, string $codeUser, Depot $depot): Response
     {
-        $user = Auth::user();
-
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -644,7 +632,7 @@ class DepotController extends Controller
     {
         $user = Auth::user();
 
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
@@ -698,11 +686,9 @@ class DepotController extends Controller
         }
     }
 
-    public function stockTemplate(Depot $depot)
+    public function stockTemplate(string $codeUser, Depot $depot)
     {
-        $user = Auth::user();
-
-        if ($depot->code_user !== $user->code_user) {
+        if ($depot->code_user !== $codeUser) {
             abort(403);
         }
 
