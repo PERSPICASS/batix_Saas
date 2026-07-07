@@ -32,6 +32,7 @@ class LemonSqueezyController extends Controller
         ]);
 
         $user = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
 
         $product = LemonSqueezyProduct::where('subscription_plan_id', $plan->id)->firstOrFail();
 

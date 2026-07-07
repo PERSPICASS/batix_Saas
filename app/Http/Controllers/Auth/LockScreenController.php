@@ -111,8 +111,8 @@ class LockScreenController extends Controller
             return redirect()->route('platform.dashboard');
         }
 
-        if ($user->code_user) {
-            return redirect()->route('dashboard', ['code_user' => $user->code_user]);
+        if ($accountCode = $user->accountCode()) {
+            return redirect()->route('dashboard', ['code_user' => $accountCode]);
         }
 
         return redirect()->route('login');

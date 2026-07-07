@@ -35,6 +35,7 @@ class PawaPayController extends Controller
         ]);
 
         $user    = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
         $months  = $validated['billing_cycle'] === 'yearly' ? 12 : 1;
         $amount  = $validated['billing_cycle'] === 'yearly'
             ? round((float) $plan->price * 10)

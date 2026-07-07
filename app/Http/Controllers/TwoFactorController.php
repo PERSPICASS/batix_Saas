@@ -31,7 +31,7 @@ class TwoFactorController extends Controller
         $user = auth()->user();
 
         return inertia('Auth/VerifyTwoFactor', [
-            'codeUser' => $user->code_user,
+            'codeUser' => $user->accountCode(),
         ]);
     }
 

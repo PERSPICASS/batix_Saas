@@ -22,6 +22,7 @@ class PaymentController extends Controller
         abort_if(!$plan->is_active, 404);
 
         $user = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
         $currentSubscription = $user->activeSubscription();
 
         // Devise de la boutique active de l'utilisateur
@@ -80,6 +81,7 @@ class PaymentController extends Controller
         ]);
 
         $user = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
 
         // Plan gratuit → activation directe sans paiement
         if ($plan->price == 0) {

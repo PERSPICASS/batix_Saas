@@ -20,6 +20,7 @@ class PaddleController extends Controller
     public function checkout(Request $request, SubscriptionPlan $plan): JsonResponse
     {
         $user = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
         $billingCycle = $request->input('billing_cycle', 'monthly');
 
         try {

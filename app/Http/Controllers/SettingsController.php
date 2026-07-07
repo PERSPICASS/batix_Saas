@@ -47,7 +47,7 @@ class SettingsController extends Controller
         $shop = $user->accessibleShopsQuery()->first();
 
         if (!$shop) {
-            return Redirect::route('settings.index', ['code_user' => $user->code_user])
+            return Redirect::route('settings.index', ['code_user' => $user->accountCode()])
                 ->with('error', 'Aucune boutique n\'est associée à votre compte.');
         }
 
@@ -98,14 +98,14 @@ class SettingsController extends Controller
                 ? "Paramètres mis à jour avec succès pour {$shopsUpdated} boutique(s)."
                 : 'Paramètres mis à jour avec succès.';
                 
-            return Redirect::route('settings.index', ['code_user' => $user->code_user])
+            return Redirect::route('settings.index', ['code_user' => $user->accountCode()])
                 ->with('success', $message);
         }
         
         // Pour les autres rôles : mettre à jour uniquement leur boutique assignée
         $shop->update($validated);
 
-        return Redirect::route('settings.index', ['code_user' => $user->code_user])
+        return Redirect::route('settings.index', ['code_user' => $user->accountCode()])
             ->with('success', 'Paramètres mis à jour avec succès.');
     }
 

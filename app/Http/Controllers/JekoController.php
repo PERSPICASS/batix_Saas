@@ -34,6 +34,7 @@ class JekoController extends Controller
         ]);
 
         $user = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
         $months = $validated['billing_cycle'] === 'yearly' ? 12 : 1;
 
         // Calculate amount: yearly = price * 10, monthly = price
@@ -139,7 +140,7 @@ class JekoController extends Controller
         }
 
         if ($payment->subscription_activated) {
-            return redirect('/' . $payment->user->code_user . '/dashboard')
+            return redirect('/' . $payment->user->accountCode() . '/dashboard')
                 ->with('success', 'Paiement confirmé et abonnement activé !');
         }
 
