@@ -142,6 +142,44 @@ class User extends Authenticatable
     }
 
     /**
+     * ID du propriétaire (super_admin) du compte auquel appartient cet utilisateur —
+     * lui-même s'il est déjà le propriétaire, sinon le propriétaire de sa boutique.
+     * Source de vérité pour toute ressource partagée à l'échelle du compte (abonnement,
+     * dépôts, quota d'utilisateurs/boutiques...), qui ne doit jamais être résolue via
+     * l'ID de l'employé qui agit.
+     */
+    public function ownerId(): ?int
+    {
+        if ($this->role === 'super_admin') {
+            return $this->id;
+        }
+
+        $shop = $this->shop ?? $this->shops()->first();
+
+        return $shop?->user_id;
+    }
+
+    /**
+     * Code du COMPTE (le {code_user} des URLs et le sélecteur des ressources partagées
+     * comme les dépôts ou les logs d'activité) — à ne pas confondre avec `code_user`, qui
+     * est un identifiant unique généré pour CHAQUE utilisateur (propriétaire ou employé).
+     * Pour le propriétaire (super_admin), les deux coïncident. Pour un employé, le compte
+     * est celui du propriétaire de sa boutique.
+     */
+    public function accountCode(): ?string
+    {
+        $ownerId = $this->ownerId();
+
+        if ($ownerId === null) {
+            return $this->code_user;
+        }
+
+        $owner = $ownerId === $this->id ? $this : self::find($ownerId);
+
+        return $owner?->code_user ?? $this->code_user;
+    }
+
+    /**
      * Get the shop that the user belongs to.
      */
     public function shop(): BelongsTo
@@ -375,12 +413,24 @@ class User extends Authenticatable
     public const SUBSCRIPTION_GRACE_PERIOD_DAYS = 14;
 
     /**
-     * Get the active subscription for this user, including the grace period after
-     * expiry (see SUBSCRIPTION_GRACE_PERIOD_DAYS).
+     * Get the active subscription for the ACCOUNT this user belongs to, including the
+     * grace period after expiry (see SUBSCRIPTION_GRACE_PERIOD_DAYS).
+     *
+     * Subscriptions only ever exist on the account owner's (super_admin) user record —
+     * an employee has none of their own. Resolving through `$this->subscriptions()`
+     * directly would silently return null for every employee, making every
+     * subscription-gated check (canCreateShop, canCreateDepot, hasAiAssistant...) fail
+     * closed regardless of the account's real plan.
      */
     public function activeSubscription()
     {
-        return $this->subscriptions()
+        $ownerId = $this->ownerId();
+
+        if (!$ownerId) {
+            return null;
+        }
+
+        return Subscription::where('user_id', $ownerId)
             ->whereIn('status', ['active', 'trial'])
             ->where(function ($query) {
                 $query->whereNull('expires_at')
@@ -441,8 +491,8 @@ class User extends Authenticatable
         }
 
         // Check current shop count
-        $currentShopCount = $this->shops()->count();
-        
+        $currentShopCount = Shop::where('user_id', $this->ownerId())->count();
+
         return $currentShopCount < $plan->max_shops;
     }
 
@@ -458,23 +508,24 @@ class User extends Authenticatable
 
         // Get active subscription
         $subscription = $this->activeSubscription();
-        
+
         if (!$subscription) {
             return false; // No active subscription
         }
 
         $plan = $subscription->plan;
-        
+
         // Check if plan allows unlimited users
         if ($plan->hasUnlimitedUsers()) {
             return true;
         }
 
-        // Count all users belonging to this super_admin's shops
-        $currentUserCount = User::whereHas('shop', function ($query) {
-            $query->where('user_id', $this->id);
+        // Count all users belonging to the account owner's shops
+        $ownerId = $this->ownerId();
+        $currentUserCount = User::whereHas('shop', function ($query) use ($ownerId) {
+            $query->where('user_id', $ownerId);
         })->count();
-        
+
         // Also count the super_admin themselves
         $currentUserCount += 1;
         
@@ -498,8 +549,8 @@ class User extends Authenticatable
             return -1; // Unlimited
         }
 
-        $currentShopCount = $this->shops()->count();
-        
+        $currentShopCount = Shop::where('user_id', $this->ownerId())->count();
+
         return max(0, $plan->max_shops - $currentShopCount);
     }
 
@@ -509,19 +560,20 @@ class User extends Authenticatable
     public function remainingUserSlots(): int
     {
         $subscription = $this->activeSubscription();
-        
+
         if (!$subscription) {
             return 0;
         }
 
         $plan = $subscription->plan;
-        
+
         if ($plan->hasUnlimitedUsers()) {
             return -1; // Unlimited
         }
 
-        $currentUserCount = User::whereHas('shop', function ($query) {
-            $query->where('user_id', $this->id);
+        $ownerId = $this->ownerId();
+        $currentUserCount = User::whereHas('shop', function ($query) use ($ownerId) {
+            $query->where('user_id', $ownerId);
         })->count() + 1; // +1 for super_admin
         
         return max(0, $plan->max_users - $currentUserCount);
@@ -584,7 +636,7 @@ class User extends Authenticatable
             return false;
         }
 
-        $currentCount = Depot::where('code_user', $this->code_user)
+        $currentCount = Depot::where('code_user', $this->accountCode())
             ->where('is_active', true)
             ->count();
 
@@ -632,7 +684,7 @@ class User extends Authenticatable
             return -1; // Unlimited
         }
 
-        $currentCount = Depot::where('code_user', $this->code_user)
+        $currentCount = Depot::where('code_user', $this->accountCode())
             ->where('is_active', true)
             ->count();
 
@@ -650,7 +702,7 @@ class User extends Authenticatable
             $currentProducts = $shopId
                 ? Product::where('shop_id', $shopId)->where('is_active', true)->count()
                 : 0;
-            $currentDepots = Depot::where('code_user', $this->code_user)->where('is_active', true)->count();
+            $currentDepots = Depot::where('code_user', $this->accountCode())->where('is_active', true)->count();
 
             return [
                 'has_subscription' => false,
@@ -659,7 +711,7 @@ class User extends Authenticatable
                 'max_users' => 0,
                 'max_products' => 0,
                 'max_depots' => 0,
-                'current_shops' => $this->shops()->count(),
+                'current_shops' => Shop::where('user_id', $this->ownerId())->count(),
                 'current_users' => 1,
                 'current_products' => $currentProducts,
                 'current_depots' => $currentDepots,
@@ -678,14 +730,15 @@ class User extends Authenticatable
         }
 
         $plan = $subscription->plan;
-        $currentShops = $this->shops()->count();
-        $currentUsers = User::whereHas('shop', function ($query) {
-            $query->where('user_id', $this->id);
+        $ownerId = $this->ownerId();
+        $currentShops = Shop::where('user_id', $ownerId)->count();
+        $currentUsers = User::whereHas('shop', function ($query) use ($ownerId) {
+            $query->where('user_id', $ownerId);
         })->count() + 1;
         $currentProducts = $shopId
             ? Product::where('shop_id', $shopId)->where('is_active', true)->count()
             : Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))->where('is_active', true)->count();
-        $currentDepots = Depot::where('code_user', $this->code_user)->where('is_active', true)->count();
+        $currentDepots = Depot::where('code_user', $this->accountCode())->where('is_active', true)->count();
 
         return [
             'has_subscription' => true,
