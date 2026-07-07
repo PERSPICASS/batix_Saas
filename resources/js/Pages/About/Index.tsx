@@ -1,11 +1,14 @@
 import { Link } from '@inertiajs/react';
-import { ArrowRight, HardHat, MapPin, ShieldCheck, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, CheckCircle2, HardHat, MapPin, MessageCircle, ShieldCheck, TriangleAlert, Users, Zap } from 'lucide-react';
 import aboutBanner from '/resources/images/various-repair-tools-for-sale-on-hardware-store-sh-2026-03-17-21-44-06-utc.jpg';
 import PublicLayout from '@/Layouts/PublicLayout';
 import { SeoHead } from '@/Components/SeoHead';
+import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
 import { PageProps } from '@/types';
 import type { Locale } from '@/types/types';
-import { copy } from '@/types/data';
+import { copy, fadeUp, stagger } from '@/types/data';
+import { featurePages } from '@/types/featurePages';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
 
 interface Props extends PageProps {
@@ -20,22 +23,44 @@ export default function AboutIndex({ auth, locale, localeLinks }: Props) {
 
     const title = isFr ? 'À propos de BATIX PRO' : 'About BATIX PRO';
     const description = isFr
-        ? 'BATIX PRO est un logiciel de gestion pensé pour les quincailleries et boutiques d\'Afrique francophone.'
-        : 'BATIX PRO is management software built for hardware stores and shops across French-speaking Africa.';
+        ? 'BATIX PRO est un logiciel de gestion pensé pour les quincailleries et boutiques de détail, partout dans le monde.'
+        : 'BATIX PRO is management software built for hardware stores and retail shops, wherever they are.';
 
     const values = isFr
         ? [
             { icon: HardHat, title: 'Conçu pour le terrain', text: 'Pas pour des informaticiens : pour des gérants, vendeurs et caissiers qui n\'ont pas le temps à perdre.' },
-            { icon: MapPin, title: 'Pensé pour l\'Afrique francophone', text: 'Prix affichés en FCFA et EUR, support en français, adapté aux réalités du commerce local.' },
-            { icon: ShieldCheck, title: 'Vos données vous appartiennent', text: 'Exportables à tout moment, sans vous enfermer dans un outil que vous ne maîtrisez pas.' },
+            { icon: MapPin, title: 'Multi-devises et bilingue', text: 'Prix affichés en EUR, USD, CAD ou FCFA, interface disponible en français et en anglais.' },
+            { icon: ShieldCheck, title: 'Vos données vous appartiennent', text: 'Exportables à tout moment (Excel, CSV), sans vous enfermer dans un outil que vous ne maîtrisez pas.' },
             { icon: Users, title: 'Support humain', text: 'Une équipe joignable par WhatsApp et email, pas un simple centre de tickets automatisé.' },
         ]
         : [
             { icon: HardHat, title: 'Built for the field', text: 'Not for IT teams — for managers, sellers and cashiers who have no time to lose.' },
-            { icon: MapPin, title: 'Built for French-speaking Africa', text: 'Prices shown in FCFA and EUR, French-language support, adapted to local commerce.' },
-            { icon: ShieldCheck, title: 'Your data is yours', text: 'Exportable anytime, without locking you into a tool you don\'t control.' },
+            { icon: MapPin, title: 'Multi-currency and bilingual', text: 'Prices shown in EUR, USD, CAD or FCFA, interface available in French and English.' },
+            { icon: ShieldCheck, title: 'Your data is yours', text: 'Exportable anytime (Excel, CSV), without locking you into a tool you don\'t control.' },
             { icon: Users, title: 'Human support', text: 'A team reachable on WhatsApp and email, not just an automated ticket queue.' },
         ];
+
+    const problemSolution = isFr
+        ? {
+            problemTitle: 'Le problème',
+            problem: "La plupart des commerçants gèrent encore leur stock sur cahier, leurs ventes de tête, et découvrent une rupture le jour où un client repart les mains vides. Les logiciels de gestion existants sont soit trop chers, soit trop complexes, avec des devises ou une langue qui ne correspondent pas à leur marché.",
+            solutionTitle: 'Notre réponse',
+            solution: "BATIX PRO donne aux commerçants, où qu'ils soient, les mêmes outils de pilotage que les grandes enseignes — vente, stock, multi-boutiques, rapports, assistant IA — dans une seule application, disponible en français et en anglais, avec des prix affichés dans votre devise, et un essai qui ne demande pas de carte bancaire.",
+        }
+        : {
+            problemTitle: 'The problem',
+            problem: "Most retailers still track stock on paper, sales from memory, and discover a stock-out the day a customer walks away empty-handed. Existing management software is either too expensive or too complex, priced or worded in ways that don't match their market.",
+            solutionTitle: 'Our answer',
+            solution: "BATIX PRO gives retailers, wherever they are, the same management tools as large chains — sales, stock, multi-store, reports, AI assistant — in one application, available in French and English, priced in your currency, with a trial that asks for no credit card.",
+        };
+
+    const builtLabel = isFr ? 'Ce que nous avons construit' : 'What we built';
+    const builtTitle = isFr ? 'Cinq modules, un seul logiciel' : 'Five modules, one piece of software';
+
+    const promiseIcons = [Zap, MessageCircle, ShieldCheck];
+    const pullQuote = isFr
+        ? "La plupart des logiciels de gestion sont conçus pour des bureaux, pas pour des comptoirs de quincaillerie où chaque minute compte."
+        : "Most management software is built for back offices, not for hardware store counters where every minute counts.";
 
     return (
         <>
@@ -52,55 +77,162 @@ export default function AboutIndex({ auth, locale, localeLinks }: Props) {
             />
 
             <PublicLayout locale={locale} localeLinks={localeLinks} isAuthenticated={!!auth.user} getDashboardUrl={getDashboardUrl}>
-                <div
-                    className="h-56 w-full bg-cover bg-center sm:h-72"
-                    style={{ backgroundImage: `url(${aboutBanner})` }}
-                    role="img"
-                    aria-label={isFr ? 'Rayonnage de quincaillerie' : 'Hardware store shelving'}
-                />
+                {/* Hero avec bannière, plus immersif */}
+                <section className="relative">
+                    <div
+                        className="h-80 w-full bg-cover bg-center sm:h-[28rem]"
+                        style={{ backgroundImage: `linear-gradient(180deg, rgba(15,15,15,0.25), rgba(15,15,15,0.75)), url(${aboutBanner})` }}
+                        role="img"
+                        aria-label={isFr ? 'Rayonnage de quincaillerie' : 'Hardware store shelving'}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-terre-900/70">
+                        <div className="w-full flex items-center justify-center flex-col">
+                            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-300">
+                                {isFr ? 'À propos' : 'About'}
+                            </p>
+                            <h1 className="mt-3 text-4xl font-extrabold leading-tight text-white sm:text-5xl">{title}</h1>
+                            <p className="mt-4 max-w-xl text-lg text-terre-50 text-center">{description}</p>
+                        </div>
+                    </div>
+                </section>
 
+                {/* Citation d'ouverture */}
                 <section className="mx-auto max-w-3xl px-6 py-16 text-center lg:px-8">
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-600">
-                        {isFr ? 'À propos' : 'About'}
+                    <span className="text-6xl font-black leading-none text-terre-200">“</span>
+                    <p className="-mt-6 text-2xl font-bold leading-snug text-slate-900 sm:text-3xl">
+                        {pullQuote}
                     </p>
-                    <h1 className="mt-2 text-4xl font-extrabold text-slate-900">{title}</h1>
-                    <p className="mt-4 text-lg leading-relaxed text-slate-600">
+                    <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-500">
                         {isFr
-                            ? "BATIX PRO est né d'un constat simple : la plupart des logiciels de gestion sont conçus pour des bureaux, pas pour des comptoirs de quincaillerie où chaque minute compte. Notre objectif est de donner aux commerçants d'Afrique francophone les mêmes outils de pilotage que les grandes enseignes, sans la complexité."
-                            : "BATIX PRO started from a simple observation: most management software is built for back offices, not for hardware store counters where every minute counts. Our goal is to give French-speaking African retailers the same management tools as large chains, without the complexity."}
+                            ? "Notre objectif est de donner à tout commerçant, où qu'il soit, les mêmes outils de pilotage que les grandes enseignes, sans la complexité."
+                            : "Our goal is to give any retailer, wherever they are, the same management tools as large chains, without the complexity."}
                     </p>
                 </section>
 
-                <section className="bg-gray-50 py-14">
-                    <div className="mx-auto grid max-w-5xl gap-5 px-6 sm:grid-cols-2 lg:px-8">
-                        {values.map((value) => (
-                            <div key={value.title} className="flex gap-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                                <div className="inline-flex h-fit shrink-0 rounded-xl bg-terre-50 p-3 text-terre-600">
-                                    <value.icon className="size-5" />
+                {/* Bandeau de preuve — chiffres réels déjà utilisés sur le site */}
+                <section className="border-y border-gray-200 bg-white py-12">
+                    <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 px-6 sm:grid-cols-3 lg:px-8">
+                        {t.promises.map((promise, index) => {
+                            const Icon = promiseIcons[index] ?? Zap;
+                            return (
+                                <div key={promise.label} className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-5 shadow-sm">
+                                    <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-terre-50 text-terre-600">
+                                        <Icon className="size-5" />
+                                    </span>
+                                    <div>
+                                        <p className="text-2xl font-extrabold text-slate-900">{promise.value}</p>
+                                        <p className="text-xs text-slate-500">{promise.label}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-bold text-slate-900">{value.title}</p>
-                                    <p className="mt-1 text-sm leading-relaxed text-slate-500">{value.text}</p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
 
-                <section className="py-14 text-center">
-                    <div className="mx-auto max-w-2xl px-6 lg:px-8">
-                        <h2 className="text-2xl font-extrabold text-slate-900">
-                            {isFr ? 'Envie de le voir en action ?' : 'Want to see it in action?'}
+                {/* Le problème / Notre réponse */}
+                <section className="bg-terre-50 py-16">
+                    <motion.div
+                        className="relative mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-2 lg:px-8"
+                        initial="hidden"
+                        whileInView="show"
+                        viewport={{ once: true, amount: 0.2 }}
+                        variants={stagger}
+                    >
+                        <motion.div variants={fadeUp} className="rounded-2xl bg-white p-8 shadow-sm">
+                            <div className="mb-4 inline-flex size-11 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                                <TriangleAlert className="size-5" />
+                            </div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{problemSolution.problemTitle}</p>
+                            <p className="mt-3 text-base leading-relaxed text-slate-600">{problemSolution.problem}</p>
+                        </motion.div>
+
+                        <div className="absolute left-1/2 top-1/2 z-10 hidden size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-amber-300 text-slate-900 shadow-lg md:flex">
+                            <ArrowRight className="size-5" />
+                        </div>
+
+                        <motion.div variants={fadeUp} className="rounded-2xl bg-terre-600 p-8 shadow-sm">
+                            <div className="mb-4 inline-flex size-11 items-center justify-center rounded-full bg-white/15 text-white">
+                                <CheckCircle2 className="size-5" />
+                            </div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-100">{problemSolution.solutionTitle}</p>
+                            <p className="mt-3 text-base leading-relaxed text-white">{problemSolution.solution}</p>
+                        </motion.div>
+                    </motion.div>
+                </section>
+
+                {/* Valeurs */}
+                <section className="bg-white py-16">
+                    <div className="mx-auto max-w-6xl px-6 lg:px-8">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-600">
+                            {isFr ? 'Nos principes' : 'Our principles'}
+                        </p>
+                        <h2 className="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                            {isFr ? 'Ce qui guide chaque décision produit' : 'What guides every product decision'}
                         </h2>
-                        <Link
-                            href={getDashboardUrl()}
-                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-bold text-slate-900 shadow-md transition hover:bg-amber-400"
+                        <div className="mt-3 h-1 w-12 rounded-full bg-terre-500" />
+
+                        <motion.div
+                            className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
+                            initial="hidden"
+                            whileInView="show"
+                            viewport={{ once: true, amount: 0.1 }}
+                            variants={stagger}
                         >
-                            {t.hero.primary}
-                            <ArrowRight className="size-4" />
-                        </Link>
+                            {values.map((value) => (
+                                <motion.div key={value.title} variants={fadeUp} className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                    <div className="mx-auto mb-4 inline-flex size-14 items-center justify-center rounded-2xl bg-terre-50 text-terre-600">
+                                        <value.icon className="size-6" />
+                                    </div>
+                                    <p className="font-bold text-slate-900">{value.title}</p>
+                                    <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{value.text}</p>
+                                </motion.div>
+                            ))}
+                        </motion.div>
                     </div>
                 </section>
+
+                {/* Ce que nous avons construit — lien vers les 5 modules réels */}
+                <section className="bg-gray-50 py-16">
+                    <div className="mx-auto max-w-6xl px-6 lg:px-8">
+                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-terre-600">{builtLabel}</p>
+                        <h2 className="mt-2 text-2xl font-extrabold text-slate-900 sm:text-3xl">{builtTitle}</h2>
+                        <div className="mt-3 h-1 w-12 rounded-full bg-terre-500" />
+
+                        <motion.div
+                            className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+                            initial="hidden"
+                            whileInView="show"
+                            viewport={{ once: true, amount: 0.1 }}
+                            variants={stagger}
+                        >
+                            {featurePages.map((feature) => (
+                                <motion.div key={feature.slug} variants={fadeUp}>
+                                    <Link
+                                        href={isFr ? route('features.show', feature.slug) : route('en.features.show', feature.slug)}
+                                        className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-terre-200 hover:shadow-md"
+                                    >
+                                        <div className="mb-3 inline-flex w-fit rounded-xl bg-terre-50 p-2.5 text-terre-600">
+                                            <feature.icon className="size-5" />
+                                        </div>
+                                        <p className="font-bold text-slate-900">{feature.title[locale]}</p>
+                                        <p className="mt-1 flex-1 text-sm leading-relaxed text-slate-500">{feature.tagline[locale]}</p>
+                                        <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-terre-700">
+                                            {isFr ? 'Découvrir' : 'Discover'}
+                                            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                                        </span>
+                                    </Link>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </div>
+                </section>
+
+                <FinalCtaSection
+                    title={t.contact.title}
+                    description={t.contact.description}
+                    cta={t.contact.cta}
+                    getDashboardUrl={getDashboardUrl}
+                />
             </PublicLayout>
         </>
     );
