@@ -584,7 +584,7 @@ export default function Authenticated({
                             <LanguageSwitcher />
 
                             <div className="relative" ref={themeMenuRef}>
-                                {/* <button
+                                <button
                                     type="button"
                                     onClick={() => setThemeMenuOpen((prev) => !prev)}
                                     aria-label={t.layout.theme.label}
@@ -601,7 +601,7 @@ export default function Authenticated({
                                         {themePreference === 'system' ? t.layout.theme.system : themePreference === 'dark' ? t.layout.theme.dark : t.layout.theme.light}
                                     </span> 
                                     <ChevronDown className="size-3.5 text-slate-500 dark:text-slate-400" />
-                                </button> */}
+                                </button> 
 
                                 {themeMenuOpen && (
                                     <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
