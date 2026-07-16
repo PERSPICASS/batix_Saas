@@ -111,39 +111,29 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 throw new \Exception("Produit introuvable (SKU: {$sku}, code-barres: {$barcode}) et aucun nom fourni pour le créer.");
             }
 
-            try {
-                // Wrapped in its own savepoint: on Postgres, catching this exception doesn't
-                // undo the poisoned transaction state on its own — without an explicit
-                // savepoint here, the recovery lookup right below would itself fail with
-                // "current transaction is aborted".
-                $product = DB::transaction(function () use ($name, $sku, $brand, $purchasePrice) {
-                    return Product::create([
-                        'name'           => $name,
-                        'sku'            => $sku ?? ('SKU-' . strtoupper(substr(uniqid(), -8))),
-                        'brand'          => $brand,
-                        'shop_id'        => $this->defaultShopId,
-                        'stock_quantity' => 0,
-                        'selling_price'  => 0,
-                        'purchase_price' => $purchasePrice !== null ? (float) $purchasePrice : 0,
-                        'unit'           => 'Pièce',
-                        'is_active'      => false,
-                        'track_stock'    => true,
-                    ]);
-                });
+            // Une création qui échoue laisse remonter l'exception : la ligne est alors
+            // signalée et annulée par son propre savepoint (cf. collection()), sans
+            // toucher aux autres. Il y avait ici un rattrapage « le slug existe déjà,
+            // réutilisons ce produit » : il retrouvait le produit par slug seul, donc
+            // renvoyait celui d'une AUTRE marque portant le même nom et fusionnait
+            // silencieusement leurs stocks. Il est devenu inutile quand la contrainte
+            // unique (shop_id, slug) a été supprimée le 2026-07-04 (même raison que
+            // dans ProductsImport, qui ne l'a plus non plus) — mieux vaut refuser
+            // bruyamment une ligne que corrompre un stock.
+            $product = Product::create([
+                'name'           => $name,
+                'sku'            => $sku ?? ('SKU-' . strtoupper(substr(uniqid(), -8))),
+                'brand'          => $brand,
+                'shop_id'        => $this->defaultShopId,
+                'stock_quantity' => 0,
+                'selling_price'  => 0,
+                'purchase_price' => $purchasePrice !== null ? (float) $purchasePrice : 0,
+                'unit'           => 'Pièce',
+                'is_active'      => false,
+                'track_stock'    => true,
+            ]);
 
-                $this->importedCount['products_created']++;
-            } catch (\Illuminate\Database\QueryException $e) {
-                // Si le produit existe déjà (contrainte unique), le chercher et l'utiliser
-                if (str_contains($e->getMessage(), 'unique') || str_contains($e->getMessage(), 'already exists')) {
-                    $slug = Str::slug($name);
-                    $product = Product::where('shop_id', $this->defaultShopId)->where('slug', $slug)->first();
-                    if (!$product) {
-                        throw new \Exception("Le produit '{$name}' existe déjà mais ne peut pas être trouvé.");
-                    }
-                } else {
-                    throw $e;
-                }
-            }
+            $this->importedCount['products_created']++;
         }
 
         // 3. Mettre à jour ou créer l'entrée depot_products
