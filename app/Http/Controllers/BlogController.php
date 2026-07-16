@@ -50,6 +50,9 @@ class BlogController extends Controller
             'author_name' => $post->author_name,
             'category' => $post->category,
             'published_at' => $post->published_at?->toDateString(),
+            // dateModified des données structurées Article : Google s'en sert pour
+            // repérer un contenu rafraîchi.
+            'updated_at' => $post->updated_at?->toDateString(),
         ];
 
         if ($withContent) {

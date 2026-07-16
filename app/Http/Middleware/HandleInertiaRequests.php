@@ -32,6 +32,9 @@ class HandleInertiaRequests extends Middleware
                 ],
                 'csrf_token' => csrf_token(),
                 'whatsapp_number' => config('app.whatsapp_number'),
+                // Base absolue des URL du balisage SEO (données structurées, images OG) :
+                // partagée plutôt que repassée par chaque contrôleur de page publique.
+                'appUrl' => rtrim(config('app.url'), '/'),
                 'ziggy' => fn () => [...(new \Tighten\Ziggy\Ziggy)->toArray(), 'location' => $request->url()],
             ];
         }
@@ -156,6 +159,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'csrf_token' => csrf_token(),
             'whatsapp_number' => config('app.whatsapp_number'),
+            'appUrl' => rtrim(config('app.url'), '/'),
             'ziggy' => fn () => [...(new \Tighten\Ziggy\Ziggy)->toArray(), 'location' => $request->url()],
         ];
     }

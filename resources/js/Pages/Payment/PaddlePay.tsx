@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Head } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 
@@ -52,11 +53,15 @@ export default function PaddlePay() {
     }, []);
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50">
-            <div className="text-center">
-                <Loader2 className="mb-4 h-8 w-8 animate-spin text-blue-600" />
-                <p className="text-gray-600">{t.payment.loadingCheckout}</p>
+        <>
+            <Head title={t.payment.loadingCheckout} />
+
+            <div className="flex min-h-screen items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <Loader2 className="mb-4 h-8 w-8 animate-spin text-blue-600" />
+                    <p className="text-gray-600">{t.payment.loadingCheckout}</p>
+                </div>
             </div>
-        </div>
+        </>
     );
 }

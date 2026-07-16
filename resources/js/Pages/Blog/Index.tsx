@@ -1,5 +1,6 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import PublicLayout from '@/Layouts/PublicLayout';
+import { SeoHead } from '@/Components/SeoHead';
 import { PageProps } from '@/types';
 import type { Locale } from '@/types/types';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
@@ -25,8 +26,9 @@ interface Props extends PageProps {
     localeLinks: Record<Locale, string>;
 }
 
-export default function BlogIndex({ auth, posts, locale, localeLinks }: Props) {
+export default function BlogIndex({ auth, appUrl, posts, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
+    const isFr = locale === 'fr';
 
     const getTitle = (post: Post) => (locale === 'en' && post.title_en) ? post.title_en : post.title_fr;
     const getExcerpt = (post: Post) => (locale === 'en' && post.excerpt_en) ? post.excerpt_en : post.excerpt_fr;
@@ -37,15 +39,54 @@ export default function BlogIndex({ auth, posts, locale, localeLinks }: Props) {
 
     const canonicalUrl = localeLinks[locale];
 
+    const seoTitle = isFr ? 'Blog – Conseils quincaillerie' : 'Blog – Hardware Store Tips';
+    const seoDescription = isFr
+        ? 'Conseils pratiques pour gérer une quincaillerie : stock, caisse, multi-boutiques et rentabilité.'
+        : 'Practical advice for running a hardware store: stock, POS, multi-store management and profitability.';
+
+    // ItemList : annonce les articles listés ici, dans l'ordre affiché. Non filtré par
+    // catégorie — le filtre est un état client, alors que le balisage doit décrire la
+    // page telle qu'un crawler la reçoit.
+    const blogSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'Blog',
+        name: `${seoTitle} | BATIX PRO`,
+        description: seoDescription,
+        url: canonicalUrl,
+        inLanguage: isFr ? 'fr-FR' : 'en-US',
+        publisher: { '@id': `${appUrl}/#organization` },
+        blogPost: posts.map((post) => ({
+            '@type': 'BlogPosting',
+            headline: getTitle(post),
+            url: isFr ? `${appUrl}/blog/${post.slug}` : `${appUrl}/en/blog/${post.slug}`,
+            ...(post.published_at ? { datePublished: post.published_at } : {}),
+            author: { '@type': 'Person', name: post.author_name },
+        })),
+    };
+
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'BATIX PRO', item: appUrl },
+            { '@type': 'ListItem', position: 2, name: 'Blog', item: canonicalUrl },
+        ],
+    };
+
     return (
         <>
-            <Head title={locale === 'fr' ? 'Blog – Conseils quincaillerie | BATIX PRO' : 'Blog – Hardware Store Tips | BATIX PRO'}>
-                <link rel="canonical" href={canonicalUrl} />
-                <link rel="alternate" hrefLang="fr" href={localeLinks.fr} />
-                <link rel="alternate" hrefLang="en" href={localeLinks.en} />
-                <link rel="alternate" hrefLang="x-default" href={localeLinks.fr} />
-                <meta property="og:locale" content={locale === 'fr' ? 'fr_FR' : 'en_US'} />
-            </Head>
+            <SeoHead
+                title={seoTitle}
+                description={seoDescription}
+                canonical={canonicalUrl}
+                ogLocale={isFr ? 'fr_FR' : 'en_US'}
+                hreflangAlternates={[
+                    { locale: 'fr', href: localeLinks.fr },
+                    { locale: 'en', href: localeLinks.en },
+                    { locale: 'x-default', href: localeLinks.fr },
+                ]}
+                jsonLd={[blogSchema, breadcrumbSchema]}
+            />
 
             <PublicLayout
                 locale={locale}

@@ -40,4 +40,6 @@ export type PageProps<
     shopSettings?: ShopSettings | null;
     csrf_token?: string;
     whatsapp_number?: string;
+    /** Base absolue du site, partagée par HandleInertiaRequests — sert aux URL du balisage SEO. */
+    appUrl: string;
 };

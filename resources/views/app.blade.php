@@ -7,10 +7,14 @@
         <meta name="theme-color" content="#FBBF24">
         <meta name="author" content="BATIX PRO">
         <meta name="robots" content="index, follow">
-        {{-- description/keywords are set per-page via Inertia's <Head> (Welcome.tsx, Blog pages, etc.)
-             to stay locale-aware and avoid duplicate/conflicting <meta> tags in the rendered HTML. --}}
+        {{-- Le <title>, la description et le reste des métadonnées sont posés par page via
+             <Head> d'Inertia (SeoHead.tsx, Welcome.tsx) et injectés ici par @inertiaHead,
+             pour rester adaptés à la locale et éviter les balises en double.
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+             Pas de <title inertia> de repli ici : ce placeholder n'est prévu que pour un
+             rendu 100% client. Avec le SSR, @inertiaHead en rend un second, et le
+             placeholder — arrivant en premier dans le <head> — l'emportait, donnant à
+             CHAQUE page le titre "BATIXPRO" aux yeux des crawlers. --}}
 
         <!-- Favicon & PWA -->
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">

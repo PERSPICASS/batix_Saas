@@ -12,6 +12,13 @@ interface SeoHeadProps {
     author?: string;
     /** Real per-locale URLs for this page, e.g. { fr: '/blog/x', en: '/en/blog/x' } */
     hreflangAlternates?: { locale: string; href: string }[];
+    /**
+     * Blocs de données structurées schema.org rendus en <script type="application/ld+json">.
+     * Passer par ici plutôt que d'écrire le <script> dans la page (comme le fait
+     * Welcome.tsx, antérieur à ce composant) : le balisage reste au même endroit que
+     * les autres métadonnées.
+     */
+    jsonLd?: Record<string, unknown>[];
 }
 
 export function SeoHead({
@@ -25,6 +32,7 @@ export function SeoHead({
     publishedAt,
     author,
     hreflangAlternates,
+    jsonLd,
 }: SeoHeadProps) {
     const fullTitle = `${title} | BATIX PRO`;
 
@@ -61,6 +69,13 @@ export function SeoHead({
             <meta name="twitter:title" content={fullTitle} />
             <meta name="twitter:description" content={description} />
             <meta name="twitter:image" content={ogImage} />
+
+            {/* Données structurées */}
+            {jsonLd?.map((block, i) => (
+                <script key={`ld-${i}`} type="application/ld+json">
+                    {JSON.stringify(block)}
+                </script>
+            ))}
         </Head>
     );
 }

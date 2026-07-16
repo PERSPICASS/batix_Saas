@@ -7,14 +7,34 @@ use Illuminate\Http\Response;
 
 class SitemapController extends Controller
 {
-    // Keep in sync with SitePageController::FEATURE_SLUGS
-    private const FEATURE_SLUGS = [
-        'vente-caisse',
-        'stocks-depots',
-        'multi-boutiques',
-        'rapports',
-        'assistant-ia',
-    ];
+    /**
+     * Paire d'URLs fr/en d'une même page, chacune déclarant l'autre en alternate.
+     * Écrire les deux entrées à la main était la raison pour laquelle des pages
+     * ajoutées plus tard (sécurité, fiabilité, sous-traitants, politiques) n'étaient
+     * jamais arrivées jusqu'ici.
+     */
+    private function bilingualPair(string $frPath, string $enPath, string $changefreq, string $priority, string $lastmod): array
+    {
+        $baseUrl = rtrim(config('app.url'), '/');
+        $alternates = ['fr' => $baseUrl . $frPath, 'en' => $baseUrl . $enPath];
+
+        return [
+            [
+                'loc' => $baseUrl . $frPath,
+                'lastmod' => $lastmod,
+                'changefreq' => $changefreq,
+                'priority' => $priority,
+                'alternates' => $alternates,
+            ],
+            [
+                'loc' => $baseUrl . $enPath,
+                'lastmod' => $lastmod,
+                'changefreq' => $changefreq,
+                'priority' => $priority,
+                'alternates' => $alternates,
+            ],
+        ];
+    }
 
     public function index(): Response
     {
@@ -160,6 +180,12 @@ class SitemapController extends Controller
                 'alternates' => ['fr' => $baseUrl . '/contact', 'en' => $baseUrl . '/en/contact'],
             ],
 
+            // Sécurité / Fiabilité / Sous-traitants : pages de confiance, consultées
+            // pendant l'évaluation d'un achat — elles doivent être indexables.
+            ...$this->bilingualPair('/securite', '/en/security', 'monthly', '0.5', $today),
+            ...$this->bilingualPair('/fiabilite', '/en/reliability', 'monthly', '0.5', $today),
+            ...$this->bilingualPair('/sous-traitants', '/en/subprocessors', 'monthly', '0.4', $today),
+
             // Auth pages (low priority)
             [
                 'loc' => $baseUrl . '/login',
@@ -175,21 +201,24 @@ class SitemapController extends Controller
             ],
         ];
 
-        foreach (self::FEATURE_SLUGS as $slug) {
-            $urls[] = [
-                'loc' => $baseUrl . '/fonctionnalites/' . $slug,
-                'lastmod' => $today,
-                'changefreq' => 'monthly',
-                'priority' => '0.7',
-                'alternates' => ['fr' => $baseUrl . '/fonctionnalites/' . $slug, 'en' => $baseUrl . '/en/features/' . $slug],
-            ];
-            $urls[] = [
-                'loc' => $baseUrl . '/en/features/' . $slug,
-                'lastmod' => $today,
-                'changefreq' => 'monthly',
-                'priority' => '0.7',
-                'alternates' => ['fr' => $baseUrl . '/fonctionnalites/' . $slug, 'en' => $baseUrl . '/en/features/' . $slug],
-            ];
+        foreach (SitePageController::FEATURE_SLUGS as $slug) {
+            $urls = array_merge($urls, $this->bilingualPair(
+                '/fonctionnalites/' . $slug,
+                '/en/features/' . $slug,
+                'monthly',
+                '0.7',
+                $today,
+            ));
+        }
+
+        foreach (SitePageController::POLICY_TYPES as $type) {
+            $urls = array_merge($urls, $this->bilingualPair(
+                '/politiques/' . $type,
+                '/en/policies/' . $type,
+                'yearly',
+                '0.3',
+                $today,
+            ));
         }
 
         $posts = Post::published()
@@ -198,20 +227,13 @@ class SitemapController extends Controller
 
         foreach ($posts as $post) {
             $lastmod = ($post->updated_at ?? $post->published_at)->format('Y-m-d');
-            $urls[] = [
-                'loc' => $baseUrl . '/blog/' . $post->slug,
-                'lastmod' => $lastmod,
-                'changefreq' => 'monthly',
-                'priority' => '0.6',
-                'alternates' => ['fr' => $baseUrl . '/blog/' . $post->slug, 'en' => $baseUrl . '/en/blog/' . $post->slug],
-            ];
-            $urls[] = [
-                'loc' => $baseUrl . '/en/blog/' . $post->slug,
-                'lastmod' => $lastmod,
-                'changefreq' => 'monthly',
-                'priority' => '0.6',
-                'alternates' => ['fr' => $baseUrl . '/blog/' . $post->slug, 'en' => $baseUrl . '/en/blog/' . $post->slug],
-            ];
+            $urls = array_merge($urls, $this->bilingualPair(
+                '/blog/' . $post->slug,
+                '/en/blog/' . $post->slug,
+                'monthly',
+                '0.6',
+                $lastmod,
+            ));
         }
 
         $content = view('sitemap', ['urls' => $urls])->render();

@@ -34,6 +34,46 @@ export default function PricingIndex({ auth, subscriptionPlans, locale, localeLi
         ? 'Comparez les plans BATIX PRO : Starter, Growth, Pro et Entreprise. Facturation mensuelle ou annuelle (2 mois offerts), en EUR et FCFA.'
         : 'Compare BATIX PRO plans: Starter, Growth, Pro and Entreprise. Monthly or yearly billing (2 months free), in EUR and FCFA.';
 
+    // Offres déclarées à Google. Le XAF est la devise réellement stockée (cf. utils/currency.ts) :
+    // les autres montants affichés en sont convertis, donc lui seul peut être annoncé sans
+    // dériver un chiffre. Rien n'est publié quand aucun plan payant n'est actif — les plans
+    // de repli sont du contenu marketing statique, pas des offres réelles (cf. buildPlanViews),
+    // et les plans sur devis n'ont volontairement pas de prix.
+    // Number() est indispensable : `price` arrive de la colonne décimale Postgres sous
+    // forme de chaîne ("45000.00"), malgré le `number` annoncé par le type. Le reste de
+    // l'app ne le voit pas — JS convertit tout seul dans les divisions de currency.ts —
+    // mais une comparaison de type, elle, rejetterait tout en silence.
+    // Les plans à 0 (offre sur devis) sont écartés : annoncer un prix nul serait faux.
+    const offers = hasDynamicPlans
+        ? plans
+              .map((plan) => ({ plan, price: Number(plan.price_xaf) }))
+              .filter(({ price }) => Number.isFinite(price) && price > 0)
+              .map(({ plan, price }) => ({
+                  '@type': 'Offer',
+                  name: plan.name,
+                  price,
+                  priceCurrency: 'XAF',
+                  url: localeLinks[locale],
+                  availability: 'https://schema.org/InStock',
+              }))
+        : [];
+
+    const jsonLd = offers.length
+        ? [
+              {
+                  '@context': 'https://schema.org',
+                  '@type': 'SoftwareApplication',
+                  name: 'BATIX PRO',
+                  applicationCategory: 'BusinessApplication',
+                  operatingSystem: 'Web',
+                  description,
+                  url: localeLinks[locale],
+                  inLanguage: isFr ? 'fr-FR' : 'en-US',
+                  offers,
+              },
+          ]
+        : undefined;
+
     return (
         <>
             <SeoHead
@@ -46,6 +86,7 @@ export default function PricingIndex({ auth, subscriptionPlans, locale, localeLi
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
                 ]}
+                jsonLd={jsonLd}
             />
 
             <PublicLayout locale={locale} localeLinks={localeLinks} isAuthenticated={!!auth.user} getDashboardUrl={getDashboardUrl}>

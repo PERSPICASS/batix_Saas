@@ -26,6 +26,8 @@ export interface PageProps {
         user: any;
         code_user: string | null;
     };
+    /** Partagé par HandleInertiaRequests à chaque réponse, comme les champs ci-dessus. */
+    appUrl: string;
     [key: string]: any;
 }
 

@@ -17,7 +17,7 @@ interface Props extends PageProps {
     localeLinks: Record<Locale, string>;
 }
 
-export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) {
+export default function FeatureShow({ auth, appUrl, slug, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const isFr = locale === 'fr';
     const page = getFeaturePage(slug);
@@ -25,10 +25,24 @@ export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) 
 
     if (!page) return null;
 
-    console.log('page', isFr);
-
     const otherPages = featurePages.filter((p) => p.slug !== slug);
     const seoTitle = `${page.title[locale]} — BATIX PRO`;
+
+    // Fil d'Ariane : Google l'affiche à la place de l'URL nue sous le titre.
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'BATIX PRO', item: appUrl },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: isFr ? 'Fonctionnalités' : 'Features',
+                item: isFr ? `${appUrl}/fonctionnalites` : `${appUrl}/en/features`,
+            },
+            { '@type': 'ListItem', position: 3, name: page.title[locale], item: localeLinks[locale] },
+        ],
+    };
 
     return (
         <>
@@ -42,6 +56,7 @@ export default function FeatureShow({ auth, slug, locale, localeLinks }: Props) 
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
                 ]}
+                jsonLd={[breadcrumbSchema]}
             />
 
             <PublicLayout locale={locale} localeLinks={localeLinks} isAuthenticated={!!auth.user} getDashboardUrl={getDashboardUrl}>

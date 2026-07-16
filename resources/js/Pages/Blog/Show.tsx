@@ -18,6 +18,7 @@ interface Post {
     author_name: string;
     category: string | null;
     published_at: string | null;
+    updated_at: string | null;
 }
 
 interface Props extends PageProps {
@@ -26,7 +27,7 @@ interface Props extends PageProps {
     localeLinks: Record<Locale, string>;
 }
 
-export default function BlogShow({ auth, post, locale, localeLinks }: Props) {
+export default function BlogShow({ auth, post, appUrl, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
 
     const postTitle = (locale === 'en' && post.title_en) ? post.title_en : post.title_fr;
@@ -34,13 +35,43 @@ export default function BlogShow({ auth, post, locale, localeLinks }: Props) {
 
     const postExcerpt = (locale === 'en' && post.excerpt_en) ? post.excerpt_en : (post.excerpt_fr ?? postTitle);
     const canonicalUrl = localeLinks[locale];
+    const coverImageUrl = post.cover_image ? `${appUrl}/storage/${post.cover_image}` : undefined;
+
+    // BlogPosting : c'est ce qui permet à Google d'afficher l'auteur, la date et
+    // l'image d'un article dans les résultats. L'éditeur pointe vers l'Organization
+    // déclarée une seule fois sur l'accueil, au lieu d'en redéclarer une copie.
+    const articleSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: postTitle,
+        description: postExcerpt,
+        ...(coverImageUrl ? { image: coverImageUrl } : {}),
+        ...(post.published_at ? { datePublished: post.published_at } : {}),
+        dateModified: post.updated_at ?? post.published_at ?? undefined,
+        author: { '@type': 'Person', name: post.author_name },
+        publisher: { '@id': `${appUrl}/#organization` },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
+        inLanguage: locale === 'fr' ? 'fr-FR' : 'en-US',
+        ...(post.category ? { articleSection: post.category } : {}),
+    };
+
+    // Fil d'Ariane : Google le rend à la place de l'URL nue sous le titre.
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'BATIX PRO', item: appUrl },
+            { '@type': 'ListItem', position: 2, name: 'Blog', item: locale === 'fr' ? `${appUrl}/blog` : `${appUrl}/en/blog` },
+            { '@type': 'ListItem', position: 3, name: postTitle, item: canonicalUrl },
+        ],
+    };
 
     return (
         <>
             <SeoHead
                 title={postTitle}
                 description={postExcerpt}
-                ogImage={post.cover_image ? `https://batixpro.com/storage/${post.cover_image}` : undefined}
+                ogImage={coverImageUrl}
                 ogLocale={locale === 'fr' ? 'fr_FR' : 'en_US'}
                 canonical={canonicalUrl}
                 ogType="article"
@@ -51,6 +82,7 @@ export default function BlogShow({ auth, post, locale, localeLinks }: Props) {
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
                 ]}
+                jsonLd={[articleSchema, breadcrumbSchema]}
             />
 
             <PublicLayout

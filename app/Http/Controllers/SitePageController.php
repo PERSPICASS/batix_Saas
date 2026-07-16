@@ -13,7 +13,11 @@ use Inertia\Response;
  */
 class SitePageController extends Controller
 {
-    private const FEATURE_SLUGS = [
+    /**
+     * Publiques : SitemapController s'en sert pour lister ces pages, afin que le
+     * sitemap ne puisse pas diverger des slugs réellement servis ici.
+     */
+    public const FEATURE_SLUGS = [
         'vente-caisse',
         'stocks-depots',
         'multi-boutiques',
@@ -21,7 +25,7 @@ class SitePageController extends Controller
         'assistant-ia',
     ];
 
-    private const POLICY_TYPES = ['terms', 'privacy', 'refund'];
+    public const POLICY_TYPES = ['terms', 'privacy', 'refund'];
 
     public function features(): Response
     {
