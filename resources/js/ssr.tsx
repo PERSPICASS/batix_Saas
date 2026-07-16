@@ -1,12 +1,9 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { renderToString } from 'react-dom/server';
-import _createServer from '@inertiajs/server';
+import createServer from '@inertiajs/react/server';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { route } from 'ziggy-js';
 import { LocaleProvider } from '@/contexts/LocaleContext';
-
-// CJS/ESM interop : module.exports = { default: fn }
-const createServer = (_createServer as any).default ?? _createServer;
 
 createServer((page: any) =>
     createInertiaApp({
