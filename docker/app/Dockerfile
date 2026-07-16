@@ -60,10 +60,15 @@ FROM php:8.4-fpm-alpine AS production
 
 WORKDIR /var/www/html
 
+# nodejs : exécute le bundle SSR d'Inertia (bootstrap/ssr/ssr.js, produit par `npm run
+# build` dans l'étage base et recopié plus bas avec node_modules, dont le bundle dépend
+# encore à l'exécution pour react-dom/server). Sans ce binaire, le service ssr ne peut
+# pas démarrer et le site sert aux crawlers une page vide — voir docs/SSR_DEPLOYMENT.md.
 RUN apk add --no-cache \
     mysql-client \
     postgresql-client \
-    postgresql-dev && \
+    postgresql-dev \
+    nodejs && \
     docker-php-ext-install \
     pdo \
     pdo_mysql \

@@ -2,10 +2,10 @@
 
 ## Pourquoi
 
-Sans le serveur SSR, Inertia sert une coquille vide. Vérifié sur la production le
-2026-07-16 (`curl` en Googlebot sur `https://batixpro.com/`) :
+Sans serveur SSR, Inertia sert une coquille vide. Constaté sur la production le
+2026-07-16 (`curl` en Googlebot sur `https://batixpro.com/`, `/tarifs`, `/blog`) :
 
-| Ce que reçoit un crawler | Sans SSR | Avec SSR |
+| Ce que reçoit un crawler | Sans SSR (état actuel) | Avec SSR |
 | --- | --- | --- |
 | `<title>` | `BATIXPRO` sur **toutes** les pages | le vrai titre de la page |
 | `<meta name="description">` | 0 | 1 |
@@ -15,61 +15,96 @@ Sans le serveur SSR, Inertia sert une coquille vide. Vérifié sur la production
 | Blocs JSON-LD | 0 | 1 à 3 selon la page |
 | Mots visibles | **0** | la page entière |
 
-Le sitemap, lui, est du XML rendu par PHP : il fonctionne quoi qu'il arrive. D'où le
-pire scénario — 45 URLs déclarées à Google, chacune renvoyant une page vide intitulée
+`/sitemap.xml` est du XML rendu par PHP : il fonctionne quoi qu'il arrive. D'où le pire
+scénario — 45 URLs déclarées à Google, chacune renvoyant une page vide intitulée
 `BATIXPRO`.
 
-Google finit par exécuter le JavaScript, mais en seconde passe, avec du retard et sans
-garantie. Surtout, **les robots Open Graph de Facebook, LinkedIn et X n'exécutent aucun
-JavaScript** : sans SSR, aucun partage de lien n'affiche d'aperçu.
+Google exécute le JavaScript, mais en seconde passe, avec du retard. Surtout, **les
+robots Open Graph de Facebook, LinkedIn et X n'en exécutent aucun** : sans SSR, aucun
+lien partagé n'affiche d'aperçu.
 
-## Le bundle n'est pas dans le dépôt
+## Pourquoi ça n'a jamais tourné
 
-`bootstrap/ssr` est ignoré par git (commit `028c833`). Un simple `git pull` ne le
-déploie donc pas : **le build doit tourner sur le serveur**.
+`docker/app/Dockerfile` a deux étages :
+
+- **`base`** installe `nodejs`/`npm` et lance `npm run build`, ce qui produit bien
+  `bootstrap/ssr/ssr.js` ;
+- **`production`** repart d'une image nue, recopie l'application (`COPY --from=base`) —
+  bundle et `node_modules` inclus — mais n'installait **pas Node**, et son `CMD` ne lance
+  qu'un `php-fpm`.
+
+Le bundle SSR était donc présent dans l'image, sans aucun binaire capable de l'exécuter.
+`nodejs` est désormais installé dans l'étage `production`.
+
+À noter : `docker/app/supervisor.conf` et l'étage `base` ne sont pas utilisés en prod.
+
+## Trois choses à savoir avant de toucher au serveur
+
+1. **`config:cache` tourne au *build*** (Dockerfile, avant l'étage production), et faute
+   de `.dockerignore`, `COPY . .` embarque le `.env` du serveur dans l'image. Toute la
+   configuration est donc figée au moment du build : une variable ajoutée au runtime par
+   compose serait **ignorée**. `INERTIA_SSR_URL` doit être dans `.env` **avant** de
+   construire.
+2. **Le bundle a besoin de `node_modules` à l'exécution** — il importe `react-dom/server`,
+   `@inertiajs/core` et consorts. Ne pas élaguer `node_modules` de l'image.
+3. **Quand le SSR tombe, le site continue de fonctionner.** Aucune erreur, aucune alerte :
+   seul le SEO s'éteint, en silence. D'où le `restart` et le healthcheck ci-dessous.
+
+## Mise en place
+
+### 1. `.env` sur le serveur — *avant* le build
+
+```dotenv
+INERTIA_SSR_ENABLED=true
+INERTIA_SSR_URL=http://ssr:13714
+```
+
+`ssr` est le nom du service compose : c'est le DNS interne de Docker qui le résout depuis
+le conteneur `app`. Le défaut (`127.0.0.1:13714`) ne fonctionnerait pas — il désignerait
+le conteneur `app` lui-même.
+
+### 2. Service `ssr` dans le `docker-compose.yml` du serveur
+
+Il réutilise **la même image** que `app` : le bundle et `node_modules` y sont déjà.
+
+```yaml
+  ssr:
+    # Reprendre à l'identique l'image / build du service `app`
+    image: <même image que app>
+    command: node bootstrap/ssr/ssr.js
+    restart: unless-stopped
+    environment:
+      # Fait charger à React son build de production (le bundle prend sinon
+      # react-dom-server-legacy.node.development.js, nettement plus lent).
+      NODE_ENV: production
+    expose:
+      - "13714"          # interne au réseau docker : ne jamais publier ce port
+    networks:
+      - <même réseau que app>
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:13714/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+```
+
+`expose` et non `ports` : le SSR ne doit être joignable que depuis le réseau interne.
+
+### 3. Construire et démarrer
 
 ```bash
-npm ci
-npm run build          # tsc + vite build + vite build --ssr -> bootstrap/ssr/ssr.js
+cd /opt/batix/apps/dev/batix_Saas
+docker compose build app ssr
+docker compose up -d app ssr
 ```
-
-Sans `bootstrap/ssr/ssr.js`, Inertia retombe silencieusement en rendu client : le site
-fonctionne, mais le SEO disparaît. C'est exactement l'état constaté en production.
-
-## Faire tourner le serveur SSR
-
-`php artisan inertia:start-ssr` écoute sur le port 13714 (cf. `INERTIA_SSR_URL`). Il doit
-être supervisé, sinon un crash rebascule tout le site en coquille vide sans alerte.
-
-`/etc/supervisor/conf.d/batixpro-ssr.conf` :
-
-```ini
-[program:batixpro-ssr]
-process_name=%(program_name)s
-command=php /var/www/batixpro/artisan inertia:start-ssr
-autostart=true
-autorestart=true
-user=www-data
-redirect_stderr=true
-stdout_logfile=/var/log/batixpro-ssr.log
-stopwaitsecs=10
-```
-
-```bash
-sudo supervisorctl reread && sudo supervisorctl update
-sudo supervisorctl start batixpro-ssr
-```
-
-`ext-pcntl` est recommandé pour que la commande gère proprement les signaux d'arrêt.
 
 ## À chaque déploiement
 
-Le bundle SSR est chargé en mémoire au démarrage : **le redémarrer après chaque build**,
-sinon il continue de servir l'ancienne version du front.
+Le bundle est chargé en mémoire au démarrage : **redémarrer `ssr` après chaque build**,
+sinon il continue de servir l'ancien front.
 
 ```bash
-npm ci && npm run build
-php artisan inertia:stop-ssr        # ou: sudo supervisorctl restart batixpro-ssr
+docker compose build app ssr && docker compose up -d app ssr
 ```
 
 ## Vérifier
@@ -77,12 +112,19 @@ php artisan inertia:stop-ssr        # ou: sudo supervisorctl restart batixpro-ss
 Le seul test qui compte est le HTML brut, sans exécution de JavaScript :
 
 ```bash
-curl -s https://batixpro.com/ | grep -c 'application/ld+json'   # attendu : 3
-curl -s https://batixpro.com/ | grep -o '<title[^>]*>[^<]*</title>'
+curl -s https://batixpro.com/ | grep -o '<title[^>]*>[^<]*</title>'   # attendu : le vrai titre
+curl -s https://batixpro.com/ | grep -c 'application/ld+json'         # attendu : 3
 ```
 
-Un `<title>BATIXPRO</title>` ou `0` bloc JSON-LD signifie que le SSR ne tourne pas.
+Un `<title>BATIXPRO</title>`, ou `0` bloc JSON-LD, signifie que le SSR ne tourne pas.
 
-À surveiller en continu : `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:13714/health`
-doit renvoyer `200`. C'est le signal le plus direct — le site reste debout quand le SSR
-tombe, seul le SEO s'éteint, donc rien d'autre ne vous préviendra.
+Depuis le serveur :
+
+```bash
+docker compose ps ssr                    # doit être "healthy"
+docker compose logs --tail=20 ssr        # attendu : "Inertia SSR server started."
+docker compose exec app php -r "echo config('inertia.ssr.url');"   # doit afficher http://ssr:13714
+```
+
+Si cette dernière commande affiche encore `127.0.0.1:13714`, c'est que `.env` a été modifié
+**après** le build : reconstruire.
