@@ -6,10 +6,48 @@ use App\Models\User;
 use App\Models\UserPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class PermissionController extends Controller
 {
+    /**
+     * Les seuls utilisateurs dont les permissions sont gérables ici : `super_admin` et
+     * `admin_platforme` court-circuitent `hasPermission()` (ils ont tout par défaut),
+     * leurs lignes de permission n'auraient donc aucun effet.
+     */
+    private const MANAGEABLE_ROLES_EXCLUDED = ['admin_platforme', 'super_admin'];
+
+    /**
+     * Le rôle ne borne PAS le compte : `super_admin` est le rôle de TOUT propriétaire de
+     * compte (attribué à l'inscription), pas un rôle plateforme. La boutique de la cible
+     * doit donc toujours être confrontée aux boutiques accessibles de l'appelant, sinon
+     * un propriétaire peut agir sur les utilisateurs d'un autre compte.
+     *
+     * Interdit aussi de modifier ses propres permissions : un `manager` ne court-circuite
+     * pas `hasPermission()` et pourrait sinon s'accorder tous les droits lui-même.
+     */
+    private function authorizeManaging(User $target): void
+    {
+        $authUser = Auth::user();
+
+        if (!in_array($authUser->role, ['super_admin', 'manager'])) {
+            abort(403, 'Seul un administrateur peut gérer les permissions.');
+        }
+
+        if ($target->id === $authUser->id) {
+            abort(403, 'Vous ne pouvez pas modifier vos propres permissions.');
+        }
+
+        if (in_array($target->role, self::MANAGEABLE_ROLES_EXCLUDED, true)) {
+            abort(403, 'Les permissions de cet utilisateur ne sont pas gérables.');
+        }
+
+        if (!$authUser->accessibleShopsQuery()->where('id', $target->shop_id)->exists()) {
+            abort(403, 'Vous ne pouvez gérer que les utilisateurs de votre compte.');
+        }
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -24,14 +62,13 @@ class PermissionController extends Controller
         if ($userId) {
             $targetUser = User::findOrFail($userId);
 
-            if ($user->role === 'manager' && $targetUser->shop_id !== $user->shop_id) {
-                abort(403, 'Vous ne pouvez gérer que les utilisateurs de votre boutique.');
-            }
+            $this->authorizeManaging($targetUser);
         }
 
-        $users = $user->role === 'super_admin'
-            ? User::where('role', '!=', 'admin_platforme')->get()
-            : User::where('shop_id', $user->shop_id)->where('role', '!=', 'super_admin')->get();
+        $users = User::whereIn('shop_id', $user->accessibleShopsQuery()->select('id'))
+            ->whereNotIn('role', self::MANAGEABLE_ROLES_EXCLUDED)
+            ->where('id', '!=', $user->id)
+            ->get();
 
         $permissions = $targetUser
             ? $targetUser->permissions()->get()->mapWithKeys(fn($p) => [$p->module => $p->toArray()])
@@ -45,21 +82,15 @@ class PermissionController extends Controller
         ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, string $code_user, User $user)
     {
-        $authUser = Auth::user();
-
-        if (!in_array($authUser->role, ['super_admin', 'manager'])) {
-            abort(403);
-        }
-
-        if ($authUser->role === 'manager' && $user->shop_id !== $authUser->shop_id) {
-            abort(403);
-        }
+        $this->authorizeManaging($user);
 
         $validated = $request->validate([
             'permissions' => 'required|array',
-            'permissions.*.module' => 'required|string',
+            // Borne les modules à la liste canonique : les modules non délégables
+            // (facturation, API, IA) ne doivent jamais recevoir de ligne de permission.
+            'permissions.*.module' => ['required', 'string', Rule::in(array_keys(UserPermission::MODULES))],
             'permissions.*.can_view' => 'boolean',
             'permissions.*.can_create' => 'boolean',
             'permissions.*.can_edit' => 'boolean',
@@ -81,17 +112,9 @@ class PermissionController extends Controller
         return back()->with('success', 'Permissions mises à jour avec succès.');
     }
 
-    public function resetToDefault(User $user)
+    public function resetToDefault(string $code_user, User $user)
     {
-        $authUser = Auth::user();
-
-        if (!in_array($authUser->role, ['super_admin', 'manager'])) {
-            abort(403);
-        }
-
-        if ($authUser->role === 'manager' && $user->shop_id !== $authUser->shop_id) {
-            abort(403);
-        }
+        $this->authorizeManaging($user);
 
         foreach (UserPermission::defaultsForRole($user->role) as $module => $perms) {
             UserPermission::updateOrCreate(
