@@ -12,6 +12,7 @@ use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -74,10 +75,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'shop_id' => [
-                'nullable',
-                Rule::exists('shops', 'id')->whereIn('id', $currentUser->accessibleShopsQuery()->pluck('id')),
-            ],
+            'shop_id' => self::shopIdRules($currentUser, $request->input('role')),
             'role' => ['required', Rule::in(self::assignableRoles($currentUser))],
             'is_active' => 'boolean',
             'permissions' => 'array',
@@ -87,6 +85,9 @@ class UserController extends Controller
             'permissions.*.can_edit' => 'boolean',
             'permissions.*.can_delete' => 'boolean',
         ]);
+
+        $validated['shop_id'] = self::resolveShopId($currentUser, $validated);
+        self::assertNotOrphan($validated['role'], $validated['shop_id']);
 
         $validated['password'] = Hash::make($validated['password']);
         $permissions = $validated['permissions'] ?? [];
@@ -151,10 +152,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
-            'shop_id' => [
-                'nullable',
-                Rule::exists('shops', 'id')->whereIn('id', $currentUser->accessibleShopsQuery()->pluck('id')),
-            ],
+            'shop_id' => self::shopIdRules($currentUser, $request->input('role')),
             'role' => ['required', Rule::in(self::assignableRoles($currentUser))],
             'is_active' => 'boolean',
             'permissions' => 'array',
@@ -169,6 +167,9 @@ class UserController extends Controller
         if ($user->id === $currentUser->id) {
             $validated['role'] = $user->role;
         }
+
+        $validated['shop_id'] = self::resolveShopId($currentUser, $validated);
+        self::assertNotOrphan($validated['role'], $validated['shop_id']);
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -226,6 +227,65 @@ class UserController extends Controller
      * Roles that $currentUser is allowed to assign to another account.
      * Only account owners (or platform admins) can grant super_admin/admin.
      */
+    /**
+     * Règles de validation de `shop_id` à la création/modification d'un utilisateur.
+     *
+     * La boutique est le SEUL lien entre un employé et son compte (`shop.user_id` →
+     * propriétaire) : un employé sans boutique n'appartient à aucun compte. Il échappe
+     * donc au quota (`canCreateUser()` compte via `whereHas('shop')`), n'apparaît dans
+     * aucune liste, et ne peut plus être ni modifié ni supprimé — les gardes exigent
+     * que sa boutique fasse partie de celles de l'appelant. Un tel compte est un
+     * fantôme irrécupérable, d'où l'obligation.
+     *
+     * Seul `super_admin` fait exception : il POSSÈDE ses boutiques (`shops()`) au lieu
+     * d'y appartenir, et se résout lui-même via `ownerId()`.
+     */
+    private static function shopIdRules(User $currentUser, ?string $role): array
+    {
+        // Un appelant non-propriétaire ne choisit pas la boutique — l'UI désactive le
+        // champ ("Seul un super admin peut assigner une boutique") et resolveShopId()
+        // rattache l'utilisateur à la sienne. La valeur reçue est donc ignorée.
+        if ($currentUser->role !== 'super_admin') {
+            return ['nullable'];
+        }
+
+        return [
+            Rule::requiredIf(fn () => $role !== null && $role !== 'super_admin'),
+            'nullable',
+            Rule::exists('shops', 'id')->whereIn('id', $currentUser->accessibleShopsQuery()->pluck('id')),
+        ];
+    }
+
+    /**
+     * Boutique effective d'un utilisateur créé/modifié. Le propriétaire choisit
+     * explicitement ; pour tout autre appelant (un manager, dont le champ est désactivé
+     * côté UI) l'utilisateur rejoint la boutique de l'appelant — sans quoi il serait
+     * créé sans boutique, donc orphelin (cf. shopIdRules).
+     */
+    private static function resolveShopId(User $currentUser, array $validated): ?int
+    {
+        if ($currentUser->role !== 'super_admin') {
+            return $currentUser->shop_id;
+        }
+
+        return $validated['shop_id'] ?? null;
+    }
+
+    /**
+     * Dernier filet : la boutique est le seul lien d'un employé vers son compte, donc
+     * l'écrire sans boutique le rendrait invisible, hors quota et non supprimable.
+     * Attrape les chemins que shopIdRules() ne couvre pas — typiquement un appelant
+     * lui-même sans boutique, dont resolveShopId() propagerait le null.
+     */
+    private static function assertNotOrphan(string $role, ?int $shopId): void
+    {
+        if ($role !== 'super_admin' && $shopId === null) {
+            throw ValidationException::withMessages([
+                'shop_id' => "Un utilisateur de ce rôle doit être rattaché à une boutique.",
+            ]);
+        }
+    }
+
     private static function assignableRoles(User $currentUser): array
     {
         $all = ['super_admin', 'admin', 'manager', 'cashier', 'staff'];

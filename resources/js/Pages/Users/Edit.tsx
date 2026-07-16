@@ -122,7 +122,11 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                     className={`mt-1 block w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 ${
                                         isSuperAdmin ? 'border-white/15 bg-slate-900/70 text-slate-200 focus:border-amber-300 focus:ring-amber-300' : 'border-slate-600 bg-slate-800/50 text-slate-500 cursor-not-allowed'
                                     }`}>
-                                    <option value="">{t.common.form.noShop}</option>
+                                    {/* Une boutique est obligatoire sauf pour un super admin, qui
+                                        possède ses boutiques au lieu d'y appartenir. */}
+                                    <option value="">
+                                        {data.role === 'super_admin' ? t.common.form.noShop : t.common.form.selectShop}
+                                    </option>
                                     {shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
                                 </select>
                                 {!isSuperAdmin && <p className="mt-1 text-xs text-slate-500">{t.common.form.shopAssignHint}</p>}
