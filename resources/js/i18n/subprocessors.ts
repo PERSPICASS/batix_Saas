@@ -37,6 +37,11 @@ export const subprocessors: Record<'fr' | 'en', Subprocessor[]> = {
             data: 'Adresse email et contenu des notifications : confirmation de compte, factures, réinitialisation de mot de passe.',
         },
         {
+            name: 'Sentry (Functional Software, Inc.)',
+            role: 'Surveillance des erreurs et des performances',
+            data: "Rapports d'erreur techniques : message et trace d'exécution, adresse de la page, requêtes SQL (sans leurs paramètres) et un identifiant de compte. Ni votre nom ni votre email n'y sont joints.",
+        },
+        {
             name: 'Hostinger',
             role: "Hébergement de l'infrastructure (serveur applicatif et base de données)",
             data: 'Toutes les données de votre compte et de votre boutique, stockées sur les serveurs de production.',
@@ -74,9 +79,14 @@ export const subprocessors: Record<'fr' | 'en', Subprocessor[]> = {
             data: 'Email address and notification content: account confirmation, invoices, password reset.',
         },
         {
+            name: 'Sentry (Functional Software, Inc.)',
+            role: 'Error and performance monitoring',
+            data: 'Technical error reports: exception message and stack trace, page address, SQL queries (without their parameters) and an account identifier. Neither your name nor your email is attached.',
+        },
+        {
             name: 'Hostinger',
             role: 'Infrastructure hosting (application server and database)',
-            data: "All your account and shop data, stored on production servers.",
+            data: 'All your account and shop data, stored on production servers.',
         },
     ],
 };
