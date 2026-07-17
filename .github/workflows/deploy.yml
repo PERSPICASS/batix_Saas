@@ -51,5 +51,29 @@ jobs:
             echo "=== 8. Docker cleanup ==="
             docker system prune -af
             docker builder prune -af
-            
+
             echo "=== Deploy SUCCESS ==="
+
+      # Un SSR à l'arrêt ne casse rien de visible : le site répond normalement, seul le
+      # SEO s'éteint. C'est resté invisible pendant des jours. D'où cette vérification
+      # sur le HTML réellement servi — la seule chose qu'un crawler regarde.
+      - name: Verify SSR is serving the SEO markup
+        run: |
+          sleep 15
+          html=$(curl -sL --max-time 30 https://batixpro.com/)
+          title=$(printf '%s' "$html" | grep -o '<title[^>]*>[^<]*</title>' | head -1)
+          ld=$(printf '%s' "$html" | grep -c 'application/ld+json' || true)
+          echo "title           : ${title:-<aucun>}"
+          echo "json-ld blocks  : $ld"
+
+          if printf '%s' "$title" | grep -q '>BATIXPRO<'; then
+            echo "::error::Le SSR ne rend pas : toutes les pages renvoient le titre placeholder. Les crawlers reçoivent une coquille vide. Voir docs/SSR_DEPLOYMENT.md"
+            exit 1
+          fi
+
+          if [ "$ld" -lt 1 ]; then
+            echo "::error::Aucun JSON-LD dans le HTML servi — le service ssr est absent ou arrêté. Voir docs/SSR_DEPLOYMENT.md"
+            exit 1
+          fi
+
+          echo "SSR OK — le HTML servi contient le vrai titre et $ld bloc(s) JSON-LD."

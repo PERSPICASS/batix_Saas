@@ -64,46 +64,56 @@ en mémoire au démarrage.
 > n'existent que sur le serveur. Les modifications ci-dessous se font donc directement
 > là-bas, et survivent au `git reset --hard` du déploiement (fichiers non suivis).
 
-### Service `ssr` — à ajouter aux fichiers compose du serveur
+### Service `ssr` — à ajouter à `docker-compose.prod.yml`
 
-Il réutilise **la même image** que `app` : le bundle et `node_modules` y sont déjà.
+Calqué sur `queue`/`scheduler` : même image, donc bundle et `node_modules` déjà présents.
+Aucun volume — le bundle vit dans l'image, et les volumes montés (`public`, `./storage`,
+`./bootstrap/cache`) ne recouvrent pas `bootstrap/ssr/`.
 
 ```yaml
   ssr:
-    # Reprendre à l'identique le `build:` (ou l'`image:`) du service `app`
     build:
       context: .
       dockerfile: docker/app/Dockerfile
-      target: production
-    command: node bootstrap/ssr/ssr.js
+    container_name: batix_prod_ssr
     restart: unless-stopped
+    working_dir: /var/www/html
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: sh -lc "node bootstrap/ssr/ssr.js"
     environment:
+      - TMPDIR=/tmp
       # Fait charger à React son build de production (le bundle prend sinon
       # react-dom-server-legacy.node.development.js, nettement plus lent).
-      NODE_ENV: production
-    expose:
-      - "13714"          # interne au réseau docker : ne jamais publier ce port
+      - NODE_ENV=production
     networks:
-      - <même réseau que app>
+      - prod_internal
     healthcheck:
+      # `node` et pas `curl` : l'étage production de l'image n'embarque pas curl.
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:13714/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
 ```
 
-`expose` et non `ports` : le SSR ne doit être joignable que depuis le réseau interne.
+Pas de `ports:` — le SSR ne doit rester joignable que depuis `prod_internal`. Docker
+résout `ssr` par le nom du **service** (le `container_name` ne change rien à ça).
 
 Et sur le service **`app`**, pour qu'il sache où joindre le SSR :
 
 ```yaml
   app:
     environment:
-      INERTIA_SSR_ENABLED: "true"
-      INERTIA_SSR_URL: "http://ssr:13714"
+      - TMPDIR=/tmp
+      - INERTIA_SSR_ENABLED=true
+      - INERTIA_SSR_URL=http://ssr:13714
     depends_on:
       - ssr
 ```
+
+`environment:` l'emporte sur `env_file:`, donc inutile de toucher au `.env` du serveur.
 
 ### Déployer
 
