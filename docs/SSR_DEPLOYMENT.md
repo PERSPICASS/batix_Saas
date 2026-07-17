@@ -38,13 +38,15 @@ Le bundle SSR était donc présent dans l'image, sans aucun binaire capable de l
 
 À noter : `docker/app/supervisor.conf` et l'étage `base` ne sont pas utilisés en prod.
 
-## Trois choses à savoir avant de toucher au serveur
+## Trois choses à savoir
 
-1. **`config:cache` tourne au *build*** (Dockerfile, avant l'étage production), et faute
-   de `.dockerignore`, `COPY . .` embarque le `.env` du serveur dans l'image. Toute la
-   configuration est donc figée au moment du build : une variable ajoutée au runtime par
-   compose serait **ignorée**. `INERTIA_SSR_URL` doit être dans `.env` **avant** de
-   construire.
+1. **`INERTIA_SSR_URL` doit désigner le service, pas localhost.** Le défaut
+   (`127.0.0.1:13714`) pointerait le conteneur `app` sur lui-même. Le Dockerfile fait bien
+   un `config:cache` au *build*, mais le déploiement (`.github/workflows/deploy.yml`,
+   étape 6) enchaîne `optimize:clear` puis `optimize` **dans le conteneur démarré** : la
+   config est donc reconstruite au runtime, et une variable passée par compose est prise
+   en compte. Laravel charge le `.env` en mode immutable, donc **les variables d'env du
+   conteneur l'emportent** sur le fichier.
 2. **Le bundle a besoin de `node_modules` à l'exécution** — il importe `react-dom/server`,
    `@inertiajs/core` et consorts. Ne pas élaguer `node_modules` de l'image.
 3. **Quand le SSR tombe, le site continue de fonctionner.** Aucune erreur, aucune alerte :
@@ -52,25 +54,27 @@ Le bundle SSR était donc présent dans l'image, sans aucun binaire capable de l
 
 ## Mise en place
 
-### 1. `.env` sur le serveur — *avant* le build
+Le déploiement est automatique sur push vers `prod` (GitHub Actions → SSH VPS →
+`/opt/batix/apps/prod/batix_Saas`). Il reconstruit et relance **tous** les services
+déclarés : une fois le service `ssr` ajouté aux fichiers compose, chaque déploiement le
+reconstruit et le redémarre tout seul — y compris le rechargement du bundle, qui est lu
+en mémoire au démarrage.
 
-```dotenv
-INERTIA_SSR_ENABLED=true
-INERTIA_SSR_URL=http://ssr:13714
-```
+> ⚠️ `docker-compose.yml` et `docker-compose.prod.yml` **ne sont pas versionnés** : ils
+> n'existent que sur le serveur. Les modifications ci-dessous se font donc directement
+> là-bas, et survivent au `git reset --hard` du déploiement (fichiers non suivis).
 
-`ssr` est le nom du service compose : c'est le DNS interne de Docker qui le résout depuis
-le conteneur `app`. Le défaut (`127.0.0.1:13714`) ne fonctionnerait pas — il désignerait
-le conteneur `app` lui-même.
-
-### 2. Service `ssr` dans le `docker-compose.yml` du serveur
+### Service `ssr` — à ajouter aux fichiers compose du serveur
 
 Il réutilise **la même image** que `app` : le bundle et `node_modules` y sont déjà.
 
 ```yaml
   ssr:
-    # Reprendre à l'identique l'image / build du service `app`
-    image: <même image que app>
+    # Reprendre à l'identique le `build:` (ou l'`image:`) du service `app`
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+      target: production
     command: node bootstrap/ssr/ssr.js
     restart: unless-stopped
     environment:
@@ -90,21 +94,24 @@ Il réutilise **la même image** que `app` : le bundle et `node_modules` y sont 
 
 `expose` et non `ports` : le SSR ne doit être joignable que depuis le réseau interne.
 
-### 3. Construire et démarrer
+Et sur le service **`app`**, pour qu'il sache où joindre le SSR :
 
-```bash
-cd /opt/batix/apps/dev/batix_Saas
-docker compose build app ssr
-docker compose up -d app ssr
+```yaml
+  app:
+    environment:
+      INERTIA_SSR_ENABLED: "true"
+      INERTIA_SSR_URL: "http://ssr:13714"
+    depends_on:
+      - ssr
 ```
 
-## À chaque déploiement
+### Déployer
 
-Le bundle est chargé en mémoire au démarrage : **redémarrer `ssr` après chaque build**,
-sinon il continue de servir l'ancien front.
+Un `git push` sur `prod` suffit : le workflow reconstruit et relance tout. Manuellement :
 
 ```bash
-docker compose build app ssr && docker compose up -d app ssr
+cd /opt/batix/apps/prod/batix_Saas
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build ssr app
 ```
 
 ## Vérifier
@@ -118,13 +125,19 @@ curl -s https://batixpro.com/ | grep -c 'application/ld+json'         # attendu 
 
 Un `<title>BATIXPRO</title>`, ou `0` bloc JSON-LD, signifie que le SSR ne tourne pas.
 
-Depuis le serveur :
+Depuis le serveur (`cd /opt/batix/apps/prod/batix_Saas`, et `C="docker compose -f
+docker-compose.yml -f docker-compose.prod.yml"`) :
 
 ```bash
-docker compose ps ssr                    # doit être "healthy"
-docker compose logs --tail=20 ssr        # attendu : "Inertia SSR server started."
-docker compose exec app php -r "echo config('inertia.ssr.url');"   # doit afficher http://ssr:13714
+$C ps ssr                                   # doit être "healthy"
+$C logs --tail=20 ssr                       # attendu : "Inertia SSR server started."
+$C exec -T app php artisan tinker --execute="echo config('inertia.ssr.url');"
 ```
 
-Si cette dernière commande affiche encore `127.0.0.1:13714`, c'est que `.env` a été modifié
-**après** le build : reconstruire.
+Si la dernière commande affiche encore `127.0.0.1:13714`, la config cachée est périmée :
+relancer `$C exec -T app php artisan optimize:clear && $C exec -T app php artisan optimize`
+(c'est ce que fait l'étape 6 du déploiement).
+
+Le bundle SSR vit dans l'**image**, pas dans le volume `batix_prod_batix_public` que le
+déploiement supprime : rebuild obligatoire pour le mettre à jour, un simple `restart` du
+conteneur rejouerait l'ancien front.
