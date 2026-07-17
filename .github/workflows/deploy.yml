@@ -22,33 +22,51 @@ jobs:
             set -e
 
             cd /opt/batix/apps/prod/batix_Saas
+            C="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
 
             echo "=== 1. Git update ==="
             git fetch origin prod
             git reset --hard origin/prod
 
-            echo "=== 2. Stop containers ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans
+            # Construire AVANT de couper. Le build dure ~3 min, pendant lesquelles les
+            # conteneurs actuels continuent de servir. Le `down` venait avant : le site
+            # était donc éteint pendant tout le build, et un build raté (set -e) le
+            # laissait éteint au lieu de conserver la version précédente en ligne.
+            echo "=== 2. Build (le site tourne toujours) ==="
+            $C build --no-cache
 
-            echo "=== 3. Delete public volume ==="
+            # Seule fenêtre d'indisponibilité : quelques secondes.
+            # Le volume public doit être supprimé pour que Docker le repeuple avec les
+            # assets de la nouvelle image — il ne remplit un volume que s'il est vide.
+            echo "=== 3. Bascule ==="
+            $C down --remove-orphans
             docker volume rm batix_prod_batix_public || true
+            $C up -d --remove-orphans
 
-            echo "=== 4. Rebuild containers ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            echo "=== 4. Laravel migrate ==="
+            $C exec -T app php artisan migrate --force
 
-            echo "=== 5. Laravel migrate ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan migrate --force
+            # `optimize` réécrit bootstrap/cache/config.php, mais php-fpm tourne avec
+            # opcache.validate_timestamps=0 : il ne relit jamais un fichier modifié et
+            # garde l'ancienne config compilée en mémoire. Sans ce restart, la nouvelle
+            # config n'est prise que si AUCUNE requête n'est arrivée entre `up -d` et
+            # `optimize` — soit par pure chance de timing. (Le CLI, lui, a
+            # opcache.enable_cli=0 : `artisan tinker` affiche donc la bonne valeur
+            # pendant que le site en sert une autre.)
+            echo "=== 5. Cache Laravel + rechargement opcache ==="
+            $C exec -T app php artisan optimize:clear
+            $C exec -T app php artisan optimize
+            $C restart app
+            # nginx résout `app:9000` une seule fois au démarrage et garde l'IP en
+            # cache : le relancer après app évite un 502 si l'IP a changé.
+            $C restart nginx
 
-            echo "=== 6. Clear and optimize cache ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan optimize:clear
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app php artisan optimize
+            echo "=== 6. Verify build ==="
+            $C exec -T app ls -la public/build
+            $C exec -T nginx ls -la /var/www/html/public/build
+            $C ps ssr
 
-            echo "=== 7. Verify build ==="
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T app ls -la public/build
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T nginx ls -la /var/www/html/public/build
-
-            echo "=== 8. Docker cleanup ==="
+            echo "=== 7. Docker cleanup ==="
             docker system prune -af
             docker builder prune -af
 

@@ -41,16 +41,40 @@ Le bundle SSR était donc présent dans l'image, sans aucun binaire capable de l
 ## Trois choses à savoir
 
 1. **`INERTIA_SSR_URL` doit désigner le service, pas localhost.** Le défaut
-   (`127.0.0.1:13714`) pointerait le conteneur `app` sur lui-même. Le Dockerfile fait bien
-   un `config:cache` au *build*, mais le déploiement (`.github/workflows/deploy.yml`,
-   étape 6) enchaîne `optimize:clear` puis `optimize` **dans le conteneur démarré** : la
-   config est donc reconstruite au runtime, et une variable passée par compose est prise
-   en compte. Laravel charge le `.env` en mode immutable, donc **les variables d'env du
-   conteneur l'emportent** sur le fichier.
+   (`127.0.0.1:13714`) pointerait le conteneur `app` sur lui-même. Le déploiement
+   reconstruit la config au runtime (`optimize`), et Laravel charge le `.env` en mode
+   immutable : **les variables d'env du conteneur l'emportent** sur le fichier. Donc
+   `INERTIA_SSR_URL` se règle dans compose, pas dans `.env`.
 2. **Le bundle a besoin de `node_modules` à l'exécution** — il importe `react-dom/server`,
    `@inertiajs/core` et consorts. Ne pas élaguer `node_modules` de l'image.
 3. **Quand le SSR tombe, le site continue de fonctionner.** Aucune erreur, aucune alerte :
    seul le SEO s'éteint, en silence. D'où le `restart` et le healthcheck ci-dessous.
+
+## Les deux pièges qui font croire à un bug du code
+
+Ils ont coûté une heure lors de la mise en place. À vérifier **avant** de suspecter le code.
+
+**L'opcache ment.** `docker/app/php.ini` pose `opcache.validate_timestamps = 0` et
+`opcache.enable_cli = 0`. Conséquence : `artisan optimize` réécrit bien
+`bootstrap/cache/config.php`, mais **php-fpm ne relit jamais un fichier modifié** et
+continue de servir l'ancienne config compilée. Pendant ce temps `artisan tinker`, qui
+tourne en CLI **sans** opcache, affiche la nouvelle valeur. Les deux commandes se
+contredisent sans qu'aucune ne mente :
+
+```bash
+$C exec -T app php artisan tinker --execute="echo config('inertia.ssr.url');"  # http://ssr:13714
+# ... et le site sert quand même l'ancienne config
+```
+
+Toute modification de config exige donc `$C restart app`. Le déploiement le fait
+désormais automatiquement après `optimize`.
+
+**nginx garde l'IP d'`app` en cache.** `docker/nginx/default.conf` fait
+`fastcgi_pass app:9000;` sans directive `resolver` : nginx résout `app` une seule fois,
+à son démarrage. Recréer `app` seul (`up -d app`) lui donne une nouvelle IP → **502**
+jusqu'à ce que nginx redémarre. Un déploiement complet n'a pas le problème (`down` puis
+`up` relance tout). Correctif durable, non appliqué : un `resolver 127.0.0.11 valid=10s;`
+avec un `fastcgi_pass` via variable, pour forcer la re-résolution.
 
 ## Mise en place
 
@@ -145,8 +169,9 @@ $C exec -T app php artisan tinker --execute="echo config('inertia.ssr.url');"
 ```
 
 Si la dernière commande affiche encore `127.0.0.1:13714`, la config cachée est périmée :
-relancer `$C exec -T app php artisan optimize:clear && $C exec -T app php artisan optimize`
-(c'est ce que fait l'étape 6 du déploiement).
+`$C exec -T app php artisan optimize:clear && $C exec -T app php artisan optimize && $C restart app`.
+Attention : sans le `restart`, seul le CLI verra la nouvelle valeur (cf. le piège de
+l'opcache plus haut).
 
 Le bundle SSR vit dans l'**image**, pas dans le volume `batix_prod_batix_public` que le
 déploiement supprime : rebuild obligatoire pour le mettre à jour, un simple `restart` du
