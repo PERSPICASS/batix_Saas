@@ -106,45 +106,66 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::cl
     Route::get('/payment/confirmation/{planSlug}', [PaymentController::class, 'confirmation'])->name('payment.confirmation');
 });
 
-// Routes PawaPay (webhook public, autres avec auth)
-Route::post('/pawapay/webhook', [PawaPayController::class, 'webhook'])
-    ->name('pawapay.webhook')
-    ->middleware('throttle:60,1')
-    ->withoutMiddleware(['web']); // stateless webhook
+/*
+|--------------------------------------------------------------------------
+| Prestataires de paiement en attente d'accès
+|--------------------------------------------------------------------------
+|
+| Seul Paddle est actif en production (voir plus bas). PawaPay, Jèko et
+| LemonSqueezy sont intégrés et fonctionnels côté code, mais leurs routes
+| restent commentées tant que nous n'avons pas les identifiants marchands.
+| Leurs contrôleurs, services et modèles sont conservés intacts.
+|
+| Pour réactiver un prestataire :
+|   1. renseigner ses clés dans .env (voir config/services.php) ;
+|   2. décommenter son bloc de routes ci-dessous ;
+|   3. décommenter son bloc dans Pages/Payment/Checkout.tsx (`{false && ...}`) ;
+|   4. décommenter son test dans tests/Feature/Payment/WebhookRoutesTest.php.
+|
+| L'étape 4 n'est pas optionnelle : ce test garde une régression CSRF réelle,
+| et un `assertNotEquals(419)` sur une route absente passe sans rien vérifier.
+|
+*/
 
-Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
-    Route::post('/pawapay/initiate/{plan}', [PawaPayController::class, 'initiate'])->name('pawapay.initiate');
-    Route::get('/pawapay/status/{depositId}', [PawaPayController::class, 'pollStatus'])->name('pawapay.status');
-    Route::post('/pawapay/simulate/{depositId}', [PawaPayController::class, 'simulate'])->name('pawapay.simulate');
-});
+// Routes PawaPay (webhook public, autres avec auth)
+// Route::post('/pawapay/webhook', [PawaPayController::class, 'webhook'])
+//     ->name('pawapay.webhook')
+//     ->middleware('throttle:60,1')
+//     ->withoutMiddleware(['web']); // stateless webhook
+//
+// Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
+//     Route::post('/pawapay/initiate/{plan}', [PawaPayController::class, 'initiate'])->name('pawapay.initiate');
+//     Route::get('/pawapay/status/{depositId}', [PawaPayController::class, 'pollStatus'])->name('pawapay.status');
+//     Route::post('/pawapay/simulate/{depositId}', [PawaPayController::class, 'simulate'])->name('pawapay.simulate');
+// });
 
 // Routes Jèko (webhook public, success/error public redirects, initiate with auth)
-Route::post('/jeko/webhook', [JekoController::class, 'webhook'])
-    ->name('jeko.webhook')
-    ->middleware('throttle:60,1')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook, no CSRF
-
-Route::get('/jeko/success', [JekoController::class, 'success'])->name('jeko.success');
-Route::get('/jeko/error', [JekoController::class, 'error'])->name('jeko.error');
-
-Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
-    Route::post('/jeko/initiate/{plan}', [JekoController::class, 'initiate'])->name('jeko.initiate');
-});
+// Route::post('/jeko/webhook', [JekoController::class, 'webhook'])
+//     ->name('jeko.webhook')
+//     ->middleware('throttle:60,1')
+//     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook, no CSRF
+//
+// Route::get('/jeko/success', [JekoController::class, 'success'])->name('jeko.success');
+// Route::get('/jeko/error', [JekoController::class, 'error'])->name('jeko.error');
+//
+// Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
+//     Route::post('/jeko/initiate/{plan}', [JekoController::class, 'initiate'])->name('jeko.initiate');
+// });
 
 // Routes LemonSqueezy (webhook public, checkout with auth)
-Route::post('/lemonsqueezy/webhook', [LemonSqueezyController::class, 'webhook'])
-    ->name('lemonsqueezy.webhook')
-    ->middleware('throttle:60,1')
-    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook
-
-Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
-    Route::post('/lemonsqueezy/checkout/{plan}', [LemonSqueezyController::class, 'checkout'])->name('lemonsqueezy.checkout');
-});
+// Route::post('/lemonsqueezy/webhook', [LemonSqueezyController::class, 'webhook'])
+//     ->name('lemonsqueezy.webhook')
+//     ->middleware('throttle:60,1')
+//     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook
+//
+// Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
+//     Route::post('/lemonsqueezy/checkout/{plan}', [LemonSqueezyController::class, 'checkout'])->name('lemonsqueezy.checkout');
+// });
 
 // Route admin pour synchroniser les produits LemonSqueezy
-Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->prefix('platform-admin')->group(function () {
-    Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
-});
+// Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->prefix('platform-admin')->group(function () {
+//     Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
+// });
 
 // Routes Paddle (webhook public, checkout with auth)
 Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])

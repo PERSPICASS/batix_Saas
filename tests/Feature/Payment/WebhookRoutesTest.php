@@ -13,24 +13,17 @@ use Tests\TestCase;
  * default is `Illuminate\Foundation\Http\Middleware\ValidateCsrfToken`. The
  * exclusion was therefore a no-op and every real webhook call from these three
  * providers was being rejected with 419 before ever reaching the controller.
+ *
+ * Only Paddle is live today; the Jèko, LemonSqueezy and PawaPay routes are
+ * commented out in routes/web.php until we have their merchant credentials.
+ * Their tests are commented out with them, on purpose: `assertNotEquals(419)`
+ * against a route that no longer exists returns 404 and passes while asserting
+ * nothing, which would leave the regression unguarded on the day we re-enable
+ * the route. Uncomment the test in the same commit as the route.
  */
 class WebhookRoutesTest extends TestCase
 {
     use RefreshDatabase;
-
-    public function test_jeko_webhook_is_not_blocked_by_csrf(): void
-    {
-        $response = $this->postJson('/jeko/webhook', ['event' => 'test']);
-
-        $this->assertNotEquals(419, $response->getStatusCode());
-    }
-
-    public function test_lemonsqueezy_webhook_is_not_blocked_by_csrf(): void
-    {
-        $response = $this->postJson('/lemonsqueezy/webhook', ['meta' => ['event_name' => 'test']]);
-
-        $this->assertNotEquals(419, $response->getStatusCode());
-    }
 
     public function test_paddle_webhook_is_not_blocked_by_csrf(): void
     {
@@ -39,10 +32,24 @@ class WebhookRoutesTest extends TestCase
         $this->assertNotEquals(419, $response->getStatusCode());
     }
 
-    public function test_pawapay_webhook_is_not_blocked_by_csrf(): void
-    {
-        $response = $this->postJson('/pawapay/webhook', ['depositId' => 'test']);
+    // public function test_jeko_webhook_is_not_blocked_by_csrf(): void
+    // {
+    //     $response = $this->postJson('/jeko/webhook', ['event' => 'test']);
+    //
+    //     $this->assertNotEquals(419, $response->getStatusCode());
+    // }
 
-        $this->assertNotEquals(419, $response->getStatusCode());
-    }
+    // public function test_lemonsqueezy_webhook_is_not_blocked_by_csrf(): void
+    // {
+    //     $response = $this->postJson('/lemonsqueezy/webhook', ['meta' => ['event_name' => 'test']]);
+    //
+    //     $this->assertNotEquals(419, $response->getStatusCode());
+    // }
+
+    // public function test_pawapay_webhook_is_not_blocked_by_csrf(): void
+    // {
+    //     $response = $this->postJson('/pawapay/webhook', ['depositId' => 'test']);
+    //
+    //     $this->assertNotEquals(419, $response->getStatusCode());
+    // }
 }
