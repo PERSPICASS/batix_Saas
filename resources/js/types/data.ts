@@ -117,7 +117,7 @@ export const copy = {
             }, */
         ],
         stats: [
-            { label: 'Première vente', value: '< 10 min' },
+            { label: 'Première vente', value: '< 5 min' },
             { label: 'Support WhatsApp', value: '< 2h' },
             { label: 'Essai gratuit', value: '14 j' },
         ],
@@ -291,7 +291,7 @@ export const copy = {
             },
         ], */
         stats: [
-            { label: 'First sale', value: '< 10 min' },
+            { label: 'First sale', value: '< 5 min' },
             { label: 'WhatsApp support', value: '< 2h' },
             { label: 'Free trial', value: '14 days' },
         ],
