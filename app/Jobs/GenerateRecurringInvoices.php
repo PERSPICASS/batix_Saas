@@ -32,8 +32,15 @@ class GenerateRecurringInvoices implements ShouldQueue
                 $invoice = $recurringInvoice->generateNextInvoice();
 
                 Log::info("Generated invoice {$invoice->invoice_number} from recurring cycle {$recurringInvoice->invoice_prefix}");
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                // \Throwable and not \Exception: calculateNextInvoiceDate() uses a match
+                // with no default arm, so an unexpected `frequency` raises
+                // \UnhandledMatchError — an \Error, which \Exception does not catch. That
+                // would abort every remaining cycle in the batch, unattended, at 2am.
+                // Each cycle has its own transaction inside generateNextInvoice(), so
+                // skipping one leaves no partial write behind.
                 Log::error("Failed to generate invoice for recurring cycle {$recurringInvoice->invoice_prefix}: {$e->getMessage()}");
+                report($e);
             }
         }
     }
