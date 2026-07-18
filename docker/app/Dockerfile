@@ -41,13 +41,21 @@ RUN git config --global --add safe.directory /var/www/html
 COPY . .
 
 # Install dependencies & build
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
-    && npm install \
-    && npm run build \
-    && mkdir -p storage/framework/cache \
+#
+# Le mkdir vient AVANT composer install, et pas après comme auparavant :
+# `composer install` déclenche `package:discover`, qui démarre Laravel. Sans
+# storage/logs ni storage/framework/*, le framework ne peut pas ouvrir son fichier
+# de log et l'étape échoue sur un « error code 1 » sans autre explication. Cela
+# fonctionnait tant que ces répertoires arrivaient via `COPY . .` — donc par
+# accident, en dépendant de fichiers gitignorés présents sur la machine de build.
+RUN mkdir -p storage/framework/cache \
         storage/framework/sessions \
         storage/framework/views \
         storage/logs \
+        bootstrap/cache \
+    && composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
+    && npm install \
+    && npm run build \
     && chmod -R 775 storage bootstrap/cache
 
 # Optimize Laravel

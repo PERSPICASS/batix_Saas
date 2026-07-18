@@ -1,6 +1,12 @@
 # Le Dockerfile fait `COPY . .`. Sans ce fichier, TOUT le répertoire de travail du
 # serveur part dans l'image — y compris des fichiers gitignorés qui n'ont rien à y
 # faire et qui ont déjà cassé la production.
+#
+# ⚠️ Rester conservateur ici. `composer install` exécute `package:discover`, qui
+# démarre Laravel, et le `mkdir -p storage/framework/...` du Dockerfile n'intervient
+# QU'APRÈS. Exclure storage/logs ou storage/framework/* fait donc échouer le build
+# avec un simple « error code 1 » : Laravel ne peut pas ouvrir son fichier de log.
+# Ne pas les ajouter sans déplacer le mkdir avant l'installation des dépendances.
 
 # LA CAUSE DU BUG DES IMAGES EN 404 : public/storage est un lien symbolique créé à
 # l'exécution. Sur le serveur il existait sous forme de répertoire vide ; `COPY . .`
@@ -12,15 +18,7 @@ public/storage
 # complète de la base de données dans l'image.
 storage/app/backups
 
-# Fichiers d'exécution : le montage bind de l'hôte fait autorité, pas l'image.
-storage/app/public
-storage/logs
-storage/framework/cache
-storage/framework/sessions
-storage/framework/views
-
 # Reconstruits pendant le build (composer install / npm install / npm run build).
-# Les exclure allège le contexte et évite de traîner des artefacts périmés.
 node_modules
 vendor
 public/build
@@ -28,10 +26,6 @@ public/hot
 
 .git
 .github
-.idea
-.vscode
-tests
-.phpunit.result.cache
 
 # NOTE — .env n'est volontairement PAS exclu ici.
 # `npm run build` lit ses variables VITE_* dans ce fichier au moment du build
