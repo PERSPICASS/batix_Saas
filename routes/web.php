@@ -15,6 +15,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\OfflineSaleSyncController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\InventoryController;
@@ -377,6 +378,11 @@ Route::prefix('{code_user}')
         ->middlewareFor(['create', 'store'], 'permission:sales,create')
         ->middlewareFor(['edit', 'update'], 'permission:sales,edit')
         ->middlewareFor('destroy', 'permission:sales_delete,delete');
+    // Rejeu des ventes saisies hors ligne. Même permission que la création d'une vente :
+    // synchroniser, c'est créer des ventes.
+    Route::post('ventes/sync-offline', [OfflineSaleSyncController::class, 'store'])
+        ->name('sales.sync-offline')
+        ->middleware('permission:sales,create');
     Route::post('ventes/{sale}/pay-credit', [SaleController::class, 'payCredit'])->name('sales.pay-credit')->middleware('permission:credits,edit');
     Route::patch('ventes/{sale}/reactiver', [SaleController::class, 'restore'])->name('sales.restore')->middleware('permission:sales_restore,view');
 

@@ -46,6 +46,7 @@ import {
     X,
 } from 'lucide-react';
 import ToastContainer from '@/Components/ToastContainer';
+import OfflineBanner from '@/Components/OfflineBanner';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import AiChatWidget from '@/Components/AiChatWidget';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -852,6 +853,7 @@ export default function Authenticated({
 
             <div className="print:hidden">
                 <ToastContainer />
+                <OfflineBanner />
                 {!isPlatformAdmin && (
                     <AiChatWidget
                         codeUser={routeParams.code_user ?? ''}

@@ -16,6 +16,9 @@ class Sale extends Model
         'user_id',
         'customer_id',
         'ticket_number',
+        // Généré par le client hors ligne : rend le rejeu d'une vente en file d'attente
+        // idempotent. Voir la migration add_client_uuid_to_sales_table.
+        'client_uuid',
         'sale_date',
         'payment_method',
         'status',

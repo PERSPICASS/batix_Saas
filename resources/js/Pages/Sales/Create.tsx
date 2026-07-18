@@ -1,11 +1,28 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
-import { Plus, Minus, Trash2, CreditCard } from 'lucide-react';
+import { Plus, Minus, Trash2, CreditCard, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import ProductImage from '@/Components/ProductImage';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import { enqueue, newClientUuid } from '@/offline/outbox';
+import { useOfflineSales } from '@/offline/useOfflineSales';
+import { cacheCatalog, readCatalog } from '@/offline/catalog';
+
+/**
+ * Format attendu par la validation `date` de Laravel côté synchronisation.
+ * `toISOString()` produirait de l'UTC et décalerait toutes les ventes hors ligne d'un
+ * fuseau — ici on transmet l'heure locale de la boutique, celle du ticket.
+ */
+function formatSaleDate(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    return (
+        `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+        `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    );
+}
 
 interface Shop {
     id: number;
@@ -73,6 +90,15 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
     const activeShop = props.activeShop as { id: number; name: string } | null;
     
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [justQueued, setJustQueued] = useState(false);
+    const {
+        pendingCount,
+        rejected,
+        syncing,
+        needsLogin,
+        syncNow,
+        refresh: refreshQueue,
+    } = useOfflineSales(route('sales.sync-offline'));
     const [searchProduct, setSearchProduct] = useState('');
     const [searchCustomer, setSearchCustomer] = useState('');
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -224,6 +250,14 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
             unit_price: item.unit_price, // Envoyer le prix négocié
         }));
 
+        // Hors ligne : la vente part dans la file locale plutôt que dans le vide. Elle
+        // sera rejouée au retour du réseau, avec son heure réelle et un identifiant
+        // stable qui empêche tout double enregistrement.
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            queueOffline(items);
+            return;
+        }
+
         // Utiliser transform pour ajouter les items au moment de l'envoi
         post(route('sales.store'), {
             preserveScroll: true,
@@ -234,7 +268,53 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
         });
     };
 
-    const filteredProducts = products.filter(
+    const queueOffline = async (items: { product_id: number; quantity: number; unit_price: number }[]) => {
+        const total = calculateTotal();
+
+        await enqueue({
+            client_uuid: newClientUuid(),
+            shop_id: Number(data.shop_id),
+            customer_id: data.customer_id ? Number(data.customer_id) : null,
+            payment_method: data.payment_method,
+            amount_paid: parseFloat(data.amount_paid || '0') || total,
+            discount_amount: parseFloat(data.discount_amount || '0'),
+            // L'heure de la vente, pas celle de la synchronisation : sans cela les
+            // rapports du gérant dateraient toutes les ventes du retour du réseau.
+            sale_date: formatSaleDate(new Date()),
+            notes: data.notes || null,
+            items,
+            label: cart.map((i) => i.product_name).join(', '),
+            total,
+        });
+
+        setCart([]);
+        setData('amount_paid', '');
+        await refreshQueue();
+        setJustQueued(true);
+    };
+
+    // Le catalogue local sert de filet : si la page se charge sans produits alors que le
+    // réseau est absent, le vendeur travaille sur la dernière version connue plutôt que
+    // sur une liste vide.
+    const [cachedProducts, setCachedProducts] = useState<Product[]>([]);
+    const shopId = Number(data.shop_id);
+
+    useEffect(() => {
+        if (!shopId) return;
+
+        if (products.length > 0) {
+            // Rafraîchi à chaque affichage en ligne : c'est la seule alimentation du
+            // catalogue, il n'y a pas d'appel de synchronisation dédié.
+            cacheCatalog(products, shopId);
+            return;
+        }
+
+        readCatalog(shopId).then(setCachedProducts);
+    }, [products, shopId]);
+
+    const availableProducts = products.length > 0 ? products : cachedProducts;
+
+    const filteredProducts = availableProducts.filter(
         (product) =>
             product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
             product.sku?.toLowerCase().includes(searchProduct.toLowerCase()) ||
@@ -248,6 +328,56 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
     return (
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.sales.checkout}</h1>}>
             <Head title={t.sales.form.createTitle} />
+
+            {justQueued && (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+                    <CloudOff className="mt-0.5 size-5 shrink-0" />
+                    <p>{t.layout.offline.savedLocally}</p>
+                </div>
+            )}
+
+            {pendingCount > 0 && (
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5">
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t.layout.offline.queued(pendingCount)}
+                    </p>
+                    <button
+                        type="button"
+                        onClick={syncNow}
+                        disabled={syncing}
+                        className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 dark:bg-white dark:text-slate-900"
+                    >
+                        <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
+                        {syncing ? t.layout.offline.syncing : t.layout.offline.syncNow}
+                    </button>
+                </div>
+            )}
+
+            {needsLogin && (
+                <div className="mb-4 rounded-xl border border-orange-300 bg-orange-50 px-4 py-3 text-sm text-orange-900 dark:border-orange-500/40 dark:bg-orange-500/10 dark:text-orange-200">
+                    {t.layout.offline.needsLogin}
+                </div>
+            )}
+
+            {/* Une vente refusée a pourtant été encaissée au comptoir : elle doit rester
+                visible jusqu'à ce qu'un humain tranche, jamais disparaître en silence. */}
+            {rejected.length > 0 && (
+                <div className="mb-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 dark:border-red-500/40 dark:bg-red-500/10">
+                    <p className="flex items-center gap-2 text-sm font-semibold text-red-900 dark:text-red-200">
+                        <AlertTriangle className="size-4" />
+                        {t.layout.offline.rejectedTitle}
+                    </p>
+                    <p className="mt-1 text-xs text-red-800 dark:text-red-300">{t.layout.offline.rejectedHelp}</p>
+                    <ul className="mt-2 space-y-1 text-xs text-red-900 dark:text-red-200">
+                        {rejected.map((sale) => (
+                            <li key={sale.client_uuid}>
+                                <span className="font-medium">{sale.label ?? sale.client_uuid}</span>
+                                {sale.error ? ` — ${sale.error}` : null}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             <form onSubmit={onSubmit} className="space-y-4">
                 <div className="grid gap-4 lg:grid-cols-3">
