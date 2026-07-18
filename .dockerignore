@@ -1,0 +1,42 @@
+# Le Dockerfile fait `COPY . .`. Sans ce fichier, TOUT le répertoire de travail du
+# serveur part dans l'image — y compris des fichiers gitignorés qui n'ont rien à y
+# faire et qui ont déjà cassé la production.
+
+# LA CAUSE DU BUG DES IMAGES EN 404 : public/storage est un lien symbolique créé à
+# l'exécution. Sur le serveur il existait sous forme de répertoire vide ; `COPY . .`
+# le figeait dans l'image, le volume public s'en trouvait repeuplé à chaque
+# déploiement, et `storage:link` refusait ensuite d'écraser un non-lien.
+public/storage
+
+# Sauvegardes de la base : sans cette exclusion, chaque build embarque une copie
+# complète de la base de données dans l'image.
+storage/app/backups
+
+# Fichiers d'exécution : le montage bind de l'hôte fait autorité, pas l'image.
+storage/app/public
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+
+# Reconstruits pendant le build (composer install / npm install / npm run build).
+# Les exclure allège le contexte et évite de traîner des artefacts périmés.
+node_modules
+vendor
+public/build
+public/hot
+
+.git
+.github
+.idea
+.vscode
+tests
+.phpunit.result.cache
+
+# NOTE — .env n'est volontairement PAS exclu ici.
+# `npm run build` lit ses variables VITE_* dans ce fichier au moment du build
+# (dont VITE_PADDLE_CLIENT_SIDE_TOKEN) : l'exclure produirait un build sans token
+# Paddle, donc un tunnel de paiement cassé, sans aucune erreur au build.
+# Conséquence assumée pour l'instant : les secrets de production se retrouvent dans
+# l'image. Pour l'exclure proprement, il faut d'abord passer les variables VITE_*
+# en `build args` dans le Dockerfile.

@@ -52,6 +52,20 @@ jobs:
             # `--force` rend l'étape idempotente : elle recrée le lien sans échouer
             # s'il existe déjà.
             echo "=== 4. Lien symbolique storage ==="
+            # `storage:link --force` ne sait écraser qu'un lien symbolique existant
+            # (isRemovableSymlink() = is_link() && force). Face à un vrai répertoire il
+            # échoue — c'est précisément ce qui est arrivé. On le retire donc d'abord,
+            # avec `rmdir` et non `rm -rf` : rmdir refuse un répertoire non vide, ce qui
+            # garantit qu'aucun fichier ne peut être détruit par cette étape.
+            $C exec -T app sh -lc '
+              if [ -e public/storage ] && [ ! -L public/storage ]; then
+                if [ -n "$(ls -A public/storage 2>/dev/null)" ]; then
+                  echo "public/storage est un répertoire NON VIDE : rapatrier son contenu vers storage/app/public avant de relancer." >&2
+                  exit 1
+                fi
+                rmdir public/storage
+              fi
+            '
             $C exec -T app php artisan storage:link --force
             # Vérification : un lien absent doit arrêter le déploiement, pas se
             # découvrir plus tard sur une page produit vide.

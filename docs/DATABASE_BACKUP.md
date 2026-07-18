@@ -8,8 +8,16 @@ conteneur `scheduler`.
 
 `storage/app/backups/`, dans le conteneur, ce qui correspond à
 `/opt/batix/apps/prod/batix_Saas/storage/app/backups/` sur le VPS — `storage/` est
-monté en bind depuis l'hôte (`docker-compose.prod.yml:19`). Les dumps survivent donc
-aux rebuilds d'image et au `git reset --hard` du déploiement.
+monté en bind depuis l'hôte. Les dumps survivent donc aux rebuilds d'image et au
+`git reset --hard` du déploiement.
+
+> **Ce montage est la condition de tout le reste.** Les services `queue` et
+> `scheduler` ne l'avaient pas au départ : la sauvegarde de 3h, exécutée par
+> `scheduler`, écrivait dans le système de fichiers éphémère du conteneur et
+> disparaissait au déploiement suivant. La commande réussissait pourtant, et
+> vérifiait bien son dump — simplement, rien n'atteignait le disque de l'hôte.
+> Si un jour un service exécutant `db:backup` perd son montage `./storage`, la
+> sauvegarde redevient silencieusement fictive.
 
 Nommage : `batixpro_db-AAAA-MM-JJ_HHMMSS.dump`
 Rétention : **14 jours**, les plus anciens sont supprimés à chaque exécution.

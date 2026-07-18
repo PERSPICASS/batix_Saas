@@ -84,6 +84,11 @@ services:
       - app
     environment:
       - TMPDIR=/tmp
+    volumes:
+      # Indispensable : sans ce montage, tout ce que le worker écrit (logs, fichiers
+      # générés) reste dans le système de fichiers éphémère du conteneur et disparaît
+      # au prochain `down`. Doit rester identique à celui du service `app`.
+      - ./storage:/var/www/html/storage
     networks:
       - prod_internal
 
@@ -103,6 +108,12 @@ services:
       - app
     environment:
       - TMPDIR=/tmp
+    volumes:
+      # CRITIQUE pour db:backup : c'est ce conteneur qui exécute la sauvegarde de 3h.
+      # Sans ce montage, le dump est écrit dans le conteneur et détruit au déploiement
+      # suivant — la sauvegarde semble réussir (elle vérifie bien son fichier) mais
+      # rien n'atteint jamais le disque de l'hôte. Doit rester identique à `app`.
+      - ./storage:/var/www/html/storage
     networks:
       - prod_internal
 
