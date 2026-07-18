@@ -21,7 +21,10 @@ export const copy = {
         title: 'BATIX PRO - Logiciel gestion quincaillerie (Essai gratuit 14j)',
         brandSubtitle: 'Gestion moderne des quincailleries',
         seo: {
-            description: 'Logiciel de gestion quincaillerie: ventes, stock, caisse. Essai gratuit 14j sans CB. Support WhatsApp inclus. 500+ quincailliers nous font confiance.',
+            // Ne jamais réintroduire de nombre de clients ici sans pouvoir le justifier :
+            // cette phrase est ce que Google affiche dans ses résultats. Elle annonçait
+            // « 500+ quincailliers nous font confiance ».
+            description: 'Logiciel de gestion quincaillerie: ventes, stock, caisse. Essai gratuit 14j sans CB. Support WhatsApp inclus, mise en route sans équipe technique.',
             keywords: 'logiciel quincaillerie, gestion stock quincaillerie, caisse quincaillerie, logiciel POS quincaillerie, gestion boutique, SaaS quincaillerie, gestion multi-boutiques, caisse enregistreuse quincaillerie',
             ogImage: '/og-image.jpg',
         },

@@ -43,7 +43,22 @@ jobs:
             docker volume rm batix_prod_batix_public || true
             $C up -d --remove-orphans
 
-            echo "=== 4. Laravel migrate ==="
+            # Le `docker volume rm` ci-dessus repart d'un public/ vierge, reconstruit à
+            # partir de l'image. Or public/storage est un lien symbolique créé à
+            # l'exécution (et gitignoré, donc absent de l'image) : sans cette étape il
+            # disparaît à chaque déploiement et TOUTES les images téléversées — blog,
+            # produits, justificatifs de dépenses — renvoient 404, alors que les
+            # fichiers eux-mêmes sont intacts dans storage/ (bind-mount de l'hôte).
+            # `--force` rend l'étape idempotente : elle recrée le lien sans échouer
+            # s'il existe déjà.
+            echo "=== 4. Lien symbolique storage ==="
+            $C exec -T app php artisan storage:link --force
+            # Vérification : un lien absent doit arrêter le déploiement, pas se
+            # découvrir plus tard sur une page produit vide.
+            $C exec -T app test -L public/storage \
+              || { echo "::error::public/storage n'est pas un lien symbolique — les images seront en 404."; exit 1; }
+
+            echo "=== 5. Laravel migrate ==="
             $C exec -T app php artisan migrate --force
 
             # `optimize` réécrit bootstrap/cache/config.php, mais php-fpm tourne avec
@@ -53,7 +68,7 @@ jobs:
             # `optimize` — soit par pure chance de timing. (Le CLI, lui, a
             # opcache.enable_cli=0 : `artisan tinker` affiche donc la bonne valeur
             # pendant que le site en sert une autre.)
-            echo "=== 5. Cache Laravel + rechargement opcache ==="
+            echo "=== 6. Cache Laravel + rechargement opcache ==="
             $C exec -T app php artisan optimize:clear
             $C exec -T app php artisan optimize
             $C restart app
@@ -61,12 +76,12 @@ jobs:
             # cache : le relancer après app évite un 502 si l'IP a changé.
             $C restart nginx
 
-            echo "=== 6. Verify build ==="
+            echo "=== 7. Verify build ==="
             $C exec -T app ls -la public/build
             $C exec -T nginx ls -la /var/www/html/public/build
             $C ps ssr
 
-            echo "=== 7. Docker cleanup ==="
+            echo "=== 8. Docker cleanup ==="
             docker system prune -af
             docker builder prune -af
 
