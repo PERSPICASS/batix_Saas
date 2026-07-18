@@ -82,6 +82,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Passerelle MCP BATIXPRO
+    |--------------------------------------------------------------------------
+    | Endpoint Streamable HTTP du serveur MCP par lequel l'assistant IA interne
+    | exécute ses tools (voir App\Services\Mcp\McpClient). En prod (Docker),
+    | pointer sur le réseau interne : http://batixpro-mcp:3000/mcp.
+    */
+    'batixpro_mcp' => [
+        'url' => env('BATIXPRO_MCP_URL', 'http://localhost:3111/mcp'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | LemonSqueezy Payment Platform
     |--------------------------------------------------------------------------
     */

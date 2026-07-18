@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\MobileController;
+use App\Http\Controllers\Api\V1\AlertController;
+use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -52,6 +54,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::middleware('abilities:sales:read')->group(function () {
         Route::get('/sales', [SaleController::class, 'index']);
         Route::get('/sales/{sale}', [SaleController::class, 'show']);
+        // Analyses de ventes (consommées par l'assistant IA via le MCP).
+        Route::get('/analytics/sales-summary', [AnalyticsController::class, 'salesSummary']);
+        Route::get('/analytics/top-products', [AnalyticsController::class, 'topProducts']);
     });
     Route::middleware('abilities:sales:write')->group(function () {
         Route::post('/sales', [SaleController::class, 'store']);
@@ -63,5 +68,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     });
     Route::middleware('abilities:stock-movements:read')->group(function () {
         Route::get('/stock-movements', [StockMovementController::class, 'index']);
+        Route::get('/alerts', [AlertController::class, 'index']);
     });
 });

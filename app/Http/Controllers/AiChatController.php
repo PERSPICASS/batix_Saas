@@ -64,6 +64,12 @@ class AiChatController extends Controller
             return response()->json([
                 'error' => 'Erreur d\'authentification avec le service IA. Veuillez contacter le support.',
             ], 401);
+        } catch (\App\Services\Mcp\McpUnavailableException $e) {
+            \Log::error('AI Chat - MCP unavailable: ' . $e->getMessage());
+
+            return response()->json([
+                'error' => 'Le service de données de l\'assistant est momentanément indisponible. Veuillez réessayer dans un instant.',
+            ], 503);
         } catch (\Exception $e) {
             \Log::error('AI Chat error: ' . $e->getMessage(), [
                 'exception' => $e,
