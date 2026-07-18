@@ -17,7 +17,9 @@ class SubscriptionPlanSeeder extends Seeder
             [
                 'name'        => 'Free',
                 'slug'        => 'free',
-                'description' => 'Découvrez Batix gratuitement — valable 30 jours',
+                // 14 jours, pas 30 : c'est ce que ShopController accorde réellement
+                // (now()->addDays(14)) et ce qu'annonce la page d'accueil.
+                'description' => 'Découvrez Batix gratuitement — valable 14 jours',
                 'price'       => 0.00,
                 'max_shops'   => 1,
                 'max_users'   => 2,
@@ -28,7 +30,7 @@ class SubscriptionPlanSeeder extends Seeder
                     'Gestion des produits et stocks',
                     'Facturation et devis',
                     'Tableau de bord et rapports',
-                    'Essai valable 30 jours',
+                    'Essai valable 14 jours',
                 ],
                 'is_active'   => false,
                 'sort_order'  => 0,

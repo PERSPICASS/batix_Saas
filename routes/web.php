@@ -66,7 +66,8 @@ Route::middleware('setlocale:fr')->group(function () {
     Route::get('/fonctionnalites', [SitePageController::class, 'features'])->name('features.index');
     Route::get('/fonctionnalites/{slug}', [SitePageController::class, 'featureShow'])->name('features.show');
     Route::get('/tarifs', [SitePageController::class, 'pricing'])->name('pricing');
-    Route::get('/clients', [SitePageController::class, 'customers'])->name('customers');
+    // /clients retirée : la page reposait entièrement sur des témoignages fictifs.
+    // À rouvrir avec de vrais avis clients, pas avant.
     Route::get('/ressources', [SitePageController::class, 'resources'])->name('resources');
     Route::get('/a-propos', [SitePageController::class, 'about'])->name('about');
     Route::get('/contact', [SitePageController::class, 'contactShow'])->name('contact.show');
@@ -83,7 +84,7 @@ Route::prefix('en')->name('en.')->middleware('setlocale:en')->group(function () 
     Route::get('/features', [SitePageController::class, 'features'])->name('features.index');
     Route::get('/features/{slug}', [SitePageController::class, 'featureShow'])->name('features.show');
     Route::get('/pricing', [SitePageController::class, 'pricing'])->name('pricing');
-    Route::get('/customers', [SitePageController::class, 'customers'])->name('customers');
+    // /en/customers retirée — voir la note sur /clients plus haut.
     Route::get('/resources', [SitePageController::class, 'resources'])->name('resources');
     Route::get('/about', [SitePageController::class, 'about'])->name('about');
     Route::get('/contact', [SitePageController::class, 'contactShow'])->name('contact.show');

@@ -11,7 +11,7 @@ interface TrustPromise {
     label: string;
 }
 
-interface TestimonialsSectionProps {
+interface TrustSectionProps {
     locale: Locale;
     promises: TrustPromise[];
     trustReasons: string[];
@@ -23,7 +23,7 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
     return <Icon className={className} />;
 }
 
-export default function TestimonialsSection({ locale, promises, trustReasons }: TestimonialsSectionProps) {
+export default function TrustSection({ locale, promises, trustReasons }: TrustSectionProps) {
     const sectionLabel = locale === 'fr' ? 'Pourquoi nous faire confiance' : 'Why trust us';
 
     return (

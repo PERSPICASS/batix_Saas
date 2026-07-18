@@ -46,7 +46,6 @@ class SitemapTest extends TestCase
             '/', '/en',
             '/fonctionnalites', '/en/features',
             '/tarifs', '/en/pricing',
-            '/clients', '/en/customers',
             '/ressources', '/en/resources',
             '/blog', '/en/blog',
             '/a-propos', '/en/about',

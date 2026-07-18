@@ -26,7 +26,6 @@ export default function WelcomeFooter({ locale, footerText }: WelcomeFooterProps
 
     const companyLinks = [
         { label: isFr ? 'À propos' : 'About', href: isFr ? route('about') : route('en.about') },
-        //{ label: isFr ? 'Clients' : 'Customers', href: isFr ? route('customers') : route('en.customers') },
        // { label: isFr ? 'Ressources' : 'Resources', href: isFr ? route('resources') : route('en.resources') },
         { label: isFr ? 'Blog' : 'Blog', href: isFr ? route('blog.index') : route('en.blog.index') },
         { label: 'Contact', href: isFr ? route('contact.show') : route('en.contact.show') },

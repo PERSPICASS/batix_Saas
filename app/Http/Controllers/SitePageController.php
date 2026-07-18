@@ -61,17 +61,8 @@ class SitePageController extends Controller
         ]);
     }
 
-    public function customers(): Response
-    {
-        // Rendered from Pages/Testimonials/ (not Pages/Customers/, which is the
-        // authenticated CRM "customers" module — different feature, same word).
-        return Inertia::render('Testimonials/Index', [
-            'localeLinks' => [
-                'fr' => route('customers'),
-                'en' => route('en.customers'),
-            ],
-        ]);
-    }
+    // La méthode customers() rendait Pages/Testimonials/Index, une page bâtie
+    // uniquement sur des témoignages fictifs. Page, route et données supprimées.
 
     public function resources(): Response
     {

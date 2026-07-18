@@ -13,6 +13,7 @@ import FaqSection from '@/Components/Welcome/FaqSection';
 import FeaturesTeaser from '@/Components/Welcome/FeaturesTeaser';
 import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
 import HeroSection from '@/Components/Welcome/HeroSection';
+import TrustSection from '@/Components/Welcome/TrustSection';
 
 interface BlogPost {
     id: number;
@@ -172,6 +173,11 @@ export default function Welcome({ auth, appUrl, latestPosts = [], locale, locale
                 <FeaturesTeaser locale={locale} featuresTitle={t.featuresTitle} />
 
                 <AudienceSwitcher locale={locale} />
+
+                {/* Remontée depuis la page /clients supprimée : elle porte les
+                    promesses vérifiables (essai 14 jours, support WhatsApp) et ne
+                    contenait aucun témoignage. */}
+                <TrustSection locale={locale} promises={t.promises} trustReasons={t.trustReasons} />
 
                 <AiShowcase locale={locale} />
 

@@ -21,15 +21,6 @@ export type HeroSlide = {
     caption: Record<Locale, { title: string; description: string }>;
 };
 
-export type Testimonial = {
-    quote: string;
-    name: string;
-    role: string;
-    location: string;
-    /** True until replaced with a real customer quote — never rendered on-page, just a code marker. */
-    isPlaceholder?: boolean;
-};
-
 export interface SubscriptionPlan {
     id: number;
     name: string;

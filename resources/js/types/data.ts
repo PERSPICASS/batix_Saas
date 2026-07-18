@@ -53,8 +53,11 @@ export const copy = {
             'Visibilité en temps réel sur toutes vos boutiques',
         ],
         socialProof: 'Pourquoi nous faire confiance',
+        // Chaque promesse affichée ici doit être tenable : ce sont des engagements
+        // publics. « < 5 min » vaut pour le parcours inscription → première vente ;
+        // le rechronométrer si l'onboarding change.
         promises: [
-            { icon: 'Zap', value: '< 10 min', label: 'Pour faire votre première vente' },
+            { icon: 'Zap', value: '< 5 min', label: 'Pour faire votre première vente' },
             { icon: 'MessageCircle', value: '< 2h', label: 'Temps de réponse support WhatsApp' },
             { icon: 'ShieldCheck', value: '14 jours', label: 'Essai gratuit, sans carte bancaire' },
         ],
@@ -196,7 +199,7 @@ export const copy = {
         ],
         socialProof: 'Why trust us',
         promises: [
-            { icon: 'Zap', value: '< 10 min', label: 'To make your first sale' },
+            { icon: 'Zap', value: '< 5 min', label: 'To make your first sale' },
             { icon: 'MessageCircle', value: '< 2h', label: 'WhatsApp support response time' },
             { icon: 'ShieldCheck', value: '14 days', label: 'Free trial, no credit card needed' },
         ],

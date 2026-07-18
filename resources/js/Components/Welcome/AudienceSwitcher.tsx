@@ -1,10 +1,9 @@
 import { Link } from '@inertiajs/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, Check, Quote } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { useState } from 'react';
 import { fadeUp, stagger } from '../../types/data';
 import { getFeaturePage } from '../../types/featurePages';
-import { testimonialsByLocale } from '../../types/testimonials';
 import type { Locale } from '../../types/types';
 
 interface AudienceSwitcherProps {
@@ -14,9 +13,10 @@ interface AudienceSwitcherProps {
 /**
  * Segment switcher (tabs → dynamic left content + right proof card), inspired
  * by Brevo's "Built for every business" section. Content is pulled from the
- * real feature pages (resources/js/types/featurePages.ts) — no invented copy —
- * and the proof card uses a text-only placeholder testimonial (no fabricated
- * customer photo, since we don't have a real one to attach to a real name).
+ * real feature pages (resources/js/types/featurePages.ts) — no invented copy.
+ * The right-hand card used to hold a fabricated customer testimonial; it now
+ * shows the feature's real screenshot, or its description when no screenshot
+ * exists yet.
  */
 export default function AudienceSwitcher({ locale }: AudienceSwitcherProps) {
     const isFr = locale === 'fr';
@@ -25,26 +25,24 @@ export default function AudienceSwitcher({ locale }: AudienceSwitcherProps) {
         {
             label: isFr ? 'Boutique unique' : 'Single store',
             featureSlug: 'vente-caisse',
-            testimonialIndex: 0,
         },
         {
             label: isFr ? 'Multi-boutiques' : 'Multi-store',
             featureSlug: 'multi-boutiques',
-            testimonialIndex: 1,
         },
         {
             label: isFr ? 'Équipes avec IA' : 'AI-powered teams',
             featureSlug: 'assistant-ia',
-            testimonialIndex: 2,
         },
     ];
 
     const [activeIndex, setActiveIndex] = useState(0);
     const active = segments[activeIndex];
     const feature = getFeaturePage(active.featureSlug);
-    const testimonial = testimonialsByLocale[locale][active.testimonialIndex];
 
     if (!feature) return null;
+
+    const screenshot = locale === 'fr' ? feature.image_fr : feature.image_en;
 
     return (
         <motion.section
@@ -115,15 +113,27 @@ export default function AudienceSwitcher({ locale }: AudienceSwitcherProps) {
                             </Link>
                         </div>
 
-                        {/* Colonne droite — carte témoignage */}
-                        <div className="rounded-3xl border border-gray-200 bg-gray-50 p-8">
-                            <Quote className="size-8 text-terre-400" />
-                            <blockquote className="mt-4 text-lg italic leading-relaxed text-slate-700">
-                                “{testimonial.quote}”
-                            </blockquote>
-                            <p className="mt-6 font-bold text-slate-900">{testimonial.name}</p>
-                            <p className="text-sm text-slate-500">{testimonial.role} — {testimonial.location}</p>
-                        </div>
+                        {/* Colonne droite — capture réelle du produit.
+                            Remplace les témoignages fictifs qui occupaient cette place.
+                            Quand la fonctionnalité n'a pas encore de capture, on montre sa
+                            description plutôt qu'une image générique : même règle que
+                            featurePages.ts, « don't fall back to a generic stock photo ». */}
+                        {screenshot ? (
+                            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-gray-50 shadow-sm">
+                                <img
+                                    src={screenshot}
+                                    alt={feature.title[locale]}
+                                    className="w-full"
+                                    loading="lazy"
+                                />
+                            </div>
+                        ) : (
+                            <div className="rounded-3xl border border-gray-200 bg-gray-50 p-8">
+                                <p className="text-base leading-relaxed text-slate-700">
+                                    {feature.longDescription[locale]}
+                                </p>
+                            </div>
+                        )}
                     </motion.div>
                 </AnimatePresence>
             </div>

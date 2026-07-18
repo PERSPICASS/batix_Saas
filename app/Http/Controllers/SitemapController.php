@@ -100,21 +100,9 @@ class SitemapController extends Controller
                 'priority' => '0.5',
             ],
 
-            // Clients / Customers
-            [
-                'loc' => $baseUrl . '/clients',
-                'lastmod' => $today,
-                'changefreq' => 'monthly',
-                'priority' => '0.7',
-                'alternates' => ['fr' => $baseUrl . '/clients', 'en' => $baseUrl . '/en/customers'],
-            ],
-            [
-                'loc' => $baseUrl . '/en/customers',
-                'lastmod' => $today,
-                'changefreq' => 'monthly',
-                'priority' => '0.7',
-                'alternates' => ['fr' => $baseUrl . '/clients', 'en' => $baseUrl . '/en/customers'],
-            ],
+            // /clients et /en/customers retirées avec la page qu'elles indexaient.
+            // Laisser une URL supprimée dans le sitemap génère des erreurs
+            // « Explorée, actuellement non indexée » dans la Search Console.
 
             // Ressources / Resources
             [

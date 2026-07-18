@@ -77,13 +77,6 @@ export default function WelcomeHeader({ locale, localeLinks, scrolled, getDashbo
                     </Link>
 
                     {/* <Link
-                        href={isFr ? route('customers') : route('en.customers')}
-                        className="rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-terre-50 hover:text-terre-700"
-                    >
-                        {isFr ? 'Clients' : 'Customers'}
-                    </Link> 
-
-                    <Link
                         href={isFr ? route('resources') : route('en.resources')}
                         className="rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-terre-50 hover:text-terre-700"
                     >
