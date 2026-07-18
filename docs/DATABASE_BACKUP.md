@@ -78,11 +78,68 @@ est vide, illisible ou sans données de table, la commande échoue et l'exceptio
 remontée à Sentry — une sauvegarde qui échoue en silence ne vaut pas mieux que pas de
 sauvegarde du tout.
 
-En revanche, **les dumps sont sur le même disque que la base**. Ils protègent contre
-une erreur applicative, une migration ratée ou une suppression accidentelle, mais
-**pas contre la perte du VPS**. Une copie hors-site (S3, Backblaze B2, `rsync` vers
-une autre machine) reste à mettre en place ; c'est le dernier maillon manquant.
+## Copie hors-site
 
-Piste la plus simple une fois les accès obtenus : ajouter un disque `s3` dans
-`config/filesystems.php` et téléverser le fichier en fin de commande, ou brancher
-`rclone` sur le répertoire depuis l'hôte.
+Un dump posé sur le même disque que la base ne protège pas de la perte de la machine.
+La commande téléverse donc chaque dump vérifié vers un stockage objet S3-compatible,
+**dès que celui-ci est configuré**.
+
+Tant que `BACKUP_S3_BUCKET` est vide, la sauvegarde locale se déroule normalement et
+la commande affiche :
+
+```
+Off-site upload skipped — no bucket configured on the 'backups' disk.
+```
+
+C'est volontairement bruyant : « pas de copie distante » est un état que quelqu'un
+doit remarquer, pas un silence.
+
+### Configurer
+
+Renseigner dans le `.env` du serveur (voir `.env.example` pour les endpoints B2 / R2) :
+
+```env
+BACKUP_S3_KEY=...
+BACKUP_S3_SECRET=...
+BACKUP_S3_BUCKET=batixpro-backups
+BACKUP_S3_REGION=eu-central-003
+BACKUP_S3_ENDPOINT=https://s3.eu-central-003.backblazeb2.com
+BACKUP_S3_PREFIX=prod
+```
+
+Puis `php artisan config:clear` et redémarrer `app`, `queue` et `scheduler` —
+php-fpm tourne avec `opcache.validate_timestamps=0` et ne relit pas une config
+modifiée sans redémarrage.
+
+Vérifier ensuite par un envoi réel : `php artisan db:backup` doit afficher
+`Off-site copy uploaded: backups:prod/...`.
+
+### Ce que la copie distante garantit
+
+- **La taille distante est comparée à la taille locale** après l'envoi. Le disque
+  `backups` est configuré avec `'throw' => true` (contrairement au disque `s3`
+  générique, qui avale ses erreurs), mais un envoi tronqué peut malgré tout se
+  terminer sans erreur — d'où la comparaison.
+- **La rétention s'applique aussi à distance**, avec la même durée qu'en local,
+  sinon le bucket grossit indéfiniment. La purge ne touche que les fichiers `.dump`
+  du préfixe configuré : un bucket partagé ne risque rien.
+- **Un échec d'envoi fait échouer la commande** (code de sortie non nul) et remonte
+  à Sentry, même si le dump local est bon. Une purge distante en échec, elle, n'est
+  qu'un avertissement : la copie fraîche est déjà en sécurité, c'est un problème de
+  coût, pas de données.
+
+### Restaurer depuis la copie distante
+
+```bash
+# Lister ce qui est disponible
+aws s3 ls s3://batixpro-backups/prod/ --endpoint-url "$BACKUP_S3_ENDPOINT"
+
+# Récupérer un dump, puis suivre la procédure de restauration ci-dessus
+aws s3 cp s3://batixpro-backups/prod/batixpro_db-2026-07-18_030000.dump . \
+    --endpoint-url "$BACKUP_S3_ENDPOINT"
+```
+
+**Conseil de rétention côté fournisseur** : activer le versioning et un verrou objet
+(object lock) sur le bucket. Sans cela, des identifiants compromis permettraient de
+supprimer les sauvegardes en même temps que la base — c'est le mode opératoire
+habituel des rançongiciels.

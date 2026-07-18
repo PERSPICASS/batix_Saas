@@ -4,13 +4,16 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 
 class BackupDatabase extends Command
 {
     protected $signature = 'db:backup
         {--keep-days=14 : Delete dumps older than this. 0 disables pruning.}
-        {--path= : Directory to write to. Defaults to storage/app/backups.}';
+        {--path= : Directory to write to. Defaults to storage/app/backups.}
+        {--disk=backups : Filesystem disk holding the off-site copies.}
+        {--no-offsite : Keep the dump local even if an off-site disk is configured.}';
 
     protected $description = 'Dump the PostgreSQL database, verify the dump is readable, and prune old ones';
 
@@ -76,9 +79,122 @@ class BackupDatabase extends Command
         $this->info("Backup written: {$file} ({$size}, {$tables} tables)");
         Log::info('Database backup succeeded', ['file' => $file, 'bytes' => filesize($file), 'tables' => $tables]);
 
+        $offsite = $this->upload($file);
+
         $this->prune($directory);
 
-        return self::SUCCESS;
+        // The local dump is good either way, so the command still succeeds; but a
+        // configured off-site target that failed must not be reported as a clean run.
+        return $offsite === false ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * Copy the dump off the machine it was taken on.
+     *
+     * Returns null when no off-site target is configured, true on success, false on
+     * failure. A local-only backup covers a bad migration or an accidental deletion;
+     * it does not cover losing the server, which is the case this exists for.
+     */
+    private function upload(string $file): ?bool
+    {
+        if ($this->option('no-offsite')) {
+            return null;
+        }
+
+        $disk = $this->option('disk');
+
+        if (blank(config("filesystems.disks.{$disk}.bucket"))) {
+            // Loud, not silent: "no off-site copy" is a state someone must notice.
+            $this->warn("Off-site upload skipped — no bucket configured on the '{$disk}' disk.");
+            $this->line('Set BACKUP_S3_BUCKET, BACKUP_S3_KEY, BACKUP_S3_SECRET and BACKUP_S3_ENDPOINT. See docs/DATABASE_BACKUP.md');
+
+            return null;
+        }
+
+        $name = basename($file);
+        $key = trim((string) config('filesystems.disks.'.$disk.'.path_prefix', ''), '/');
+        $remote = $key === '' ? $name : "{$key}/{$name}";
+
+        try {
+            // Streamed rather than read into memory: a dump grows with the business,
+            // and the scheduler container has no reason to hold it all at once.
+            $handle = fopen($file, 'rb');
+
+            if ($handle === false) {
+                throw new \RuntimeException("Cannot reopen the dump for upload: {$file}");
+            }
+
+            try {
+                Storage::disk($disk)->writeStream($remote, $handle);
+            } finally {
+                fclose($handle);
+            }
+
+            // Confirm what actually landed. The 'backups' disk is configured with
+            // 'throw' => true so a failed write raises, but a truncated upload can
+            // still return normally — compare the sizes rather than trusting silence.
+            $remoteSize = Storage::disk($disk)->size($remote);
+            $localSize = (int) filesize($file);
+
+            if ($remoteSize !== $localSize) {
+                throw new \RuntimeException(
+                    "Off-site copy is {$remoteSize} bytes but the local dump is {$localSize}."
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::error('Off-site backup upload failed', ['file' => $file, 'error' => $e->getMessage()]);
+            $this->error('Off-site upload failed: '.$e->getMessage());
+            report($e);
+
+            return false;
+        }
+
+        $this->info("Off-site copy uploaded: {$disk}:{$remote}");
+        Log::info('Off-site backup uploaded', ['disk' => $disk, 'key' => $remote, 'bytes' => filesize($file)]);
+
+        $this->pruneRemote($disk, $key);
+
+        return true;
+    }
+
+    /**
+     * Apply the same retention off-site. Without this the bucket grows forever, which
+     * is how an object-storage bill quietly becomes the reason backups get turned off.
+     */
+    private function pruneRemote(string $disk, string $prefix): void
+    {
+        $keepDays = (int) $this->option('keep-days');
+
+        if ($keepDays <= 0) {
+            return;
+        }
+
+        $cutoff = now()->subDays($keepDays)->getTimestamp();
+        $deleted = 0;
+
+        try {
+            foreach (Storage::disk($disk)->files($prefix) as $remote) {
+                if (! str_ends_with($remote, '.dump')) {
+                    continue;
+                }
+
+                if (Storage::disk($disk)->lastModified($remote) < $cutoff) {
+                    Storage::disk($disk)->delete($remote);
+                    $deleted++;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Never fail the run over retention: the fresh copy is already safely
+            // uploaded, and an unpruned bucket is a cost problem, not a data one.
+            $this->warn('Could not prune old off-site copies: '.$e->getMessage());
+            Log::warning('Off-site prune failed', ['error' => $e->getMessage()]);
+
+            return;
+        }
+
+        if ($deleted > 0) {
+            $this->line("Pruned {$deleted} off-site copy/copies older than {$keepDays} days.");
+        }
     }
 
     private function dump(array $config, string $file): void
