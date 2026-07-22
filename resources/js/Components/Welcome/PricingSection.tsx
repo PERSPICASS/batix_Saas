@@ -22,7 +22,9 @@ type BillingCycle = 'monthly' | 'yearly';
 export default function PricingSection({ locale, pricingTitle, pricingFallback, planCta, pricingLabel, plans, hasDynamicPlans, getDashboardUrl }: PricingSectionProps) {
     const isFr = locale === 'fr';
     const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
-    const [currency, setCurrency] = useState<Currency>('USD');
+    // EUR by default: billing is real in EUR (Paddle). The FCFA equivalent is
+    // shown next to it for the local market — see the price block below.
+    const [currency, setCurrency] = useState<Currency>('EUR');
 
     const planOrder = ['Starter', 'Growth', 'Pro', 'Entreprise'];
     const sortedPlans = [...plans].sort((a, b) => {
@@ -142,6 +144,11 @@ export default function PricingSection({ locale, pricingTitle, pricingFallback, 
                                         <span className={`text-4xl font-black tracking-tight leading-none ${plan.highlighted ? 'text-white' : 'text-slate-900'}`}>
                                             {displayPrice}
                                         </span>
+                                        {currency !== 'FCFA' && amountXaf && (
+                                            <p className={`mt-1 text-sm font-semibold ${plan.highlighted ? 'text-terre-100' : 'text-terre-600'}`}>
+                                                {formatPrice(amountXaf, 'FCFA')}
+                                            </p>
+                                        )}
                                         <p className={`mt-0.5 text-xs font-medium ${plan.highlighted ? 'text-terre-100' : 'text-slate-500'}`}>{displaySubtitle}</p>
                                     </div>
                                 )}
