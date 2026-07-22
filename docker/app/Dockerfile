@@ -72,18 +72,36 @@ WORKDIR /var/www/html
 # build` dans l'étage base et recopié plus bas avec node_modules, dont le bundle dépend
 # encore à l'exécution pour react-dom/server). Sans ce binaire, le service ssr ne peut
 # pas démarrer et le site sert aux crawlers une page vide — voir docs/SSR_DEPLOYMENT.md.
+# The runtime image copies the built app from `base` but NOT its compiled PHP
+# extensions, so every extension the app uses at request time must be installed
+# here too. zip is required by maatwebsite/excel (PhpSpreadsheet → ZipArchive)
+# for the xlsx product import/export; gd by the blog-image command. Runtime
+# shared libs (libzip, libpng…) are kept; the -dev headers are installed as a
+# virtual package and removed once the extensions are built.
 RUN apk add --no-cache \
     mysql-client \
     postgresql-client \
+    nodejs \
+    libzip \
+    libpng \
+    libjpeg-turbo \
+    freetype && \
+    apk add --no-cache --virtual .build-deps \
     postgresql-dev \
-    nodejs && \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev && \
+    docker-php-ext-configure gd --with-freetype --with-jpeg && \
     docker-php-ext-install \
     pdo \
     pdo_mysql \
     pdo_pgsql \
+    gd \
     bcmath \
+    zip \
     pcntl && \
-    apk del postgresql-dev
+    apk del .build-deps
 
 COPY --from=base /var/www/html /var/www/html
 
