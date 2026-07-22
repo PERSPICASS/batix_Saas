@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -37,11 +38,21 @@ class Supplier extends Model
     }
 
     /**
-     * Get the products supplied by this supplier.
+     * Distinct products this supplier has provided.
+     *
+     * There is no `products.supplier_id` column: a product is tied to a
+     * supplier only through purchase orders (supplier → purchases →
+     * purchase_items → product). This returns a Product query, so callers
+     * can `->get()`, `->count()` or `->exists()` on it as needed.
      */
-    public function products(): HasMany
+    public function products(): Builder
     {
-        return $this->hasMany(Product::class);
+        return Product::query()->whereIn('id', function ($query) {
+            $query->select('purchase_items.product_id')
+                ->from('purchase_items')
+                ->join('purchases', 'purchases.id', '=', 'purchase_items.purchase_id')
+                ->where('purchases.supplier_id', $this->id);
+        });
     }
 
     /**

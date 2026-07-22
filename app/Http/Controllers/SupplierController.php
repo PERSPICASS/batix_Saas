@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
@@ -117,8 +118,20 @@ class SupplierController extends Controller
             abort(403, 'Accès non autorisé.');
         }
 
-        $supplier->load(['shops', 'products']);
-        
+        $supplier->load('shops');
+
+        // Products come through purchase orders, not a direct FK. Shape them
+        // to match what Suppliers/Show expects (price/stock, not the raw
+        // selling_price/stock_quantity columns).
+        $supplier->setRelation('products', $supplier->products()->get()->map(fn (Product $product) => [
+            'id' => $product->id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'image' => $product->image,
+            'price' => (float) $product->selling_price,
+            'stock' => (int) $product->stock_quantity,
+        ]));
+
         return Inertia::render('Suppliers/Show', [
             'supplier' => $supplier,
         ]);
