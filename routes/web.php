@@ -266,7 +266,9 @@ Route::prefix('{code_user}')
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Avis client (noter le SaaS) — soumis via le bouton flottant / modal
-    Route::post('/avis', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
+    Route::post('/avis', [\App\Http\Controllers\ReviewController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('reviews.store');
 
     // Routes pour les boutiques (avec vérification des limites d'abonnement)
     Route::post('boutiques', [ShopController::class, 'store'])
