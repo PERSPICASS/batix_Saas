@@ -116,25 +116,25 @@ class StockMovementController extends Controller
         return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement de stock créé avec succès.');
     }
 
-    public function show(string $code_user, StockMovement $stock): Response
+    public function show(string $code_user, StockMovement $stockMovement): Response
     {
-        if (!Auth::user()->accessibleShopsQuery()->where('id', $stock->shop_id)->exists()) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $stockMovement->shop_id)->exists()) {
             abort(403);
         }
 
-        $stock->load(['shop', 'product', 'user']);
-        return Inertia::render('Stocks/Show', ['movement' => $stock]);
+        $stockMovement->load(['shop', 'product', 'user']);
+        return Inertia::render('Stocks/Show', ['movement' => $stockMovement]);
     }
 
-    public function destroy(string $code_user, StockMovement $stock): RedirectResponse
+    public function destroy(string $code_user, StockMovement $stockMovement): RedirectResponse
     {
-        if (!Auth::user()->accessibleShopsQuery()->where('id', $stock->shop_id)->exists()) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $stockMovement->shop_id)->exists()) {
             abort(403);
         }
 
-        DB::transaction(function () use ($stock) {
-            StockMovementService::reverseMovement($stock);
-            $stock->delete();
+        DB::transaction(function () use ($stockMovement) {
+            StockMovementService::reverseMovement($stockMovement);
+            $stockMovement->delete();
         });
 
         return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement supprimé et stock ajusté.');
