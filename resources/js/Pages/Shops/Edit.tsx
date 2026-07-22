@@ -4,18 +4,21 @@ import { FormEventHandler } from 'react';
 import { Store, MapPin, Phone, FileText } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import { countriesI18n } from '@/i18n/countries';
 import InputError from '@/Components/InputError';
 
 interface Shop {
     id: number; name: string; description: string | null;
     address: string | null; city: string | null; postal_code: string | null;
+    country: string | null;
     phone: string | null; email: string | null; tax_id: string | null; is_active: boolean;
 }
 interface Props { shop: Shop }
 
 export default function Edit({ shop }: Props) {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
     const route = useRoute();
+    const countries = countriesI18n[locale];
 
     const { data, setData, put, processing, errors } = useForm({
         name: shop.name,
@@ -23,6 +26,7 @@ export default function Edit({ shop }: Props) {
         address: shop.address || '',
         city: shop.city || '',
         postal_code: shop.postal_code || '',
+        country: shop.country || '',
         phone: shop.phone || '',
         email: shop.email || '',
         tax_id: shop.tax_id || '',
@@ -114,6 +118,18 @@ export default function Edit({ shop }: Props) {
                                         onChange={(e) => setData('postal_code', e.target.value)}
                                         className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
                                     <InputError message={errors.postal_code} />
+                                </div>
+                                <div>
+                                    <label htmlFor="country" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{countries.label}</label>
+                                    <select id="country" value={data.country}
+                                        onChange={(e) => setData('country', e.target.value)}
+                                        className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200">
+                                        <option value="">{countries.placeholder}</option>
+                                        {countries.list.map((name) => (
+                                            <option key={name} value={name}>{name}</option>
+                                        ))}
+                                    </select>
+                                    <InputError message={errors.country} />
                                 </div>
                             </div>
                         </div>
