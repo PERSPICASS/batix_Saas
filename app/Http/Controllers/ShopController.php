@@ -62,6 +62,10 @@ class ShopController extends Controller
             'tax_id' => 'nullable|string|max:50',
         ]);
 
+        // Additional shops inherit the user's country by default, like the
+        // first one created during onboarding.
+        $validated['country'] = $user->country ?: 'France';
+
         $shop = $user->accessibleShopsQuery()->create($validated);
 
         // Log activity
@@ -207,7 +211,9 @@ class ShopController extends Controller
             'postal_code' => $validated['postal_code'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'currency' => 'USD',
-            'country' => 'Maroc',
+            // Default to the country the user picked at registration, not a
+            // hardcoded one.
+            'country' => $user->country ?: 'France',
         ]);
 
         // Associer l'utilisateur à la boutique créée
