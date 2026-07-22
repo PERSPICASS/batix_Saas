@@ -122,11 +122,15 @@ class PurchaseController extends Controller
         $validated = $request->validate([
             'supplier_id' => [
                 'required',
-                Rule::exists('suppliers', 'id')->whereExists(function ($q) use ($activeShopId) {
-                    $q->select(DB::raw(1))
-                        ->from('shop_supplier')
-                        ->whereColumn('shop_supplier.supplier_id', 'suppliers.id')
-                        ->where('shop_supplier.shop_id', $activeShopId);
+                Rule::exists('suppliers', 'id')->where(function ($query) use ($activeShopId) {
+                    // The supplier must be linked to the active shop through the
+                    // shop_supplier pivot (suppliers has no shop_id column).
+                    $query->whereExists(function ($q) use ($activeShopId) {
+                        $q->select(DB::raw(1))
+                            ->from('shop_supplier')
+                            ->whereColumn('shop_supplier.supplier_id', 'suppliers.id')
+                            ->where('shop_supplier.shop_id', $activeShopId);
+                    });
                 }),
             ],
             'order_date' => 'required|date',
@@ -283,11 +287,15 @@ class PurchaseController extends Controller
         $validated = $request->validate([
             'supplier_id' => [
                 'required',
-                Rule::exists('suppliers', 'id')->whereExists(function ($q) use ($purchase) {
-                    $q->select(DB::raw(1))
-                        ->from('shop_supplier')
-                        ->whereColumn('shop_supplier.supplier_id', 'suppliers.id')
-                        ->where('shop_supplier.shop_id', $purchase->shop_id);
+                Rule::exists('suppliers', 'id')->where(function ($query) use ($purchase) {
+                    // The supplier must be linked to the purchase's shop through the
+                    // shop_supplier pivot (suppliers has no shop_id column).
+                    $query->whereExists(function ($q) use ($purchase) {
+                        $q->select(DB::raw(1))
+                            ->from('shop_supplier')
+                            ->whereColumn('shop_supplier.supplier_id', 'suppliers.id')
+                            ->where('shop_supplier.shop_id', $purchase->shop_id);
+                    });
                 }),
             ],
             'order_date' => 'required|date',
