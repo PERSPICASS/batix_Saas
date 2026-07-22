@@ -59,6 +59,14 @@ export default function Welcome({ auth, appUrl, latestPosts = [], reviews = [], 
         return () => window.clearInterval(timer);
     }, []);
 
+    // Aggregate rating from the real, admin-approved reviews shown on the page.
+    // Only surfaced to search engines when there is at least one — an empty or
+    // fabricated AggregateRating is against Google's guidelines.
+    const reviewCount = reviews.length;
+    const averageRating = reviewCount > 0
+        ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 10) / 10
+        : 0;
+
     const canonicalUrl = localeLinks[locale];
     const ogImage = `${appUrl}${t.seo.ogImage}`;
     const ogLocale = locale === 'fr' ? 'fr_FR' : 'en_US';
@@ -103,6 +111,15 @@ export default function Welcome({ auth, appUrl, latestPosts = [], reviews = [], 
                     lowPrice: '0',
                     offerCount: '4',
                 },
+                ...(reviewCount > 0 && {
+                    aggregateRating: {
+                        '@type': 'AggregateRating',
+                        ratingValue: averageRating,
+                        reviewCount,
+                        bestRating: 5,
+                        worstRating: 1,
+                    },
+                }),
                 description: t.seo.description,
                 url: appUrl,
             },
