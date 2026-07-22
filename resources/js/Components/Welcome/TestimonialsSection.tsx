@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Star, Quote } from 'lucide-react';
+import { Star, Quote, ThumbsUp } from 'lucide-react';
 import { fadeUp, stagger } from '../../types/data';
 import type { Locale } from '../../types/types';
 
@@ -9,6 +9,7 @@ export interface Testimonial {
     author_company: string | null;
     rating: number;
     comment: string;
+    would_recommend: boolean;
 }
 
 interface TestimonialsSectionProps {
@@ -67,6 +68,12 @@ export default function TestimonialsSection({ locale, reviews }: TestimonialsSec
                                 <p className="font-semibold text-slate-900">{r.author_name}</p>
                                 {r.author_company && (
                                     <p className="text-sm text-slate-500">{r.author_company}</p>
+                                )}
+                                {r.would_recommend && (
+                                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                                        <ThumbsUp className="size-3.5" />
+                                        {isFr ? 'Recommande BATIX PRO' : 'Recommends BATIX PRO'}
+                                    </span>
                                 )}
                             </figcaption>
                         </motion.figure>

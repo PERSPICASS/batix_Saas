@@ -46,6 +46,7 @@ class WelcomeController extends Controller
                 'author_company' => $r->author_company,
                 'rating' => $r->rating,
                 'comment' => $r->comment,
+                'would_recommend' => $r->would_recommend,
             ]);
 
         return Inertia::render('Welcome', [
