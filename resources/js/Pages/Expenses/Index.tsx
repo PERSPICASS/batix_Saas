@@ -71,6 +71,106 @@ interface Props extends PageProps {
     filters: { search?: string; category?: string; payment_method?: string; date_from?: string; date_to?: string };
 }
 
+type ExpenseFormData = {
+    title: string;
+    amount: string;
+    category: string;
+    expense_date: string;
+    payment_method: string;
+    reference: string;
+    notes: string;
+    receipt: File | null;
+};
+
+/**
+ * Defined at module scope, NOT inside ExpensesIndex. If it lived in the parent's
+ * body, every keystroke (which calls setForm) would give it a new function
+ * identity, so React would unmount and remount the whole form — every input
+ * losing focus after each character typed.
+ */
+function ExpenseForm({
+    formData, setFormData, errors, onSubmit, onClose, isEdit, submitting,
+}: {
+    formData: ExpenseFormData;
+    setFormData: React.Dispatch<React.SetStateAction<ExpenseFormData>>;
+    errors: Record<string, string>;
+    onSubmit: (e: FormEvent) => void;
+    onClose: () => void;
+    isEdit: boolean;
+    submitting: boolean;
+}) {
+    const { t, locale } = useLocale();
+    const PAYMENT_METHODS = locale === 'fr' ? PAYMENT_METHODS_FR : PAYMENT_METHODS_EN;
+
+    return (
+        <form onSubmit={onSubmit} className="space-y-4">
+            <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.label}</label>
+                <input type="text" value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
+                    placeholder={t.expenses.form.labelPlaceholder}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
+                <InputError message={errors.title} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.amount}</label>
+                    <input type="number" min="0" step="0.01" value={formData.amount} onChange={e => setFormData(f => ({ ...f, amount: e.target.value }))}
+                        placeholder="0.00"
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
+                    <InputError message={errors.amount} />
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.date}</label>
+                    <input type="date" value={formData.expense_date} onChange={e => setFormData(f => ({ ...f, expense_date: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
+                    <InputError message={errors.expense_date} />
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.category}</label>
+                    <select value={formData.category} onChange={e => setFormData(f => ({ ...f, category: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none">
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <InputError message={errors.category} />
+                </div>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.paymentMethod}</label>
+                    <select value={formData.payment_method} onChange={e => setFormData(f => ({ ...f, payment_method: e.target.value }))}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none">
+                        <option value="">{t.expenses.form.paymentUnspecified}</option>
+                        {Object.entries(PAYMENT_METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                    <InputError message={errors.payment_method} />
+                </div>
+            </div>
+            <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.reference}</label>
+                <input type="text" value={formData.reference} onChange={e => setFormData(f => ({ ...f, reference: e.target.value }))}
+                    placeholder={t.expenses.form.referencePlaceholder}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
+                <InputError message={errors.reference} />
+            </div>
+            <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.notes}</label>
+                <textarea rows={2} value={formData.notes} onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))}
+                    placeholder={t.expenses.form.notesPlaceholder}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-amber-300 focus:outline-none" />
+                <InputError message={errors.notes} />
+            </div>
+            <div className="flex gap-3 pt-1">
+                <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
+                    {t.expenses.form.cancel}
+                </button>
+                <button type="submit" disabled={submitting} className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50">
+                    {submitting ? t.expenses.form.saving : t.expenses.form.save}
+                </button>
+            </div>
+        </form>
+    );
+}
+
 export default function ExpensesIndex({ expenses, totalAmount, monthTotal, currency, filters }: Props) {
     const route = useRoute();
     const { t, locale } = useLocale();
@@ -100,9 +200,9 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
         router.get(route('expenses.index'), {}, { preserveState: false });
     };
 
-    const emptyForm = {
+    const emptyForm: ExpenseFormData = {
         title: '', amount: '', category: 'Autre', expense_date: '',
-        payment_method: '', reference: '', notes: '', receipt: null as File | null,
+        payment_method: '', reference: '', notes: '', receipt: null,
     };
     const [createOpen, setCreateOpen] = useState(false);
     const [form, setForm] = useState({ ...emptyForm });
@@ -176,83 +276,6 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
             onFinish: () => setDeleting(false),
         });
     };
-
-    const ExpenseForm = ({
-        formData, setFormData, errors, onSubmit, onClose, isEdit,
-    }: {
-        formData: typeof emptyForm;
-        setFormData: React.Dispatch<React.SetStateAction<typeof emptyForm>>;
-        errors: Record<string, string>;
-        onSubmit: (e: FormEvent) => void;
-        onClose: () => void;
-        isEdit: boolean;
-    }) => (
-        <form onSubmit={onSubmit} className="space-y-4">
-            <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.label}</label>
-                <input type="text" value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
-                    placeholder={t.expenses.form.labelPlaceholder}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                <InputError message={errors.title} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.amount}</label>
-                    <input type="number" min="0" step="0.01" value={formData.amount} onChange={e => setFormData(f => ({ ...f, amount: e.target.value }))}
-                        placeholder="0.00"
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                    <InputError message={errors.amount} />
-                </div>
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.date}</label>
-                    <input type="date" value={formData.expense_date} onChange={e => setFormData(f => ({ ...f, expense_date: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                    <InputError message={errors.expense_date} />
-                </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.category}</label>
-                    <select value={formData.category} onChange={e => setFormData(f => ({ ...f, category: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none">
-                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <InputError message={errors.category} />
-                </div>
-                <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.paymentMethod}</label>
-                    <select value={formData.payment_method} onChange={e => setFormData(f => ({ ...f, payment_method: e.target.value }))}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none">
-                        <option value="">{t.expenses.form.paymentUnspecified}</option>
-                        {Object.entries(PAYMENT_METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-                    </select>
-                    <InputError message={errors.payment_method} />
-                </div>
-            </div>
-            <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.reference}</label>
-                <input type="text" value={formData.reference} onChange={e => setFormData(f => ({ ...f, reference: e.target.value }))}
-                    placeholder={t.expenses.form.referencePlaceholder}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none" />
-                <InputError message={errors.reference} />
-            </div>
-            <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{t.expenses.form.notes}</label>
-                <textarea rows={2} value={formData.notes} onChange={e => setFormData(f => ({ ...f, notes: e.target.value }))}
-                    placeholder={t.expenses.form.notesPlaceholder}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-amber-300 focus:outline-none" />
-                <InputError message={errors.notes} />
-            </div>
-            <div className="flex gap-3 pt-1">
-                <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-slate-300 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">
-                    {t.expenses.form.cancel}
-                </button>
-                <button type="submit" disabled={submitting} className="flex-1 rounded-xl bg-amber-300 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50">
-                    {submitting ? t.expenses.form.saving : t.expenses.form.save}
-                </button>
-            </div>
-        </form>
-    );
 
     return (
         <AuthenticatedLayout>
@@ -481,7 +504,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                                 <X className="size-5" />
                             </button>
                         </div>
-                        <ExpenseForm formData={form} setFormData={setForm} errors={formErrors} onSubmit={handleCreate} onClose={closeCreate} isEdit={false} />
+                        <ExpenseForm formData={form} setFormData={setForm} errors={formErrors} onSubmit={handleCreate} onClose={closeCreate} isEdit={false} submitting={submitting} />
                     </div>
                 </div>
             )}
@@ -510,7 +533,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                                 </a>
                             </div>
                         )}
-                        <ExpenseForm formData={editForm} setFormData={setEditForm} errors={editErrors} onSubmit={handleEdit} onClose={closeEdit} isEdit={true} />
+                        <ExpenseForm formData={editForm} setFormData={setEditForm} errors={editErrors} onSubmit={handleEdit} onClose={closeEdit} isEdit={true} submitting={submitting} />
                     </div>
                 </div>
             )}
