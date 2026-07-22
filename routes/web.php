@@ -242,6 +242,12 @@ Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactor
     Route::delete('/blog/{post}', [BlogAdminController::class, 'destroy'])->name('platform.blog.destroy');
     Route::post('/blog/{post}/toggle', [BlogAdminController::class, 'togglePublished'])->name('platform.blog.toggle');
 
+    // Reviews moderation
+    Route::get('/reviews', [\App\Http\Controllers\PlatformReviewController::class, 'index'])->name('platform.reviews.index');
+    Route::post('/reviews/{review}/approve', [\App\Http\Controllers\PlatformReviewController::class, 'approve'])->name('platform.reviews.approve');
+    Route::post('/reviews/{review}/reject', [\App\Http\Controllers\PlatformReviewController::class, 'reject'])->name('platform.reviews.reject');
+    Route::delete('/reviews/{review}', [\App\Http\Controllers\PlatformReviewController::class, 'destroy'])->name('platform.reviews.destroy');
+
     // Fixed Costs Management
     Route::get('/fixed-costs', [FixedCostController::class, 'index'])->name('platform.fixed-costs.index');
     Route::get('/fixed-costs/create', [FixedCostController::class, 'create'])->name('platform.fixed-costs.create');
@@ -258,6 +264,9 @@ Route::prefix('{code_user}')
         
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Avis client (noter le SaaS) — soumis via le bouton flottant / modal
+    Route::post('/avis', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
 
     // Routes pour les boutiques (avec vérification des limites d'abonnement)
     Route::post('boutiques', [ShopController::class, 'store'])

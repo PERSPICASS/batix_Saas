@@ -35,6 +35,7 @@ import {
     ShoppingCart,
     Settings,
     Shield,
+    Star,
     Store,
     Truck,
     User,
@@ -49,6 +50,7 @@ import ToastContainer from '@/Components/ToastContainer';
 import OfflineBanner from '@/Components/OfflineBanner';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import AiChatWidget from '@/Components/AiChatWidget';
+import ReviewModal, { type MyReview } from '@/Components/ReviewModal';
 import { useLocale } from '@/contexts/LocaleContext';
 
 type ThemePreference = 'light' | 'dark' | 'system';
@@ -79,6 +81,8 @@ export default function Authenticated({
         : null;
     const showExpiryBanner = daysUntilExpiry !== null && daysUntilExpiry <= 7 && user?.role === 'super_admin';
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [reviewOpen, setReviewOpen] = useState(false);
+    const myReview = (page.props.myReview as MyReview | null) ?? null;
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
     const isPlatformAdmin = user?.role === 'admin_platforme';
@@ -262,6 +266,13 @@ export default function Authenticated({
                 href: route('platform.blog.index'),
                 active: route().current('platform.blog.*'),
                 icon: BookOpen,
+                module: null,
+            },
+            {
+                label: t.nav.platformReviews,
+                href: route('platform.reviews.index'),
+                active: route().current('platform.reviews.*'),
+                icon: Star,
                 module: null,
             },
         ] : [
@@ -859,6 +870,21 @@ export default function Authenticated({
                         codeUser={routeParams.code_user ?? ''}
                         hasAccess={subscription?.has_ai_assistant ?? false}
                     />
+                )}
+                {!isPlatformAdmin && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setReviewOpen(true)}
+                            title={t.nav.reviews}
+                            aria-label={t.nav.reviews}
+                            className="fixed bottom-24 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-amber-200"
+                        >
+                            <Star className="size-5" />
+                            <span className="hidden sm:inline">{t.nav.reviews}</span>
+                        </button>
+                        <ReviewModal show={reviewOpen} onClose={() => setReviewOpen(false)} review={myReview} />
+                    </>
                 )}
             </div>
         </div>

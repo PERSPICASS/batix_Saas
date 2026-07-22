@@ -14,6 +14,7 @@ import FeaturesTeaser from '@/Components/Welcome/FeaturesTeaser';
 import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
 import HeroSection from '@/Components/Welcome/HeroSection';
 import TrustSection from '@/Components/Welcome/TrustSection';
+import TestimonialsSection, { type Testimonial } from '@/Components/Welcome/TestimonialsSection';
 
 interface BlogPost {
     id: number;
@@ -31,11 +32,12 @@ interface BlogPost {
 interface WelcomeProps extends PageProps {
     appUrl: string;
     latestPosts: BlogPost[];
+    reviews: Testimonial[];
     locale: Locale;
     localeLinks: Record<Locale, string>;
 }
 
-export default function Welcome({ auth, appUrl, latestPosts = [], locale, localeLinks }: WelcomeProps) {
+export default function Welcome({ auth, appUrl, latestPosts = [], reviews = [], locale, localeLinks }: WelcomeProps) {
     const [activeHeroSlide, setActiveHeroSlide] = useState(0);
     const getDashboardUrl = useDashboardUrl(auth);
 
@@ -188,6 +190,8 @@ export default function Welcome({ auth, appUrl, latestPosts = [], locale, locale
                 />
 
                
+
+                <TestimonialsSection locale={locale} reviews={reviews} />
 
                 <BlogSection
                     locale={locale}

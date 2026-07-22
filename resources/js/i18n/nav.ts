@@ -34,6 +34,8 @@ export const nav = {
         mrr: 'MRR & Revenus',
         blog: 'Blog',
         charges: 'Charges fixes',
+        platformReviews: 'Avis clients',
+        reviews: 'Mon avis',
     },
     en: {
         dashboard: 'Dashboard',
@@ -70,5 +72,7 @@ export const nav = {
         mrr: 'MRR & Revenue',
         blog: 'Blog',
         charges: 'Fixed Charges',
+        platformReviews: 'Customer reviews',
+        reviews: 'My review',
     },
 } as const;

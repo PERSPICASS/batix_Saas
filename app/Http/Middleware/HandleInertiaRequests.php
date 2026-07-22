@@ -148,6 +148,20 @@ class HandleInertiaRequests extends Middleware
                 'default_tax_rate' => $shop->default_tax_rate,
                 'invoice_prefix'   => $shop->invoice_prefix,
             ] : null,
+            // Powers the floating "leave a review" button available across the
+            // client space. null for platform admins (they moderate, not review).
+            'myReview' => function () use ($user) {
+                if ($user->role === 'admin_platforme') {
+                    return null;
+                }
+                $review = \App\Models\Review::where('user_id', $user->id)->first();
+                return $review ? [
+                    'rating' => $review->rating,
+                    'comment' => $review->comment,
+                    'would_recommend' => $review->would_recommend,
+                    'status' => $review->status,
+                ] : null;
+            },
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error'   => fn () => $request->session()->get('error'),

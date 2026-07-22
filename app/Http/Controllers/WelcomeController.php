@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\Review;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -32,6 +33,21 @@ class WelcomeController extends Controller
                 'published_at' => $post->published_at?->toDateString(),
             ]);
 
+        // Real, admin-approved customer reviews — these replace the fabricated
+        // testimonials that were removed. Nothing shows until an admin approves one.
+        $reviews = Review::approved()
+            ->where('would_recommend', true)
+            ->orderByDesc('approved_at')
+            ->limit(9)
+            ->get()
+            ->map(fn (Review $r) => [
+                'id' => $r->id,
+                'author_name' => $r->author_name,
+                'author_company' => $r->author_company,
+                'rating' => $r->rating,
+                'comment' => $r->comment,
+            ]);
+
         return Inertia::render('Welcome', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
@@ -39,6 +55,7 @@ class WelcomeController extends Controller
             'phpVersion' => PHP_VERSION,
             'appUrl' => rtrim(config('app.url'), '/'),
             'latestPosts' => $latestPosts,
+            'reviews' => $reviews,
             'localeLinks' => [
                 'fr' => route('welcome'),
                 'en' => route('en.welcome'),
