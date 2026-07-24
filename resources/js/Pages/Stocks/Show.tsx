@@ -4,6 +4,7 @@ import { ArrowLeft, Package, Calendar, User, MapPin, FileText } from 'lucide-rea
 import { useRoute } from '@/utils/route';
 import ProductImage from '@/Components/ProductImage';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -42,6 +43,7 @@ interface Props {
 export default function StocksShow({ movement }: Props) {
     const { t } = useLocale();
     const route = useRoute();
+    const { formatCurrency } = useShopSettings();
 
     const getTypeBadge = (type: string) => {
         const types: Record<string, { label: string; bg: string; text: string }> = {
@@ -166,11 +168,7 @@ export default function StocksShow({ movement }: Props) {
                             <div className="flex justify-between">
                                 <span className="text-slate-500 dark:text-slate-400">Coût unitaire</span>
                                 <span className="font-medium text-slate-700 dark:text-slate-200">
-                                    {parseFloat(movement.unit_cost).toLocaleString('fr-FR', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}{' '}
-                                    DH
+                                    {formatCurrency(parseFloat(movement.unit_cost))}
                                 </span>
                             </div>
                         )}
@@ -179,14 +177,7 @@ export default function StocksShow({ movement }: Props) {
                             <div className="flex justify-between border-t border-white/10 pt-4">
                                 <span className="text-slate-500 dark:text-slate-400">Valeur totale</span>
                                 <span className="text-lg font-bold text-amber-300">
-                                    {(Math.abs(movement.quantity) * parseFloat(movement.unit_cost)).toLocaleString(
-                                        'fr-FR',
-                                        {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        }
-                                    )}{' '}
-                                    DH
+                                    {formatCurrency(Math.abs(movement.quantity) * parseFloat(movement.unit_cost))}
                                 </span>
                             </div>
                         )}

@@ -15,6 +15,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRoute } from '@/utils/route';
 import { PageProps } from '@/types';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useShopSettings } from '@/Components/Currency';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ interface PaymentModalProps {
 
 function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
     const { t } = useLocale();
+    const { formatCurrency } = useShopSettings();
     const [amount, setAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [notes, setNotes] = useState('');
@@ -148,19 +150,19 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                         <div>
                             <p className="text-xs text-slate-500 dark:text-slate-400">{t.credits.form.totalSale}</p>
                             <p className="font-semibold text-slate-900 dark:text-white">
-                                {Number(sale.total).toLocaleString('fr-FR')} FCFA
+                                {formatCurrency(Number(sale.total))}
                             </p>
                         </div>
                         <div>
                             <p className="text-xs text-slate-500 dark:text-slate-400">{t.credits.form.alreadyPaid}</p>
                             <p className="font-semibold text-emerald-400">
-                                {Number(sale.amount_paid).toLocaleString('fr-FR')} FCFA
+                                {formatCurrency(Number(sale.amount_paid))}
                             </p>
                         </div>
                         <div className="col-span-2">
                             <p className="text-xs text-slate-500 dark:text-slate-400">{t.credits.form.remainingToPay}</p>
                             <p className="text-xl font-bold text-amber-400">
-                                {Number(sale.remaining_amount).toLocaleString('fr-FR')} FCFA
+                                {formatCurrency(Number(sale.remaining_amount))}
                             </p>
                         </div>
                     </div>
@@ -192,7 +194,7 @@ function PaymentModal({ sale, onClose, routeFn }: PaymentModalProps) {
                             onClick={() => setAmount(maxAmount.toString())}
                             className="mt-1 text-xs text-amber-400 hover:text-amber-300 transition-colors"
                         >
-                            {t.credits.buttons.payFully} ({maxAmount.toLocaleString('fr-FR')} FCFA)
+                            {t.credits.buttons.payFully} ({formatCurrency(maxAmount)})
                         </button>
                     </div>
 
@@ -432,6 +434,7 @@ function DueBadge({ sale }: { sale: CreditSale }) {
 
 export default function Credits({ credits, shops = [], kpis, filters = {}, auth }: Props) {
     const { t } = useLocale();
+    const { formatCurrency, currencySymbol } = useShopSettings();
     const buildRoute = useRoute();
     const isFirstRender = useRef(true);
     const safeFilters: Record<string, unknown> =
@@ -540,14 +543,14 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                     <KpiCard
                         label={t.credits.kpis.totalRemaining}
-                        value={`${safeKpis.total_remaining.toLocaleString('fr-FR')} FCFA`}
+                        value={formatCurrency(safeKpis.total_remaining)}
                         sub={`${safeKpis.total_count} vente${safeKpis.total_count !== 1 ? 's' : ''}`}
                         color="amber"
                         icon={CreditCard}
                     />
                     <KpiCard
                         label={t.credits.kpis.overdue}
-                        value={`${safeKpis.overdue_remaining.toLocaleString('fr-FR')} FCFA`}
+                        value={formatCurrency(safeKpis.overdue_remaining)}
                         sub={`${safeKpis.overdue_count} vente${safeKpis.overdue_count !== 1 ? 's' : ''}`}
                         color="red"
                         icon={AlertTriangle}
@@ -743,13 +746,13 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                             {/* Total */}
                                             <td className="px-4 py-3 text-right text-white font-medium whitespace-nowrap">
                                                 {Number(sale.total).toLocaleString('fr-FR')}
-                                                <span className="ml-1 text-xs text-slate-500">FCFA</span>
+                                                <span className="ml-1 text-xs text-slate-500">{currencySymbol}</span>
                                             </td>
 
                                             {/* Payé */}
                                             <td className="px-4 py-3 text-right text-emerald-400 whitespace-nowrap">
                                                 {Number(sale.amount_paid).toLocaleString('fr-FR')}
-                                                <span className="ml-1 text-xs text-emerald-600">FCFA</span>
+                                                <span className="ml-1 text-xs text-emerald-600">{currencySymbol}</span>
                                             </td>
 
                                             {/* Reste */}
@@ -757,7 +760,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                                                 <span className={`font-semibold ${sale.overdue ? 'text-red-400' : 'text-amber-400'}`}>
                                                     {Number(sale.remaining_amount).toLocaleString('fr-FR')}
                                                 </span>
-                                                <span className="ml-1 text-xs text-slate-500">FCFA</span>
+                                                <span className="ml-1 text-xs text-slate-500">{currencySymbol}</span>
                                             </td>
 
                                             {/* Échéance */}

@@ -5,6 +5,7 @@ import { FormEventHandler, KeyboardEvent as ReactKeyboardEvent, useEffect, useMe
 import Modal from '@/Components/Modal';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -60,6 +61,7 @@ const emptyItem = (): PreorderItem => ({
 
 export default function Create({ shops, customers, products }: Props) {
     const { t } = useLocale();
+    const { formatCurrency } = useShopSettings();
 
     const [items, setItems] = useState<PreorderItem[]>([emptyItem()]);
     const [showProductModal, setShowProductModal] = useState(false);
@@ -320,8 +322,8 @@ export default function Create({ shops, customers, products }: Props) {
 
                                         {lineTotal > 0 && (
                                             <div className="flex justify-between border-t border-white/10 pt-2 text-xs text-slate-400">
-                                                <span>{t.preorders.form.lineTotal} <span className="text-slate-700 dark:text-slate-200 font-medium">{lineTotal.toFixed(2)} FCFA</span></span>
-                                                <span>{t.preorders.form.lineRemaining} <span className="text-amber-300 font-medium">{lineRemaining.toFixed(2)} FCFA</span></span>
+                                                <span>{t.preorders.form.lineTotal} <span className="text-slate-700 dark:text-slate-200 font-medium">{formatCurrency(lineTotal)}</span></span>
+                                                <span>{t.preorders.form.lineRemaining} <span className="text-amber-300 font-medium">{formatCurrency(lineRemaining)}</span></span>
                                             </div>
                                         )}
                                     </div>
@@ -334,11 +336,11 @@ export default function Create({ shops, customers, products }: Props) {
                             <div className="mt-4 border-t border-white/10 pt-4 space-y-1">
                                 <div className="flex justify-between text-sm text-slate-300">
                                     <span>{t.preorders.form.totalAmount(items.length)}</span>
-                                    <span className="font-semibold text-slate-900 dark:text-white">{totalAmount.toFixed(2)} FCFA</span>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{formatCurrency(totalAmount)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm text-slate-300">
                                     <span>{t.preorders.form.remaining}</span>
-                                    <span className="font-semibold text-amber-300">{(totalAmount - totalDeposit).toFixed(2)} FCFA</span>
+                                    <span className="font-semibold text-amber-300">{formatCurrency(totalAmount - totalDeposit)}</span>
                                 </div>
                             </div>
                         )}

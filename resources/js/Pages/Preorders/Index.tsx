@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Search, Filter, Calendar, Package, User, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Preorder {
     id: number;
@@ -38,6 +39,7 @@ interface Props {
 
 export default function Index({ preorders, shops, filters }: Props) {
     const { t, locale } = useLocale();
+    const { currencySymbol } = useShopSettings();
     const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-GB';
     const [search, setSearch] = useState(filters.search || '');
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
@@ -233,13 +235,13 @@ export default function Index({ preorders, shops, filters }: Props) {
                                                         {new Date(preorder.expected_delivery_date).toLocaleDateString(dateLocale)}
                                                     </div>
                                                     <div className="text-right">
-                                                        {t.preorders.index.total}: <span className="text-slate-900 dark:text-white font-medium">{number_format(total, 0, ',', ' ')} FCFA</span>
+                                                        {t.preorders.index.total}: <span className="text-slate-900 dark:text-white font-medium">{number_format(total, 0, ',', ' ')} {currencySymbol}</span>
                                                     </div>
                                                 </div>
 
                                                 {balance > 0 && (
                                                     <div className="mt-2 text-xs text-amber-300">
-                                                        {t.preorders.index.remaining}: {number_format(balance, 0, ',', ' ')} FCFA
+                                                        {t.preorders.index.remaining}: {number_format(balance, 0, ',', ' ')} {currencySymbol}
                                                     </div>
                                                 )}
                                             </div>

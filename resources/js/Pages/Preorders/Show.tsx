@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Package, User, DollarSign, CheckCircle } from 'luc
 import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Preorder {
     id: number;
@@ -27,6 +28,7 @@ interface Props {
 
 export default function Show({ preorder }: Props) {
     const { t, locale } = useLocale();
+    const { formatCurrency } = useShopSettings();
     const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-GB';
     const [showStatusModal, setShowStatusModal] = useState(false);
     const { data, setData, patch, processing, errors } = useForm({
@@ -147,7 +149,7 @@ export default function Show({ preorder }: Props) {
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-slate-500 dark:text-slate-400">{t.preorders.show.unitPrice}</span>
-                            <span className="text-sm text-slate-900 dark:text-white font-medium">{unitPrice.toFixed(2)} FCFA</span>
+                            <span className="text-sm text-slate-900 dark:text-white font-medium">{formatCurrency(unitPrice)}</span>
                         </div>
                     </div>
                 </div>
@@ -183,16 +185,16 @@ export default function Show({ preorder }: Props) {
                     <div className="space-y-3 border-b border-gray-200 dark:border-white/10 pb-4 mb-4">
                         <div className="flex justify-between">
                             <span className="text-sm text-slate-500 dark:text-slate-400">{t.preorders.show.totalAmount}</span>
-                            <span className="text-sm text-slate-900 dark:text-white font-semibold">{total.toFixed(2)} FCFA</span>
+                            <span className="text-sm text-slate-900 dark:text-white font-semibold">{formatCurrency(total)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-sm text-slate-500 dark:text-slate-400">{t.preorders.show.depositPaid}</span>
-                            <span className="text-sm text-slate-900 dark:text-white font-semibold">{depositAmount.toFixed(2)} FCFA</span>
+                            <span className="text-sm text-slate-900 dark:text-white font-semibold">{formatCurrency(depositAmount)}</span>
                         </div>
                         <div className="flex justify-between text-lg">
                             <span className="text-slate-300 font-semibold">{t.preorders.show.remaining}</span>
                             <span className={`font-bold ${remaining > 0 ? 'text-amber-300' : 'text-green-300'}`}>
-                                {remaining.toFixed(2)} FCFA
+                                {formatCurrency(remaining)}
                             </span>
                         </div>
                     </div>

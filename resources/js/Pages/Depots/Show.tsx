@@ -9,6 +9,7 @@ import ProductImage from '@/Components/ProductImage';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import { useShopSettings } from '@/Components/Currency';
 
 interface DepotProductItem {
     id: number;
@@ -108,6 +109,7 @@ interface TransferForm {
 
 export default function Show({ depot, products, recentTransfers, stats, otherDepots, filters, depotProductsForTransfer }: Props) {
     const { t } = useLocale();
+    const { formatCurrency, currencySymbol } = useShopSettings();
     const buildRoute = useRoute();
     const page = usePage<any>();
     const shops = page.props.shops as Array<{ id: number; name: string; slug: string }> || [];
@@ -378,7 +380,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                             Valeur du stock
                         </div>
                         <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                            {Number(stats.total_value).toLocaleString('fr-FR')} <span className="text-lg">FCFA</span>
+                            {Number(stats.total_value).toLocaleString('fr-FR')} <span className="text-lg">{currencySymbol}</span>
                         </p>
                     </div>
                 </div>
@@ -486,7 +488,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                 {product.product_sku && <span>SKU: {product.product_sku}</span>}
                                                 {product.product_category && <span>• {product.product_category}</span>}
                                                 {product.purchase_price > 0 && (
-                                                    <span className="text-emerald-600 dark:text-emerald-400">• PA : {Number(product.purchase_price).toLocaleString('fr-FR')} FCFA</span>
+                                                    <span className="text-emerald-600 dark:text-emerald-400">• PA : {Number(product.purchase_price).toLocaleString('fr-FR')} {currencySymbol}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -655,7 +657,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 </div>
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Prix d'achat (FCFA)</label>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Prix d'achat ({currencySymbol})</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -866,7 +868,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                         />
                                                         {depotProd && (
                                                             <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                                PA : {Number(depotProd.purchase_price).toLocaleString('fr-FR')} FCFA
+                                                                PA : {Number(depotProd.purchase_price).toLocaleString('fr-FR')} {currencySymbol}
                                                             </span>
                                                         )}
                                                     </div>
@@ -878,7 +880,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                                 const marginColor = margin > 0 ? 'text-emerald-600 dark:text-emerald-400' : margin < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500';
                                                                 return (
                                                                     <span className={`text-xs font-medium ${marginColor}`}>
-                                                                        Marge : {Number(margin).toLocaleString('fr-FR')} FCFA ({marginPercent}%)
+                                                                        Marge : {Number(margin).toLocaleString('fr-FR')} {currencySymbol} ({marginPercent}%)
                                                                     </span>
                                                                 );
                                                             })()}
@@ -990,7 +992,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 </div>
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Prix d'achat (FCFA)</label>
+                                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Prix d'achat ({currencySymbol})</label>
                                 <input
                                     type="number"
                                     min="0"

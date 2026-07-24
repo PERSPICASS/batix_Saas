@@ -5,6 +5,7 @@ import { useRoute } from '@/utils/route';
 import { Search, X, ChevronDown } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -27,6 +28,7 @@ interface Props {
 export default function StocksCreate({ shops, products }: Props) {
     const { t } = useLocale();
     const route = useRoute();
+    const { currencySymbol } = useShopSettings();
 
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
@@ -266,7 +268,7 @@ export default function StocksCreate({ shops, products }: Props) {
 
                         <div>
                             <label htmlFor="unit_cost" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                Coût unitaire (DH)
+                                Coût unitaire ({currencySymbol})
                             </label>
                             <input
                                 type="number"

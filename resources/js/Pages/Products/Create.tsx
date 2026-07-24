@@ -5,6 +5,7 @@ import { RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -33,6 +34,7 @@ interface Props {
 export default function ProductsCreate({ shops, categories, subcategories }: Props) {
     const { t } = useLocale();
     const route = useRoute();
+    const { formatCurrency } = useShopSettings();
 
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
@@ -307,7 +309,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                                 <p className={`font-medium ${
                                     profitMargin.percentage >= 20 ? 'text-green-400' : profitMargin.percentage >= 10 ? 'text-amber-400' : 'text-red-400'
                                 }`}>
-                                    {profitMargin.amount.toFixed(2)} FCFA ({profitMargin.percentage.toFixed(1)}%)
+                                    {formatCurrency(profitMargin.amount)} ({profitMargin.percentage.toFixed(1)}%)
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                     {profitMargin.percentage >= 20

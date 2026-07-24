@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { Plus, Minus, Trash2, CreditCard, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
-import Currency from '@/Components/Currency';
+import Currency, { useShopSettings } from '@/Components/Currency';
 import ProductImage from '@/Components/ProductImage';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -85,10 +85,11 @@ interface CartItem {
 export default function SalesCreate({ shops, customers, products, preorder }: Props) {
     const { t } = useLocale();
     const route = useRoute();
+    const { formatCurrency } = useShopSettings();
 
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
-    
+
     const [cart, setCart] = useState<CartItem[]>([]);
     const [justQueued, setJustQueued] = useState(false);
     const {
@@ -111,7 +112,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
         discount_amount: '0',
         credit_due_date: '',
         notes: preorder
-            ? `Vente issue de la pré-commande #${preorder.id}${preorder.deposit_amount > 0 ? ` — acompte déjà versé : ${preorder.deposit_amount.toLocaleString('fr-FR')} FCFA` : ''}`
+            ? `Vente issue de la pré-commande #${preorder.id}${preorder.deposit_amount > 0 ? ` — acompte déjà versé : ${formatCurrency(preorder.deposit_amount)}` : ''}`
             : '',
         items: [] as any[],
         preorder_id: preorder?.id.toString() || '',
