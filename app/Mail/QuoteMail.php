@@ -29,13 +29,29 @@ class QuoteMail extends Mailable
         );
     }
 
+    /**
+     * `markdown:` and not `view:`: emails/quote.blade.php is built out of
+     * @component('mail::message'). It is Illuminate\Mail\Markdown that registers the
+     * `mail` view namespace as it renders (Markdown::render → replaceNamespace), so
+     * declaring the template as a plain view renders the Blade straight through the
+     * view factory, Markdown never runs, and the mail:: components resolve against a
+     * namespace that was never defined — "No hint path defined for [mail]".
+     *
+     * MailServiceProvider only registers that namespace itself when runningInConsole(),
+     * which is why this can look fine from artisan and still fail on every HTTP send.
+     */
     public function content(): Content
     {
         return new Content(
-            view: 'emails.quote',
+            markdown: 'emails.quote',
             with: [
                 'quote' => $this->quote,
                 'shopName' => $this->quote->shop->name,
+                // La devise de la boutique du devis, pas celle de l'expéditeur :
+                // format_currency()/get_currency_symbol() sans argument passent par
+                // auth()->user(), qui est nul depuis une queue et pointerait sur la
+                // mauvaise boutique en multi-boutiques.
+                'currencySymbol' => get_currency_symbol($this->quote->shop->currency),
             ],
         );
     }

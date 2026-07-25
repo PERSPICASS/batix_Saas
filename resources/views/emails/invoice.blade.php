@@ -9,9 +9,9 @@
 
 | {{ __('mail.invoice.description') }} | {{ __('mail.invoice.amount') }} |
 |-----------|---------|
-| {{ __('mail.invoice.subtotal') }} | {{ number_format($invoice->subtotal, 2, ',', ' ') }} € |
-| {{ __('mail.invoice.tax') }} | {{ number_format($invoice->tax_amount, 2, ',', ' ') }} € |
-| **{{ __('mail.invoice.total') }}** | **{{ number_format($invoice->total, 2, ',', ' ') }} €** |
+| {{ __('mail.invoice.subtotal') }} | {{ number_format($invoice->subtotal, 2, ',', ' ') }} {{ $currencySymbol }} |
+| {{ __('mail.invoice.tax') }} | {{ number_format($invoice->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }} |
+| **{{ __('mail.invoice.total') }}** | **{{ number_format($invoice->total, 2, ',', ' ') }} {{ $currencySymbol }}** |
 
 @if($invoice->notes)
 ## {{ __('mail.invoice.notes_title') }}

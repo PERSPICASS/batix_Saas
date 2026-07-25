@@ -29,13 +29,19 @@ class InvoiceMail extends Mailable
         );
     }
 
+    /**
+     * `markdown:` and not `view:` — see the note on QuoteMail::content(): the template
+     * uses @component('mail::message'), and only Markdown rendering registers the
+     * `mail` view namespace.
+     */
     public function content(): Content
     {
         return new Content(
-            view: 'emails.invoice',
+            markdown: 'emails.invoice',
             with: [
                 'invoice' => $this->invoice,
                 'shopName' => $this->invoice->shop->name,
+                'currencySymbol' => get_currency_symbol($this->invoice->shop->currency),
             ],
         );
     }

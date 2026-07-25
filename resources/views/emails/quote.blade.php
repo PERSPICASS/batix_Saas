@@ -9,9 +9,9 @@
 
 | {{ __('mail.quote.description') }} | {{ __('mail.quote.amount') }} |
 |-----------|---------|
-| {{ __('mail.quote.subtotal') }} | {{ number_format($quote->subtotal, 2, ',', ' ') }} € |
-| {{ __('mail.quote.tax') }} | {{ number_format($quote->tax_amount, 2, ',', ' ') }} € |
-| **{{ __('mail.quote.total') }}** | **{{ number_format($quote->total, 2, ',', ' ') }} €** |
+| {{ __('mail.quote.subtotal') }} | {{ number_format($quote->subtotal, 2, ',', ' ') }} {{ $currencySymbol }} |
+| {{ __('mail.quote.tax') }} | {{ number_format($quote->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }} |
+| **{{ __('mail.quote.total') }}** | **{{ number_format($quote->total, 2, ',', ' ') }} {{ $currencySymbol }}** |
 
 ## {{ __('mail.quote.validity_title') }}
 
