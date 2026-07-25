@@ -48,26 +48,63 @@ class Shop extends Model
     }
 
     /**
+     * La boutique dont les réglages font référence pour ce compte.
+     *
+     * Celle de rattachement de l'utilisateur d'abord : plusieurs boutiques peuvent
+     * diverger, et celle où il travaille est la réponse qui a du sens. Sinon la dernière
+     * créée. Null pour un compte tout neuf, qui n'a rien à hériter.
+     */
+    public static function settingsSourceFor(User $user): ?self
+    {
+        if ($user->shop_id && $source = static::find($user->shop_id)) {
+            return $source;
+        }
+
+        return $user->accessibleShopsQuery()->orderByDesc('id')->first();
+    }
+
+    /**
      * La devise qu'une nouvelle boutique doit adopter.
      *
-     * Celle que le super_admin a paramétrée dans les Réglages, pas le défaut de la base.
-     * `shops.currency` vaut `MAD` par défaut en base : une boutique supplémentaire créée
-     * sans devise explicite repartait donc sur le Maroc, quel que soit le pays du compte
-     * et quoi qu'ait réglé son propriétaire.
-     *
-     * La boutique de rattachement de l'utilisateur fait foi ; à défaut, la dernière créée
-     * du compte. Un compte tout neuf n'a rien à hériter — d'où USD en dernier recours,
-     * ajustable ensuite dans les Réglages.
+     * `shops.currency` vaut `MAD` par défaut en base : une boutique créée sans devise
+     * explicite repartait sur le Maroc, quel que soit le pays du compte et quoi qu'ait
+     * réglé son propriétaire. USD n'est le dernier recours que pour un compte tout neuf.
      */
     public static function defaultCurrencyFor(User $user): string
     {
-        $own = $user->shop_id
-            ? static::whereKey($user->shop_id)->value('currency')
-            : null;
+        return static::settingsSourceFor($user)?->currency ?: 'USD';
+    }
 
-        return $own
-            ?: $user->accessibleShopsQuery()->orderByDesc('id')->value('currency')
-            ?: 'USD';
+    /**
+     * Les réglages d'entreprise qu'une nouvelle boutique reprend du compte.
+     *
+     * Ce sont ceux qui relèvent de la société, pas de l'établissement : la devise, le
+     * régime de taxe, l'identifiant fiscal, les conventions de facturation. Le formulaire
+     * de création n'en demande aucun — ils retombaient donc sur les défauts de la base, ou
+     * restaient vides.
+     *
+     * Ce qui identifie l'établissement — nom, adresse, ville, téléphone — n'est
+     * délibérément PAS repris : une succursale a les siens.
+     *
+     * Le logo non plus, et c'est un choix : les boutiques partageraient alors le même
+     * fichier, or SettingsController supprime l'ancien fichier quand on en téléverse un
+     * nouveau. La première boutique à changer de logo effacerait celui des autres.
+     *
+     * @return array<string, mixed> Réglages du compte, à compléter par ce que le
+     *                              formulaire a réellement renseigné.
+     */
+    public static function inheritedSettingsFor(User $user): array
+    {
+        $source = static::settingsSourceFor($user);
+
+        return [
+            'currency' => $source?->currency ?: 'USD',
+            'default_tax_rate' => $source?->default_tax_rate,
+            'tax_id' => $source?->tax_id,
+            'invoice_prefix' => $source?->invoice_prefix,
+            'invoice_footer' => $source?->invoice_footer,
+            'website' => $source?->website,
+        ];
     }
 
     public function user(): BelongsTo

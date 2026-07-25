@@ -66,9 +66,16 @@ class ShopController extends Controller
         // first one created during onboarding.
         $validated['country'] = $user->country ?: 'France';
 
-        // Et sa devise du compte : le formulaire n'en envoie aucune, si bien que la
-        // colonne retombait sur son défaut de base — MAD — pour toute nouvelle boutique.
-        $validated['currency'] = Shop::defaultCurrencyFor($user);
+        // Les réglages d'entreprise viennent du compte — devise, régime de taxe,
+        // conventions de facturation — parce que le formulaire n'en demande aucun. Ce que
+        // l'utilisateur a effectivement saisi l'emporte : on comble les vides, on
+        // n'écrase rien. D'où le filtre, une chaîne vide n'étant pas une réponse.
+        $submitted = array_filter(
+            $validated,
+            fn ($value) => $value !== null && $value !== ''
+        );
+
+        $validated = array_merge(Shop::inheritedSettingsFor($user), $submitted);
 
         $shop = $user->accessibleShopsQuery()->create($validated);
 
