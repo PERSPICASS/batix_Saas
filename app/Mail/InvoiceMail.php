@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class InvoiceMail extends Mailable
 {
@@ -46,10 +47,20 @@ class InvoiceMail extends Mailable
         );
     }
 
+    /**
+     * Même condition que sur QuoteMail : rien ne génère `invoices/{id}.pdf`, et attacher
+     * un fichier absent faisait échouer l'envoi entier.
+     */
     public function attachments(): array
     {
+        $path = "invoices/{$this->invoice->id}.pdf";
+
+        if (!Storage::exists($path)) {
+            return [];
+        }
+
         return [
-            Attachment::fromStorage("invoices/{$this->invoice->id}.pdf")
+            Attachment::fromStorage($path)
                 ->as("Facture-{$this->invoice->invoice_number}.pdf")
                 ->withMime('application/pdf'),
         ];

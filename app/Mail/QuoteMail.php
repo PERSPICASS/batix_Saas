@@ -9,6 +9,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class QuoteMail extends Mailable
 {
@@ -56,10 +57,28 @@ class QuoteMail extends Mailable
         );
     }
 
+    /**
+     * Le PDF n'est joint que s'il existe.
+     *
+     * Rien dans le projet ne génère `quotes/{id}.pdf` — il n'y a aucune bibliothèque PDF,
+     * ni côté PHP ni côté JavaScript. Attacher inconditionnellement faisait donc échouer
+     * TOUT envoi : Attachment::fromStorage résout un fichier absent en null, et Symfony
+     * refuse un corps de pièce jointe nul. L'erreur survenait après le rendu du message,
+     * ce qu'un test sur render() ne peut pas voir.
+     *
+     * Le devis reste lisible dans le corps du mail. La condition disparaîtra le jour où
+     * une génération de PDF existera.
+     */
     public function attachments(): array
     {
+        $path = "quotes/{$this->quote->id}.pdf";
+
+        if (!Storage::exists($path)) {
+            return [];
+        }
+
         return [
-            Attachment::fromStorage("quotes/{$this->quote->id}.pdf")
+            Attachment::fromStorage($path)
                 ->as("Devis-{$this->quote->quote_number}.pdf")
                 ->withMime('application/pdf'),
         ];

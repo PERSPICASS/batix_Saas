@@ -10,6 +10,7 @@ use App\Models\Quote;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -75,6 +76,60 @@ class DocumentMailRenderTest extends TestCase
             'tax_amount' => 200,
             'total' => 1200,
         ]);
+    }
+
+    /**
+     * render() builds the body but never resolves attachments, which is exactly how the
+     * missing PDF slipped past the first round of tests: the body was fixed, the send
+     * still died on Attachment::fromStorage resolving an absent file to null. Going
+     * through the mailer with the array transport builds the whole Symfony message,
+     * attachments included.
+     */
+    public function test_a_quote_can_actually_be_sent(): void
+    {
+        config(['mail.default' => 'array']);
+
+        $quote = $this->quote($this->shop('EUR'));
+
+        Mail::to('client@example.com')->send(new QuoteMail($quote));
+
+        $this->assertCount(1, app('mailer')->getSymfonyTransport()->messages());
+    }
+
+    public function test_an_invoice_can_actually_be_sent(): void
+    {
+        config(['mail.default' => 'array']);
+
+        $invoice = $this->invoice($this->shop('EUR'));
+
+        Mail::to('client@example.com')->send(new InvoiceMail($invoice));
+
+        $this->assertCount(1, app('mailer')->getSymfonyTransport()->messages());
+    }
+
+    /**
+     * Nothing generates these PDFs today — there is no PDF library in the project at all.
+     * The attachment must therefore be conditional; when a file does appear, it is
+     * attached.
+     */
+    public function test_the_pdf_is_attached_when_one_exists(): void
+    {
+        config(['mail.default' => 'array']);
+
+        $quote = $this->quote($this->shop('EUR'));
+        Storage::put("quotes/{$quote->id}.pdf", '%PDF-1.4 fake');
+
+        $this->assertCount(1, (new QuoteMail($quote))->attachments());
+
+        Mail::to('client@example.com')->send(new QuoteMail($quote));
+        $this->assertCount(1, app('mailer')->getSymfonyTransport()->messages());
+    }
+
+    public function test_no_attachment_is_claimed_when_no_pdf_exists(): void
+    {
+        $quote = $this->quote($this->shop('EUR'));
+
+        $this->assertSame([], (new QuoteMail($quote))->attachments());
     }
 
     public function test_a_quote_mail_renders(): void
