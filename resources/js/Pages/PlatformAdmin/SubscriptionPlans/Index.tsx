@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { showToast } from '@/utils/toast';
 import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
@@ -55,7 +56,7 @@ export default function Index({ plans }: Props) {
 
     const confirmDelete = (plan: SubscriptionPlan) => {
         if (plan.subscriptions_count > 0) {
-            alert(t.platformSubscriptionPlans.index.cannotDeleteWithSubscriptions);
+            showToast('warning', t.platformSubscriptionPlans.index.cannotDeleteWithSubscriptions);
             return;
         }
         setPlanToDelete(plan);

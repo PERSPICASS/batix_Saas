@@ -18,11 +18,17 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
-            'status' => session('status'),
+            // `?expired=1` : le client renvoie ici quand la session a expiré en cours de
+            // navigation. Le message s'affiche sur la page d'arrivée, là où l'utilisateur
+            // se demande pourquoi il a été déconnecté — plutôt que dans un alert() qui
+            // bloquait l'onglet avant la redirection.
+            'status' => $request->boolean('expired')
+                ? 'Votre session a expiré pour des raisons de sécurité. Veuillez vous reconnecter.'
+                : session('status'),
         ]);
     }
 

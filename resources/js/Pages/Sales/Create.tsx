@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { showToast } from '@/utils/toast';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
 import { Plus, Minus, Trash2, CreditCard, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
@@ -241,7 +242,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
         e.preventDefault();
 
         if (cart.length === 0) {
-            alert(t.sales.form.addProductValidation);
+            showToast('warning', t.sales.form.addProductValidation);
             return;
         }
 

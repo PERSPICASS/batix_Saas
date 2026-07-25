@@ -2,6 +2,9 @@ export const permissions = {
     fr: {
         title: 'Permissions',
         selectUser: 'Sélectionner un utilisateur',
+        reset: 'Réinitialiser',
+        resetTitle: 'Réinitialiser les permissions',
+        resetConfirm: 'Rétablir les permissions de :name aux valeurs par défaut de son rôle ? Les réglages personnalisés seront perdus.',
         noUserSelected: 'Aucun utilisateur sélectionné',
         columns: {
             module: 'Module',
@@ -17,6 +20,9 @@ export const permissions = {
     en: {
         title: 'Permissions',
         selectUser: 'Select a user',
+        reset: 'Reset',
+        resetTitle: 'Reset permissions',
+        resetConfirm: "Restore :name's permissions to their role's defaults? Any custom settings will be lost.",
         noUserSelected: 'No user selected',
         columns: {
             module: 'Module',

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { showToast } from '@/utils/toast';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import React from 'react';
 import { useRoute } from '@/utils/route';
@@ -271,7 +272,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         })
         .catch(error => {
             console.error('Erreur lors de l\'import:', error);
-            alert('Erreur lors de l\'import : ' + error.message);
+            showToast('error', "Erreur lors de l'import : " + error.message);
             setIsImporting(false);
         });
     };

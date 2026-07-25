@@ -15,6 +15,7 @@ export const subcategories = {
             edit: 'Modifier',
             delete: 'Supprimer',
         },
+        deleteConfirm: 'Supprimer cette sous-catégorie ? Cette action est irréversible.',
         emptyMessage: 'Aucun {} trouvé'.replace('{}', 'sous-catégories'),
     },
     en: {
@@ -33,6 +34,7 @@ export const subcategories = {
             edit: 'Edit',
             delete: 'Delete',
         },
+        deleteConfirm: 'Delete this subcategory? This cannot be undone.',
         emptyMessage: 'No records found',
     },
 } as const;

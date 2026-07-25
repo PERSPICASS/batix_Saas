@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
@@ -31,10 +33,16 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
     const route = useRoute();
     const { t } = useLocale();
 
-    const handleDelete = (id: number) => {
-        if (confirm('Êtes-vous sûr de vouloir supprimer cette sous-catégorie ?')) {
-            router.delete(route('subcategories.destroy', { sous_category: id }));
-        }
+    const [toDelete, setToDelete] = useState<number | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const confirmDelete = () => {
+        if (toDelete === null) return;
+
+        setDeleting(true);
+        router.delete(route('subcategories.destroy', { sous_category: toDelete }), {
+            onFinish: () => { setDeleting(false); setToDelete(null); },
+        });
     };
 
     const columns = [
@@ -75,7 +83,7 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
                     </Link>
                     <TableActionButton
                         variant="danger"
-                        onClick={() => handleDelete(subcategory.id)}
+                        onClick={() => setToDelete(subcategory.id)}
                     >
                         <Trash2 className="size-3.5" /> {t.common.actions.delete}
                     </TableActionButton>
@@ -101,6 +109,16 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
                     emptyMessage="Aucune sous-catégorie. Créez-en une pour commencer."
                 />
             </section>
+
+            {toDelete !== null && (
+                <ConfirmDeleteModal
+                    show
+                    onClose={() => setToDelete(null)}
+                    onConfirm={confirmDelete}
+                    processing={deleting}
+                    message={t.subcategories.deleteConfirm}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocale } from '@/contexts/LocaleContext';
 import { X, Plus, Trash2, Tag } from 'lucide-react';
 import axios from 'axios';
 import { useRoute } from '@/utils/route';
@@ -19,6 +20,7 @@ interface Props {
 
 export default function ProductArticleModal({ productId, productName, isOpen, onClose }: Props) {
     const route = useRoute();
+    const { t } = useLocale();
     const [articles, setArticles] = useState<Article[]>([]);
     const [newArticleName, setNewArticleName] = useState('');
     const [loading, setLoading] = useState(false);
@@ -88,8 +90,15 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
         }
     };
 
+    /**
+     * Confirmation EN LIGNE plutôt qu'une modale : ce composant est déjà une surcouche
+     * maison, et imbriquer un dialogue dans un dialogue met les deux pièges du focus en
+     * concurrence. Sur une ligne de liste, armer le bouton se lit aussi bien.
+     */
+    const [armedForDelete, setArmedForDelete] = useState<number | null>(null);
+
     const handleDeleteArticle = async (articleId: number) => {
-        if (!confirm('Confirmer la suppression?')) return;
+        setArmedForDelete(null);
 
         try {
             await axios.delete(
@@ -219,13 +228,30 @@ export default function ProductArticleModal({ productId, productName, isOpen, on
                                         </option>
                                     </select>
 
-                                    {/* Delete Button */}
-                                    <button
-                                        onClick={() => handleDeleteArticle(article.id)}
-                                        className="rounded p-2 text-slate-500 hover:bg-red-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/20 dark:hover:text-red-400"
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </button>
+                                    {/* Suppression : deux temps, sans boîte de dialogue */}
+                                    {armedForDelete === article.id ? (
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => handleDeleteArticle(article.id)}
+                                                className="rounded bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-700"
+                                            >
+                                                {t.common.actions.confirm}
+                                            </button>
+                                            <button
+                                                onClick={() => setArmedForDelete(null)}
+                                                className="rounded px-2 py-1 text-xs text-slate-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-white/10"
+                                            >
+                                                {t.common.actions.cancel}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setArmedForDelete(article.id)}
+                                            className="rounded p-2 text-slate-500 hover:bg-red-100 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/20 dark:hover:text-red-400"
+                                        >
+                                            <Trash2 className="size-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))

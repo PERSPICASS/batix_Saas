@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { Head, useForm, router } from '@inertiajs/react';
 import { Lock, Shield, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -61,12 +62,16 @@ export default function Index({ users, selectedUser, modules, permissions }: Pro
         });
     };
 
+    const [confirmingReset, setConfirmingReset] = useState(false);
+    const [resetting, setResetting] = useState(false);
+
     const handleReset = () => {
         if (!selectedUser) return;
 
-        if (confirm('Êtes-vous sûr de vouloir réinitialiser les permissions aux valeurs par défaut ?')) {
-            router.post(route('permissions.reset', selectedUser.id));
-        }
+        setResetting(true);
+        router.post(route('permissions.reset', selectedUser.id), {}, {
+            onFinish: () => { setResetting(false); setConfirmingReset(false); },
+        });
     };
 
     return (
@@ -121,7 +126,7 @@ export default function Index({ users, selectedUser, modules, permissions }: Pro
                                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Rôle : <span className="text-slate-300 font-medium">{selectedUser.role}</span></p>
                                 </div>
                                 <button
-                                    onClick={handleReset}
+                                    onClick={() => setConfirmingReset(true)}
                                     className="text-sm px-4 py-2 rounded-lg border border-white/10 text-slate-300 hover:bg-slate-800 transition"
                                 >
                                     Réinitialiser aux défauts
@@ -211,6 +216,19 @@ export default function Index({ users, selectedUser, modules, permissions }: Pro
                     </>
                 )}
             </div>
+
+            {confirmingReset && selectedUser && (
+                <ConfirmDeleteModal
+                    show
+                    onClose={() => setConfirmingReset(false)}
+                    onConfirm={handleReset}
+                    processing={resetting}
+                    processingText={t.common.actions.saving}
+                    title={t.permissions.resetTitle}
+                    message={t.permissions.resetConfirm.replace(':name', selectedUser.name)}
+                    confirmText={t.permissions.reset}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }

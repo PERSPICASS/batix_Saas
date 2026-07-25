@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
 import { Head, Link, router } from '@inertiajs/react';
@@ -35,10 +37,16 @@ export default function CustomersIndex({ customers }: Props) {
     const route = useRoute();
     const { t } = useLocale();
 
-    const handleDelete = (customer: Customer) => {
-        if (confirm(t.customers.deleteConfirm(customer.name))) {
-            router.delete(route('customers.destroy', { customer: customer.id }));
-        }
+    const [toDelete, setToDelete] = useState<Customer | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const confirmDelete = () => {
+        if (!toDelete) return;
+
+        setDeleting(true);
+        router.delete(route('customers.destroy', { customer: toDelete.id }), {
+            onFinish: () => { setDeleting(false); setToDelete(null); },
+        });
     };
 
     return (
@@ -96,7 +104,7 @@ export default function CustomersIndex({ customers }: Props) {
                                     >
                                         <Pencil className="size-3.5" /> {t.customers.actions.edit}
                                     </Link>
-                                    <TableActionButton variant="danger" onClick={() => handleDelete(customer)}>
+                                    <TableActionButton variant="danger" onClick={() => setToDelete(customer)}>
                                         <Trash2 className="size-3.5" /> {t.customers.actions.delete}
                                     </TableActionButton>
                                 </TableActions>
@@ -123,6 +131,16 @@ export default function CustomersIndex({ customers }: Props) {
                     </div>
                 )}
             </section>
+
+            {toDelete && (
+                <ConfirmDeleteModal
+                    show
+                    onClose={() => setToDelete(null)}
+                    onConfirm={confirmDelete}
+                    processing={deleting}
+                    message={t.customers.deleteConfirm(toDelete.name)}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }

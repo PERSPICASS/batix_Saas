@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { showToast } from '@/utils/toast';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import {
@@ -345,7 +346,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
             }
         } catch (err: any) {
             console.error('Payment error:', err);
-            alert(`Erreur: ${err.response?.data?.message || t.plans.checkout.manual.genericError}`);
+            showToast('error', err.response?.data?.message || t.plans.checkout.manual.genericError);
         } finally {
             setSubmittingManual(false);
         }

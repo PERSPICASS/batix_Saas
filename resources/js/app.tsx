@@ -30,8 +30,12 @@ router.on('error', (event) => {
                                  window.location.pathname.includes('/register');
                 
                 if (!isAuthPage) {
-                    alert('Votre session a expiré pour des raisons de sécurité. Vous allez être redirigé vers la page de connexion.');
-                    window.location.href = '/login';
+                    // Le message est porté par la page d'arrivée (?expired=1 → prop
+                    // `status` de Login), pas par un alert() qui bloquait l'onglet avant
+                    // la redirection. Un toast ne conviendrait pas non plus : il
+                    // disparaîtrait avec la navigation, laissant l'utilisateur déconnecté
+                    // sans explication.
+                    window.location.href = '/login?expired=1';
                 } else {
                     // Sur page d'auth, juste recharger
                     window.location.reload();
