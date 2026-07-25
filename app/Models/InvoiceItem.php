@@ -62,6 +62,18 @@ class InvoiceItem extends Model
         parent::boot();
         
         static::saving(function ($item) {
+            // tax_rate et discount_amount sont NOT NULL DEFAULT 0 en base. Un défaut SQL
+            // ne s'applique qu'à une colonne ABSENTE de l'INSERT, jamais à un null
+            // explicite — or c'est exactement ce qui arrivait ici : la validation les
+            // accepte en `nullable`, et ConvertEmptyStringsToNull transforme en null le
+            // champ que l'utilisateur a simplement vidé dans le formulaire. Résultat, un
+            // 500 sur Postgres à l'enregistrement de la facture.
+            //
+            // Normalisé ici et non dans le contrôleur : toutes les écritures passent par
+            // ce hook — création, modification, factures récurrentes, conversion de devis.
+            $item->tax_rate = $item->tax_rate ?? 0;
+            $item->discount_amount = $item->discount_amount ?? 0;
+
             // Calculer le montant de la taxe
             $subtotal = ($item->unit_price * $item->quantity) - $item->discount_amount;
             $item->tax_amount = $subtotal * ($item->tax_rate / 100);
