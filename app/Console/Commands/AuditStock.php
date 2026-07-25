@@ -133,8 +133,8 @@ class AuditStock extends Command
         $rows = [];
 
         DepotProduct::query()
-            ->with(['depot:id,name,shop_id', 'product:id,name,track_stock'])
-            ->when($shopId, fn ($q) => $q->whereHas('depot', fn ($d) => $d->where('shop_id', $shopId)))
+            ->with(['depot:id,name', 'product:id,name,shop_id,track_stock'])
+            ->when($shopId, fn ($q) => $q->whereHas('product', fn ($p) => $p->where('shop_id', $shopId)))
             ->chunkById(500, function ($depotProducts) use ($ledger, &$rows) {
                 foreach ($depotProducts as $dp) {
                     if (!$dp->product || !$dp->product->track_stock || !$dp->depot) {
@@ -146,7 +146,7 @@ class AuditStock extends Command
 
                     if ($counter !== $sum) {
                         $rows[] = [
-                            'shop_id' => $dp->depot->shop_id,
+                            'shop_id' => $dp->product->shop_id,
                             'product_id' => $dp->product_id,
                             'depot_id' => $dp->depot_id,
                             'product' => $dp->product->name,

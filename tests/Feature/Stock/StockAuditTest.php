@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Stock;
 
+use App\Models\Depot;
+use App\Models\DepotProduct;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\StockMovement;
@@ -132,6 +134,104 @@ class StockAuditTest extends TestCase
         $this->artisan('stock:audit', ['--baseline' => true])->assertSuccessful();
 
         $this->assertNull(StockMovement::firstOrFail()->user_id);
+    }
+
+    /**
+     * The depot branch was never exercised: every test here used counter stock only, so
+     * the command shipped selecting depots.shop_id — a column that does not exist, a depot
+     * belonging to the ACCOUNT (depots.code_user). It crashed on the first production run,
+     * where four depots exist.
+     */
+    public function test_a_depot_quantity_with_no_movement_behind_it_is_reported(): void
+    {
+        $shop = $this->shopWithOwner();
+        $product = Product::factory()->create([
+            'shop_id' => $shop->id,
+            'track_stock' => true,
+            'stock_quantity' => 0,
+            'name' => 'Fer à béton 8mm',
+        ]);
+
+        $depot = Depot::factory()->create([
+            'user_id' => $shop->user_id,
+            'code_user' => $shop->user->code_user,
+            'name' => 'Dépôt central',
+        ]);
+
+        DepotProduct::create([
+            'depot_id' => $depot->id,
+            'product_id' => $product->id,
+            'quantity' => 60,
+            'min_stock_alert' => 0,
+        ]);
+
+        // Une seule attente : expectsOutputToContain consomme la ligne qu'elle vient de
+        // faire correspondre, donc deux chaînes situées sur la MÊME ligne du tableau ne
+        // peuvent pas être vérifiées l'une après l'autre. Le nom du dépôt suffit : il
+        // n'apparaît que dans la colonne Emplacement, donc la branche dépôt a bien tourné.
+        $this->artisan('stock:audit')
+            ->expectsOutputToContain('Dépôt central')
+            ->assertSuccessful();
+    }
+
+    public function test_the_baseline_settles_a_depot_too(): void
+    {
+        $shop = $this->shopWithOwner();
+        $product = Product::factory()->create([
+            'shop_id' => $shop->id,
+            'track_stock' => true,
+            'stock_quantity' => 0,
+        ]);
+
+        $depot = Depot::factory()->create([
+            'user_id' => $shop->user_id,
+            'code_user' => $shop->user->code_user,
+        ]);
+
+        DepotProduct::create([
+            'depot_id' => $depot->id,
+            'product_id' => $product->id,
+            'quantity' => 60,
+            'min_stock_alert' => 0,
+        ]);
+
+        $this->artisan('stock:audit', ['--baseline' => true])->assertSuccessful();
+
+        $this->assertSame(60, (int) StockMovement::inDepot($depot->id)->sum('quantity'));
+
+        $this->artisan('stock:audit')
+            ->expectsOutputToContain('Aucun écart')
+            ->assertSuccessful();
+    }
+
+    /**
+     * --shop filters depots through their PRODUCTS, a depot having no shop of its own.
+     */
+    public function test_filtering_by_shop_reaches_depot_lines(): void
+    {
+        $shop = $this->shopWithOwner();
+        $product = Product::factory()->create([
+            'shop_id' => $shop->id,
+            'track_stock' => true,
+            'stock_quantity' => 0,
+            'name' => 'Ciment 50kg',
+        ]);
+
+        $depot = Depot::factory()->create([
+            'user_id' => $shop->user_id,
+            'code_user' => $shop->user->code_user,
+        ]);
+
+        DepotProduct::create([
+            'depot_id' => $depot->id,
+            'product_id' => $product->id,
+            'quantity' => 15,
+            'min_stock_alert' => 0,
+        ]);
+
+        $this->artisan('stock:audit', ['--shop' => $shop->id])
+            ->expectsOutputToContain('Ciment 50kg')
+            ->assertSuccessful();
     }
 
     public function test_a_product_that_is_not_tracked_is_ignored(): void
