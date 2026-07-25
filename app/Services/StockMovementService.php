@@ -246,6 +246,10 @@ class StockMovementService
         Model $reference,
         ?string $notes = null
     ): StockMovement {
+        // La moyenne se calcule AVANT l'incrément : elle pondère le stock détenu contre
+        // celui qui entre. Après coup, le stock détenu inclurait déjà l'entrée.
+        $product->foldIntoAverageCost($quantity, $unitCost);
+
         $product->increment('stock_quantity', $quantity);
 
         return self::writeMovement([
@@ -295,6 +299,66 @@ class StockMovementService
         ]);
     }
 
+
+
+    /**
+     * Sortie de stock à l'émission d'une facture.
+     *
+     * Symétrique de recordSale : c'est le même événement, de la marchandise qui quitte la
+     * boutique, par un autre document.
+     */
+    public static function recordInvoiceIssue(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->decrement('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'sale',
+            'quantity'       => -$quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => 'Facture émise',
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Retour en stock à l'annulation d'une facture qui l'avait sorti.
+     */
+    public static function recordInvoiceCancellation(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        Model $reference
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->increment('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'return',
+            'quantity'       => $quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => 'Facture annulée',
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
 
     /**
      * Un mouvement de stock survenu dans un dépôt.

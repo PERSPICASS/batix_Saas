@@ -6,7 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Services\StockMovementService;
 use App\Support\GlobalDiscount;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
@@ -21,6 +24,7 @@ class Invoice extends Model
         'invoice_date',
         'due_date',
         'status',
+        'stock_released_at',
         'payment_method',
         'subtotal',
         'tax_amount',
@@ -32,6 +36,7 @@ class Invoice extends Model
 
     protected $casts = [
         'invoice_date' => 'date',
+        'stock_released_at' => 'datetime',
         'due_date' => 'date',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
@@ -155,6 +160,105 @@ class Invoice extends Model
         }
 
         return $this->items->contains(fn ($item) => $item->quantityCreditable() > 0);
+    }
+
+    /**
+     * Sortir la marchandise du stock, une seule fois.
+     *
+     * Appelée à l'émission — pas à la création des lignes : un brouillon se modifie
+     * librement et ses lignes sont détruites puis recréées à chaque enregistrement, si bien
+     * qu'une sortie à ce moment décrémenterait à chaque passage.
+     *
+     * `stock_released_at` rend l'appel idempotent : émettre puis marquer payée ne sort la
+     * marchandise qu'une fois, quel que soit le nombre d'appels.
+     *
+     * Les factures récurrentes en sont exclues. Elles rebillent un contrat à chaque
+     * échéance ; décrémenter à chaque fois viderait le stock d'un produit jamais livré.
+     *
+     * @throws ValidationException si le stock ne suffit pas.
+     */
+    public function releaseStock(): void
+    {
+        // La garde est ici et pas seulement chez les appelants : une facture non émise
+        // n'a rien livré, et un futur appel mal placé ne doit pas pouvoir vider le stock
+        // sur un brouillon.
+        if (!in_array($this->status, ['sent', 'paid'], true)) {
+            return;
+        }
+
+        if ($this->stock_released_at !== null || $this->recurring_invoice_id !== null) {
+            return;
+        }
+
+        DB::transaction(function () {
+            $needed = [];
+            foreach ($this->items as $item) {
+                if ($item->product_id) {
+                    $needed[$item->product_id] = ($needed[$item->product_id] ?? 0) + (int) $item->quantity;
+                }
+            }
+
+            if (empty($needed)) {
+                $this->forceFill(['stock_released_at' => now()])->save();
+
+                return;
+            }
+
+            // Verrouiller avant de vérifier : deux émissions simultanées de la dernière
+            // pièce passeraient sinon toutes deux le contrôle. Même garde que la vente au
+            // comptoir (SaleCreationService).
+            $products = Product::whereIn('id', array_keys($needed))->lockForUpdate()->get()->keyBy('id');
+
+            $errors = [];
+            foreach ($needed as $productId => $quantity) {
+                $product = $products->get($productId);
+
+                if ($product && $product->track_stock && $product->stock_quantity < $quantity) {
+                    $errors['stock'][] = "Stock insuffisant pour « {$product->name} » (disponible : {$product->stock_quantity}, demandé : {$quantity}).";
+                }
+            }
+
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
+
+            foreach ($needed as $productId => $quantity) {
+                if ($product = $products->get($productId)) {
+                    StockMovementService::recordInvoiceIssue($product, $quantity, $this->shop_id, $this);
+                }
+            }
+
+            $this->forceFill(['stock_released_at' => now()])->save();
+        });
+    }
+
+    /**
+     * Remettre en stock une facture annulée qui l'avait sorti.
+     *
+     * La marchandise n'a pas été vendue : la garder sortie fausserait l'inventaire.
+     */
+    public function restoreStock(): void
+    {
+        if ($this->stock_released_at === null) {
+            return;
+        }
+
+        DB::transaction(function () {
+            foreach ($this->items as $item) {
+                if (!$item->product_id || !$item->product) {
+                    continue;
+                }
+
+                StockMovementService::recordInvoiceCancellation(
+                    $item->product,
+                    (int) $item->quantity,
+                    $this->shop_id,
+                    $this
+                );
+            }
+
+            $this->forceFill(['stock_released_at' => null])->save();
+        });
     }
 
     public function calculateTotals(): void

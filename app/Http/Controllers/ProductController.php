@@ -81,6 +81,15 @@ class ProductController extends Controller
 
         $products = $query->paginate(20)->withQueryString();
 
+        // Valeur du stock détenu, au coût moyen pondéré. C'est le chiffre qui dit où est
+        // immobilisée la trésorerie, et rien ne le calculait.
+        $products->getCollection()->transform(function ($product) {
+            $product->unit_cost = $product->unitCost();
+            $product->stock_value = $product->stockValue();
+
+            return $product;
+        });
+
         $shops = Auth::user()->accessibleShops();
         
         // Les catégories sont globales (prédéfinies par la plateforme)

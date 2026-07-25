@@ -164,6 +164,12 @@ class InvoiceController extends Controller
             return $invoice;
         }));
 
+        // Une facture créée directement émise sort sa marchandise tout de suite ; un
+        // brouillon attendra son émission.
+        if (in_array($invoice->status, ['sent', 'paid'], true)) {
+            $invoice->load('items')->releaseStock();
+        }
+
         // Log activity
         ActivityLogger::created($invoice, $invoice->invoice_number);
 
@@ -331,6 +337,10 @@ class InvoiceController extends Controller
             $changes['items'] = ['old' => $previousItems, 'new' => $newItems];
         }
 
+        if ($invoice->status === 'sent') {
+            $invoice->load('items')->releaseStock();
+        }
+
         ActivityLogger::updated($invoice, $changes, $invoice->invoice_number);
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture modifiée avec succès.');
@@ -403,6 +413,12 @@ class InvoiceController extends Controller
         }
 
         $invoice->update($attributes);
+
+        // Une facture annulée n'a rien vendu : la marchandise revient. `paid` ne change
+        // rien, la sortie ayant déjà eu lieu à l'émission.
+        if ($to === 'cancelled') {
+            $invoice->load('items.product')->restoreStock();
+        }
 
         ActivityLogger::updated(
             $invoice,
@@ -480,6 +496,7 @@ class InvoiceController extends Controller
         // facture payée redevenait « envoyée », donc réencaissable.
         if ($invoice->status === 'draft') {
             $invoice->update(['status' => 'sent']);
+            $invoice->load('items')->releaseStock();
         }
 
         \Mail::to($invoice->customer->email)->send(new \App\Mail\InvoiceMail($invoice));

@@ -23,6 +23,7 @@ class Product extends Model
         'description',
         'brand',
         'purchase_price',
+        'average_cost',
         'selling_price',
         'tax_rate',
         'stock_quantity',
@@ -38,6 +39,7 @@ class Product extends Model
 
     protected $casts = [
         'purchase_price' => 'decimal:2',
+        'average_cost' => 'decimal:2',
         'selling_price' => 'decimal:2',
         'tax_rate' => 'decimal:2',
         'stock_quantity' => 'integer',
@@ -137,6 +139,52 @@ class Product extends Model
     {
         return (int) $this->stock_quantity
             + (int) ($this->depot_products_sum_quantity ?? $this->depotProducts()->sum('quantity'));
+    }
+
+    /**
+     * Le coût unitaire retenu pour valoriser une unité.
+     *
+     * La moyenne pondérée si elle existe, sinon le dernier prix d'achat — mieux vaut une
+     * approximation connue qu'un zéro qui ferait disparaître le stock du bilan.
+     */
+    public function unitCost(): float
+    {
+        return (float) ($this->average_cost ?? $this->purchase_price ?? 0);
+    }
+
+    /** Ce que vaut le stock du comptoir. */
+    public function stockValue(): float
+    {
+        return round($this->stock_quantity * $this->unitCost(), 2);
+    }
+
+    /**
+     * Intègre une entrée de marchandise à la moyenne pondérée.
+     *
+     * new = (stock × moyenne + entrée × coût) / (stock + entrée), calculé AVANT que le
+     * compteur n'ait été incrémenté — d'où la quantité passée en paramètre.
+     *
+     * Une entrée sans coût connu ne change pas la moyenne : l'inventer à zéro
+     * effondrerait la valorisation d'un seul mouvement mal saisi.
+     */
+    public function foldIntoAverageCost(int $incomingQuantity, ?float $unitCost): void
+    {
+        if ($unitCost === null || $incomingQuantity <= 0) {
+            return;
+        }
+
+        $held = max((int) $this->stock_quantity, 0);
+        $current = $this->average_cost !== null ? (float) $this->average_cost : (float) ($this->purchase_price ?? $unitCost);
+
+        $total = $held + $incomingQuantity;
+
+        if ($total <= 0) {
+            return;
+        }
+
+        $this->forceFill([
+            'average_cost' => round((($held * $current) + ($incomingQuantity * $unitCost)) / $total, 2),
+        ])->save();
     }
 
     public function isLowStock(): bool

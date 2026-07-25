@@ -35,6 +35,10 @@ interface Product {
     stock_quantity: number;
     /** Somme des quantités en dépôt, hors comptoir (withSum côté contrôleur). */
     depot_stock: number | null;
+    /** Coût moyen pondéré, ou le dernier prix d'achat à défaut. */
+    unit_cost: number;
+    /** Valeur du stock du comptoir, au coût moyen. */
+    stock_value: number;
     defective_stock_quantity: number;
     min_stock_alert: number | null;
     is_active: boolean;
@@ -234,6 +238,16 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                     </div>
                 );
             },
+        },
+        {
+            key: 'stock_value',
+            label: t.products.columns.stockValue,
+            align: 'right' as const,
+            render: (product: Product) => (
+                <span className="text-slate-600 dark:text-slate-300">
+                    <Currency amount={product.stock_value} />
+                </span>
+            ),
         },
         {
             key: 'defective_stock_quantity',
