@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\SubscriptionPlan;
@@ -178,6 +179,24 @@ class ShopController extends Controller
     }
 
     /**
+     * L'équivalent de la catégorie du produit dans la boutique de destination.
+     *
+     * Rapproché par nom : les catégories sont propres à chaque boutique, donc l'identifiant
+     * de la source n'y a aucun sens. Null si elle n'existe pas là-bas — mieux vaut un
+     * produit sans catégorie qu'un produit rangé chez le voisin.
+     */
+    private function matchingCategoryIn(Shop $target, Product $source): ?int
+    {
+        if (!$source->category) {
+            return null;
+        }
+
+        return Category::where('shop_id', $target->id)
+            ->where('name', $source->category->name)
+            ->value('id');
+    }
+
+    /**
      * L'homologue d'un produit dans la boutique de destination.
      *
      * Rapproché par SKU puis par nom — le SKU d'abord, un nom pouvant être retouché. Créé
@@ -200,7 +219,10 @@ class ShopController extends Controller
 
         return Product::create([
             'shop_id' => $target->id,
-            'category_id' => $source->category_id,
+            // La catégorie est rattachée à une boutique : recopier l'identifiant de la
+            // source ferait pointer le produit vers la catégorie d'une AUTRE boutique.
+            // On retrouve donc l'équivalente par son nom, ou on laisse vide.
+            'category_id' => $this->matchingCategoryIn($target, $source),
             'name' => $source->name,
             // Sans le SKU, un second transfert ne retrouverait pas ce produit et en
             // créerait un doublon. Le code-barres n'est pas repris : il est dérivé de

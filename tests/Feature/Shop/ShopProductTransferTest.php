@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Shop;
 
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\StockMovement;
@@ -129,6 +130,49 @@ class ShopProductTransferTest extends TestCase
 
         $this->assertSame(10, $bySku->fresh()->stock_quantity);
         $this->assertSame(0, $byName->fresh()->stock_quantity);
+    }
+
+    /**
+     * Categories belong to a shop. Copying the source's category_id would have pointed the
+     * new product at a category owned by ANOTHER shop.
+     */
+    public function test_the_category_is_matched_by_name_not_copied(): void
+    {
+        $sourceCategory = Category::factory()->create(['shop_id' => $this->source->id, 'name' => 'Ciment']);
+        $targetCategory = Category::factory()->create(['shop_id' => $this->target->id, 'name' => 'Ciment']);
+
+        $source = $this->product($this->source, [
+            'category_id' => $sourceCategory->id,
+            'name' => 'Ciment 50kg',
+            'sku' => 'CIM-50',
+        ]);
+
+        $this->transfer([['product_id' => $source->id, 'quantity' => 10]]);
+
+        $created = Product::where('shop_id', $this->target->id)->where('sku', 'CIM-50')->firstOrFail();
+
+        $this->assertSame($targetCategory->id, $created->category_id);
+        $this->assertNotSame($sourceCategory->id, $created->category_id);
+    }
+
+    /**
+     * No category of that name at the destination: better no category than one belonging
+     * to the neighbour.
+     */
+    public function test_an_unknown_category_leaves_the_product_uncategorised(): void
+    {
+        $sourceCategory = Category::factory()->create(['shop_id' => $this->source->id, 'name' => 'Plomberie']);
+
+        $source = $this->product($this->source, [
+            'category_id' => $sourceCategory->id,
+            'sku' => 'PLB-1',
+        ]);
+
+        $this->transfer([['product_id' => $source->id, 'quantity' => 5]]);
+
+        $created = Product::where('shop_id', $this->target->id)->where('sku', 'PLB-1')->firstOrFail();
+
+        $this->assertNull($created->category_id);
     }
 
     public function test_transferring_more_than_is_in_stock_is_refused(): void
