@@ -5,6 +5,7 @@ namespace Tests\Feature\Shop;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Models\ShopTransfer;
 use App\Models\StockMovement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -173,6 +174,130 @@ class ShopProductTransferTest extends TestCase
         $created = Product::where('shop_id', $this->target->id)->where('sku', 'PLB-1')->firstOrFail();
 
         $this->assertNull($created->category_id);
+    }
+
+    public function test_a_transfer_leaves_a_document(): void
+    {
+        $source = $this->product($this->source, ['name' => 'Ciment 50kg']);
+
+        $this->transfer([['product_id' => $source->id, 'quantity' => 20]]);
+
+        $transfer = ShopTransfer::with('items')->firstOrFail();
+
+        $this->assertSame($this->source->id, $transfer->from_shop_id);
+        $this->assertSame($this->target->id, $transfer->to_shop_id);
+        $this->assertSame($this->user->id, $transfer->user_id);
+        $this->assertStringStartsWith('TRF-' . date('Ym'), $transfer->reference);
+
+        // Un geste, une pièce : dix produits envoyés ensemble ne font pas dix transferts.
+        $this->assertCount(1, $transfer->items);
+        $this->assertSame('Ciment 50kg', $transfer->items->first()->product_name);
+        $this->assertSame(20, $transfer->items->first()->quantity);
+    }
+
+    public function test_several_products_travel_on_one_document(): void
+    {
+        $first = $this->product($this->source);
+        $second = $this->product($this->source);
+
+        $this->transfer([
+            ['product_id' => $first->id, 'quantity' => 5],
+            ['product_id' => $second->id, 'quantity' => 8],
+        ]);
+
+        $this->assertSame(1, ShopTransfer::count());
+        $this->assertCount(2, ShopTransfer::firstOrFail()->items);
+    }
+
+    /**
+     * Cancelling sends the goods back. Nothing is deleted — the document stays, marked
+     * cancelled, and two opposite movements join the ledger. Erasing the originals would
+     * claim the transfer never happened, when it did move stock.
+     */
+    public function test_cancelling_a_transfer_sends_the_goods_back(): void
+    {
+        $source = $this->product($this->source, ['stock_quantity' => 100, 'sku' => 'CIM-50']);
+
+        $this->transfer([['product_id' => $source->id, 'quantity' => 20]]);
+        $transfer = ShopTransfer::firstOrFail();
+
+        $this->assertSame(80, $source->fresh()->stock_quantity);
+
+        $this->post("/{$this->user->code_user}/transferts/{$transfer->id}/annuler")
+            ->assertSessionHas('success');
+
+        $this->assertSame(100, $source->fresh()->stock_quantity);
+        $this->assertSame('cancelled', $transfer->fresh()->status);
+        $this->assertNotNull($transfer->fresh()->cancelled_at);
+
+        // Le registre garde les quatre mouvements, et somme toujours à zéro.
+        $this->assertSame(4, StockMovement::count());
+        $this->assertSame(0, StockMovement::sum('quantity'));
+    }
+
+    public function test_a_transfer_cannot_be_cancelled_twice(): void
+    {
+        $source = $this->product($this->source);
+        $this->transfer([['product_id' => $source->id, 'quantity' => 10]]);
+        $transfer = ShopTransfer::firstOrFail();
+
+        $this->post("/{$this->user->code_user}/transferts/{$transfer->id}/annuler");
+        $this->post("/{$this->user->code_user}/transferts/{$transfer->id}/annuler")
+            ->assertSessionHas('error');
+
+        $this->assertSame(4, StockMovement::count());
+    }
+
+    /**
+     * The goods must still be there to go back: the destination may have sold them.
+     */
+    public function test_cancelling_is_refused_when_the_goods_are_gone(): void
+    {
+        $source = $this->product($this->source, ['sku' => 'CIM-50']);
+        $this->transfer([['product_id' => $source->id, 'quantity' => 20]]);
+
+        $transfer = ShopTransfer::with('items')->firstOrFail();
+        $destination = Product::findOrFail($transfer->items->first()->target_product_id);
+        $destination->update(['stock_quantity' => 3]);
+
+        $this->post("/{$this->user->code_user}/transferts/{$transfer->id}/annuler")
+            ->assertSessionHasErrors('transfer');
+
+        $this->assertSame('completed', $transfer->fresh()->status);
+    }
+
+    /**
+     * A variation holds the stock, so it must be transferable — and its parent has to
+     * exist at the destination before the child can be attached to it.
+     */
+    public function test_a_variation_can_be_transferred_and_brings_its_parent(): void
+    {
+        $parent = $this->product($this->source, [
+            'name' => 'Peinture',
+            'sku' => 'PEINT',
+            'has_variations' => true,
+            'stock_quantity' => 0,
+        ]);
+        $variation = $this->product($this->source, [
+            'name' => 'Rouge 5L',
+            'sku' => 'PEINT-R5',
+            'parent_id' => $parent->id,
+            'stock_quantity' => 40,
+        ]);
+
+        $this->transfer([['product_id' => $variation->id, 'quantity' => 10]])
+            ->assertSessionHas('success');
+
+        $createdVariation = Product::where('shop_id', $this->target->id)
+            ->where('sku', 'PEINT-R5')
+            ->firstOrFail();
+
+        $createdParent = Product::where('shop_id', $this->target->id)
+            ->where('sku', 'PEINT')
+            ->firstOrFail();
+
+        $this->assertSame(10, $createdVariation->stock_quantity);
+        $this->assertSame($createdParent->id, $createdVariation->parent_id);
     }
 
     public function test_transferring_more_than_is_in_stock_is_refused(): void

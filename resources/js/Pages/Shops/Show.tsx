@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, ArrowRightLeft, Building2, Mail, MapPin, Pencil, Phone } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Building2, History, Mail, MapPin, Pencil, Phone, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
@@ -47,8 +47,44 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
     const route = useRoute();
     const { t } = useLocale();
 
-    // Quantité à transférer par produit. 0 = produit non retenu.
-    const [quantities, setQuantities] = useState<Record<number, number>>({});
+    // Recherche + panier plutôt qu'un champ par produit : une quincaillerie de plusieurs
+    // centaines de références rendait le formulaire illisible.
+    const [search, setSearch] = useState('');
+    const [cart, setCart] = useState<Record<number, number>>({});
+
+    const matches = useMemo(() => {
+        const needle = search.trim().toLowerCase();
+
+        if (!needle) return [];
+
+        return transferableProducts
+            .filter((product) => !(product.id in cart))
+            .filter(
+                (product) =>
+                    product.name.toLowerCase().includes(needle) ||
+                    (product.sku ?? '').toLowerCase().includes(needle),
+            )
+            .slice(0, 8);
+    }, [search, transferableProducts, cart]);
+
+    const inCart = useMemo(
+        () => transferableProducts.filter((product) => product.id in cart),
+        [transferableProducts, cart],
+    );
+
+    const addToCart = (product: TransferableProduct) => {
+        setCart((current) => ({ ...current, [product.id]: 1 }));
+        setSearch('');
+    };
+
+    const removeFromCart = (productId: number) => {
+        setCart((current) => {
+            const next = { ...current };
+            delete next[productId];
+
+            return next;
+        });
+    };
 
     const { data, setData, post, processing, errors, reset, transform } = useForm({
         target_shop_id: '',
@@ -56,10 +92,10 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
 
     const selected = useMemo(
         () =>
-            transferableProducts
-                .filter((product) => (quantities[product.id] ?? 0) > 0)
-                .map((product) => ({ product_id: product.id, quantity: quantities[product.id] })),
-        [transferableProducts, quantities],
+            inCart
+                .filter((product) => (cart[product.id] ?? 0) > 0)
+                .map((product) => ({ product_id: product.id, quantity: cart[product.id] })),
+        [inCart, cart],
     );
 
     const setQuantity = (product: TransferableProduct, raw: string) => {
@@ -68,7 +104,7 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
         // laisser saisir un nombre qui sera rejeté.
         const clamped = Number.isNaN(value) ? 0 : Math.max(0, Math.min(product.stock_quantity, value));
 
-        setQuantities((current) => ({ ...current, [product.id]: clamped }));
+        setCart((current) => ({ ...current, [product.id]: clamped }));
     };
 
     const submit = (e: React.FormEvent) => {
@@ -80,7 +116,8 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
 
         post(route('shops.transfer', { shop: shop.id }), {
             onSuccess: () => {
-                setQuantities({});
+                setCart({});
+                setSearch('');
                 reset();
             },
         });
@@ -108,12 +145,20 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
                     >
                         <ArrowLeft className="size-4" /> {t.common.actions.back}
                     </Link>
+                    <div className="flex items-center gap-2">
+                    <Link
+                        href={route('shops.transfers', { shop: shop.id })}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                    >
+                        <History className="size-4" /> {t.shops.transfer.history}
+                    </Link>
                     <Link
                         href={route('shops.edit', { shop: shop.id })}
                         className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
                         <Pencil className="size-4" /> {t.common.actions.edit}
                     </Link>
+                    </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-4">
@@ -204,37 +249,94 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
                                     <InputError message={errors.target_shop_id} className="mt-1" />
                                 </div>
 
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
-                                        <thead className="text-left text-xs uppercase text-slate-500 dark:text-slate-400">
-                                            <tr>
-                                                <th className="py-2">{t.products.columns.name}</th>
-                                                <th className="py-2">SKU</th>
-                                                <th className="py-2 text-right">{t.products.columns.stock}</th>
-                                                <th className="py-2 text-right">{t.shops.transfer.quantity}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                                            {transferableProducts.map((product) => (
-                                                <tr key={product.id}>
-                                                    <td className="py-2 text-slate-900 dark:text-slate-200">{product.name}</td>
-                                                    <td className="py-2 text-slate-500 dark:text-slate-400">{product.sku || '—'}</td>
-                                                    <td className="py-2 text-right text-slate-600 dark:text-slate-300">{product.stock_quantity}</td>
-                                                    <td className="py-2 text-right">
-                                                        <input
-                                                            type="number"
-                                                            min={0}
-                                                            max={product.stock_quantity}
-                                                            value={quantities[product.id] ?? 0}
-                                                            onChange={(e) => setQuantity(product, e.target.value)}
-                                                            className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                                        />
-                                                    </td>
-                                                </tr>
+                                {/* Recherche : on ajoute au panier, on n'affiche pas
+                                    tout le catalogue. */}
+                                <div className="relative mb-4 max-w-lg">
+                                    <input
+                                        type="text"
+                                        value={search}
+                                        onChange={(e) => setSearch(e.target.value)}
+                                        placeholder={t.shops.transfer.searchPlaceholder}
+                                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200 dark:placeholder-slate-500"
+                                    />
+
+                                    {matches.length > 0 && (
+                                        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-slate-900">
+                                            {matches.map((product) => (
+                                                <li key={product.id}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => addToCart(product)}
+                                                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10"
+                                                    >
+                                                        <span>
+                                                            {product.name}
+                                                            {product.sku && (
+                                                                <span className="ml-2 text-xs text-slate-400">{product.sku}</span>
+                                                            )}
+                                                        </span>
+                                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                            {t.products.columns.stock} {product.stock_quantity}
+                                                        </span>
+                                                    </button>
+                                                </li>
                                             ))}
-                                        </tbody>
-                                    </table>
+                                        </ul>
+                                    )}
                                 </div>
+
+                                {inCart.length === 0 ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        {t.shops.transfer.emptyCart}
+                                    </p>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead className="text-left text-xs uppercase text-slate-500 dark:text-slate-400">
+                                                <tr>
+                                                    <th className="py-2">{t.products.columns.name}</th>
+                                                    <th className="py-2 text-right">{t.products.columns.stock}</th>
+                                                    <th className="py-2 text-right">{t.shops.transfer.quantity}</th>
+                                                    <th className="py-2"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-200 dark:divide-white/10">
+                                                {inCart.map((product) => (
+                                                    <tr key={product.id}>
+                                                        <td className="py-2 text-slate-900 dark:text-slate-200">
+                                                            {product.name}
+                                                            {product.sku && (
+                                                                <span className="ml-2 text-xs text-slate-400">{product.sku}</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-2 text-right text-slate-600 dark:text-slate-300">
+                                                            {product.stock_quantity}
+                                                        </td>
+                                                        <td className="py-2 text-right">
+                                                            <input
+                                                                type="number"
+                                                                min={1}
+                                                                max={product.stock_quantity}
+                                                                value={cart[product.id] ?? 1}
+                                                                onChange={(e) => setQuantity(product, e.target.value)}
+                                                                className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                                            />
+                                                        </td>
+                                                        <td className="py-2 text-right">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeFromCart(product.id)}
+                                                                className="rounded p-1 text-slate-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-500/20 dark:hover:text-red-400"
+                                                            >
+                                                                <X className="size-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
 
                                 <button
                                     type="submit"

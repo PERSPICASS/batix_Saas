@@ -377,6 +377,7 @@ class StockMovementService
         Product $product,
         int $signedQuantity,
         Shop $counterpart,
+        ?Model $reference = null,
         ?string $notes = null
     ): ?StockMovement {
         if (!$product->track_stock) {
@@ -395,8 +396,10 @@ class StockMovementService
             'user_id'        => Auth::id(),
             'type'           => 'transfer',
             'quantity'       => $signedQuantity,
-            'reference_id'   => $counterpart->id,
-            'reference_type' => 'Shop',
+            // Le document de transfert sert de référence quand il existe : c'est lui qui
+            // rapproche les deux côtés. Sinon, la boutique d'en face.
+            'reference_id'   => $reference?->getKey() ?? $counterpart->id,
+            'reference_type' => $reference ? class_basename($reference) : 'Shop',
             'notes'          => $notes,
             'movement_date'  => now()->toDateString(),
         ]);

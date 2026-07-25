@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Models\ShopTransfer;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
 use App\Services\ActivityLogger;
@@ -119,11 +120,12 @@ class ShopController extends Controller
                 Rule::exists('products', 'id')->where('shop_id', $shop->id),
             ],
             'items.*.quantity' => 'required|integer|min:1',
+            'notes' => 'nullable|string',
         ]);
 
         $target = Shop::findOrFail($validated['target_shop_id']);
 
-        DB::transaction(function () use ($validated, $shop, $target) {
+        $transfer = DB::transaction(function () use ($validated, $shop, $target, $user) {
             $wanted = [];
             foreach ($validated['items'] as $item) {
                 $wanted[$item['product_id']] = ($wanted[$item['product_id']] ?? 0) + (int) $item['quantity'];
@@ -146,6 +148,13 @@ class ShopController extends Controller
                 throw ValidationException::withMessages($errors);
             }
 
+            $transfer = ShopTransfer::create([
+                'from_shop_id' => $shop->id,
+                'to_shop_id' => $target->id,
+                'user_id' => $user->id,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
             foreach ($wanted as $productId => $quantity) {
                 $source = $sources->get($productId);
 
@@ -159,23 +168,108 @@ class ShopController extends Controller
                     $source,
                     -$quantity,
                     $target,
-                    "Transfert vers « {$target->name} »"
+                    $transfer,
+                    "Transfert {$transfer->reference} vers « {$target->name} »"
                 );
 
                 StockMovementService::recordShopTransfer(
                     $destination,
                     $quantity,
                     $shop,
-                    "Transfert depuis « {$shop->name} »"
+                    $transfer,
+                    "Transfert {$transfer->reference} depuis « {$shop->name} »"
                 );
+
+                $transfer->items()->create([
+                    'product_id' => $source->id,
+                    'target_product_id' => $destination->id,
+                    'product_name' => $source->name,
+                    'quantity' => $quantity,
+                ]);
             }
+
+            return $transfer;
         });
 
         $count = count($validated['items']);
 
         return back()->with('success', $count === 1
-            ? "Produit transféré vers « {$target->name} »."
-            : "{$count} produits transférés vers « {$target->name} ».");
+            ? "Transfert {$transfer->reference} : 1 produit envoyé vers « {$target->name} »."
+            : "Transfert {$transfer->reference} : {$count} produits envoyés vers « {$target->name} ».");
+    }
+
+    /**
+     * Les transferts d'une boutique, envoyés comme reçus.
+     */
+    public function transfers(string $code_user, Shop $shop): Response
+    {
+        $this->authorize('view', $shop);
+
+        $transfers = ShopTransfer::with(['fromShop:id,name', 'toShop:id,name', 'user:id,name', 'items'])
+            ->where(fn ($q) => $q->where('from_shop_id', $shop->id)->orWhere('to_shop_id', $shop->id))
+            ->latest('id')
+            ->paginate(20);
+
+        return Inertia::render('Shops/Transfers', [
+            'shop' => $shop->only(['id', 'name']),
+            'transfers' => $transfers,
+        ]);
+    }
+
+    /**
+     * Annuler un transfert : la marchandise repart d'où elle venait.
+     *
+     * Rien n'est supprimé — le document reste, marqué annulé, et deux mouvements inverses
+     * s'ajoutent au registre. Effacer les mouvements d'origine reviendrait à prétendre que
+     * le transfert n'a pas eu lieu, alors qu'il a bien déplacé du stock.
+     */
+    public function cancelTransfer(string $code_user, ShopTransfer $shopTransfer): RedirectResponse
+    {
+        $this->authorize('view', $shopTransfer->fromShop);
+
+        if ($shopTransfer->isCancelled()) {
+            return back()->with('error', 'Ce transfert est déjà annulé.');
+        }
+
+        DB::transaction(function () use ($shopTransfer) {
+            $shopTransfer->load('items.product', 'items.targetProduct', 'fromShop', 'toShop');
+
+            foreach ($shopTransfer->items as $item) {
+                // Le stock revenu doit encore être là pour repartir : sans quoi la
+                // destination passerait en négatif.
+                if ($item->targetProduct && $item->targetProduct->stock_quantity < $item->quantity) {
+                    throw ValidationException::withMessages([
+                        'transfer' => "« {$item->product_name} » n'est plus en stock en quantité suffisante chez « {$shopTransfer->toShop->name} » pour annuler ce transfert.",
+                    ]);
+                }
+            }
+
+            foreach ($shopTransfer->items as $item) {
+                if ($item->targetProduct) {
+                    StockMovementService::recordShopTransfer(
+                        $item->targetProduct,
+                        -$item->quantity,
+                        $shopTransfer->fromShop,
+                        $shopTransfer,
+                        "Annulation du transfert {$shopTransfer->reference}"
+                    );
+                }
+
+                if ($item->product) {
+                    StockMovementService::recordShopTransfer(
+                        $item->product,
+                        $item->quantity,
+                        $shopTransfer->toShop,
+                        $shopTransfer,
+                        "Annulation du transfert {$shopTransfer->reference}"
+                    );
+                }
+            }
+
+            $shopTransfer->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+        });
+
+        return back()->with('success', "Transfert {$shopTransfer->reference} annulé.");
     }
 
     /**
@@ -217,8 +311,17 @@ class ShopController extends Controller
             return $existing;
         }
 
+        // Une déclinaison ne peut pas exister sans son parent : on le retrouve — ou on le
+        // crée — dans la boutique de destination avant d'y rattacher l'enfant.
+        $parentId = null;
+        if ($source->parent_id && $source->parent) {
+            $parentId = $this->matchingProductIn($target, $source->parent)->id;
+        }
+
         return Product::create([
             'shop_id' => $target->id,
+            'parent_id' => $parentId,
+            'has_variations' => $source->has_variations,
             // La catégorie est rattachée à une boutique : recopier l'identifiant de la
             // source ferait pointer le produit vers la catégorie d'une AUTRE boutique.
             // On retrouve donc l'équivalente par son nom, ou on laisse vide.
@@ -253,7 +356,10 @@ class ShopController extends Controller
 
         // La page rendait `Shops/Show`, un composant qui n'existait pas : Inertia ne
         // pouvait pas le résoudre, d'où un écran blanc au clic sur « Voir ».
+        // Les statistiques ne comptent que les produits parents, mais le transfert doit
+        // pouvoir porter sur une déclinaison : c'est elle qui détient le stock.
         $products = $shop->products()->whereNull('parent_id')->get();
+        $transferable = $shop->products()->with('parent:id,name')->get();
 
         return Inertia::render('Shops/Show', [
             'shop' => $shop,
@@ -267,12 +373,15 @@ class ShopController extends Controller
             'otherShops' => $user->accessibleShopsQuery()
                 ->where('id', '!=', $shop->id)
                 ->get(['id', 'name']),
-            'transferableProducts' => $products
+            'transferableProducts' => $transferable
                 ->where('track_stock', true)
                 ->where('stock_quantity', '>', 0)
                 ->map(fn ($product) => [
                     'id' => $product->id,
-                    'name' => $product->name,
+                    // Une déclinaison seule est ambiguë : « Rouge » ne dit pas de quoi.
+                    'name' => $product->parent
+                        ? "{$product->parent->name} › {$product->name}"
+                        : $product->name,
                     'sku' => $product->sku,
                     'stock_quantity' => $product->stock_quantity,
                 ])

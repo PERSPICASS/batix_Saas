@@ -297,6 +297,12 @@ Route::prefix('{code_user}')
     Route::post('boutiques/{shop}/transferer', [ShopController::class, 'transferProducts'])
         ->name('shops.transfer')
         ->middleware('permission:stocks,edit');
+    Route::get('boutiques/{shop}/transferts', [ShopController::class, 'transfers'])
+        ->name('shops.transfers')
+        ->middleware('permission:stocks,view');
+    Route::post('transferts/{shopTransfer}/annuler', [ShopController::class, 'cancelTransfer'])
+        ->name('shops.transfer.cancel')
+        ->middleware('permission:stocks,edit');
     Route::get('boutiques/create', [ShopController::class, 'create'])->name('shops.create')->middleware('permission:shops,create');
     Route::get('boutiques/{shop}', [ShopController::class, 'show'])->name('shops.show')->middleware('permission:shops,view');
     Route::get('boutiques/{shop}/edit', [ShopController::class, 'edit'])->name('shops.edit')->middleware('permission:shops,edit');
