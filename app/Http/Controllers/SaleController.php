@@ -10,6 +10,7 @@ use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Services\ActivityLogger;
 use App\Services\SaleCreationService;
+use App\Services\DocumentLink;
 use App\Services\DocumentPdf;
 use App\Services\StockMovementService;
 use Illuminate\Http\Request;
@@ -285,6 +286,9 @@ class SaleController extends Controller
 
         return Inertia::render('Sales/Show', [
             'sale' => $sale,
+            // Lien signé du ticket : c'est lui que le partage WhatsApp transmet, un lien
+            // wa.me ne transportant que du texte.
+            'shareUrl' => DocumentLink::forSale($sale),
         ]);
     }
 

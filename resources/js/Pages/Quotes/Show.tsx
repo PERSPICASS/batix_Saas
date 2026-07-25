@@ -5,8 +5,9 @@ import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useRoute } from '@/utils/route';
 import Currency, { useShopSettings } from '@/Components/Currency';
+import WhatsAppShareButton from '@/Components/WhatsAppShareButton';
 
-export default function ShowQuote({ quote }: { quote: any }) {
+export default function ShowQuote({ quote, shareUrl }: { quote: any; shareUrl: string }) {
     const { t } = useLocale();
     const route = useRoute();
     const { currencySymbol } = useShopSettings();
@@ -182,6 +183,14 @@ export default function ShowQuote({ quote }: { quote: any }) {
 
                             {/* Toujours disponible : un devis se télécharge quel que soit
                                 son statut, y compris pour le renvoyer au client. */}
+                            <WhatsAppShareButton
+                                shareUrl={shareUrl}
+                                phone={quote.customer?.phone}
+                                message={t.documents.share.quoteMessage
+                                    .replace(':number', quote.quote_number)
+                                    .replace(':shop', quote.shop?.name ?? '')}
+                            />
+
                             <a
                                 href={route('quotes.pdf', { quote: quote.id })}
                                 target="_blank"

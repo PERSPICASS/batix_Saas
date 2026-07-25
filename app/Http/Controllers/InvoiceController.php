@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Services\ActivityLogger;
+use App\Services\DocumentLink;
 use App\Services\DocumentPdf;
 use App\Support\ConcurrencySafe;
 use Illuminate\Http\RedirectResponse;
@@ -197,6 +198,7 @@ class InvoiceController extends Controller
             'creditedTotal' => $invoice->creditedTotal(),
             'netTotal' => $invoice->netTotal(),
             'isCreditable' => $invoice->isCreditable(),
+            'shareUrl' => DocumentLink::forInvoice($invoice),
         ]);
     }
 

@@ -6,6 +6,7 @@ import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useState } from 'react';
 import Modal from '@/Components/Modal';
+import WhatsAppShareButton from '@/Components/WhatsAppShareButton';
 
 interface Customer {
     id: number;
@@ -71,6 +72,7 @@ interface Props {
     creditedTotal: number;
     netTotal: number;
     isCreditable: boolean;
+    shareUrl: string;
 }
 
 const statusLabels: Record<string, string> = {
@@ -89,7 +91,7 @@ const paymentLabels: Record<string, string> = {
     mobile: 'Mobile',
 };
 
-export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netTotal, isCreditable }: Props) {
+export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netTotal, isCreditable, shareUrl }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const [showRecurringModal, setShowRecurringModal] = useState(false);
@@ -170,6 +172,13 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                         >
                             <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
+                        <WhatsAppShareButton
+                            shareUrl={shareUrl}
+                            phone={(invoice.customer as any)?.phone}
+                            message={t.documents.share.invoiceMessage
+                                .replace(':number', invoice.invoice_number)
+                                .replace(':shop', invoice.shop?.name ?? '')}
+                        />
                         <a
                             href={route('invoices.pdf', { invoice: invoice.id })}
                             target="_blank"

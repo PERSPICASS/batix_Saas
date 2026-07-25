@@ -173,6 +173,7 @@ class QuoteController extends Controller
 
         return Inertia::render('Quotes/Show', [
             'quote' => $quote->load('customer', 'items.product'),
+            'shareUrl' => \App\Services\DocumentLink::forQuote($quote),
         ]);
     }
 

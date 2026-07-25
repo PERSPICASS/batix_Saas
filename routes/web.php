@@ -14,6 +14,7 @@ use App\Http\Controllers\ProductAttributeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicDocumentController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\OfflineSaleSyncController;
 use App\Http\Controllers\SaleController;
@@ -98,6 +99,18 @@ Route::prefix('en')->name('en.')->middleware('setlocale:en')->group(function () 
 
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+// ── Pièces commerciales partagées par lien signé ─────────────────────────
+// Hors authentification : le client d'une quincaillerie n'a pas de compte, et c'est
+// précisément lui le destinataire. La signature scelle l'URL entière avec la clé de
+// l'application, donc rien n'est devinable ni énumérable, et un lien ne donne accès qu'à
+// la seule pièce partagée. Le throttle borne le balayage d'un attaquant qui tenterait des
+// signatures au hasard.
+Route::middleware(['signed', 'throttle:60,1'])->group(function () {
+    Route::get('/d/ticket/{sale}', [PublicDocumentController::class, 'ticket'])->name('public.ticket');
+    Route::get('/d/facture/{invoice}', [PublicDocumentController::class, 'invoice'])->name('public.invoice');
+    Route::get('/d/devis/{quote}', [PublicDocumentController::class, 'quote'])->name('public.quote');
+});
 
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');

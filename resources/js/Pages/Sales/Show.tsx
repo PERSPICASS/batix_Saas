@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw } from 'lucide-react';
+import WhatsAppShareButton from '@/Components/WhatsAppShareButton';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useEffect } from 'react';
@@ -24,6 +25,7 @@ interface User {
 interface Customer {
     id: number;
     name: string;
+    phone?: string | null;
 }
 
 interface Product {
@@ -72,6 +74,8 @@ interface Sale {
 
 interface Props extends PageProps {
     sale: Sale;
+    /** Lien signé du ticket, transmis tel quel par le partage WhatsApp. */
+    shareUrl: string;
 }
 
 const paymentMethodLabels: Record<string, string> = {
@@ -91,7 +95,7 @@ const statusLabels: Record<string, string> = {
     returned: 'Retournée',
 };
 
-export default function SalesShow({ sale, auth }: Props) {
+export default function SalesShow({ sale, auth, shareUrl }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const [displayedSale, setDisplayedSale] = useState<Sale>(sale);
@@ -303,6 +307,13 @@ export default function SalesShow({ sale, auth }: Props) {
                                 <Trash2 className="size-4" /> Annuler la vente
                             </button>
                         )}
+                        <WhatsAppShareButton
+                            shareUrl={shareUrl}
+                            phone={sale.customer?.phone}
+                            message={t.documents.share.ticketMessage
+                                .replace(':number', sale.ticket_number)
+                                .replace(':shop', sale.shop?.name ?? '')}
+                        />
                         {/* Pointait sur `sales.receipt`, une route qui n'a jamais existé —
                             ni route, ni méthode de contrôleur — donc le bouton ne faisait
                             rien. Il sert maintenant le ticket PDF. */}
