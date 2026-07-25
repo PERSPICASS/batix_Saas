@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Depot;
 use App\Models\Product;
+use App\Models\Shop;
 use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -356,6 +357,47 @@ class StockMovementService
             'reference_id'   => $reference->getKey(),
             'reference_type' => class_basename($reference),
             'notes'          => 'Facture annulée',
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+
+    /**
+     * Un côté d'un transfert entre boutiques.
+     *
+     * Un produit appartient à UNE boutique : transférer ne déplace donc pas une ligne,
+     * cela sort du stock d'un côté et en fait entrer de l'autre, sur deux produits
+     * distincts. D'où deux mouvements, chacun rattaché à sa boutique, la boutique d'en
+     * face servant de référence pour pouvoir les rapprocher.
+     *
+     * @param int $signedQuantity Négatif pour la boutique qui envoie, positif pour celle
+     *                            qui reçoit.
+     */
+    public static function recordShopTransfer(
+        Product $product,
+        int $signedQuantity,
+        Shop $counterpart,
+        ?string $notes = null
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        if ($signedQuantity < 0) {
+            $product->decrement('stock_quantity', abs($signedQuantity));
+        } else {
+            $product->increment('stock_quantity', $signedQuantity);
+        }
+
+        return self::writeMovement([
+            'shop_id'        => $product->shop_id,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'transfer',
+            'quantity'       => $signedQuantity,
+            'reference_id'   => $counterpart->id,
+            'reference_type' => 'Shop',
+            'notes'          => $notes,
             'movement_date'  => now()->toDateString(),
         ]);
     }

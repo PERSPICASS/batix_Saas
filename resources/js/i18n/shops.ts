@@ -1,5 +1,22 @@
 export const shops = {
     fr: {
+        identity: 'Identité',
+        settings: 'Réglages',
+        stats: {
+            products: 'Produits',
+            stockUnits: 'Unités en stock',
+            stockValue: 'Valeur du stock',
+            lowStock: 'Stock bas',
+        },
+        transfer: {
+            title: 'Transférer des produits',
+            help: "Un produit appartient à une seule boutique : la quantité sort d'ici et entre chez la destination, sur le produit de même SKU ou de même nom — créé là-bas s'il n'existe pas encore.",
+            destination: 'Boutique de destination',
+            selectDestination: '-- Choisir une boutique --',
+            quantity: 'Quantité',
+            submit: 'Transférer',
+            nothingToTransfer: 'Aucun produit en stock à transférer.',
+        },
         title: 'Boutiques',
         columns: {
             name: 'Nom',
@@ -39,6 +56,23 @@ export const shops = {
         deleteConfirm: (name: string) => `Êtes-vous sûr de vouloir supprimer la boutique "${name}" ?`,
     },
     en: {
+        identity: 'Identity',
+        settings: 'Settings',
+        stats: {
+            products: 'Products',
+            stockUnits: 'Units in stock',
+            stockValue: 'Stock value',
+            lowStock: 'Low stock',
+        },
+        transfer: {
+            title: 'Transfer products',
+            help: 'A product belongs to one shop only: the quantity leaves here and arrives at the destination, on the product with the same SKU or name — created there if it does not exist yet.',
+            destination: 'Destination shop',
+            selectDestination: '-- Choose a shop --',
+            quantity: 'Quantity',
+            submit: 'Transfer',
+            nothingToTransfer: 'No product in stock to transfer.',
+        },
         title: 'Shops',
         columns: {
             name: 'Name',

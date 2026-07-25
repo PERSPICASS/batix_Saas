@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Shop;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
 use App\Services\ActivityLogger;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -86,14 +91,170 @@ class ShopController extends Controller
     }
 
     /**
+     * Transférer des produits vers une autre boutique du compte.
+     *
+     * Un produit appartient à une seule boutique : il n'y a donc rien à « déplacer ». On
+     * sort la quantité du produit source, et on la fait entrer sur son homologue chez la
+     * destination — retrouvé par SKU puis par nom, comme le fait déjà l'entrée en dépôt, et
+     * créé s'il n'existe pas encore là-bas.
+     */
+    public function transferProducts(Request $request, string $code_user, Shop $shop): RedirectResponse
+    {
+        $this->authorize('view', $shop);
+
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'target_shop_id' => [
+                'required',
+                Rule::exists('shops', 'id')->where(fn ($q) => $q->whereIn('id', $user->accessibleShopsQuery()->pluck('id'))),
+                // `different:` compare à un autre CHAMP du formulaire, pas à une valeur :
+                // écrit ainsi il cherchait un champ nommé « 3 » et ne refusait rien.
+                Rule::notIn([$shop->id]),
+            ],
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('shop_id', $shop->id),
+            ],
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $target = Shop::findOrFail($validated['target_shop_id']);
+
+        DB::transaction(function () use ($validated, $shop, $target) {
+            $wanted = [];
+            foreach ($validated['items'] as $item) {
+                $wanted[$item['product_id']] = ($wanted[$item['product_id']] ?? 0) + (int) $item['quantity'];
+            }
+
+            // Verrouiller avant de vérifier : deux transferts simultanés de la dernière
+            // pièce passeraient sinon tous deux le contrôle.
+            $sources = Product::whereIn('id', array_keys($wanted))->lockForUpdate()->get()->keyBy('id');
+
+            $errors = [];
+            foreach ($wanted as $productId => $quantity) {
+                $source = $sources->get($productId);
+
+                if ($source && $source->track_stock && $source->stock_quantity < $quantity) {
+                    $errors['items'][] = "Stock insuffisant pour « {$source->name} » (disponible : {$source->stock_quantity}, demandé : {$quantity}).";
+                }
+            }
+
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
+
+            foreach ($wanted as $productId => $quantity) {
+                $source = $sources->get($productId);
+
+                if (!$source) {
+                    continue;
+                }
+
+                $destination = $this->matchingProductIn($target, $source);
+
+                StockMovementService::recordShopTransfer(
+                    $source,
+                    -$quantity,
+                    $target,
+                    "Transfert vers « {$target->name} »"
+                );
+
+                StockMovementService::recordShopTransfer(
+                    $destination,
+                    $quantity,
+                    $shop,
+                    "Transfert depuis « {$shop->name} »"
+                );
+            }
+        });
+
+        $count = count($validated['items']);
+
+        return back()->with('success', $count === 1
+            ? "Produit transféré vers « {$target->name} »."
+            : "{$count} produits transférés vers « {$target->name} ».");
+    }
+
+    /**
+     * L'homologue d'un produit dans la boutique de destination.
+     *
+     * Rapproché par SKU puis par nom — le SKU d'abord, un nom pouvant être retouché. Créé
+     * à stock zéro s'il n'existe pas encore : la quantité arrivera par le mouvement de
+     * transfert, pour que l'entrée figure au registre comme n'importe quelle autre.
+     */
+    private function matchingProductIn(Shop $target, Product $source): Product
+    {
+        $existing = null;
+
+        if ($source->sku) {
+            $existing = Product::where('shop_id', $target->id)->where('sku', $source->sku)->first();
+        }
+
+        $existing ??= Product::where('shop_id', $target->id)->where('name', $source->name)->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return Product::create([
+            'shop_id' => $target->id,
+            'category_id' => $source->category_id,
+            'name' => $source->name,
+            // Sans le SKU, un second transfert ne retrouverait pas ce produit et en
+            // créerait un doublon. Le code-barres n'est pas repris : il est dérivé de
+            // l'identifiant du produit, donc propre à chaque ligne.
+            'sku' => $source->sku,
+            'description' => $source->description,
+            'brand' => $source->brand,
+            'unit' => $source->unit,
+            'purchase_price' => $source->purchase_price,
+            'average_cost' => $source->average_cost,
+            'selling_price' => $source->selling_price,
+            'tax_rate' => $source->tax_rate,
+            'min_stock_alert' => $source->min_stock_alert,
+            'stock_quantity' => 0,
+            'track_stock' => true,
+            'is_active' => true,
+        ]);
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(string $code_user, Shop $shop)
     {
         $this->authorize('view', $shop);
-        
+
+        $user = Auth::user();
+
+        // La page rendait `Shops/Show`, un composant qui n'existait pas : Inertia ne
+        // pouvait pas le résoudre, d'où un écran blanc au clic sur « Voir ».
+        $products = $shop->products()->whereNull('parent_id')->get();
+
         return Inertia::render('Shops/Show', [
             'shop' => $shop,
+            'stats' => [
+                'products' => $products->count(),
+                'stock_units' => (int) $products->sum('stock_quantity'),
+                'stock_value' => round($products->sum(fn ($product) => $product->stockValue()), 2),
+                'low_stock' => $products->filter(fn ($product) => $product->isLowStock())->count(),
+            ],
+            // Les autres boutiques du compte, destinations possibles d'un transfert.
+            'otherShops' => $user->accessibleShopsQuery()
+                ->where('id', '!=', $shop->id)
+                ->get(['id', 'name']),
+            'transferableProducts' => $products
+                ->where('track_stock', true)
+                ->where('stock_quantity', '>', 0)
+                ->map(fn ($product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'stock_quantity' => $product->stock_quantity,
+                ])
+                ->values(),
         ]);
     }
 

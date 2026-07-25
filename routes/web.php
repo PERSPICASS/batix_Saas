@@ -292,6 +292,11 @@ Route::prefix('{code_user}')
         ->name('shops.store')
         ->middleware(['subscription.limits:shop', 'permission:shops,create']);
     Route::get('boutiques', [ShopController::class, 'index'])->name('shops.index')->middleware('permission:shops,view');
+    // Transfert de produits d'une boutique à l'autre. Un produit appartenant à une seule
+    // boutique, l'opération sort du stock d'un côté et en fait entrer de l'autre.
+    Route::post('boutiques/{shop}/transferer', [ShopController::class, 'transferProducts'])
+        ->name('shops.transfer')
+        ->middleware('permission:stocks,edit');
     Route::get('boutiques/create', [ShopController::class, 'create'])->name('shops.create')->middleware('permission:shops,create');
     Route::get('boutiques/{shop}', [ShopController::class, 'show'])->name('shops.show')->middleware('permission:shops,view');
     Route::get('boutiques/{shop}/edit', [ShopController::class, 'edit'])->name('shops.edit')->middleware('permission:shops,edit');
