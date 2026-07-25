@@ -25,11 +25,14 @@ use Barryvdh\DomPDF\PDF as PdfWrapper;
  */
 class DocumentPdf
 {
-    /**
-     * Largeur d'un ruban de caisse 80 mm, en points PostScript (1 pt = 1/72").
-     * La hauteur est volontairement généreuse : dompdf coupe à la fin du contenu.
-     */
+    /** Largeur d'un ruban de caisse 80 mm, en points PostScript (1 pt = 1/72"). */
     private const RECEIPT_WIDTH = 226.77;
+
+    /** En-tête, méta, totaux et pied : ce que le ticket occupe sans aucune ligne. */
+    private const RECEIPT_BASE_HEIGHT = 250;
+
+    /** Un article occupe deux lignes : son libellé, puis quantité × prix. */
+    private const RECEIPT_LINE_HEIGHT = 24;
 
     public function forSale(Sale $sale): PdfWrapper
     {
@@ -39,7 +42,36 @@ class DocumentPdf
             'sale' => $sale,
             'shop' => $sale->shop,
             'currencySymbol' => get_currency_symbol($sale->shop?->currency),
-        ])->setPaper([0, 0, self::RECEIPT_WIDTH, 1200]);
+        ])->setPaper([0, 0, self::RECEIPT_WIDTH, $this->receiptHeight($sale)]);
+    }
+
+    /**
+     * Hauteur du ruban, ajustée au contenu.
+     *
+     * dompdf ne sait pas réduire un format au contenu : une hauteur fixe généreuse
+     * imprimait une longue bande blanche après chaque ticket, soit du papier perdu à
+     * chaque vente. La hauteur est donc estimée, avec une marge de sécurité — mieux vaut
+     * quelques millimètres de trop qu'un ticket coupé.
+     */
+    private function receiptHeight(Sale $sale): float
+    {
+        $height = self::RECEIPT_BASE_HEIGHT
+            + $sale->items->count() * self::RECEIPT_LINE_HEIGHT;
+
+        // Une vente à crédit ajoute le reste dû et son échéance.
+        if ($sale->remaining_amount > 0) {
+            $height += 30;
+        }
+
+        if ($sale->status === 'cancelled') {
+            $height += 25;
+        }
+
+        if ($sale->shop?->invoice_footer) {
+            $height += 20;
+        }
+
+        return $height;
     }
 
     public function forInvoice(Invoice $invoice): PdfWrapper

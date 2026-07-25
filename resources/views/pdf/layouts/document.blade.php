@@ -45,7 +45,8 @@
             border-bottom: 0.4pt solid #e0e0e0;
         }
 
-        .totals { margin-top: 12pt; }
+        .totals-wrap { margin-top: 12pt; }
+        .totals-wrap > tr > td { padding: 0; vertical-align: top; }
         .totals td { padding: 2pt 3pt; }
         .totals .grand td {
             font-size: 11pt;
@@ -53,14 +54,20 @@
             border-top: 0.8pt solid #333;
             padding-top: 5pt;
         }
+        /* Un montant ne doit jamais se couper : « 1 037 928,00 CFA » passait à la ligne,
+           le symbole atterrissant seul sous le nombre. */
+        .amount { white-space: nowrap; }
 
-        .breakdown { margin-top: 10pt; width: 60%; }
+        .breakdown { margin-top: 10pt; width: 45%; }
         .breakdown th, .breakdown td {
             font-size: 8pt;
             padding: 2pt 3pt;
             border-bottom: 0.4pt solid #e0e0e0;
         }
+        /* `.breakdown th` l'emportait sur `.right` par spécificité : les en-têtes
+           restaient à gauche au-dessus de chiffres alignés à droite. */
         .breakdown th { text-align: left; }
+        .breakdown th.right, .breakdown td.right { text-align: right; }
 
         .notes { margin-top: 14pt; font-size: 8pt; }
         .footer {

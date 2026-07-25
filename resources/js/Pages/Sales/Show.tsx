@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, Printer, CreditCard, CheckCircle, FileDown, Trash2, Download, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useEffect } from 'react';
@@ -259,17 +259,6 @@ export default function SalesShow({ sale, auth }: Props) {
                         >
                             <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
-                        {/* Le ticket en PDF, au format ruban 80 mm. Sert aussi quand il n'y
-                            a pas d'imprimante sous la main — et c'est le fichier que
-                            l'envoi WhatsApp partagera. */}
-                        <a
-                            href={route('sales.pdf', { sale: displayedSale.id })}
-                            target="_blank"
-                            rel="noopener"
-                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
-                        >
-                            <FileDown className="size-4" /> PDF
-                        </a>
 
                     </div>
                 </div>
@@ -314,15 +303,17 @@ export default function SalesShow({ sale, auth }: Props) {
                                 <Trash2 className="size-4" /> Annuler la vente
                             </button>
                         )}
-                        <button
-                            onClick={() => {
-                                const codeUser = window.location.pathname.split('/')[1];
-                                window.location.href = route('sales.receipt', { code_user: codeUser, sale: sale.id });
-                            }}
+                        {/* Pointait sur `sales.receipt`, une route qui n'a jamais existé —
+                            ni route, ni méthode de contrôleur — donc le bouton ne faisait
+                            rien. Il sert maintenant le ticket PDF. */}
+                        <a
+                            href={route('sales.pdf', { sale: sale.id })}
+                            target="_blank"
+                            rel="noopener"
                             className="inline-flex items-center gap-2 rounded-lg border border-blue-400/40 bg-blue-400/10 px-4 py-2 text-sm font-medium text-blue-300 hover:bg-blue-400/20"
                         >
                             <Download className="size-4" /> {t.common.actions.download || "Télécharger"}
-                        </button>
+                        </a>
                         <button
                             onClick={() => canCreateReturn ? setShowReturnModal(true) : setShowReturnPermissionDenied(true)}
                             className="inline-flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-400/20"

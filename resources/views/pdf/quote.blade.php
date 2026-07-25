@@ -58,9 +58,9 @@
         <table class="breakdown">
             <thead>
                 <tr>
-                    <th>Taux</th>
-                    <th class="right">Base HT</th>
-                    <th class="right">TVA</th>
+                    <th style="width: 25%;">Taux</th>
+                    <th class="right" style="width: 40%;">Base HT</th>
+                    <th class="right" style="width: 35%;">TVA</th>
                 </tr>
             </thead>
             <tbody>
@@ -75,21 +75,28 @@
         </table>
     @endif
 
-    <table class="totals">
+    {{-- Le bloc de totaux est isolé dans la colonne de droite d'un tableau porteur.
+         Auparavant chaque ligne portait une cellule vide de 65 % : le trait du total
+         général la traversait, et courait donc sur toute la largeur de la page. --}}
+    <table class="totals-wrap">
         <tr>
-            <td style="width: 65%;"></td>
-            <td>Sous-total HT</td>
-            <td class="right">{{ number_format($quote->subtotal, 2, ',', ' ') }} {{ $currencySymbol }}</td>
-        </tr>
-        <tr>
-            <td></td>
-            <td>TVA</td>
-            <td class="right">{{ number_format($quote->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
-        </tr>
-        <tr class="grand">
-            <td></td>
-            <td>TOTAL TTC</td>
-            <td class="right">{{ number_format($quote->total, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+            <td style="width: 55%;"></td>
+            <td style="width: 45%;">
+                <table class="totals">
+                    <tr>
+                        <td>Sous-total HT</td>
+                        <td class="right amount">{{ number_format($quote->subtotal, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+                    </tr>
+                    <tr>
+                        <td>TVA</td>
+                        <td class="right amount">{{ number_format($quote->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+                    </tr>
+                    <tr class="grand">
+                        <td>TOTAL TTC</td>
+                        <td class="right amount">{{ number_format($quote->total, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
     </table>
 @endsection
