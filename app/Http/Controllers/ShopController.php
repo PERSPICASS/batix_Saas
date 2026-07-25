@@ -116,7 +116,11 @@ class ShopController extends Controller
                 // écrit ainsi il cherchait un champ nommé « 3 » et ne refusait rien.
                 Rule::notIn([$shop->id]),
             ],
-            'product_ids' => 'required|array|min:1',
+            // Tout copier d'un coup, ou une sélection. Le drapeau plutôt qu'une liste de
+            // plusieurs centaines d'identifiants : c'est le cas d'usage même de l'ouverture
+            // d'une boutique, et la requête n'a pas à transporter tout le catalogue.
+            'all_products' => 'sometimes|boolean',
+            'product_ids' => 'required_without:all_products|array|min:1',
             'product_ids.*' => [
                 'required',
                 Rule::exists('products', 'id')->where('shop_id', $shop->id),
@@ -127,7 +131,17 @@ class ShopController extends Controller
         $target = Shop::findOrFail($validated['target_shop_id']);
 
         [$transfer, $copied, $skipped] = DB::transaction(function () use ($validated, $shop, $target, $user) {
-            $sources = Product::whereIn('id', array_unique($validated['product_ids']))->get();
+            $sources = Product::query()
+                ->when(
+                    $validated['all_products'] ?? false,
+                    fn ($q) => $q->where('shop_id', $shop->id),
+                    fn ($q) => $q->whereIn('id', array_unique($validated['product_ids'] ?? []))
+                )
+                // Les parents d'abord : une déclinaison rencontrée seule ferait copier son
+                // parent au passage, ce qui marche mais brouille l'ordre du document.
+                ->orderByRaw('parent_id is not null')
+                ->orderBy('id')
+                ->get();
 
             $transfer = ShopTransfer::create([
                 'from_shop_id' => $shop->id,

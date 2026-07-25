@@ -247,6 +247,96 @@ class ShopProductCopyTest extends TestCase
         $this->assertCount(2, $transfer->items);
     }
 
+    /**
+     * Opening a shop is the case this exists for: the whole catalogue in one gesture,
+     * without listing hundreds of ids in the request.
+     */
+    public function test_the_whole_catalogue_can_be_copied_at_once(): void
+    {
+        $this->product($this->source, ['sku' => 'A']);
+        $this->product($this->source, ['sku' => 'B']);
+        $this->product($this->source, ['sku' => 'C', 'stock_quantity' => 0]);
+
+        $this->post("/{$this->user->code_user}/boutiques/{$this->source->id}/transferer", [
+            'target_shop_id' => $this->target->id,
+            'all_products' => true,
+        ])->assertSessionHas('success');
+
+        $this->assertSame(3, Product::where('shop_id', $this->target->id)->count());
+
+        // Toujours une copie : la source garde tout, le registre reste vide.
+        $this->assertSame(3, Product::where('shop_id', $this->source->id)->count());
+        $this->assertSame(0, StockMovement::count());
+    }
+
+    public function test_copying_everything_skips_what_is_already_there(): void
+    {
+        $this->product($this->source, ['name' => 'Ciment 50kg', 'sku' => 'CIM-50']);
+        $this->product($this->source, ['name' => 'Fer à béton', 'sku' => 'FER-8']);
+        $this->product($this->target, ['name' => 'Ciment 50kg', 'sku' => 'CIM-50']);
+
+        $this->post("/{$this->user->code_user}/boutiques/{$this->source->id}/transferer", [
+            'target_shop_id' => $this->target->id,
+            'all_products' => true,
+        ])->assertSessionHas('success');
+
+        // Un seul ajout : l'autre était déjà là.
+        $this->assertSame(2, Product::where('shop_id', $this->target->id)->count());
+        $this->assertCount(1, ShopTransfer::with('items')->firstOrFail()->items);
+    }
+
+    /**
+     * Copying everything must not reach into another shop's catalogue.
+     */
+    public function test_copying_everything_only_takes_this_shops_products(): void
+    {
+        $this->product($this->source, ['sku' => 'MIEN']);
+
+        $otherAccountShop = Shop::factory()->create();
+        $this->product($otherAccountShop, ['sku' => 'AUTRE']);
+
+        $this->post("/{$this->user->code_user}/boutiques/{$this->source->id}/transferer", [
+            'target_shop_id' => $this->target->id,
+            'all_products' => true,
+        ]);
+
+        $this->assertSame(1, Product::where('shop_id', $this->target->id)->count());
+        $this->assertNull(Product::where('shop_id', $this->target->id)->where('sku', 'AUTRE')->first());
+    }
+
+    public function test_a_selection_is_still_required_when_not_copying_everything(): void
+    {
+        $this->post("/{$this->user->code_user}/boutiques/{$this->source->id}/transferer", [
+            'target_shop_id' => $this->target->id,
+        ])->assertSessionHasErrors('product_ids');
+    }
+
+    /**
+     * Copying everything drags variations in too, and a variation cannot exist before its
+     * parent — hence the ordering that puts parents first.
+     */
+    public function test_copying_everything_keeps_variations_attached(): void
+    {
+        $parent = $this->product($this->source, ['sku' => 'PEINT', 'has_variations' => true]);
+        $this->product($this->source, ['sku' => 'PEINT-R5', 'parent_id' => $parent->id]);
+        $this->product($this->source, ['sku' => 'PEINT-B5', 'parent_id' => $parent->id]);
+
+        $this->post("/{$this->user->code_user}/boutiques/{$this->source->id}/transferer", [
+            'target_shop_id' => $this->target->id,
+            'all_products' => true,
+        ])->assertSessionHas('success');
+
+        $createdParent = Product::where('shop_id', $this->target->id)->where('sku', 'PEINT')->firstOrFail();
+
+        foreach (['PEINT-R5', 'PEINT-B5'] as $sku) {
+            $variation = Product::where('shop_id', $this->target->id)->where('sku', $sku)->firstOrFail();
+            $this->assertSame($createdParent->id, $variation->parent_id);
+        }
+
+        // Le parent n'est créé qu'une fois, malgré ses deux déclinaisons.
+        $this->assertSame(3, Product::where('shop_id', $this->target->id)->count());
+    }
+
     public function test_a_shop_cannot_copy_to_itself(): void
     {
         $source = $this->product($this->source);

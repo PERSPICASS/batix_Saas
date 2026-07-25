@@ -81,6 +81,10 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
         setCart((current) => current.filter((id) => id !== productId));
     };
 
+    // Tout le catalogue, ou une sélection. Ouvrir une boutique appelle le premier ;
+    // compléter un assortiment appelle le second.
+    const [copyAll, setCopyAll] = useState(false);
+
     const { data, setData, post, processing, errors, reset, transform } = useForm({
         target_shop_id: '',
     });
@@ -93,12 +97,17 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
 
         // Les quantités vivent dans leur propre état, chaque ligne se saisissant
         // indépendamment ; `transform` les rattache à l'envoi.
-        transform((formData) => ({ ...formData, product_ids: selected }));
+        transform((formData) =>
+            copyAll
+                ? { ...formData, all_products: true }
+                : { ...formData, product_ids: selected },
+        );
 
         post(route('shops.transfer', { shop: shop.id }), {
             onSuccess: () => {
                 setCart([]);
                 setSearch('');
+                setCopyAll(false);
                 reset();
             },
         });
@@ -230,9 +239,19 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
                                     <InputError message={errors.target_shop_id} className="mt-1" />
                                 </div>
 
+                                <label className="mb-4 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                    <input
+                                        type="checkbox"
+                                        checked={copyAll}
+                                        onChange={(e) => setCopyAll(e.target.checked)}
+                                        className="rounded border-gray-300 text-amber-400 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900"
+                                    />
+                                    {t.shops.transfer.copyAll.replace(':count', String(transferableProducts.length))}
+                                </label>
+
                                 {/* Recherche : on ajoute au panier, on n'affiche pas
                                     tout le catalogue. */}
-                                <div className="relative mb-4 max-w-lg">
+                                <div className={`relative mb-4 max-w-lg ${copyAll ? 'hidden' : ''}`}>
                                     <input
                                         type="text"
                                         value={search}
@@ -266,7 +285,11 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
                                     )}
                                 </div>
 
-                                {inCart.length === 0 ? (
+                                {copyAll ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        {t.shops.transfer.copyAllHelp}
+                                    </p>
+                                ) : inCart.length === 0 ? (
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
                                         {t.shops.transfer.emptyCart}
                                     </p>
@@ -310,7 +333,7 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
 
                                 <button
                                     type="submit"
-                                    disabled={processing || selected.length === 0 || !data.target_shop_id}
+                                    disabled={processing || (!copyAll && selected.length === 0) || !data.target_shop_id}
                                     className="mt-4 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {t.shops.transfer.submit}
