@@ -71,11 +71,16 @@ export default function WhatsAppShareButton({ shareUrl, message, phone, label }:
             </button>
 
             <Modal show={askingNumber} onClose={() => setAskingNumber(false)} maxWidth="sm">
-                <div className="space-y-4 p-6">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                {/* Le panneau de Modal est en `bg-white` sans variante sombre : c'est au
+                    contenu de porter son fond, sinon un titre en `dark:text-white`
+                    s'écrit en blanc sur blanc et la fenêtre paraît vide. Contrairement aux
+                    autres modales du projet, celle-ci gère les deux thèmes plutôt que de
+                    figer le fond sombre. */}
+                <div className="space-y-4 bg-white p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+                    <h2 className="text-lg font-semibold">
                         {t.documents.share.numberTitle}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                         {t.documents.share.numberHelp}
                     </p>
                     <input
