@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { FileText, Send, CheckCircle, Download, Edit, Trash2, ArrowLeft, Calculator } from 'lucide-react';
+import { FileText, FileDown, Send, CheckCircle, Download, Edit, Trash2, ArrowLeft, Calculator } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useRoute } from '@/utils/route';
@@ -179,6 +179,18 @@ export default function ShowQuote({ quote }: { quote: any }) {
                                     </button>
                                 </>
                             )}
+
+                            {/* Toujours disponible : un devis se télécharge quel que soit
+                                son statut, y compris pour le renvoyer au client. */}
+                            <a
+                                href={route('quotes.pdf', { quote: quote.id })}
+                                target="_blank"
+                                rel="noopener"
+                                className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 w-full font-semibold text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                            >
+                                <FileDown className="size-4" />
+                                PDF
+                            </a>
 
                             {quote.status === 'sent' && (
                                 <button

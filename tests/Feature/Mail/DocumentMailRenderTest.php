@@ -108,28 +108,23 @@ class DocumentMailRenderTest extends TestCase
     }
 
     /**
-     * Nothing generates these PDFs today — there is no PDF library in the project at all.
-     * The attachment must therefore be conditional; when a file does appear, it is
-     * attached.
+     * The PDF is generated at send time rather than read off disk, so the attachment is
+     * always there — and it is a real PDF, not a placeholder.
      */
-    public function test_the_pdf_is_attached_when_one_exists(): void
+    public function test_the_sent_quote_carries_a_generated_pdf(): void
     {
         config(['mail.default' => 'array']);
 
         $quote = $this->quote($this->shop('EUR'));
-        Storage::put("quotes/{$quote->id}.pdf", '%PDF-1.4 fake');
-
-        $this->assertCount(1, (new QuoteMail($quote))->attachments());
 
         Mail::to('client@example.com')->send(new QuoteMail($quote));
-        $this->assertCount(1, app('mailer')->getSymfonyTransport()->messages());
-    }
 
-    public function test_no_attachment_is_claimed_when_no_pdf_exists(): void
-    {
-        $quote = $this->quote($this->shop('EUR'));
+        $message = app('mailer')->getSymfonyTransport()->messages()[0]->getOriginalMessage();
+        $attachments = $message->getAttachments();
 
-        $this->assertSame([], (new QuoteMail($quote))->attachments());
+        $this->assertCount(1, $attachments);
+        $this->assertStringContainsString("Devis-{$quote->quote_number}.pdf", $attachments[0]->getFilename());
+        $this->assertStringStartsWith('%PDF', $attachments[0]->getBody());
     }
 
     public function test_a_quote_mail_renders(): void

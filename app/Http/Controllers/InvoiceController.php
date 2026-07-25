@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Services\ActivityLogger;
+use App\Services\DocumentPdf;
 use App\Support\ConcurrencySafe;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -454,6 +455,15 @@ class InvoiceController extends Controller
         ActivityLogger::deleted($invoice, $invoiceNumber);
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture supprimée avec succès.');
+    }
+
+    public function pdf(string $code_user, Invoice $invoice, DocumentPdf $pdf)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        return $pdf->forInvoice($invoice)->stream("Facture-{$invoice->invoice_number}.pdf");
     }
 
     public function send(string $code_user, Invoice $invoice)

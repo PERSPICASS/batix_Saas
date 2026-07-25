@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Currency from '@/Components/Currency';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Ban, CheckCircle2, Pencil, Printer, ReceiptText, Repeat2, X, Send } from 'lucide-react';
+import { ArrowLeft, Ban, CheckCircle2, FileDown, Pencil, Printer, ReceiptText, Repeat2, X, Send } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useState } from 'react';
@@ -170,6 +170,14 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                         >
                             <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
+                        <a
+                            href={route('invoices.pdf', { invoice: invoice.id })}
+                            target="_blank"
+                            rel="noopener"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <FileDown className="size-4" /> PDF
+                        </a>
                         {isDraft && (
                             <Link
                                 href={route('invoices.edit', { invoice: invoice.id })}

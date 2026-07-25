@@ -270,6 +270,15 @@ class QuoteController extends Controller
         return redirect()->route('quotes.show', ['code_user' => $code_user, 'quote' => $quote])->with('success', 'Devis mis à jour');
     }
 
+    public function pdf(string $code_user, Quote $quote, \App\Services\DocumentPdf $pdf)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {
+            abort(403);
+        }
+
+        return $pdf->forQuote($quote)->stream("Devis-{$quote->quote_number}.pdf");
+    }
+
     public function send(string $code_user, Quote $quote): RedirectResponse
     {
         if (!Auth::user()->accessibleShopsQuery()->where('id', $quote->shop_id)->exists()) {

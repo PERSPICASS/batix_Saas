@@ -10,6 +10,7 @@ use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Services\ActivityLogger;
 use App\Services\SaleCreationService;
+use App\Services\DocumentPdf;
 use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -285,6 +286,21 @@ class SaleController extends Controller
         return Inertia::render('Sales/Show', [
             'sale' => $sale,
         ]);
+    }
+
+    /**
+     * Le ticket en PDF, généré à la demande.
+     *
+     * Rien n'est stocké : une vente est immuable, son rendu est donc reproductible, et un
+     * fichier sur disque ne serait qu'un cache à invalider.
+     */
+    public function pdf(string $code_user, Sale $sale, DocumentPdf $pdf)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $sale->shop_id)->exists()) {
+            abort(403);
+        }
+
+        return $pdf->forSale($sale)->stream("Ticket-{$sale->ticket_number}.pdf");
     }
 
     public function destroy(string $code_user, Sale $sale)

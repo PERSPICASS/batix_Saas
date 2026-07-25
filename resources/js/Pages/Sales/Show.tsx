@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Printer, CreditCard, CheckCircle, FileDown, Trash2, Download, RotateCcw } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useEffect } from 'react';
@@ -259,6 +259,17 @@ export default function SalesShow({ sale, auth }: Props) {
                         >
                             <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
+                        {/* Le ticket en PDF, au format ruban 80 mm. Sert aussi quand il n'y
+                            a pas d'imprimante sous la main — et c'est le fichier que
+                            l'envoi WhatsApp partagera. */}
+                        <a
+                            href={route('sales.pdf', { sale: displayedSale.id })}
+                            target="_blank"
+                            rel="noopener"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <FileDown className="size-4" /> PDF
+                        </a>
 
                     </div>
                 </div>

@@ -346,6 +346,7 @@ Route::prefix('{code_user}')
         ->middlewareFor('destroy', 'permission:quotes,delete');
     Route::post('devis/{quote}/envoyer', [QuoteController::class, 'send'])->name('quotes.send')->middleware('permission:quotes,edit');
     Route::post('devis/{quote}/accepter', [QuoteController::class, 'accept'])->name('quotes.accept')->middleware('permission:quotes,edit');
+    Route::get('devis/{quote}/pdf', [QuoteController::class, 'pdf'])->name('quotes.pdf')->middleware('permission:quotes,view');
     Route::post('devis/{quote}/convertir-facture', [QuoteController::class, 'convertToInvoice'])->name('quotes.convert')->middleware('permission:quotes,edit');
 
     // Routes pour les précommandes
@@ -380,6 +381,7 @@ Route::prefix('{code_user}')
     // de marquer une facture payée.
     Route::post('factures/{invoice}/statut', [InvoiceController::class, 'updateStatus'])->name('invoices.status')->middleware('permission:invoices,edit');
     Route::get('factures/export/excel', [InvoiceController::class, 'export'])->name('invoices.export')->middleware('permission:invoices,view');
+    Route::get('factures/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf')->middleware('permission:invoices,view');
 
     // Avoirs. Pas de module de permission dédié : émettre un avoir fait partie de la
     // facturation, et ajouter un module imposerait de le déclarer pour chacun des rôles
@@ -419,6 +421,7 @@ Route::prefix('{code_user}')
         ->middleware('permission:sales,create');
     Route::post('ventes/{sale}/pay-credit', [SaleController::class, 'payCredit'])->name('sales.pay-credit')->middleware('permission:credits,edit');
     Route::patch('ventes/{sale}/reactiver', [SaleController::class, 'restore'])->name('sales.restore')->middleware('permission:sales_restore,view');
+    Route::get('ventes/{sale}/pdf', [SaleController::class, 'pdf'])->name('sales.pdf')->middleware('permission:sales,view');
 
     // Routes pour les retours
     Route::post('ventes/{sale}/retours', [ReturnsController::class, 'store'])->name('returns.store')->middleware('permission:returns,create');

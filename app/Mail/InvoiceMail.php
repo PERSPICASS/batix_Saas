@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
+use App\Services\DocumentPdf;
 
 class InvoiceMail extends Mailable
 {
@@ -48,21 +48,21 @@ class InvoiceMail extends Mailable
     }
 
     /**
-     * Même condition que sur QuoteMail : rien ne génère `invoices/{id}.pdf`, et attacher
-     * un fichier absent faisait échouer l'envoi entier.
+     * Le PDF est produit au moment de l'envoi, pas lu sur le disque.
+     *
+     * Rien ne stockait `invoices/{id}.pdf` — aucune génération n'existait — donc
+     * Attachment::fromStorage résolvait un fichier absent en null et Symfony faisait
+     * échouer TOUT envoi. DocumentPdf le génère à la demande : la pièce est immuable, son
+     * rendu est reproductible, et il n'y a ni cache à invalider ni copie de données
+     * fiscales à sauvegarder.
      */
     public function attachments(): array
     {
-        $path = "invoices/{$this->invoice->id}.pdf";
-
-        if (!Storage::exists($path)) {
-            return [];
-        }
-
         return [
-            Attachment::fromStorage($path)
-                ->as("Facture-{$this->invoice->invoice_number}.pdf")
-                ->withMime('application/pdf'),
+            Attachment::fromData(
+                fn () => app(DocumentPdf::class)->forInvoice($this->invoice)->output(),
+                "Facture-{$this->invoice->invoice_number}.pdf"
+            )->withMime('application/pdf'),
         ];
     }
 }
