@@ -93,12 +93,14 @@ class ShopController extends Controller
     }
 
     /**
-     * Transférer des produits vers une autre boutique du compte.
+     * Copier des produits vers une autre boutique du compte.
      *
-     * Un produit appartient à une seule boutique : il n'y a donc rien à « déplacer ». On
-     * sort la quantité du produit source, et on la fait entrer sur son homologue chez la
-     * destination — retrouvé par SKU puis par nom, comme le fait déjà l'entrée en dépôt, et
-     * créé s'il n'existe pas encore là-bas.
+     * Un compte saisit son catalogue une fois. Ouvrir une succursale ne doit pas obliger à
+     * tout ressaisir : le produit est recréé là-bas avec ses prix, sa TVA et sa catégorie,
+     * à stock zéro.
+     *
+     * C'est une COPIE, pas un mouvement de marchandise : la boutique d'origine n'est pas
+     * touchée et rien n'entre au registre des stocks. Chaque boutique approvisionne le sien.
      */
     public function transferProducts(Request $request, string $code_user, Shop $shop): RedirectResponse
     {
@@ -114,39 +116,18 @@ class ShopController extends Controller
                 // écrit ainsi il cherchait un champ nommé « 3 » et ne refusait rien.
                 Rule::notIn([$shop->id]),
             ],
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => [
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => [
                 'required',
                 Rule::exists('products', 'id')->where('shop_id', $shop->id),
             ],
-            'items.*.quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string',
         ]);
 
         $target = Shop::findOrFail($validated['target_shop_id']);
 
-        $transfer = DB::transaction(function () use ($validated, $shop, $target, $user) {
-            $wanted = [];
-            foreach ($validated['items'] as $item) {
-                $wanted[$item['product_id']] = ($wanted[$item['product_id']] ?? 0) + (int) $item['quantity'];
-            }
-
-            // Verrouiller avant de vérifier : deux transferts simultanés de la dernière
-            // pièce passeraient sinon tous deux le contrôle.
-            $sources = Product::whereIn('id', array_keys($wanted))->lockForUpdate()->get()->keyBy('id');
-
-            $errors = [];
-            foreach ($wanted as $productId => $quantity) {
-                $source = $sources->get($productId);
-
-                if ($source && $source->track_stock && $source->stock_quantity < $quantity) {
-                    $errors['items'][] = "Stock insuffisant pour « {$source->name} » (disponible : {$source->stock_quantity}, demandé : {$quantity}).";
-                }
-            }
-
-            if (!empty($errors)) {
-                throw ValidationException::withMessages($errors);
-            }
+        [$transfer, $copied, $skipped] = DB::transaction(function () use ($validated, $shop, $target, $user) {
+            $sources = Product::whereIn('id', array_unique($validated['product_ids']))->get();
 
             $transfer = ShopTransfer::create([
                 'from_shop_id' => $shop->id,
@@ -155,47 +136,38 @@ class ShopController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            foreach ($wanted as $productId => $quantity) {
-                $source = $sources->get($productId);
+            $copied = 0;
+            $skipped = 0;
 
-                if (!$source) {
+            foreach ($sources as $source) {
+                // Déjà présent là-bas : on ne recrée pas, et surtout on ne touche à rien —
+                // la boutique de destination a pu ajuster son prix depuis.
+                if ($this->existingProductIn($target, $source)) {
+                    $skipped++;
                     continue;
                 }
 
                 $destination = $this->matchingProductIn($target, $source);
-
-                StockMovementService::recordShopTransfer(
-                    $source,
-                    -$quantity,
-                    $target,
-                    $transfer,
-                    "Transfert {$transfer->reference} vers « {$target->name} »"
-                );
-
-                StockMovementService::recordShopTransfer(
-                    $destination,
-                    $quantity,
-                    $shop,
-                    $transfer,
-                    "Transfert {$transfer->reference} depuis « {$shop->name} »"
-                );
+                $copied++;
 
                 $transfer->items()->create([
                     'product_id' => $source->id,
                     'target_product_id' => $destination->id,
                     'product_name' => $source->name,
-                    'quantity' => $quantity,
                 ]);
             }
 
-            return $transfer;
+            return [$transfer, $copied, $skipped];
         });
 
-        $count = count($validated['items']);
+        if ($copied === 0) {
+            return back()->with('info', "Rien à copier : ces produits existent déjà chez « {$target->name} ».");
+        }
 
-        return back()->with('success', $count === 1
-            ? "Transfert {$transfer->reference} : 1 produit envoyé vers « {$target->name} »."
-            : "Transfert {$transfer->reference} : {$count} produits envoyés vers « {$target->name} ».");
+        $message = "Copie {$transfer->reference} : {$copied} produit(s) ajouté(s) à « {$target->name} »";
+        $message .= $skipped > 0 ? ", {$skipped} déjà présent(s)." : '.';
+
+        return back()->with('success', $message);
     }
 
     /**
@@ -217,62 +189,6 @@ class ShopController extends Controller
     }
 
     /**
-     * Annuler un transfert : la marchandise repart d'où elle venait.
-     *
-     * Rien n'est supprimé — le document reste, marqué annulé, et deux mouvements inverses
-     * s'ajoutent au registre. Effacer les mouvements d'origine reviendrait à prétendre que
-     * le transfert n'a pas eu lieu, alors qu'il a bien déplacé du stock.
-     */
-    public function cancelTransfer(string $code_user, ShopTransfer $shopTransfer): RedirectResponse
-    {
-        $this->authorize('view', $shopTransfer->fromShop);
-
-        if ($shopTransfer->isCancelled()) {
-            return back()->with('error', 'Ce transfert est déjà annulé.');
-        }
-
-        DB::transaction(function () use ($shopTransfer) {
-            $shopTransfer->load('items.product', 'items.targetProduct', 'fromShop', 'toShop');
-
-            foreach ($shopTransfer->items as $item) {
-                // Le stock revenu doit encore être là pour repartir : sans quoi la
-                // destination passerait en négatif.
-                if ($item->targetProduct && $item->targetProduct->stock_quantity < $item->quantity) {
-                    throw ValidationException::withMessages([
-                        'transfer' => "« {$item->product_name} » n'est plus en stock en quantité suffisante chez « {$shopTransfer->toShop->name} » pour annuler ce transfert.",
-                    ]);
-                }
-            }
-
-            foreach ($shopTransfer->items as $item) {
-                if ($item->targetProduct) {
-                    StockMovementService::recordShopTransfer(
-                        $item->targetProduct,
-                        -$item->quantity,
-                        $shopTransfer->fromShop,
-                        $shopTransfer,
-                        "Annulation du transfert {$shopTransfer->reference}"
-                    );
-                }
-
-                if ($item->product) {
-                    StockMovementService::recordShopTransfer(
-                        $item->product,
-                        $item->quantity,
-                        $shopTransfer->toShop,
-                        $shopTransfer,
-                        "Annulation du transfert {$shopTransfer->reference}"
-                    );
-                }
-            }
-
-            $shopTransfer->update(['status' => 'cancelled', 'cancelled_at' => now()]);
-        });
-
-        return back()->with('success', "Transfert {$shopTransfer->reference} annulé.");
-    }
-
-    /**
      * L'équivalent de la catégorie du produit dans la boutique de destination.
      *
      * Rapproché par nom : les catégories sont propres à chaque boutique, donc l'identifiant
@@ -291,6 +207,22 @@ class ShopController extends Controller
     }
 
     /**
+     * Le produit déjà présent dans la boutique de destination, s'il y est.
+     *
+     * Rapproché par SKU puis par nom — le SKU d'abord, un nom pouvant être retouché.
+     */
+    private function existingProductIn(Shop $target, Product $source): ?Product
+    {
+        $found = null;
+
+        if ($source->sku) {
+            $found = Product::where('shop_id', $target->id)->where('sku', $source->sku)->first();
+        }
+
+        return $found ?? Product::where('shop_id', $target->id)->where('name', $source->name)->first();
+    }
+
+    /**
      * L'homologue d'un produit dans la boutique de destination.
      *
      * Rapproché par SKU puis par nom — le SKU d'abord, un nom pouvant être retouché. Créé
@@ -299,15 +231,7 @@ class ShopController extends Controller
      */
     private function matchingProductIn(Shop $target, Product $source): Product
     {
-        $existing = null;
-
-        if ($source->sku) {
-            $existing = Product::where('shop_id', $target->id)->where('sku', $source->sku)->first();
-        }
-
-        $existing ??= Product::where('shop_id', $target->id)->where('name', $source->name)->first();
-
-        if ($existing) {
+        if ($existing = $this->existingProductIn($target, $source)) {
             return $existing;
         }
 
@@ -373,9 +297,9 @@ class ShopController extends Controller
             'otherShops' => $user->accessibleShopsQuery()
                 ->where('id', '!=', $shop->id)
                 ->get(['id', 'name']),
+            // Tous les produits, y compris ceux à stock zéro : une succursale qui ouvre a
+            // justement besoin du catalogue avant d'avoir la marchandise.
             'transferableProducts' => $transferable
-                ->where('track_stock', true)
-                ->where('stock_quantity', '>', 0)
                 ->map(fn ($product) => [
                     'id' => $product->id,
                     // Une déclinaison seule est ambiguë : « Rouge » ne dit pas de quoi.

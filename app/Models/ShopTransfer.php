@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Un transfert de marchandise d'une boutique vers une autre.
+ * La copie de produits d'une boutique vers une autre.
  *
- * Le document manquait : un transfert ne laissait que ses mouvements de stock, donc aucune
- * trace consultable de qui avait envoyé quoi, ni de quoi annuler.
+ * Un compte saisit son catalogue une fois ; ouvrir une succursale ne doit pas obliger à
+ * tout ressaisir. C'est une copie, pas un mouvement de marchandise : la boutique d'origine
+ * n'est pas touchée, et rien n'entre au registre des stocks.
  */
 class ShopTransfer extends Model
 {
@@ -22,13 +23,7 @@ class ShopTransfer extends Model
         'from_shop_id',
         'to_shop_id',
         'user_id',
-        'status',
         'notes',
-        'cancelled_at',
-    ];
-
-    protected $casts = [
-        'cancelled_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -80,10 +75,5 @@ class ShopTransfer extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ShopTransferItem::class);
-    }
-
-    public function isCancelled(): bool
-    {
-        return $this->status === 'cancelled';
     }
 }

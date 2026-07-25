@@ -1,21 +1,17 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight, Ban } from 'lucide-react';
-import { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { useRoute } from '@/utils/route';
-import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useLocale } from '@/contexts/LocaleContext';
 
 interface TransferItem {
     id: number;
     product_name: string;
-    quantity: number;
 }
 
 interface Transfer {
     id: number;
     reference: string;
-    status: string;
     notes: string | null;
     created_at: string;
     from_shop: { id: number; name: string } | null;
@@ -35,18 +31,6 @@ interface Props {
 export default function ShopTransfers({ shop, transfers }: Props) {
     const route = useRoute();
     const { t, locale } = useLocale();
-    const [toCancel, setToCancel] = useState<Transfer | null>(null);
-    const [cancelling, setCancelling] = useState(false);
-
-    const confirmCancel = () => {
-        if (!toCancel) return;
-
-        setCancelling(true);
-        router.post(route('shops.transfer.cancel', { shopTransfer: toCancel.id }), {}, {
-            onFinish: () => { setCancelling(false); setToCancel(null); },
-        });
-    };
-
     return (
         <AuthenticatedLayout
             header={
@@ -92,14 +76,9 @@ export default function ShopTransfers({ shop, transfers }: Props) {
                                                 <span className="font-semibold text-slate-900 dark:text-white">
                                                     {transfer.reference}
                                                 </span>
-                                                {transfer.status === 'cancelled' && (
-                                                    <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-white/10 dark:text-slate-300">
-                                                        {t.shops.transfer.cancelled}
-                                                    </span>
-                                                )}
                                             </div>
                                             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                                                {outgoing ? t.shops.transfer.sentTo : t.shops.transfer.receivedFrom}{' '}
+                                                {outgoing ? t.shops.transfer.copiedTo : t.shops.transfer.copiedFrom}{' '}
                                                 <span className="font-medium">
                                                     {outgoing ? transfer.to_shop?.name : transfer.from_shop?.name}
                                                 </span>
@@ -110,26 +89,12 @@ export default function ShopTransfers({ shop, transfers }: Props) {
                                             </p>
                                         </div>
 
-                                        {/* Seule la boutique d'origine peut annuler : c'est elle
-                                            qui a envoyé, et la marchandise lui revient. */}
-                                        {outgoing && transfer.status !== 'cancelled' && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setToCancel(transfer)}
-                                                className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-700 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
-                                            >
-                                                <Ban className="size-3.5" /> {t.shops.transfer.cancel}
-                                            </button>
-                                        )}
                                     </div>
 
                                     <ul className="mt-3 divide-y divide-gray-200 border-t border-gray-200 pt-2 text-sm dark:divide-white/10 dark:border-white/10">
                                         {transfer.items.map((item) => (
-                                            <li key={item.id} className="flex justify-between py-1.5">
-                                                <span className="text-slate-700 dark:text-slate-300">{item.product_name}</span>
-                                                <span className="font-medium text-slate-900 dark:text-slate-200">
-                                                    {item.quantity}
-                                                </span>
+                                            <li key={item.id} className="py-1.5 text-slate-700 dark:text-slate-300">
+                                                {item.product_name}
                                             </li>
                                         ))}
                                     </ul>
@@ -160,18 +125,6 @@ export default function ShopTransfers({ shop, transfers }: Props) {
                     </div>
                 )}
             </div>
-
-            {toCancel && (
-                <ConfirmDeleteModal
-                    show
-                    onClose={() => setToCancel(null)}
-                    onConfirm={confirmCancel}
-                    processing={cancelling}
-                    title={t.shops.transfer.cancel}
-                    message={t.shops.transfer.cancelConfirm.replace(':reference', toCancel.reference)}
-                    confirmText={t.shops.transfer.cancel}
-                />
-            )}
         </AuthenticatedLayout>
     );
 }

@@ -5,17 +5,21 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Le document d'un transfert entre boutiques.
+ * Le journal des copies de produits d'une boutique vers une autre.
  *
- * Un transfert ne laissait que deux mouvements de stock portant une note. On ne pouvait ni
- * lister les transferts, ni savoir qui avait envoyé quoi, ni en annuler un.
+ * Un compte à plusieurs boutiques saisit son catalogue une fois. Ouvrir une succursale ne
+ * doit pas obliger à tout ressaisir : on copie les produits, avec leurs prix, leur TVA et
+ * leur catégorie, et la nouvelle boutique démarre à stock zéro.
  *
- * `depot_transfers` existe déjà mais stocke UNE LIGNE PAR PRODUIT, sans en-tête : envoyer
- * dix produits d'un coup y produit dix enregistrements indépendants, qu'aucune référence ne
- * rassemble. On sépare donc ici l'en-tête des lignes — un transfert est un geste, pas dix.
+ * C'est une copie, PAS un mouvement de marchandise : la boutique d'origine n'est pas
+ * touchée et rien n'entre au registre des stocks. Chaque boutique approvisionne le sien.
  *
- * `nullOnDelete` sur les produits : supprimer un produit ne doit pas effacer l'histoire de
- * ce qui a circulé, d'où le nom conservé sur la ligne.
+ * `depot_transfers` existe déjà mais stocke UNE LIGNE PAR PRODUIT, sans en-tête : copier
+ * dix produits d'un coup y produirait dix enregistrements qu'aucune référence ne rassemble.
+ * On sépare donc ici l'en-tête des lignes — une copie est un geste, pas dix.
+ *
+ * `nullOnDelete` sur les produits : supprimer un produit ne doit pas effacer la trace de ce
+ * qui a été copié, d'où le nom conservé sur la ligne.
  */
 return new class extends Migration
 {
@@ -27,9 +31,7 @@ return new class extends Migration
             $table->foreignId('from_shop_id')->constrained('shops')->cascadeOnDelete();
             $table->foreignId('to_shop_id')->constrained('shops')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('status')->default('completed');
             $table->text('notes')->nullable();
-            $table->timestamp('cancelled_at')->nullable();
             $table->timestamps();
 
             // Unique par boutique d'origine, comme les autres numéros de document depuis
@@ -45,7 +47,6 @@ return new class extends Migration
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('target_product_id')->nullable()->constrained('products')->nullOnDelete();
             $table->string('product_name');
-            $table->integer('quantity');
             $table->timestamps();
         });
     }

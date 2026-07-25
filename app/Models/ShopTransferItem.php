@@ -15,10 +15,7 @@ class ShopTransferItem extends Model
         'product_id',
         'target_product_id',
         'product_name',
-        'quantity',
     ];
-
-    protected $casts = ['quantity' => 'integer'];
 
     public function transfer(): BelongsTo
     {

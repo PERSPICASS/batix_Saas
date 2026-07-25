@@ -50,7 +50,7 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
     // Recherche + panier plutôt qu'un champ par produit : une quincaillerie de plusieurs
     // centaines de références rendait le formulaire illisible.
     const [search, setSearch] = useState('');
-    const [cart, setCart] = useState<Record<number, number>>({});
+    const [cart, setCart] = useState<number[]>([]);
 
     const matches = useMemo(() => {
         const needle = search.trim().toLowerCase();
@@ -58,7 +58,7 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
         if (!needle) return [];
 
         return transferableProducts
-            .filter((product) => !(product.id in cart))
+            .filter((product) => !cart.includes(product.id))
             .filter(
                 (product) =>
                     product.name.toLowerCase().includes(needle) ||
@@ -68,55 +68,36 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
     }, [search, transferableProducts, cart]);
 
     const inCart = useMemo(
-        () => transferableProducts.filter((product) => product.id in cart),
+        () => transferableProducts.filter((product) => cart.includes(product.id)),
         [transferableProducts, cart],
     );
 
     const addToCart = (product: TransferableProduct) => {
-        setCart((current) => ({ ...current, [product.id]: 1 }));
+        setCart((current) => [...current, product.id]);
         setSearch('');
     };
 
     const removeFromCart = (productId: number) => {
-        setCart((current) => {
-            const next = { ...current };
-            delete next[productId];
-
-            return next;
-        });
+        setCart((current) => current.filter((id) => id !== productId));
     };
 
     const { data, setData, post, processing, errors, reset, transform } = useForm({
         target_shop_id: '',
     });
 
-    const selected = useMemo(
-        () =>
-            inCart
-                .filter((product) => (cart[product.id] ?? 0) > 0)
-                .map((product) => ({ product_id: product.id, quantity: cart[product.id] })),
-        [inCart, cart],
-    );
-
-    const setQuantity = (product: TransferableProduct, raw: string) => {
-        const value = Number(raw);
-        // Borné au stock disponible : le serveur refuse de toute façon, autant ne pas
-        // laisser saisir un nombre qui sera rejeté.
-        const clamped = Number.isNaN(value) ? 0 : Math.max(0, Math.min(product.stock_quantity, value));
-
-        setCart((current) => ({ ...current, [product.id]: clamped }));
-    };
+    // Une copie ne transporte pas de quantité : seuls les produits à recréer comptent.
+    const selected = useMemo(() => cart, [cart]);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
 
         // Les quantités vivent dans leur propre état, chaque ligne se saisissant
         // indépendamment ; `transform` les rattache à l'envoi.
-        transform((formData) => ({ ...formData, items: selected }));
+        transform((formData) => ({ ...formData, product_ids: selected }));
 
         post(route('shops.transfer', { shop: shop.id }), {
             onSuccess: () => {
-                setCart({});
+                setCart([]);
                 setSearch('');
                 reset();
             },
@@ -296,7 +277,6 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
                                                 <tr>
                                                     <th className="py-2">{t.products.columns.name}</th>
                                                     <th className="py-2 text-right">{t.products.columns.stock}</th>
-                                                    <th className="py-2 text-right">{t.shops.transfer.quantity}</th>
                                                     <th className="py-2"></th>
                                                 </tr>
                                             </thead>
@@ -311,16 +291,6 @@ export default function ShopShow({ shop, stats, otherShops, transferableProducts
                                                         </td>
                                                         <td className="py-2 text-right text-slate-600 dark:text-slate-300">
                                                             {product.stock_quantity}
-                                                        </td>
-                                                        <td className="py-2 text-right">
-                                                            <input
-                                                                type="number"
-                                                                min={1}
-                                                                max={product.stock_quantity}
-                                                                value={cart[product.id] ?? 1}
-                                                                onChange={(e) => setQuantity(product, e.target.value)}
-                                                                className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                                            />
                                                         </td>
                                                         <td className="py-2 text-right">
                                                             <button
