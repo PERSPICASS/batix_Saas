@@ -55,7 +55,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
     const route = useRoute();
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
-    const { currencySymbol } = useShopSettings();
+    const { currencySymbol, defaultTaxRate } = useShopSettings();
 
     const [customerSearch, setCustomerSearch] = useState('');
     const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -71,7 +71,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
             description: '',
             quantity: 1,
             unit_price: 0,
-            tax_rate: 0,
+            tax_rate: defaultTaxRate,
         },
     ]);
 
@@ -122,7 +122,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                 description: '',
                 quantity: 1,
                 unit_price: 0,
-                tax_rate: 0,
+                tax_rate: defaultTaxRate,
             },
         ]);
     };

@@ -57,7 +57,7 @@ interface Props {
 export default function InvoicesEdit({ invoice, customers, shops, products }: Props) {
     const { t } = useLocale();
     const route = useRoute();
-    const { currencySymbol } = useShopSettings();
+    const { currencySymbol, defaultTaxRate } = useShopSettings();
 
     const [items, setItems] = useState<InvoiceItem[]>(
         invoice.items.map((item) => ({
@@ -110,7 +110,10 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
             description: '',
             quantity: 1,
             unit_price: 0,
-            tax_rate: 20,
+            // Le taux configuré de la boutique, pas un nombre magique : cet écran
+            // proposait 20 % quand l'écran de création proposait 0 %, pour le même
+            // produit dans la même boutique.
+            tax_rate: defaultTaxRate,
         };
         setItems((prev) => [...prev, newItem]);
     };

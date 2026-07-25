@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Invoice;
 use App\Models\Shop;
+use App\Traits\ResolvesTaxRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -15,6 +16,8 @@ use Illuminate\Http\RedirectResponse;
 
 class QuoteController extends Controller
 {
+    use ResolvesTaxRate;
+
     /**
      * Resolve the shop this request should operate on: the active shop selected in
      * session, scoped to shops the current user can actually access (owner, manager,
@@ -71,7 +74,7 @@ class QuoteController extends Controller
             ->get(['id', 'name', 'email']);
 
         $products = Product::where('shop_id', $shop->id)
-            ->get(['id', 'name', 'selling_price']);
+            ->get(['id', 'name', 'selling_price', 'tax_rate']);
 
         return Inertia::render('Quotes/Create', [
             'customers' => $customers,
@@ -107,7 +110,10 @@ class QuoteController extends Controller
             return $item['quantity'] * $item['unit_price'];
         });
 
-        $taxAmount = $subtotal * 0.18; // 18% TVA
+        // Chaque ligne porte son propre taux (produit, sinon boutique) : un taux global
+        // appliqué au sous-total ne collerait plus dès que deux lignes diffèrent, et le
+        // total du devis contredirait le détail de ses lignes.
+        $taxAmount = $this->taxAmountFor($validated['items'], $shop);
         $total = $subtotal + $taxAmount;
 
         // quote_number est généré à partir du dernier numéro connu : deux devis créés au
@@ -143,7 +149,11 @@ class QuoteController extends Controller
                         'quantity' => $item['quantity'],
                         'unit_price' => $item['unit_price'],
                         'line_total' => $item['quantity'] * $item['unit_price'],
-                        'tax_rate' => 18,
+                        // Le taux du produit d'abord, comme le fait déjà
+                        // SaleCreationService, puis le taux configuré de la boutique.
+                        // Un 18 en dur ignorait les deux : une boutique marocaine à 20 %
+                        // ou non assujettie à 0 % voyait quand même 18 % sur ses devis.
+                        'tax_rate' => $this->taxRateFor($item['product_id'] ?? null, $shop),
                     ]);
                 }
 
@@ -176,7 +186,7 @@ class QuoteController extends Controller
             ->get(['id', 'name']);
 
         $products = Product::where('shop_id', $quote->shop_id)
-            ->get(['id', 'name', 'selling_price']);
+            ->get(['id', 'name', 'selling_price', 'tax_rate']);
 
         $quote->load('customer', 'items.product');
 
@@ -226,7 +236,7 @@ class QuoteController extends Controller
             return $item['quantity'] * $item['unit_price'];
         });
 
-        $taxAmount = $subtotal * 0.18;
+        $taxAmount = $this->taxAmountFor($validated['items'], $quote->shop);
         $total = $subtotal + $taxAmount;
 
         $quote->update([
@@ -253,7 +263,7 @@ class QuoteController extends Controller
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
                 'line_total' => $item['quantity'] * $item['unit_price'],
-                'tax_rate' => 18,
+                'tax_rate' => $this->taxRateFor($item['product_id'] ?? null, $quote->shop),
             ]);
         }
 

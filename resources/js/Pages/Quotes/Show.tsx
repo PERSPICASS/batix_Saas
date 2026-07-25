@@ -115,7 +115,11 @@ export default function ShowQuote({ quote }: { quote: any }) {
                                 <span className="w-24 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(quote.subtotal)} /></span>
                             </div>
                             <div className="flex justify-end gap-8">
-                                <span className="text-slate-600 dark:text-slate-300">TVA (18%):</span>
+                                {/* Sans taux dans le libellé : chaque ligne porte le sien
+                                    (produit, sinon boutique), donc annoncer un taux unique
+                                    serait faux dès que deux lignes diffèrent. Le montant
+                                    affiché reste celui calculé par le serveur. */}
+                                <span className="text-slate-600 dark:text-slate-300">TVA:</span>
                                 <span className="w-24 text-right text-slate-900 dark:text-white font-medium"><Currency amount={parseFloat(quote.tax_amount)} /></span>
                             </div>
                             <div className="flex justify-end gap-8 border-t border-white/10 pt-2">

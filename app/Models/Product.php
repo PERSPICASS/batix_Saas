@@ -129,9 +129,21 @@ class Product extends Model
         return $this->stock_quantity <= $this->min_stock_alert;
     }
 
+    /**
+     * Le taux qui s'applique réellement à ce produit.
+     *
+     * `tax_rate` à NULL veut dire « hérite de la boutique », pas « zéro » : lire la
+     * colonne brute donnerait 0 pour un produit non configuré, alors que sa boutique peut
+     * avoir un taux paramétré dans les Réglages.
+     */
+    public function effectiveTaxRate(): float
+    {
+        return (float) ($this->tax_rate ?? $this->shop?->default_tax_rate ?? 0);
+    }
+
     public function getPriceWithTaxAttribute(): float
     {
-        return $this->selling_price * (1 + $this->tax_rate / 100);
+        return $this->selling_price * (1 + $this->effectiveTaxRate() / 100);
     }
 
     public function getMarginAttribute(): float

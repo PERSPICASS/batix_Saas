@@ -155,7 +155,9 @@ class PurchaseController extends Controller
         DB::beginTransaction();
         try {
             // Calculer les taux globaux
-            $globalTaxRate = $validated['tax_rate'] ?? 0;
+            // Champ laissé vide = on reprend le taux configuré de la boutique, pas un 0
+            // arbitraire : c'est le sens même d'un réglage `default_tax_rate`.
+            $globalTaxRate = $validated['tax_rate'] ?? $shop?->default_tax_rate ?? 0;
             $globalDiscountRate = $validated['discount_rate'] ?? 0;
 
             $purchase = Purchase::create([
@@ -318,7 +320,7 @@ class PurchaseController extends Controller
         DB::beginTransaction();
         try {
             // Calculer les taux globaux
-            $globalTaxRate = $validated['tax_rate'] ?? 0;
+            $globalTaxRate = $validated['tax_rate'] ?? $purchase->shop?->default_tax_rate ?? 0;
             $globalDiscountRate = $validated['discount_rate'] ?? 0;
 
             $purchase->update([

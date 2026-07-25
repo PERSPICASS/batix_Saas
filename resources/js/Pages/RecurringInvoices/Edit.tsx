@@ -16,6 +16,7 @@ interface Product {
     id: number;
     name: string;
     selling_price: number;
+    tax_rate?: number | string | null;
 }
 
 interface RecurringItem {
@@ -25,10 +26,24 @@ interface RecurringItem {
     unit_price: number;
 }
 
+// Le taux d'une ligne vient du produit, sinon du taux configuré de la boutique — exactement
+// ce que résout ResolvesTaxRate côté serveur. Cet aperçu affichait 18 % en dur : il
+// annonçait un montant que le serveur n'a jamais calculé.
+function lineTaxRate(
+    productId: string | number,
+    products: Array<{ id: number; tax_rate?: number | string | null }>,
+    shopDefault: number,
+): number {
+    const product = products.find((p) => p.id === Number(productId));
+    const rate = product?.tax_rate;
+
+    return rate === null || rate === undefined ? shopDefault : Number(rate);
+}
+
 export default function EditRecurringInvoice({ recurringInvoice, customers, products }: { recurringInvoice: any; customers: Customer[]; products: Product[] }) {
     const route = useRoute();
     const { t } = useLocale();
-    const { currencySymbol } = useShopSettings();
+    const { currencySymbol, defaultTaxRate } = useShopSettings();
     const [loading, setLoading] = useState(false);
 
     const [showProductModal, setShowProductModal] = useState(false);
@@ -120,7 +135,10 @@ export default function EditRecurringInvoice({ recurringInvoice, customers, prod
     };
 
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
-    const tax = subtotal * 0.18;
+    const tax = items.reduce(
+        (sum, item) => sum + item.quantity * item.unit_price * lineTaxRate(item.product_id, products, defaultTaxRate) / 100,
+        0,
+    );
     const total = subtotal + tax;
 
     const handleSubmit: FormEventHandler = (e) => {

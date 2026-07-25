@@ -6,6 +6,7 @@ use App\Models\RecurringInvoice;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Traits\ResolvesTaxRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -14,6 +15,8 @@ use Illuminate\Http\RedirectResponse;
 
 class RecurringInvoiceController extends Controller
 {
+    use ResolvesTaxRate;
+
     /**
      * Resolve the shop this request should operate on: the active shop selected in
      * session, scoped to shops the current user can actually access (owner, manager,
@@ -74,7 +77,7 @@ class RecurringInvoiceController extends Controller
             ->get(['id', 'name', 'email']);
 
         $products = Product::where('shop_id', $shop->id)
-            ->get(['id', 'name', 'selling_price']);
+            ->get(['id', 'name', 'selling_price', 'tax_rate']);
 
         return Inertia::render('RecurringInvoices/Create', [
             'customers' => $customers,
@@ -108,7 +111,10 @@ class RecurringInvoiceController extends Controller
             return $item['quantity'] * $item['unit_price'];
         });
 
-        $taxAmount = $subtotal * 0.18; // 18% TVA
+        // Le taux vient du produit, sinon de la boutique — jamais d'un 18 en dur, qui
+        // ignorait le taux configuré dans les Réglages. Le total se somme ligne à ligne,
+        // sans quoi il contredirait le détail dès que deux lignes n'ont pas le même taux.
+        $taxAmount = $this->taxAmountFor($validated['items'], $shop);
         $total = $subtotal + $taxAmount;
 
         $recurringInvoice = RecurringInvoice::create([
@@ -133,7 +139,7 @@ class RecurringInvoiceController extends Controller
                 'product_name' => Product::find($item['product_id'])->name,
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'tax_rate' => 18,
+                'tax_rate' => $this->taxRateFor($item['product_id'] ?? null, $shop),
             ]);
         }
 
@@ -177,7 +183,7 @@ class RecurringInvoiceController extends Controller
             ->get(['id', 'name']);
 
         $products = Product::where('shop_id', $recurringInvoice->shop_id)
-            ->get(['id', 'name', 'selling_price']);
+            ->get(['id', 'name', 'selling_price', 'tax_rate']);
 
         return Inertia::render('RecurringInvoices/Edit', [
             'recurringInvoice' => $recurringData,
@@ -210,7 +216,7 @@ class RecurringInvoiceController extends Controller
             return $item['quantity'] * $item['unit_price'];
         });
 
-        $taxAmount = $subtotal * 0.18;
+        $taxAmount = $this->taxAmountFor($validated['items'], $recurringInvoice->shop);
         $total = $subtotal + $taxAmount;
 
         $recurringInvoice->update([
@@ -231,7 +237,7 @@ class RecurringInvoiceController extends Controller
                 'product_name' => Product::find($item['product_id'])->name,
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'tax_rate' => 18,
+                'tax_rate' => $this->taxRateFor($item['product_id'] ?? null, $recurringInvoice->shop),
             ]);
         }
 
