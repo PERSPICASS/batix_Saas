@@ -288,7 +288,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                 />
 
                 <Modal show={completeModal.show} onClose={() => setCompleteModal({ show: false, inventory: null })} maxWidth="2xl">
-                    <div className="bg-slate-900 p-6">
+                    <div className="bg-white p-6 dark:bg-slate-900">
                         <div className="flex items-start gap-4">
                             <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-green-500/20">
                                 <CheckCircle className="size-6 text-green-400" />

@@ -226,7 +226,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 <button
                                     type="button"
                                     onClick={() => setShowCustomerModal(true)}
-                                    className="flex w-full items-center justify-between rounded-xl border border-white/15 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-2.5 text-left text-slate-200 transition hover:border-amber-300/40"
+                                    className="flex w-full items-center justify-between rounded-xl border border-white/15 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-900 dark:to-slate-800 px-3 py-2.5 text-left text-slate-200 transition hover:border-amber-300/40"
                                 >
                                     <span className="inline-flex items-center gap-2">
                                         <UserRound className="size-4 text-amber-300" />
@@ -296,7 +296,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                             setProductTargetLine(index);
                                             setShowProductModal(true);
                                         }}
-                                        className="flex-1 rounded-lg border border-white/15 bg-gradient-to-r from-slate-900 to-slate-800 px-3 py-2 text-left text-slate-200 text-sm transition hover:border-amber-300/40"
+                                        className="flex-1 rounded-lg border border-white/15 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-900 dark:to-slate-800 px-3 py-2 text-left text-slate-200 text-sm transition hover:border-amber-300/40"
                                     >
                                         {item.product_name || t.quotes.form.selectProduct}
                                     </button>
@@ -412,7 +412,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
 
             {/* Modal Client */}
             <Modal show={showCustomerModal} onClose={() => setShowCustomerModal(false)} maxWidth="md">
-                <div className="flex max-h-[80vh] flex-col bg-slate-950 p-5 text-slate-100">
+                <div className="flex max-h-[80vh] flex-col bg-white p-5 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
                     <div className="mb-4 flex shrink-0 items-center justify-between">
                         <h3 className="text-base font-semibold">{t.quotes.form.selectCustomer}</h3>
                         <button
@@ -424,7 +424,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         </button>
                     </div>
 
-                    <div className="mb-3 shrink-0 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
+                    <div className="mb-3 shrink-0 rounded-xl border border-amber-300/20 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-900 dark:to-slate-800 p-2">
                         <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-slate-900">
                             <Search className="size-4 text-amber-300" />
                             <input
@@ -432,7 +432,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 onChange={(e) => setCustomerSearch(e.target.value)}
                                 onKeyDown={handleSearchKeyDown}
                                 placeholder={t.quotes.form.searchCustomer}
-                                className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
+                                className="w-full !bg-transparent !text-slate-900 dark:!text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
                             {customerSearch && (
@@ -460,10 +460,10 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                     onClick={() => selectCustomer(customer)}
                                     className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
                                         activeCustomerIndex === index
-                                            ? 'bg-amber-300/25 text-amber-100 ring-1 ring-amber-300/40'
+                                            ? 'bg-amber-300/25 text-amber-900 ring-1 ring-amber-300/40 dark:text-amber-100'
                                             : Number(formData.customer_id) === customer.id
-                                            ? 'bg-amber-300/20 text-amber-200'
-                                            : 'text-slate-200 hover:bg-white/10'
+                                            ? 'bg-amber-300/20 text-amber-900 dark:text-amber-200'
+                                            : 'text-slate-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10'
                                     }`}
                                 >
                                     <span>{customer.name}</span>
@@ -479,7 +479,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
 
             {/* Modal Produit */}
             <Modal show={showProductModal} onClose={() => setShowProductModal(false)} maxWidth="md">
-                <div className="h-[560px] bg-slate-950 p-5 text-slate-100">
+                <div className="h-[560px] bg-white p-5 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
                     <div className="mb-4 flex items-center justify-between">
                         <h3 className="text-base font-semibold">{t.quotes.form.selectProduct}</h3>
                         <button
@@ -491,7 +491,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                         </button>
                     </div>
 
-                    <div className="mb-3 rounded-xl border border-amber-300/20 bg-gradient-to-r from-slate-900 to-slate-800 p-2">
+                    <div className="mb-3 rounded-xl border border-amber-300/20 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-900 dark:to-slate-800 p-2">
                         <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-white/10 dark:bg-slate-900">
                             <Search className="size-4 text-amber-300" />
                             <input
@@ -499,7 +499,7 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                 onChange={(e) => setProductSearch(e.target.value)}
                                 onKeyDown={handleProductSearchKeyDown}
                                 placeholder={t.quotes.form.searchProduct}
-                                className="w-full !bg-transparent !text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
+                                className="w-full !bg-transparent !text-slate-900 dark:!text-slate-100 text-sm caret-amber-300 placeholder:text-slate-400 focus:outline-none"
                                 autoFocus
                             />
                             {productSearch && (
@@ -527,8 +527,8 @@ export default function CreateQuote({ customers, products }: { customers: Custom
                                     onClick={() => selectProduct(product)}
                                     className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition ${
                                         activeProductIndex === index
-                                            ? 'bg-amber-300/25 text-amber-100 ring-1 ring-amber-300/40'
-                                            : 'text-slate-200 hover:bg-white/10'
+                                            ? 'bg-amber-300/25 text-amber-900 ring-1 ring-amber-300/40 dark:text-amber-100'
+                                            : 'text-slate-700 hover:bg-gray-100 dark:text-slate-200 dark:hover:bg-white/10'
                                     }`}
                                 >
                                     <span>{product.name}</span>

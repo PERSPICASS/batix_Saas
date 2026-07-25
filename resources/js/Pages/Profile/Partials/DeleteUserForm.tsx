@@ -73,7 +73,7 @@ export default function DeleteUserForm({
             </button>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
-                <form onSubmit={deleteUser} className="p-6 bg-slate-900 rounded-lg">
+                <form onSubmit={deleteUser} className="p-6 bg-white dark:bg-slate-900 rounded-lg">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="flex-shrink-0 w-12 h-12 bg-red-900/30 rounded-full flex items-center justify-center border border-red-500/30">
                             <AlertTriangle className="h-6 w-6 text-red-400" />
@@ -113,7 +113,7 @@ export default function DeleteUserForm({
                         <button
                             type="button"
                             onClick={closeModal}
-                            className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-900"
                         >
                             {t.profile.form.delete.cancel}
                         </button>

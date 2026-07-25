@@ -479,7 +479,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
             {/* Modal de confirmation */}
             <Modal show={showConfirmModal} onClose={() => setShowConfirmModal(false)} maxWidth="lg">
-                <div className="p-6">
+                <div className="bg-white p-6 dark:bg-slate-900">
                     <div className="flex items-start gap-4">
                         <div className="rounded-full bg-blue-500 p-3">
                             <CheckCircle className="size-7 text-blue-400" />
@@ -492,7 +492,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         </div>
                     </div>
 
-                    <div className="mt-6 rounded-lg border border-white/20 bg-slate-900 p-5">
+                    <div className="mt-6 rounded-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-slate-900 p-5">
                         <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-white">Récapitulatif</h3>
                         <div className="space-y-3 text-base">
                             <div className="flex justify-between">
@@ -509,7 +509,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                     {purchase.items.reduce((sum, item) => sum + item.quantity_ordered, 0)} unités
                                 </span>
                             </div>
-                            <div className="flex justify-between border-t border-white/20 pt-3 mt-2">
+                            <div className="flex justify-between border-t border-gray-300 dark:border-white/20 pt-3 mt-2">
                                 <span className="text-slate-700 dark:text-slate-200 font-medium">Montant total:</span>
                                 <span className="text-xl font-bold text-amber-400">{formatCurrency(purchase.total)}</span>
                             </div>
@@ -526,7 +526,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         <button
                             onClick={() => setShowConfirmModal(false)}
                             disabled={processing}
-                            className="rounded-lg border border-white/20 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+                            className="rounded-lg border border-gray-300 dark:border-white/20 px-5 py-2.5 text-base font-semibold text-slate-900 dark:text-white transition hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50"
                         >
                             Annuler
                         </button>
@@ -539,7 +539,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
             {/* Modal de réception */}
             <Modal show={showReceiveModal} onClose={() => setShowReceiveModal(false)} maxWidth="2xl">
-                <div className="p-6">
+                <div className="bg-white p-6 dark:bg-slate-900">
                     
                     <div className='w-full mb-2'>
                         <div className='flex flex-col'>
@@ -576,7 +576,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
                     {/* Liste des articles */}
                     <div className="space-y-3">
-                        <h3 className="text-base font-bold text-white">Articles à réceptionner</h3>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">Articles à réceptionner</h3>
                         {purchase.items.map((item) => {
                             const remaining = item.quantity_ordered - item.quantity_received;
                             const percentReceived = Math.round((item.quantity_received / item.quantity_ordered) * 100);
@@ -584,7 +584,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                             return (
                                 <div
                                     key={item.id}
-                                    className="rounded-lg border border-white/20 bg-slate-900/90 p-4 transition hover:border-white/30"
+                                    className="rounded-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-slate-900/90 p-4 transition hover:border-gray-400 dark:hover:border-white/30"
                                 >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1">
@@ -592,14 +592,14 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                                 {item.product_name}
                                             </div>
                                             {item.product_sku && (
-                                                <div className="text-sm text-slate-300 mt-0.5">
+                                                <div className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">
                                                     SKU: {item.product_sku}
                                                 </div>
                                             )}
                                             
                                             {/* Barre de progression */}
                                             <div className="mt-3">
-                                                <div className="flex items-center justify-between text-sm text-slate-300">
+                                                <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
                                                     <span className="font-medium">Progression</span>
                                                     <span className="font-bold">{percentReceived}%</span>
                                                 </div>
@@ -643,7 +643,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                                         [item.id]: parseInt(e.target.value) || 0,
                                                     })
                                                 }
-                                                className="mt-1 block w-full text-center text-base font-semibold text-white"
+                                                className="mt-1 block w-full text-center text-base font-semibold text-slate-900 dark:text-white"
                                                 disabled={remaining === 0}
                                             />
                                             {remaining === 0 && (
@@ -666,7 +666,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         <button
                             onClick={() => setShowReceiveModal(false)}
                             disabled={processing}
-                            className="rounded-lg border border-white/20 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+                            className="rounded-lg border border-gray-300 dark:border-white/20 px-5 py-2.5 text-base font-semibold text-slate-900 dark:text-white transition hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50"
                         >
                             Annuler
                         </button>
@@ -682,7 +682,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
             {/* Modal d'annulation */}
             <Modal show={showCancelModal} onClose={() => setShowCancelModal(false)} maxWidth="lg">
-                <div className="p-6">
+                <div className="bg-white p-6 dark:bg-slate-900">
                     <div className="flex items-center gap-4">
                         <div className="rounded-full bg-red-500/20 w-12 h-12 flex items-center justify-center">
                             <XCircle className="size-6 text-red-600" />
@@ -695,8 +695,8 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         </div>
                     </div>
 
-                    <div className="mt-6 rounded-lg bg-slate-900 p-4">
-                        <h3 className="mb-3 text-sm font-semibold text-white">Informations de la commande</h3>
+                    <div className="mt-6 rounded-lg bg-gray-50 dark:bg-slate-900 p-4">
+                        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Informations de la commande</h3>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-slate-500 dark:text-slate-400">Fournisseur:</span>
@@ -742,7 +742,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         <button
                             onClick={() => setShowCancelModal(false)}
                             disabled={processing}
-                            className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/5 disabled:opacity-50"
+                            className="rounded-lg border border-gray-300 dark:border-white/10 px-4 py-2 text-sm font-semibold text-slate-900 dark:text-white transition hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-50"
                         >
                             Non, garder la commande
                         </button>
@@ -759,7 +759,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
             {/* Modal de suppression */}
             <Modal show={showDeleteModal} onClose={() => setShowDeleteModal(false)} maxWidth="lg">
-                <div className="p-6">
+                <div className="bg-white p-6 dark:bg-slate-900">
                     <div className="flex items-start gap-4">
                         <div className="rounded-full bg-red-500/30 p-3">
                             <Trash2 className="size-7 text-red-400" />
@@ -772,7 +772,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         </div>
                     </div>
 
-                    <div className="mt-6 rounded-lg border border-white/20 bg-slate-900 p-5">
+                    <div className="mt-6 rounded-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-slate-900 p-5">
                         <h3 className="mb-4 text-base font-bold text-slate-900 dark:text-white">Informations</h3>
                         <div className="space-y-3 text-base">
                             <div className="flex justify-between">
@@ -789,7 +789,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                     {purchase.status === 'draft' ? 'Brouillon' : 'Annulé'}
                                 </span>
                             </div>
-                            <div className="flex justify-between border-t border-white/20 pt-3 mt-2">
+                            <div className="flex justify-between border-t border-gray-300 dark:border-white/20 pt-3 mt-2">
                                 <span className="text-slate-700 dark:text-slate-200 font-medium">Montant:</span>
                                 <span className="text-xl font-bold text-amber-400">{formatCurrency(purchase.total)}</span>
                             </div>
@@ -815,7 +815,7 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                         <button
                             onClick={() => setShowDeleteModal(false)}
                             disabled={processing}
-                            className="rounded-lg border border-white/20 px-5 py-2.5 text-base font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+                            className="rounded-lg border border-gray-300 dark:border-white/20 px-5 py-2.5 text-base font-semibold text-slate-900 dark:text-white transition hover:bg-gray-100 dark:hover:bg-white/10 disabled:opacity-50"
                         >
                             Annuler
                         </button>

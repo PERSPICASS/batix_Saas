@@ -393,7 +393,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
 
             {/* Modal Créer Cycle Récurrent */}
             <Modal show={showRecurringModal} onClose={() => setShowRecurringModal(false)} maxWidth="md">
-                <div className="bg-slate-950 p-6 text-slate-100">
+                <div className="bg-white p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold">Créer un cycle de facturation</h3>
                         <button
@@ -446,7 +446,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                             <button
                                 type="button"
                                 onClick={() => setShowRecurringModal(false)}
-                                className="flex-1 rounded-lg border border-white/15 px-4 py-2 text-slate-200 transition-colors hover:bg-white/5"
+                                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                             >
                                 {t.common.actions.cancel}
                             </button>

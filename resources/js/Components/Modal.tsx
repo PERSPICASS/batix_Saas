@@ -59,8 +59,12 @@ export default function Modal({
                     leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                     leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                 >
+                    {/* Le panneau suit le thème. Sans variante sombre il restait blanc,
+                        et une modale dont le contenu n'apporte pas son propre fond
+                        s'affichait en blanc au milieu d'une interface sombre — ou, pire,
+                        avec un texte clair devenu illisible. */}
                     <DialogPanel
-                        className={`mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full ${maxWidthClass}`}
+                        className={`mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:bg-slate-900 sm:mx-auto sm:w-full ${maxWidthClass}`}
                     >
                         {children}
                     </DialogPanel>
