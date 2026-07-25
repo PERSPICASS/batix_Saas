@@ -4,6 +4,7 @@ import { FormEventHandler, KeyboardEvent as ReactKeyboardEvent, useEffect, useMe
 import { Calculator, FileText, Plus, Search, Trash2, UserRound, X } from 'lucide-react';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
+import { documentTotals } from '@/utils/totals';
 import Modal from '@/Components/Modal';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
@@ -113,8 +114,12 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
         }, 0);
     }, [items]);
 
-    const discountAmount = Math.max(Number(data.discount_amount) || 0, 0);
-    const total = Math.max(subtotal - discountAmount, 0);
+    // Même calcul que le serveur : la remise réduit la base imposable, elle ne se
+    // retranche pas du TTC. Cet écran affichait par ailleurs un total sans aucune TVA.
+    const totals = useMemo(() => documentTotals(items, data.discount_amount), [items, data.discount_amount]);
+    const discountAmount = totals.discount;
+    const totalTax = totals.tax;
+    const total = totals.total;
 
     const addItem = () => {
         setItems((prev) => [

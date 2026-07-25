@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\Quote;
 use App\Models\Sale;
+use App\Support\GlobalDiscount;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as PdfWrapper;
 
@@ -84,7 +85,9 @@ class DocumentPdf
             'currencySymbol' => get_currency_symbol($invoice->shop?->currency),
             // Ventilation par taux : une ligne « TVA » unique ne dit pas de quoi le montant
             // est fait, et les taux varient par ligne depuis 9583217.
-            'taxBreakdown' => $this->taxBreakdown($invoice->items),
+            // La ventilation doit se réconcilier avec le tax_amount de la facture : la
+            // remise du document réduit la base, donc chaque tranche aussi.
+            'taxBreakdown' => $this->taxBreakdown($invoice->items, 'total', (float) $invoice->discount_amount),
         ])->setPaper('a4');
     }
 
@@ -105,7 +108,7 @@ class DocumentPdf
      *
      * @return array<int, array{rate: float, base: float, tax: float}>
      */
-    private function taxBreakdown($items, string $totalColumn = 'total'): array
+    private function taxBreakdown($items, string $totalColumn = 'total', float $documentDiscount = 0): array
     {
         $bands = [];
 
@@ -128,11 +131,19 @@ class DocumentPdf
         // Du taux le plus élevé au plus bas : l'exonéré se lit en dernier.
         usort($bands, fn ($a, $b) => $b['rate'] <=> $a['rate']);
 
+        // La remise du document est répartie au prorata : chaque tranche voit sa base
+        // réduite dans la même proportion, sans quoi la somme des tranches ne
+        // correspondrait plus à la TVA de la pièce.
+        $ratio = GlobalDiscount::ratio(
+            array_sum(array_column($bands, 'base')),
+            $documentDiscount
+        );
+
         return array_map(
             fn ($band) => [
                 'rate' => $band['rate'],
-                'base' => round($band['base'], 2),
-                'tax' => round($band['tax'], 2),
+                'base' => round($band['base'] * $ratio, 2),
+                'tax' => round($band['tax'] * $ratio, 2),
             ],
             $bands
         );

@@ -3,6 +3,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import { Calculator, FilePenLine, Plus, Trash2 } from 'lucide-react';
 import { useRoute } from '@/utils/route';
+import { documentTotals } from '@/utils/totals';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
@@ -96,17 +97,12 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         }, 0);
     }, [items]);
 
-    const totalTax = useMemo(() => {
-        return items.reduce((sum, item) => {
-            const qty = Number(item.quantity) || 0;
-            const price = Number(item.unit_price) || 0;
-            const taxRate = Number(item.tax_rate) || 0;
-            return sum + (qty * price * taxRate) / 100;
-        }, 0);
-    }, [items]);
-
-    const discountAmount = Math.max(Number(data.discount_amount) || 0, 0);
-    const total = Math.max(subtotal + totalTax - discountAmount, 0);
+    // Même calcul que le serveur : la remise réduit la base imposable avant la TVA, elle
+    // n'était jusqu'ici retranchée qu'après.
+    const totals = useMemo(() => documentTotals(items, data.discount_amount), [items, data.discount_amount]);
+    const totalTax = totals.tax;
+    const discountAmount = totals.discount;
+    const total = totals.total;
 
     const addItem = () => {
         const newItem: InvoiceItem = {

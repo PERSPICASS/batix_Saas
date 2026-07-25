@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Sale;
+use App\Support\GlobalDiscount;
 use App\Models\Shop;
 use App\Support\ConcurrencySafe;
 use Illuminate\Support\Facades\DB;
@@ -72,8 +73,12 @@ class SaleCreationService
                 $productItems[] = array_merge($itemData, ['product' => $product]);
             }
 
-            $discount = (float) ($data['discount_amount'] ?? 0);
-            $total = $subtotal + $taxAmount - $discount;
+            // Une remise sur la vente entière réduit la base imposable. Elle était
+            // retranchée du TTC, donc après la taxe, ce qui surévaluait la TVA dès qu'un
+            // geste commercial était fait au comptoir.
+            $discount = GlobalDiscount::effective($subtotal, $data['discount_amount'] ?? 0);
+            $taxAmount = round($taxAmount * GlobalDiscount::ratio($subtotal, $discount), 2);
+            $total = round($subtotal - $discount + $taxAmount, 2);
             $amountPaid = (float) $data['amount_paid'];
             $remaining = max(0, $total - $amountPaid);
             $change = max(0, $amountPaid - $total);

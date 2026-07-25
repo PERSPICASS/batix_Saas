@@ -96,16 +96,19 @@
                         <td>Sous-total HT</td>
                         <td class="right amount">{{ number_format($invoice->subtotal, 2, ',', ' ') }} {{ $currencySymbol }}</td>
                     </tr>
-                    <tr>
-                        <td>TVA</td>
-                        <td class="right amount">{{ number_format($invoice->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
-                    </tr>
+                    {{-- La remise se lit avant la TVA parce qu'elle réduit la base
+                         imposable : l'afficher après laisserait croire que la taxe porte
+                         sur le sous-total non remisé. --}}
                     @if ($invoice->discount_amount > 0)
                         <tr>
                             <td>Remise</td>
                             <td class="right amount">-{{ number_format($invoice->discount_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
                         </tr>
                     @endif
+                    <tr>
+                        <td>TVA</td>
+                        <td class="right amount">{{ number_format($invoice->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+                    </tr>
                     <tr class="grand">
                         <td>TOTAL TTC</td>
                         <td class="right amount">{{ number_format($invoice->total, 2, ',', ' ') }} {{ $currencySymbol }}</td>

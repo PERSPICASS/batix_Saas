@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\GlobalDiscount;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
@@ -161,9 +162,19 @@ class Invoice extends Model
         // item.total est TTC (subtotal + tax_amount, voir InvoiceItem::saving()) : soustraire
         // la taxe de chaque ligne pour obtenir un sous-total HT, sans quoi la taxe était
         // comptée deux fois dans le total de la facture.
-        $this->subtotal = $this->items->sum(fn ($item) => $item->total - $item->tax_amount);
-        $this->tax_amount = $this->items->sum('tax_amount');
-        $this->total = $this->subtotal + $this->tax_amount - $this->discount_amount;
+        $subtotal = (float) $this->items->sum(fn ($item) => $item->total - $item->tax_amount);
+        $grossTax = (float) $this->items->sum('tax_amount');
+
+        // La remise du document réduit la base imposable : elle était auparavant retranchée
+        // du TTC, après la TVA, ce qui surévaluait la taxe déclarée.
+        $discount = GlobalDiscount::effective($subtotal, $this->discount_amount);
+        $tax = round($grossTax * GlobalDiscount::ratio($subtotal, $discount), 2);
+
+        // `subtotal` reste la base AVANT remise : c'est ce qu'attend le document imprimé,
+        // qui affiche le sous-total puis la remise sur deux lignes distinctes.
+        $this->subtotal = $subtotal;
+        $this->tax_amount = $tax;
+        $this->total = round($subtotal - $discount + $tax, 2);
         $this->save();
     }
 
