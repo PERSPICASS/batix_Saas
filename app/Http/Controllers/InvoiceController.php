@@ -267,26 +267,76 @@ class InvoiceController extends Controller
             'items.*.discount_amount' => 'nullable|numeric|min:0',
         ]);
 
+        // Instantané d'avant modification : les lignes sont détruites puis recréées
+        // ci-dessous, donc sans cette copie leur contenu précédent ne subsiste nulle
+        // part. Le journal recevait auparavant un tableau de changements VIDE : il
+        // enregistrait qu'une facture avait été modifiée sans dire en quoi.
+        $original = $invoice->getOriginal();
+        $previousItems = $this->itemsSnapshot($invoice);
+
         DB::transaction(function () use ($validated, $invoice) {
             $items = $validated['items'];
             unset($validated['items']);
-            
+
             $invoice->update($validated);
-            
+
             // Supprimer les anciens items et créer les nouveaux
             $invoice->items()->delete();
-            
+
             foreach ($items as $item) {
                 $invoice->items()->create($item);
             }
-            
+
             // Le calcul des totaux se fait automatiquement via les observers
         });
 
-        // Log activity
-        ActivityLogger::updated($invoice, [], $invoice->invoice_number);
+        // Recharger avant de comparer : les observers recalculent les totaux après coup,
+        // donc getChanges() ne refléterait que leur dernière écriture.
+        $invoice->refresh();
+
+        // Même forme que LogsActivity : ['champ' => ['old' => …, 'new' => …]].
+        $changes = [];
+        foreach ($invoice->getAttributes() as $key => $value) {
+            if (in_array($key, ['created_at', 'updated_at'], true)) {
+                continue;
+            }
+
+            $old = $original[$key] ?? null;
+
+            // Comparaison en chaînes : les décimaux castés ne se comparent pas de façon
+            // fiable à ce qui sortait de la base.
+            if ((string) $old !== (string) $value) {
+                $changes[$key] = ['old' => $old, 'new' => $value];
+            }
+        }
+
+        $newItems = $this->itemsSnapshot($invoice);
+        if ($previousItems !== $newItems) {
+            $changes['items'] = ['old' => $previousItems, 'new' => $newItems];
+        }
+
+        ActivityLogger::updated($invoice, $changes, $invoice->invoice_number);
 
         return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture modifiée avec succès.');
+    }
+
+    /**
+     * Les lignes d'une facture, réduites à ce qui doit figurer au journal.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function itemsSnapshot(Invoice $invoice): array
+    {
+        return $invoice->items()
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($item) => [
+                'product_name' => $item->product_name,
+                'quantity' => $item->quantity,
+                'unit_price' => (string) $item->unit_price,
+                'total' => (string) $item->total,
+            ])
+            ->all();
     }
 
     /**

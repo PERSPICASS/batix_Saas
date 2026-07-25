@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'shop_id',
@@ -54,17 +55,26 @@ class Invoice extends Model
         });
     }
 
+    /**
+     * `withTrashed()` est ce qui empêche la réattribution d'un numéro : le numéro est
+     * calculé à partir du plus élevé déjà émis, donc ignorer les factures annulées
+     * reviendrait à redonner leur numéro à la facture suivante. Deux documents
+     * distincts porteraient la même identité — et la contrainte unique
+     * [shop_id, invoice_number] ne pourrait rien y faire puisqu'elle voit, elle, la
+     * ligne conservée. Un trou dans la séquence est le comportement voulu.
+     */
     public static function generateInvoiceNumber($shopId): string
     {
         $year = date('Y');
         $month = date('m');
         $prefix = "INV-{$year}{$month}";
-        
-        $lastInvoice = static::where('shop_id', $shopId)
+
+        $lastInvoice = static::withTrashed()
+            ->where('shop_id', $shopId)
             ->where('invoice_number', 'like', "{$prefix}%")
             ->orderBy('invoice_number', 'desc')
             ->first();
-        
+
         if ($lastInvoice) {
             $lastNumber = (int) substr($lastInvoice->invoice_number, -4);
             $newNumber = $lastNumber + 1;
