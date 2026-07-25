@@ -120,6 +120,25 @@ class Product extends Model
         return $this->has_variations && $this->variations()->exists();
     }
 
+    /**
+     * Les lignes de ce produit dans les dépôts.
+     *
+     * `stock_quantity` ne couvre QUE le comptoir : un transfert depuis un dépôt
+     * l'incrémente (voir StockMovementService::recordDepotTransfer). Le stock réellement
+     * détenu est donc la somme des deux, et rien ne l'exposait.
+     */
+    public function depotProducts(): HasMany
+    {
+        return $this->hasMany(DepotProduct::class);
+    }
+
+    /** Ce que la boutique détient réellement : comptoir + dépôts. */
+    public function totalStock(): int
+    {
+        return (int) $this->stock_quantity
+            + (int) ($this->depot_products_sum_quantity ?? $this->depotProducts()->sum('quantity'));
+    }
+
     public function isLowStock(): bool
     {
         if (!$this->track_stock || $this->min_stock_alert === null) {

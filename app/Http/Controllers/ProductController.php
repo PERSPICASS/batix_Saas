@@ -33,7 +33,10 @@ class ProductController extends Controller
         $search = $request->input('search');
         $status = $request->input('status');
         
+        // withSum plutôt qu'un chargement des lignes de dépôt : la liste n'a besoin que
+        // du total détenu, et charger la relation ferait 20 requêtes de plus par page.
         $query = Product::with(['shop', 'category', 'subcategory'])
+            ->withSum('depotProducts as depot_stock', 'quantity')
             ->whereNull('parent_id') // Exclure les déclinaisons
             ->orderBy('created_at', 'desc'); // Du plus récent au plus ancien
 

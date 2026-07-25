@@ -317,6 +317,17 @@ class DepotController extends Controller
 
         $depotProduct->increment('quantity', $validated['quantity']);
 
+        // Une entrée en dépôt est un mouvement de stock comme un autre : sans cette trace,
+        // la quantité du dépôt était un nombre sans histoire.
+        StockMovementService::recordDepotMovement(
+            $product,
+            $depot,
+            (int) $validated['quantity'],
+            'in',
+            null,
+            'Entrée en dépôt'
+        );
+
         $updates = [];
         if (isset($validated['min_stock_alert'])) {
             $updates['min_stock_alert'] = $validated['min_stock_alert'];
@@ -350,6 +361,10 @@ class DepotController extends Controller
             'image'           => 'nullable|image|max:2048',
         ]);
 
+        // La quantité est REMPLACÉE, pas corrigée d'un delta : un écart y disparaissait
+        // sans laisser de trace. On note l'écart avant de l'appliquer.
+        $previousQuantity = (int) $depotProduct->quantity;
+
         // Mettre à jour les champs DepotProduct
         $depotProduct->update([
             'quantity'        => $validated['quantity'],
@@ -359,7 +374,15 @@ class DepotController extends Controller
 
         // Mettre à jour les champs du Product lié
         $product = $depotProduct->product;
+
         if ($product) {
+            StockMovementService::recordDepotCount(
+                $product,
+                $depot,
+                $previousQuantity,
+                (int) $validated['quantity']
+            );
+
             $productUpdates = [];
 
             if (!empty($validated['name'])) {
@@ -459,6 +482,18 @@ class DepotController extends Controller
                     'notes'      => $validated['notes'] ?? null,
                     'status'     => 'completed',
                 ]);
+
+                // La sortie du dépôt, en regard de l'entrée en boutique enregistrée plus
+                // bas : seul le `+N` boutique était journalisé, jamais le `-N` dépôt, si
+                // bien que le transfert semblait créer du stock.
+                StockMovementService::recordDepotMovement(
+                    $depotProduct->product,
+                    $depot,
+                    -$item['quantity'],
+                    'transfer',
+                    $depotTransfer,
+                    'Transfert vers la boutique'
+                );
 
                 // Incrémenter le stock du produit dans la boutique
                 $shopProduct = Product::where('id', $item['product_id'])
@@ -561,6 +596,26 @@ class DepotController extends Controller
                     ['quantity' => 0, 'min_stock_alert' => $srcProduct->min_stock_alert, 'purchase_price' => $srcProduct->purchase_price]
                 );
                 $dstProduct->increment('quantity', $item['quantity']);
+
+                // Les deux côtés du transfert, sortie et entrée. Aucun des deux n'était
+                // journalisé : la marchandise passait d'un dépôt à l'autre sans trace.
+                StockMovementService::recordDepotMovement(
+                    $srcProduct->product,
+                    $depot,
+                    -$item['quantity'],
+                    'transfer',
+                    null,
+                    "Transfert vers « {$targetDepot->name} »"
+                );
+
+                StockMovementService::recordDepotMovement(
+                    $srcProduct->product,
+                    $targetDepot,
+                    (int) $item['quantity'],
+                    'transfer',
+                    null,
+                    "Transfert depuis « {$depot->name} »"
+                );
 
                 // Propager le prix d'achat si non défini dans la cible
                 if ($dstProduct->purchase_price == 0 && $srcProduct->purchase_price > 0) {

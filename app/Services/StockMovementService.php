@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Depot;
 use App\Models\Product;
 use App\Models\StockMovement;
 use Illuminate\Database\Eloquent\Model;
@@ -292,6 +293,76 @@ class StockMovementService
             'notes'          => 'Transfert depuis dépôt',
             'movement_date'  => now()->toDateString(),
         ]);
+    }
+
+
+    /**
+     * Un mouvement de stock survenu dans un dépôt.
+     *
+     * Les quantités de dépôt vivent dans `depot_products`, pas dans
+     * `products.stock_quantity` : cette méthode n'incrémente donc AUCUN compteur, elle ne
+     * fait qu'enregistrer. L'appelant reste responsable du `increment`/`decrement` sur la
+     * ligne `depot_products`, comme il le faisait déjà — ce qui manquait, c'était la trace.
+     *
+     * @param int $signedQuantity  Positif pour une entrée, négatif pour une sortie.
+     */
+    public static function recordDepotMovement(
+        Product $product,
+        Depot $depot,
+        int $signedQuantity,
+        string $type,
+        ?Model $reference = null,
+        ?string $notes = null
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        return self::writeMovement([
+            // La boutique vient du produit, pas du dépôt : un dépôt appartient au COMPTE
+            // (`depots.code_user`) et peut alimenter plusieurs boutiques, alors qu'un
+            // produit n'appartient qu'à une seule.
+            'shop_id'        => $product->shop_id,
+            'product_id'     => $product->id,
+            'depot_id'       => $depot->id,
+            'user_id'        => Auth::id(),
+            'type'           => $type,
+            'quantity'       => $signedQuantity,
+            'reference_id'   => $reference?->getKey(),
+            'reference_type' => $reference ? class_basename($reference) : null,
+            'notes'          => $notes,
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Saisie directe d'une quantité de dépôt.
+     *
+     * L'écran d'édition remplace la quantité au lieu de la corriger d'un delta, si bien
+     * qu'un écart y disparaissait sans laisser de trace. On enregistre donc la différence,
+     * qui est l'information utile — et rien si la quantité n'a pas bougé.
+     */
+    public static function recordDepotCount(
+        Product $product,
+        Depot $depot,
+        int $previousQuantity,
+        int $countedQuantity,
+        ?string $notes = null
+    ): ?StockMovement {
+        $delta = $countedQuantity - $previousQuantity;
+
+        if ($delta === 0) {
+            return null;
+        }
+
+        return self::recordDepotMovement(
+            $product,
+            $depot,
+            $delta,
+            'adjustment',
+            null,
+            $notes ?? "Quantité corrigée en dépôt : {$previousQuantity} → {$countedQuantity}"
+        );
     }
 
     /**

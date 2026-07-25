@@ -33,6 +33,8 @@ interface Product {
     selling_price: number;
     purchase_price: number;
     stock_quantity: number;
+    /** Somme des quantités en dépôt, hors comptoir (withSum côté contrôleur). */
+    depot_stock: number | null;
     defective_stock_quantity: number;
     min_stock_alert: number | null;
     is_active: boolean;
@@ -209,11 +211,29 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
             key: 'stock_quantity',
             label: t.products.columns.stock,
             align: 'center' as const,
-            render: (product: Product) => (
-                <span className={isLowStock(product) ? 'text-amber-300 font-semibold' : ''}>
-                    {product.stock_quantity}
-                </span>
-            ),
+            render: (product: Product) => {
+                // `stock_quantity` ne couvre que le comptoir. Tant que rien n'affichait le
+                // stock des dépôts, le chiffre présenté sous le libellé « Stock » était
+                // inférieur à ce que la boutique détient réellement.
+                const inDepots = Number(product.depot_stock ?? 0);
+
+                return (
+                    <div className="leading-tight">
+                        <span className={isLowStock(product) ? 'font-semibold text-amber-500 dark:text-amber-300' : ''}>
+                            {product.stock_quantity}
+                        </span>
+                        {inDepots > 0 && (
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                                +{inDepots} {t.products.columns.inDepots}
+                                <span className="mx-1">·</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                    {product.stock_quantity + inDepots}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                );
+            },
         },
         {
             key: 'defective_stock_quantity',
