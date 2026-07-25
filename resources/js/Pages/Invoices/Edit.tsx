@@ -220,11 +220,13 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     onChange={(e) => setData('status', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
-                                    <option value="draft">Brouillon</option>
-                                    <option value="sent">Envoyée</option>
-                                    <option value="paid">Payée</option>
-                                    <option value="overdue">En retard</option>
-                                    <option value="cancelled">Annulée</option>
+                                    {/* Seuls les deux statuts qu'un brouillon peut prendre :
+                                        l'encaissement et l'annulation passent par l'action
+                                        dédiée de la page de la facture, une fois émise.
+                                        (« En retard » figurait ici alors que le serveur ne
+                                        l'a jamais accepté.) */}
+                                    <option value="draft">{t.invoices.status.draft}</option>
+                                    <option value="sent">{t.invoices.status.sent}</option>
                                 </select>
                                 <InputError message={errors.status} />
                             </div>

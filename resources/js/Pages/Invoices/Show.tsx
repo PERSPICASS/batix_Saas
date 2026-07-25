@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Currency from '@/Components/Currency';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Printer, Repeat2, X, Send } from 'lucide-react';
+import { ArrowLeft, Ban, CheckCircle2, Pencil, Printer, Repeat2, X, Send } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useState } from 'react';
@@ -105,6 +105,22 @@ export default function InvoicesShow({ invoice }: Props) {
         }
     };
 
+    // Une facture émise est figée : son contenu ne se modifie plus, seul son statut
+    // évolue, et via une action dédiée (invoices.status) et non plus le formulaire
+    // d'édition. Le serveur refuse de toute façon, mais afficher un bouton Modifier qui
+    // mène à un refus serait trompeur.
+    const isDraft = invoice.status === 'draft';
+    const isClosed = invoice.status === 'paid' || invoice.status === 'cancelled';
+
+    const changeStatus = (status: 'paid' | 'cancelled') => {
+        const message = (status === 'paid' ? t.invoices.confirm.markPaid : t.invoices.confirm.cancelInvoice)
+            .replace(':number', invoice.invoice_number);
+
+        if (confirm(message)) {
+            router.post(route('invoices.status', { invoice: invoice.id }), { status });
+        }
+    };
+
     return (
         <AuthenticatedLayout
             header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.invoices.form.editTitle} {invoice.invoice_number}</h1>}
@@ -142,13 +158,39 @@ export default function InvoicesShow({ invoice }: Props) {
                         >
                             <Printer className="size-4" /> {t.common.actions.print || "Imprimer"}
                         </button>
-                        <Link
-                            href={route('invoices.edit', { invoice: invoice.id })}
-                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
-                        >
-                            <Pencil className="size-4" /> {t.invoices.actions.edit}
-                        </Link>
+                        {isDraft && (
+                            <Link
+                                href={route('invoices.edit', { invoice: invoice.id })}
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                            >
+                                <Pencil className="size-4" /> {t.invoices.actions.edit}
+                            </Link>
+                        )}
+                        {!isClosed && (
+                            <>
+                                {invoice.status === 'sent' && (
+                                    <button
+                                        type="button"
+                                        onClick={() => changeStatus('paid')}
+                                        className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                                    >
+                                        <CheckCircle2 className="size-4" /> {t.invoices.actions.markPaid}
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => changeStatus('cancelled')}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
+                                >
+                                    <Ban className="size-4" /> {t.invoices.actions.cancelInvoice}
+                                </button>
+                            </>
+                        )}
                     </div>
+
+                    {!isDraft && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.issuedNotice}</p>
+                    )}
                 </div>
 
                 <div className="invoice-print rounded-2xl border border-white/10 bg-white/5 p-6 print:rounded-none print:border-0 print:bg-white print:px-2 print:py-0">

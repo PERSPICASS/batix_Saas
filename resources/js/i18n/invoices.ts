@@ -24,10 +24,16 @@ export const invoices = {
             delete: 'Supprimer',
             send: 'Envoyer',
             markPaid: 'Marquer payée',
+            cancelInvoice: 'Annuler la facture',
             download: 'Télécharger',
             reports: 'Rapports',
             createRecurring: 'Créer un cycle',
         },
+        confirm: {
+            markPaid: 'Marquer la facture :number comme payée ?',
+            cancelInvoice: 'Annuler la facture :number ? Une facture émise ne peut pas être supprimée, seulement annulée.',
+        },
+        issuedNotice: 'Facture émise : son contenu n\'est plus modifiable.',
         emptyMessage: 'Aucune facture trouvée',
         filters: {
             searchPlaceholder: 'N° facture, client...',
@@ -105,10 +111,16 @@ export const invoices = {
             delete: 'Delete',
             send: 'Send',
             markPaid: 'Mark as paid',
+            cancelInvoice: 'Cancel invoice',
             download: 'Download',
             reports: 'Reports',
             createRecurring: 'Create recurring',
         },
+        confirm: {
+            markPaid: 'Mark invoice :number as paid?',
+            cancelInvoice: 'Cancel invoice :number? An issued invoice cannot be deleted, only cancelled.',
+        },
+        issuedNotice: 'Issued invoice: its content can no longer be edited.',
         emptyMessage: 'No invoices found',
         filters: {
             searchPlaceholder: 'Invoice #, customer...',

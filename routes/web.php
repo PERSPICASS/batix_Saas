@@ -374,6 +374,10 @@ Route::prefix('{code_user}')
         ->middlewareFor('destroy', 'permission:invoices,delete');
     Route::post('factures/{invoice}/creer-cycle-recurrent', [InvoiceController::class, 'createRecurring'])->name('invoices.create-recurring')->middleware('permission:invoices,create');
     Route::post('factures/{invoice}/envoyer', [InvoiceController::class, 'send'])->name('invoices.send')->middleware('permission:invoices,edit');
+    // Seul chemin pour encaisser ou annuler une facture : l'écran d'édition se ferme dès
+    // l'émission, et le sélecteur de statut qu'il portait était jusqu'ici la seule façon
+    // de marquer une facture payée.
+    Route::post('factures/{invoice}/statut', [InvoiceController::class, 'updateStatus'])->name('invoices.status')->middleware('permission:invoices,edit');
     Route::get('factures/export/excel', [InvoiceController::class, 'export'])->name('invoices.export')->middleware('permission:invoices,view');
 
     // Routes pour les devis

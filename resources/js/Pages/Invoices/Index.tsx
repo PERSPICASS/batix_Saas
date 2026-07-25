@@ -122,15 +122,21 @@ export default function InvoicesIndex({ invoices }: Props) {
                     >
                         <Eye className="size-3.5" /> {t.invoices.actions.view}
                     </Link>
-                    <Link
-                        href={route('invoices.edit', { invoice: invoice.id })}
-                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
-                    >
-                        <Pencil className="size-3.5" /> {t.invoices.actions.edit}
-                    </Link>
-                    <TableActionButton variant="danger" onClick={() => handleDelete(invoice)}>
-                        <Trash2 className="size-3.5" /> {t.invoices.actions.delete}
-                    </TableActionButton>
+                    {/* Une facture émise est figée : ni modification ni suppression. Son
+                        statut évolue depuis sa page (« Marquer payée » / « Annuler »). */}
+                    {invoice.status === 'draft' && (
+                        <>
+                            <Link
+                                href={route('invoices.edit', { invoice: invoice.id })}
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                            >
+                                <Pencil className="size-3.5" /> {t.invoices.actions.edit}
+                            </Link>
+                            <TableActionButton variant="danger" onClick={() => handleDelete(invoice)}>
+                                <Trash2 className="size-3.5" /> {t.invoices.actions.delete}
+                            </TableActionButton>
+                        </>
+                    )}
                 </TableActions>
             ),
         },
