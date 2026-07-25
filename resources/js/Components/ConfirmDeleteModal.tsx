@@ -1,5 +1,5 @@
 import Modal from '@/Components/Modal';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Send } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 
 interface ConfirmDeleteModalProps {
@@ -11,8 +11,14 @@ interface ConfirmDeleteModalProps {
     confirmText?: string;
     cancelText?: string;
     processing?: boolean;
-    /** 'danger' (default) for destructive actions; 'success' for positive ones like activation. */
-    tone?: 'danger' | 'success';
+    /**
+     * Libellé pendant le traitement. Par défaut « Suppression… », ce qui ne convient
+     * qu'à une suppression : ce composant sert aussi à confirmer un envoi ou une
+     * annulation.
+     */
+    processingText?: string;
+    /** 'danger' (défaut) pour une action destructrice, 'success' pour une action validante, 'send' pour un envoi. */
+    tone?: 'danger' | 'success' | 'send';
 }
 
 export default function ConfirmDeleteModal({
@@ -24,6 +30,7 @@ export default function ConfirmDeleteModal({
     confirmText,
     cancelText,
     processing = false,
+    processingText,
     tone = 'danger',
 }: ConfirmDeleteModalProps) {
     const { t } = useLocale();
@@ -44,6 +51,12 @@ export default function ConfirmDeleteModal({
             icon: 'text-emerald-600 dark:text-emerald-400',
             Icon: CheckCircle,
             button: 'bg-emerald-600 hover:bg-emerald-700',
+        },
+        send: {
+            iconWrap: 'bg-blue-100 dark:bg-blue-500/20',
+            icon: 'text-blue-600 dark:text-blue-400',
+            Icon: Send,
+            button: 'bg-blue-600 hover:bg-blue-700',
         },
     }[tone];
 
@@ -75,7 +88,7 @@ export default function ConfirmDeleteModal({
                         disabled={processing}
                         className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50 ${toneClasses.button}`}
                     >
-                        {processing ? t.common.actions.deleting : resolvedConfirmText}
+                        {processing ? (processingText ?? t.common.actions.deleting) : resolvedConfirmText}
                     </button>
                 </div>
             </div>

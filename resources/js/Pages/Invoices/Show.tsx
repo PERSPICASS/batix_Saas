@@ -6,6 +6,7 @@ import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useState } from 'react';
 import Modal from '@/Components/Modal';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import WhatsAppShareButton from '@/Components/WhatsAppShareButton';
 
 interface Customer {
@@ -112,11 +113,54 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
         });
     };
 
-    const handleSend = () => {
-        const message = `${t.invoices.actions.send} ${t.common.misc.sendEmailTo || 'par email à'} ${invoice.customer.name} ?`;
-        if (confirm(message)) {
-            router.post(route('invoices.send', { invoice: invoice.id }));
+    /**
+     * Les trois actions passent par une modale plutôt que par confirm(), qui bloque tout
+     * l'onglet, ignore le thème et n'a jamais permis d'expliquer ce qui va se produire.
+     * Un seul état porte l'action en attente : elles s'excluent mutuellement.
+     */
+    type PendingAction = 'send' | 'paid' | 'cancelled';
+    const [pending, setPending] = useState<PendingAction | null>(null);
+    const [processing, setProcessing] = useState(false);
+
+    const runPending = () => {
+        if (!pending) return;
+
+        setProcessing(true);
+        const done = { onFinish: () => { setProcessing(false); setPending(null); } };
+
+        if (pending === 'send') {
+            router.post(route('invoices.send', { invoice: invoice.id }), {}, done);
+            return;
         }
+
+        router.post(route('invoices.status', { invoice: invoice.id }), { status: pending }, done);
+    };
+
+    const customerEmail = (invoice.customer as { email?: string | null })?.email;
+
+    const confirmCopy: Record<PendingAction, { title: string; message: string; confirmText: string; tone: 'danger' | 'success' | 'send' }> = {
+        send: {
+            title: t.invoices.confirm.sendTitle,
+            // L'absence d'adresse est dite ici : l'envoi partait sans prévenir et échouait.
+            message: t.invoices.confirm.send
+                .replace(':number', invoice.invoice_number)
+                .replace(':customer', invoice.customer?.name ?? '')
+                + (customerEmail ? '' : ' ' + t.invoices.confirm.sendNoEmail),
+            confirmText: t.invoices.actions.send,
+            tone: 'send',
+        },
+        paid: {
+            title: t.invoices.confirm.markPaidTitle,
+            message: t.invoices.confirm.markPaid.replace(':number', invoice.invoice_number),
+            confirmText: t.invoices.actions.markPaid,
+            tone: 'success',
+        },
+        cancelled: {
+            title: t.invoices.confirm.cancelTitle,
+            message: t.invoices.confirm.cancelInvoice.replace(':number', invoice.invoice_number),
+            confirmText: t.invoices.actions.cancelInvoice,
+            tone: 'danger',
+        },
     };
 
     // Une facture émise est figée : son contenu ne se modifie plus, seul son statut
@@ -126,14 +170,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
     const isDraft = invoice.status === 'draft';
     const isClosed = invoice.status === 'paid' || invoice.status === 'cancelled';
 
-    const changeStatus = (status: 'paid' | 'cancelled') => {
-        const message = (status === 'paid' ? t.invoices.confirm.markPaid : t.invoices.confirm.cancelInvoice)
-            .replace(':number', invoice.invoice_number);
 
-        if (confirm(message)) {
-            router.post(route('invoices.status', { invoice: invoice.id }), { status });
-        }
-    };
 
     return (
         <AuthenticatedLayout
@@ -153,7 +190,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                     <div className="flex flex-wrap items-center gap-2">
                         <button
                             type="button"
-                            onClick={handleSend}
+                            onClick={() => setPending('send')}
                             className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                         >
                             <Send className="size-4" /> {t.invoices.actions.send}
@@ -200,7 +237,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                                 {invoice.status === 'sent' && (
                                     <button
                                         type="button"
-                                        onClick={() => changeStatus('paid')}
+                                        onClick={() => setPending('paid')}
                                         className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
                                     >
                                         <CheckCircle2 className="size-4" /> {t.invoices.actions.markPaid}
@@ -208,7 +245,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                                 )}
                                 <button
                                     type="button"
-                                    onClick={() => changeStatus('cancelled')}
+                                    onClick={() => setPending('cancelled')}
                                     className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
                                 >
                                     <Ban className="size-4" /> {t.invoices.actions.cancelInvoice}
@@ -489,6 +526,20 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                     }
                 }
             `}</style>
+
+            {pending && (
+                <ConfirmDeleteModal
+                    show
+                    onClose={() => setPending(null)}
+                    onConfirm={runPending}
+                    processing={processing}
+                    processingText={pending === 'send' ? t.invoices.confirm.sending : t.invoices.confirm.processing}
+                    title={confirmCopy[pending].title}
+                    message={confirmCopy[pending].message}
+                    confirmText={confirmCopy[pending].confirmText}
+                    tone={confirmCopy[pending].tone}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }

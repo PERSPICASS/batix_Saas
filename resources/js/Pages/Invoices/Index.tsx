@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Eye, Pencil, Plus, ReceiptText, Trash2, Download, BarChart3 } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
@@ -41,10 +42,19 @@ export default function InvoicesIndex({ invoices }: Props) {
         router.get(route('invoices.index'), { search: searchTerm, status: statusFilter }, { preserveState: true });
     };
 
-    const handleDelete = (invoice: Invoice) => {
-        if (confirm(`${t.invoices.filters.searchPlaceholder.replace('...', '')} ${invoice.invoice_number} ?`)) {
-            router.delete(route('invoices.destroy', { invoice: invoice.id }));
-        }
+    // Le message de confirmation réutilisait le libellé du champ de recherche : il
+    // affichait « N° facture, client INV-… ? », qui ne veut rien dire. Et confirm() bloque
+    // l'onglet entier, ignore le thème et n'a jamais dit ce qui allait être supprimé.
+    const [toDelete, setToDelete] = useState<Invoice | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const confirmDelete = () => {
+        if (!toDelete) return;
+
+        setDeleting(true);
+        router.delete(route('invoices.destroy', { invoice: toDelete.id }), {
+            onFinish: () => { setDeleting(false); setToDelete(null); },
+        });
     };
 
     const statusLabels: Record<string, string> = {
@@ -143,7 +153,7 @@ export default function InvoicesIndex({ invoices }: Props) {
                             >
                                 <Pencil className="size-3.5" /> {t.invoices.actions.edit}
                             </Link>
-                            <TableActionButton variant="danger" onClick={() => handleDelete(invoice)}>
+                            <TableActionButton variant="danger" onClick={() => setToDelete(invoice)}>
                                 <Trash2 className="size-3.5" /> {t.invoices.actions.delete}
                             </TableActionButton>
                         </>
@@ -252,6 +262,18 @@ export default function InvoicesIndex({ invoices }: Props) {
                     </div>
                 )}
             </section>
+
+            {toDelete && (
+                <ConfirmDeleteModal
+                    show
+                    onClose={() => setToDelete(null)}
+                    onConfirm={confirmDelete}
+                    processing={deleting}
+                    title={t.invoices.confirm.deleteTitle}
+                    message={t.invoices.confirm.delete.replace(':number', toDelete.invoice_number)}
+                    confirmText={t.invoices.actions.delete}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }
