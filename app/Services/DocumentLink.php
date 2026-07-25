@@ -41,12 +41,29 @@ class DocumentLink
         return self::sign('public.quote', ['quote' => $quote->id]);
     }
 
+    /**
+     * La signature ne porte que sur le chemin et la requête, jamais sur le schéma ni sur
+     * l'hôte — d'où `absolute: false`, à lire avec le `signed:relative` des routes.
+     *
+     * Une signature absolue produisait un 403 sur chaque lien en production. Le nginx du
+     * conteneur écoute en HTTP et ne transmet rien du schéma à PHP : aucun
+     * `fastcgi_param HTTPS`, aucune reprise de `X-Forwarded-Proto`. Laravel voit donc une
+     * requête HTTP, tandis qu'AppServiceProvider force `https` à la génération. L'URL
+     * signée et l'URL vérifiée ne pouvaient pas coïncider.
+     *
+     * Le relatif supprime la dépendance : le lien reste valable quel que soit le schéma
+     * ou l'hôte par lequel le client arrive. Ce qu'on perd — l'ancrage sur le domaine —
+     * ne protégeait de rien ici, l'application ne répondant que sur le sien.
+     */
     private static function sign(string $route, array $parameters): string
     {
-        return URL::temporarySignedRoute(
+        $relative = URL::temporarySignedRoute(
             $route,
             now()->addDays(self::LIFETIME_DAYS),
-            $parameters
+            $parameters,
+            absolute: false
         );
+
+        return rtrim(config('app.url'), '/') . $relative;
     }
 }

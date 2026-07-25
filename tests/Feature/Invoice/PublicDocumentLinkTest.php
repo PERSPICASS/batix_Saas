@@ -10,6 +10,7 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Services\DocumentLink;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 /**
@@ -118,6 +119,34 @@ class PublicDocumentLinkTest extends TestCase
 
         $response->assertOk();
         $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
+
+    /**
+     * The failure this suite missed: in production every link 403'd.
+     *
+     * The container's nginx listens on HTTP and forwards nothing about the scheme to PHP
+     * — no fastcgi_param HTTPS, no X-Forwarded-Proto — so Laravel sees an http request,
+     * while AppServiceProvider calls URL::forceScheme('https') and therefore signs an
+     * https URL. An absolute signature covers the scheme, so the signed URL and the
+     * verified URL could never match.
+     *
+     * Reproduced exactly: force https for the generation, then arrive over http as the
+     * proxy makes it look. Signing the path and query only removes the dependency.
+     */
+    public function test_a_link_signed_as_https_still_opens_over_http(): void
+    {
+        $shop = $this->shopWithOwner();
+        $sale = $this->sale($shop);
+
+        // Ce que fait AppServiceProvider en production.
+        URL::forceScheme('https');
+        $link = DocumentLink::forSale($sale);
+
+        // Ce que voit l'application derrière le proxy : la même URL, mais en http.
+        URL::forceScheme('http');
+
+        $this->get(parse_url($link, PHP_URL_PATH) . '?' . parse_url($link, PHP_URL_QUERY))
+            ->assertOk();
     }
 
     public function test_an_unsigned_url_is_refused(): void

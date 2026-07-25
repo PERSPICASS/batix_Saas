@@ -106,7 +106,10 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')
 // l'application, donc rien n'est devinable ni énumérable, et un lien ne donne accès qu'à
 // la seule pièce partagée. Le throttle borne le balayage d'un attaquant qui tenterait des
 // signatures au hasard.
-Route::middleware(['signed', 'throttle:60,1'])->group(function () {
+// `signed:relative` et non `signed` : la signature ne couvre que le chemin et la
+// requête. Voir DocumentLink — l'application ne voit pas le HTTPS derrière le proxy, donc
+// une signature absolue ne pouvait jamais être vérifiée.
+Route::middleware(['signed:relative', 'throttle:60,1'])->group(function () {
     Route::get('/d/ticket/{sale}', [PublicDocumentController::class, 'ticket'])->name('public.ticket');
     Route::get('/d/facture/{invoice}', [PublicDocumentController::class, 'invoice'])->name('public.invoice');
     Route::get('/d/devis/{quote}', [PublicDocumentController::class, 'quote'])->name('public.quote');
