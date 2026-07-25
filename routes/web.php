@@ -384,10 +384,19 @@ Route::prefix('{code_user}')
     Route::post('rapports/analytique/export', [ReportController::class, 'exportAnalytics'])->name('reports.analytics.export')->middleware('permission:analytics,view');
 
     // Routes pour les ventes
+    //
+    // `except(['edit', 'update'])` : une vente est immuable. SaleController n'a jamais eu
+    // de méthode edit() ni update() — corriger un ticket passe par un retour
+    // (ReturnsController) ou une annulation (destroy(), qui bascule le statut sans rien
+    // supprimer). La ressource complète enregistrait pourtant les deux routes, qui
+    // pointaient vers des méthodes inexistantes : les appeler levait un
+    // BadMethodCallException, donc un 500 au lieu d'un 404, et la permission
+    // `sales,edit` qui leur était attachée laissait croire qu'une édition existait.
+    // L'exclusion rend l'immuabilité explicite plutôt qu'accidentelle.
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale'])
+        ->except(['edit', 'update'])
         ->middlewareFor(['index', 'show'], 'permission:sales,view')
         ->middlewareFor(['create', 'store'], 'permission:sales,create')
-        ->middlewareFor(['edit', 'update'], 'permission:sales,edit')
         ->middlewareFor('destroy', 'permission:sales_delete,delete');
     // Rejeu des ventes saisies hors ligne. Même permission que la création d'une vente :
     // synchroniser, c'est créer des ventes.
