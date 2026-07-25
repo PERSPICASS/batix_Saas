@@ -32,6 +32,7 @@ import {
     Monitor,
     Moon,
     Receipt,
+    ReceiptText,
     ShoppingCart,
     Settings,
     Shield,
@@ -415,6 +416,15 @@ export default function Authenticated({
                 href: buildRoute('invoices.index'),
                 active: route().current('invoices.*'),
                 icon: FileText,
+                module: 'invoices',
+            }]),
+            // Les avoirs relèvent du module `invoices` : émettre un avoir fait partie de
+            // la facturation, et aucun module de permission dédié n'a été créé.
+            ...(isCashier() ? [] : [{
+                label: t.nav.creditNotes,
+                href: buildRoute('credit-notes.index'),
+                active: route().current('credit-notes.*'),
+                icon: ReceiptText,
                 module: 'invoices',
             }]),
             {

@@ -26,6 +26,7 @@ use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\CreditController;
+use App\Http\Controllers\CreditNoteController;
 use App\Http\Controllers\SubscriptionPlanController;
 use App\Http\Controllers\DepotController;
 use App\Http\Controllers\PaymentController;
@@ -379,6 +380,15 @@ Route::prefix('{code_user}')
     // de marquer une facture payée.
     Route::post('factures/{invoice}/statut', [InvoiceController::class, 'updateStatus'])->name('invoices.status')->middleware('permission:invoices,edit');
     Route::get('factures/export/excel', [InvoiceController::class, 'export'])->name('invoices.export')->middleware('permission:invoices,view');
+
+    // Avoirs. Pas de module de permission dédié : émettre un avoir fait partie de la
+    // facturation, et ajouter un module imposerait de le déclarer pour chacun des rôles
+    // de UserPermission. Volontairement sans edit/update/destroy — un avoir est une pièce
+    // comptable, il ne se retouche pas (voir CreditNoteController).
+    Route::get('avoirs', [CreditNoteController::class, 'index'])->name('credit-notes.index')->middleware('permission:invoices,view');
+    Route::get('avoirs/{credit_note}', [CreditNoteController::class, 'show'])->name('credit-notes.show')->middleware('permission:invoices,view');
+    Route::get('factures/{invoice}/avoir', [CreditNoteController::class, 'create'])->name('credit-notes.create')->middleware('permission:invoices,create');
+    Route::post('factures/{invoice}/avoir', [CreditNoteController::class, 'store'])->name('credit-notes.store')->middleware('permission:invoices,create');
 
     // Routes pour les devis
     Route::post('devis/export/excel', [QuoteController::class, 'export'])->name('quotes.export')->middleware('permission:quotes,view');

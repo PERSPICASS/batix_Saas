@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InvoiceItem extends Model
 {
@@ -33,6 +34,28 @@ class InvoiceItem extends Model
         'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
     ];
+
+    public function creditNoteItems(): HasMany
+    {
+        return $this->hasMany(CreditNoteItem::class);
+    }
+
+    /**
+     * Quantité déjà créditée sur cette ligne, tous avoirs confondus.
+     */
+    public function quantityCredited(): int
+    {
+        return (int) $this->creditNoteItems()->sum('quantity');
+    }
+
+    /**
+     * Ce qu'il reste créditable. C'est la borne qu'un avoir ne peut pas franchir : sans
+     * elle, deux avoirs successifs pourraient rembourser plus que ce qui a été facturé.
+     */
+    public function quantityCreditable(): int
+    {
+        return max(0, $this->quantity - $this->quantityCredited());
+    }
 
     protected static function boot()
     {

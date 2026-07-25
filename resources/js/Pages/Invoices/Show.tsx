@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Currency from '@/Components/Currency';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Ban, CheckCircle2, Pencil, Printer, Repeat2, X, Send } from 'lucide-react';
+import { ArrowLeft, Ban, CheckCircle2, Pencil, Printer, ReceiptText, Repeat2, X, Send } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useState } from 'react';
@@ -57,8 +57,20 @@ interface Invoice {
     items: InvoiceItem[];
 }
 
+interface CreditNoteSummary {
+    id: number;
+    credit_note_number: string;
+    credit_note_date: string;
+    reason: string;
+    total: string | number;
+}
+
 interface Props {
     invoice: Invoice;
+    creditNotes: CreditNoteSummary[];
+    creditedTotal: number;
+    netTotal: number;
+    isCreditable: boolean;
 }
 
 const statusLabels: Record<string, string> = {
@@ -77,7 +89,7 @@ const paymentLabels: Record<string, string> = {
     mobile: 'Mobile',
 };
 
-export default function InvoicesShow({ invoice }: Props) {
+export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netTotal, isCreditable }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const [showRecurringModal, setShowRecurringModal] = useState(false);
@@ -186,10 +198,58 @@ export default function InvoicesShow({ invoice }: Props) {
                                 </button>
                             </>
                         )}
+                        {/* L'avoir est le seul moyen de corriger une facture émise — y
+                            compris payée, que rien d'autre ne peut plus toucher. */}
+                        {isCreditable && (
+                            <Link
+                                href={route('credit-notes.create', { invoice: invoice.id })}
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                            >
+                                <ReceiptText className="size-4" /> {t.creditNotes.actions.new}
+                            </Link>
+                        )}
                     </div>
 
                     {!isDraft && (
                         <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.issuedNotice}</p>
+                    )}
+
+                    {creditNotes.length > 0 && (
+                        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                            <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">
+                                {t.creditNotes.invoice.creditNotes}
+                            </h2>
+                            <ul className="divide-y divide-gray-200 text-sm dark:divide-white/10">
+                                {creditNotes.map((creditNote) => (
+                                    <li key={creditNote.id} className="flex items-center justify-between gap-4 py-2">
+                                        <Link
+                                            href={route('credit-notes.show', { credit_note: creditNote.id })}
+                                            className="font-medium text-amber-600 hover:underline dark:text-amber-300"
+                                        >
+                                            {creditNote.credit_note_number}
+                                        </Link>
+                                        <span className="flex-1 truncate text-slate-500 dark:text-slate-400">
+                                            {creditNote.reason}
+                                        </span>
+                                        <span className="font-semibold text-red-600 dark:text-red-400">
+                                            -<Currency amount={Number(creditNote.total)} />
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="mt-3 flex justify-between border-t border-gray-200 pt-3 text-sm dark:border-white/10">
+                                <span className="text-slate-600 dark:text-slate-400">{t.creditNotes.invoice.credited}</span>
+                                <span className="font-semibold text-red-600 dark:text-red-400">
+                                    -<Currency amount={creditedTotal} />
+                                </span>
+                            </div>
+                            <div className="mt-1 flex justify-between text-sm">
+                                <span className="font-semibold text-slate-900 dark:text-white">{t.creditNotes.invoice.net}</span>
+                                <span className="font-bold text-slate-900 dark:text-white">
+                                    <Currency amount={netTotal} />
+                                </span>
+                            </div>
+                        </div>
                     )}
                 </div>
 

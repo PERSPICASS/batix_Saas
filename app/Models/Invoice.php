@@ -49,7 +49,17 @@ class Invoice extends Model
         });
         
         static::saved(function ($invoice) {
-            if ($invoice->status === 'paid' && $invoice->wasChanged('status')) {
+            if ($invoice->status !== 'paid') {
+                return;
+            }
+
+            // `wasChanged()` ne dit jamais rien à l'insertion : syncChanges() n'est appelé
+            // que par performUpdate(). Une facture créée directement en `paid` — ce que
+            // store() autorise — ne mettait donc jamais à jour le total du client.
+            // Le total est également surveillé, parce que les observers de lignes
+            // recalculent la facture APRÈS sa création : sans cela, le total du client
+            // resterait figé sur le montant envoyé par le formulaire.
+            if ($invoice->wasRecentlyCreated || $invoice->wasChanged('status') || $invoice->wasChanged('total')) {
                 $invoice->customer->updateTotalPurchases();
             }
         });
@@ -108,6 +118,42 @@ class Invoice extends Model
     public function items(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    /**
+     * Montant déjà crédité par avoir. La facture, elle, n'est jamais retouchée : c'est la
+     * somme des avoirs qui vient s'y opposer.
+     */
+    public function creditedTotal(): float
+    {
+        return (float) $this->creditNotes()->sum('total');
+    }
+
+    /**
+     * Ce que la facture représente réellement, avoirs déduits.
+     */
+    public function netTotal(): float
+    {
+        return round((float) $this->total - $this->creditedTotal(), 2);
+    }
+
+    /**
+     * Une facture n'est créditable que si elle a été émise et pas annulée — un brouillon
+     * n'a rien produit à corriger, une facture annulée n'a jamais rien valu — et s'il
+     * reste au moins une ligne dont la quantité n'est pas intégralement créditée.
+     */
+    public function isCreditable(): bool
+    {
+        if (!in_array($this->status, ['sent', 'paid'], true)) {
+            return false;
+        }
+
+        return $this->items->contains(fn ($item) => $item->quantityCreditable() > 0);
     }
 
     public function calculateTotals(): void

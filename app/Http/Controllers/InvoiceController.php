@@ -184,6 +184,14 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Show', [
             'invoice' => $invoice,
+            // La facture n'est jamais retouchée par un avoir : ce qu'elle vaut réellement
+            // est un calcul, pas une colonne.
+            'creditNotes' => $invoice->creditNotes()
+                ->latest('id')
+                ->get(['id', 'credit_note_number', 'credit_note_date', 'reason', 'total']),
+            'creditedTotal' => $invoice->creditedTotal(),
+            'netTotal' => $invoice->netTotal(),
+            'isCreditable' => $invoice->isCreditable(),
         ]);
     }
 
