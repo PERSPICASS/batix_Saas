@@ -250,6 +250,50 @@ class CreditNoteTest extends TestCase
             ->assertForbidden();
     }
 
+    /**
+     * The invoice list shows its credit-notes button only where it leads somewhere, so it
+     * needs the count on every row.
+     */
+    public function test_the_invoice_list_carries_a_credit_note_count(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = $this->owner($shop);
+        $credited = $this->invoice($shop);
+        $untouched = $this->invoice($shop);
+
+        $this->credit($user, $credited, 1);
+
+        $response = $this->actingAs($user)->get("/{$user->code_user}/factures");
+
+        // Recherche par identifiant plutôt que par position : les deux factures portent la
+        // même date, et l'ordre de la liste est alors indifférent.
+        $rows = collect($response->viewData('page')['props']['invoices']['data']);
+
+        $this->assertSame(1, $rows->firstWhere('id', $credited->id)['credit_notes_count']);
+        $this->assertSame(0, $rows->firstWhere('id', $untouched->id)['credit_notes_count']);
+    }
+
+    /**
+     * Filtering on invoice_id rather than searching the number: INV-…0001 is a prefix of
+     * INV-…00010, so a text search would drag in a neighbouring invoice's credit notes.
+     */
+    public function test_the_list_can_be_filtered_down_to_one_invoice(): void
+    {
+        $shop = Shop::factory()->create();
+        $user = $this->owner($shop);
+        $mine = $this->invoice($shop);
+        $other = $this->invoice($shop);
+
+        $this->credit($user, $mine, 1);
+        $this->credit($user, $other, 2);
+
+        $this->actingAs($user)
+            ->get("/{$user->code_user}/avoirs?invoice_id={$mine->id}")
+            ->assertInertia(fn ($page) => $page
+                ->has('creditNotes.data', 1)
+                ->where('creditNotes.data.0.invoice.id', $mine->id));
+    }
+
     public function test_a_reason_is_required(): void
     {
         $shop = Shop::factory()->create();

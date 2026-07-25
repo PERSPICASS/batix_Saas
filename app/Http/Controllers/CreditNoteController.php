@@ -30,6 +30,13 @@ class CreditNoteController extends Controller
             ->with(['invoice:id,invoice_number', 'customer:id,name', 'shop:id,name'])
             ->latest('id');
 
+        // Filtre exact, pour le bouton « Avoirs » de la liste des factures : passer par la
+        // recherche textuelle sur le numéro attraperait aussi les avoirs d'une facture au
+        // numéro voisin, INV-...0001 étant un préfixe de INV-...00010.
+        if ($invoiceId = $request->input('invoice_id')) {
+            $query->where('invoice_id', $invoiceId);
+        }
+
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('credit_note_number', 'like', "%{$search}%")
@@ -40,7 +47,7 @@ class CreditNoteController extends Controller
 
         return Inertia::render('CreditNotes/Index', [
             'creditNotes' => $query->paginate(20)->withQueryString(),
-            'filters' => $request->only('search'),
+            'filters' => $request->only(['search', 'invoice_id']),
         ]);
     }
 

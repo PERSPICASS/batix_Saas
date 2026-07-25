@@ -25,7 +25,7 @@ interface Paginated {
 
 interface Props {
     creditNotes: Paginated;
-    filters: { search?: string };
+    filters: { search?: string; invoice_id?: string | number };
 }
 
 export default function CreditNotesIndex({ creditNotes, filters }: Props) {
@@ -110,6 +110,26 @@ export default function CreditNotesIndex({ creditNotes, filters }: Props) {
 
             <section className="space-y-6">
                 <p className="text-sm text-slate-500 dark:text-slate-400">{t.creditNotes.subtitle}</p>
+
+                {/* Arrivée depuis le bouton « Avoirs » d'une facture : sans ce bandeau, la
+                    liste paraîtrait simplement incomplète. Le numéro se lit sur les lignes
+                    affichées, toutes rattachées à la même facture. */}
+                {filters.invoice_id && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/40 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-200">
+                        <span>
+                            {t.creditNotes.filteredByInvoice.replace(
+                                ':number',
+                                creditNotes.data[0]?.invoice?.invoice_number ?? '',
+                            )}
+                        </span>
+                        <Link
+                            href={route('credit-notes.index')}
+                            className="font-medium underline underline-offset-2"
+                        >
+                            {t.creditNotes.showAll}
+                        </Link>
+                    </div>
+                )}
 
                 <div className="flex flex-wrap items-center gap-4">
                     <input

@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Pencil, Plus, Trash2, Download, BarChart3 } from 'lucide-react';
+import { Eye, Pencil, Plus, ReceiptText, Trash2, Download, BarChart3 } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
@@ -17,6 +17,7 @@ interface Invoice {
     total: string | number | null;
     total_amount?: string | number | null;
     customer: Customer;
+    credit_notes_count: number;
 }
 
 interface PaginatedInvoices {
@@ -122,6 +123,16 @@ export default function InvoicesIndex({ invoices }: Props) {
                     >
                         <Eye className="size-3.5" /> {t.invoices.actions.view}
                     </Link>
+                    {/* Uniquement là où il mène quelque part : une facture sans avoir
+                        n'affiche pas le bouton. */}
+                    {invoice.credit_notes_count > 0 && (
+                        <Link
+                            href={route('credit-notes.index', { invoice_id: invoice.id })}
+                            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <ReceiptText className="size-3.5" /> {t.creditNotes.invoice.creditNotes} ({invoice.credit_notes_count})
+                        </Link>
+                    )}
                     {/* Une facture émise est figée : ni modification ni suppression. Son
                         statut évolue depuis sa page (« Marquer payée » / « Annuler »). */}
                     {invoice.status === 'draft' && (

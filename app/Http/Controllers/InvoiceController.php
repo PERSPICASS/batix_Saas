@@ -30,7 +30,11 @@ class InvoiceController extends Controller
         $shops = Auth::user()->accessibleShops();
         $shopIds = $shops->pluck('id');
         
+        // withCount plutôt que with : la liste n'a besoin que de savoir si des avoirs
+        // existent, pour n'afficher le bouton que là où il mène quelque part. Charger les
+        // avoirs eux-mêmes ferait 20 requêtes de plus par page pour un simple compteur.
         $query = Invoice::with(['shop', 'customer', 'user'])
+            ->withCount('creditNotes')
             ->whereIn('shop_id', $shopIds)
             ->orderBy('invoice_date', 'desc');
 

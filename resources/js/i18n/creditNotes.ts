@@ -18,6 +18,8 @@ export const creditNotes = {
             selectAll: 'Tout créditer',
         },
         emptyMessage: 'Aucun avoir',
+        filteredByInvoice: 'Avoirs de la facture :number',
+        showAll: 'Voir tous les avoirs',
         filters: {
             searchPlaceholder: "N° avoir, facture, client...",
         },
@@ -72,6 +74,8 @@ export const creditNotes = {
             selectAll: 'Credit everything',
         },
         emptyMessage: 'No credit notes',
+        filteredByInvoice: 'Credit notes for invoice :number',
+        showAll: 'Show all credit notes',
         filters: {
             searchPlaceholder: 'Credit note no., invoice, customer...',
         },
