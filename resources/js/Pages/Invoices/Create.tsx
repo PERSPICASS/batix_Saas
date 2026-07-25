@@ -25,12 +25,15 @@ interface Product {
     selling_price: string;
     shop_id: number;
     has_variations: boolean;
+    // NULL = le produit n'a pas de taux propre et suit celui de la boutique.
+    tax_rate: number | string | null;
     variations: Array<{
         id: number;
         name: string;
         selling_price: string;
         shop_id: number;
         has_variations: boolean;
+        tax_rate: number | string | null;
         variations: [];
     }>;
 }
@@ -155,6 +158,10 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                             ? `${parentProduct.name} › ${product.name}`
                             : product.name;
                         updated.unit_price = product.selling_price;
+                        // La TVA suit le produit choisi, au même titre que son prix. Une
+                        // déclinaison porte son propre taux : c'est une ligne de products
+                        // à part entière. `product` désigne déjà la déclinaison ici.
+                        updated.tax_rate = product.tax_rate ?? defaultTaxRate;
                     }
                 }
 

@@ -20,7 +20,12 @@ interface Shop {
 interface Product {
     id: number;
     name: string;
-    sale_price: string;
+    // `selling_price`, le nom réel de la colonne : l'interface déclarait `sale_price`,
+    // qui n'existe ni en base ni comme accesseur, donc choisir un produit posait
+    // `undefined` et vidait le prix au lieu de le remplir.
+    selling_price: string;
+    // NULL = le produit n'a pas de taux propre et suit celui de la boutique.
+    tax_rate: number | string | null;
 }
 
 interface InvoiceItem {
@@ -135,7 +140,12 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                         const product = products.find((p) => p.id === Number(value));
                         if (product) {
                             updated.product_name = product.name;
-                            updated.unit_price = product.sale_price;
+                            updated.unit_price = product.selling_price;
+                            // La TVA suit le produit choisi, comme son prix. Sans cette
+                            // ligne, un produit exonéré restait facturé au taux de la
+                            // boutique, alors qu'un devis pour le même produit affichait
+                            // bien 0 % — le serveur, lui, résout depuis le produit.
+                            updated.tax_rate = product.tax_rate ?? defaultTaxRate;
                         }
                     }
                     
