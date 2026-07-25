@@ -66,6 +66,10 @@ class ShopController extends Controller
         // first one created during onboarding.
         $validated['country'] = $user->country ?: 'France';
 
+        // Et sa devise du compte : le formulaire n'en envoie aucune, si bien que la
+        // colonne retombait sur son défaut de base — MAD — pour toute nouvelle boutique.
+        $validated['currency'] = Shop::defaultCurrencyFor($user);
+
         $shop = $user->accessibleShopsQuery()->create($validated);
 
         // Log activity
@@ -211,7 +215,9 @@ class ShopController extends Controller
             'city' => $validated['city'] ?? null,
             'postal_code' => $validated['postal_code'] ?? null,
             'phone' => $validated['phone'] ?? null,
-            'currency' => 'USD',
+            // Première boutique du compte : rien à hériter, la méthode retombe sur son
+            // dernier recours. Elle reste réglable dans les Réglages.
+            'currency' => Shop::defaultCurrencyFor($user),
             // Default to the country the user picked at registration, not a
             // hardcoded one.
             'country' => $user->country ?: 'France',
