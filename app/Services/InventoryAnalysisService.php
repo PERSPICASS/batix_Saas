@@ -48,11 +48,18 @@ class InventoryAnalysisService
             ->groupBy('product_id')
             ->pluck('total', 'product_id') : collect();
 
-        $purchasedByProduct = $shopId ? PurchaseItem::whereHas('purchase', function ($query) use ($shopId) {
-            $query->where('shop_id', $shopId)->whereNotNull('received_date');
+        // `received_date` appartient à `purchases`, pas à `purchase_items` : la condition de
+        // date doit vivre DANS le whereHas, avec celle de boutique. Placée au niveau extérieur,
+        // elle produit un SQL que Postgres rejette (« column received_date does not exist ») —
+        // et que SQLite, lui, accepte en la résolvant contre la table du sous-EXISTS. La suite
+        // de tests tournant sur SQLite ne peut donc pas attraper cette erreur : c'est la page
+        // « Nouvel inventaire » en développement qui l'a révélée.
+        $purchasedByProduct = $shopId ? PurchaseItem::whereHas('purchase', function ($query) use ($shopId, $since) {
+            $query->where('shop_id', $shopId)
+                ->whereNotNull('received_date')
+                ->when($since, fn ($q) => $q->where('received_date', '>', $since));
         })
             ->whereIn('product_id', $productIds)
-            ->when($since, fn ($query) => $query->where('received_date', '>', $since))
             ->selectRaw('product_id, SUM(quantity_received) as total')
             ->groupBy('product_id')
             ->pluck('total', 'product_id') : collect();

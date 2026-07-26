@@ -4,9 +4,12 @@ namespace Tests\Feature\Inventory;
 
 use App\Models\Inventory;
 use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\PurchaseItem;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Shop;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Services\InventoryAnalysisService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -130,6 +133,60 @@ class InventoryNumberingTest extends TestCase
         );
 
         $this->assertSame(0, $enriched[0]['sold_since_last_inventory']);
+    }
+
+    /**
+     * Le côté achats de la fenêtre, qui n'était pas couvert — et c'est par là que le bug est
+     * sorti en développement : `received_date` appartient à `purchases`, pas à
+     * `purchase_items`, or la condition de date était posée sur la table extérieure. Postgres
+     * refuse (« column received_date does not exist ») ; SQLite l'accepte en la résolvant
+     * contre la table du sous-EXISTS, ce qui rend la suite de tests aveugle à cette faute.
+     */
+    public function test_receptions_are_split_around_the_last_count(): void
+    {
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $shop = $this->shopOf($user);
+        $product = Product::factory()->create(['shop_id' => $shop->id, 'parent_id' => null]);
+        $supplier = Supplier::create(['shop_id' => $shop->id, 'name' => 'Fournisseur test']);
+
+        $this->travelTo(now()->startOfDay()->addHours(8));
+        $this->receive($shop, $user, $supplier, $product, quantity: 7, on: now()->subDays(3));
+
+        $this->travelTo(now()->addHours(2));
+        $this->inventoryIn($shop, $user, 'completed');
+
+        $this->receive($shop, $user, $supplier, $product, quantity: 5, on: now()->addDays(2));
+
+        $enriched = InventoryAnalysisService::enrichProductsWithMovements(
+            Product::with('shop')->where('id', $product->id)->get(),
+            $shop->id
+        );
+
+        // Seule la réception postérieure au comptage compte.
+        $this->assertSame(5, $enriched[0]['purchased_since_last_inventory']);
+    }
+
+    private function receive(Shop $shop, User $user, Supplier $supplier, Product $product, int $quantity, $on): void
+    {
+        $purchase = Purchase::create([
+            'shop_id' => $shop->id,
+            'supplier_id' => $supplier->id,
+            'user_id' => $user->id,
+            'reference' => 'PO-' . uniqid(),
+            'status' => 'received',
+            'order_date' => $on,
+            'received_date' => $on,
+        ]);
+
+        PurchaseItem::create([
+            'purchase_id' => $purchase->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'quantity_ordered' => $quantity,
+            'quantity_received' => $quantity,
+            'unit_price' => 1,
+            'total' => $quantity,
+        ]);
     }
 
     /** Un inventaire non terminé ne ferme pas la fenêtre : il n'a rien ajusté. */
