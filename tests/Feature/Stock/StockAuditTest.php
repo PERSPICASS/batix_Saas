@@ -234,6 +234,52 @@ class StockAuditTest extends TestCase
             ->assertSuccessful();
     }
 
+    /**
+     * A discrepancy is not a failure — the command did its job. But the scheduler has only
+     * the exit code to know something happened, hence the flag.
+     */
+    public function test_the_flag_turns_a_discrepancy_into_a_failure(): void
+    {
+        $shop = $this->shopWithOwner();
+        Product::factory()->create([
+            'shop_id' => $shop->id,
+            'track_stock' => true,
+            'stock_quantity' => 42,
+        ]);
+
+        $this->artisan('stock:audit')->assertSuccessful();
+        $this->artisan('stock:audit', ['--fail-on-drift' => true])->assertFailed();
+    }
+
+    public function test_the_flag_reports_success_when_nothing_drifts(): void
+    {
+        $this->shopWithOwner();
+
+        $this->artisan('stock:audit', ['--fail-on-drift' => true])->assertSuccessful();
+    }
+
+    /**
+     * A first audit can raise thousands of lines, which no terminal renders usefully and no
+     * scheduled run has any reason to compose. The largest discrepancies come first.
+     */
+    public function test_the_table_is_capped_and_says_how_many_are_hidden(): void
+    {
+        $shop = $this->shopWithOwner();
+
+        for ($i = 1; $i <= 25; $i++) {
+            Product::factory()->create([
+                'shop_id' => $shop->id,
+                'track_stock' => true,
+                'stock_quantity' => $i,
+                'name' => "Produit {$i}",
+            ]);
+        }
+
+        $this->artisan('stock:audit')
+            ->expectsOutputToContain('et 5 autre(s) écart(s) non affiché(s)')
+            ->assertSuccessful();
+    }
+
     public function test_a_product_that_is_not_tracked_is_ignored(): void
     {
         $shop = $this->shopWithOwner();

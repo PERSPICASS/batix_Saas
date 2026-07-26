@@ -30,3 +30,29 @@ Schedule::command('db:backup')
     ->dailyAt('03:00')
     ->withoutOverlapping()
     ->onFailure(fn () => Log::error('Scheduled db:backup failed — see the command output above.'));
+
+// Audit du stock — tous les lundis à 4h00, après la sauvegarde de 3h.
+//
+// Les compteurs (products.stock_quantity, depot_products.quantity) et le registre des
+// mouvements doivent raconter la même histoire. Rien ne le vérifiait, si bien qu'une dérive
+// restait invisible : ni constatable, ni datable, ni traçable. Une fois la base remise en
+// cohérence avec --baseline, tout nouvel écart désigne un vrai problème.
+//
+// `--fail-on-drift` fait sortir la commande en échec quand il reste des écarts : un écart
+// n'est pas une panne, mais l'ordonnanceur n'a que le code de sortie pour le savoir.
+//
+// Jamais --baseline ici : ce serait masquer automatiquement ce qu'on cherche à détecter.
+Schedule::command('stock:audit --fail-on-drift')
+    ->weeklyOn(1, '04:00')
+    ->withoutOverlapping()
+    ->onFailure(function () {
+        $message = 'stock:audit a relevé des écarts entre les compteurs de stock et le registre des mouvements.';
+
+        Log::error($message);
+
+        // Le stack de journalisation ne contient que `daily` : un Log::error finit dans un
+        // fichier que personne ne lit. Sentry est le seul endroit où l'alerte sera vue.
+        if (app()->bound('sentry')) {
+            \Sentry\captureMessage($message);
+        }
+    });

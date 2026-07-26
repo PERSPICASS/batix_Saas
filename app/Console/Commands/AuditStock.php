@@ -25,9 +25,13 @@ class AuditStock extends Command
 {
     protected $signature = 'stock:audit
         {--shop= : Limiter à une boutique}
-        {--baseline : Inscrire l\'écart au registre pour repartir d\'une base cohérente}';
+        {--baseline : Inscrire l\'écart au registre pour repartir d\'une base cohérente}
+        {--fail-on-drift : Sortir en échec si des écarts subsistent, pour l\'ordonnanceur}';
 
     protected $description = "Compare les compteurs de stock à la somme des mouvements et signale les écarts.";
+
+    /** Nombre d'écarts détaillés à l'écran avant de résumer. */
+    private const MAX_ROWS_SHOWN = 20;
 
     public function handle(): int
     {
@@ -44,17 +48,28 @@ class AuditStock extends Command
             return self::SUCCESS;
         }
 
+        // Plafonné : un premier audit peut remonter des milliers de lignes, qu'aucun
+        // terminal ne rend lisibles et qu'une tâche planifiée n'a aucune raison de composer.
+        // Les plus gros écarts d'abord, ce sont eux qu'on veut voir.
+        $shown = collect($rows)
+            ->sortByDesc(fn ($r) => abs($r['drift']))
+            ->take(self::MAX_ROWS_SHOWN);
+
         $this->table(
             ['Boutique', 'Produit', 'Emplacement', 'Compteur', 'Registre', 'Écart'],
-            array_map(fn ($r) => [
+            $shown->map(fn ($r) => [
                 $r['shop_id'],
                 $r['product'],
                 $r['location'],
                 $r['counter'],
                 $r['ledger'],
                 sprintf('%+d', $r['drift']),
-            ], $rows)
+            ])->all()
         );
+
+        if (count($rows) > self::MAX_ROWS_SHOWN) {
+            $this->line('… et ' . (count($rows) - self::MAX_ROWS_SHOWN) . ' autre(s) écart(s) non affiché(s).');
+        }
 
         $this->newLine();
 
@@ -63,7 +78,10 @@ class AuditStock extends Command
             $this->line('Relancer avec --baseline pour inscrire ces écarts au registre,');
             $this->line('afin que toute dérive ultérieure soit détectable.');
 
-            return self::SUCCESS;
+            // Un écart n'est pas une panne : la commande a fait son travail. Mais
+            // l'ordonnanceur n'a que le code de sortie pour savoir qu'il s'est passé
+            // quelque chose, d'où ce drapeau.
+            return $this->option('fail-on-drift') ? self::FAILURE : self::SUCCESS;
         }
 
         $this->writeBaseline($rows);
