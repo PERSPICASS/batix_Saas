@@ -52,16 +52,61 @@ class AccountDeletion
 
             if ($shopIds->isNotEmpty()) {
                 $this->releaseBlockingRecords($shopIds);
+            }
 
+            // Avant les boutiques, et non après : supprimer une boutique emporte en cascade
+            // les utilisateurs qui y sont rattachés, propriétaire compris — et
+            // `credit_notes.user_id` étant en RESTRICT, un avoir rédigé ailleurs bloquerait
+            // cette cascade au lieu de la suivre.
+            CreditNote::where('user_id', $user->id)->delete();
+
+            if ($shopIds->isNotEmpty()) {
                 Shop::whereIn('id', $shopIds)->delete();
             }
 
-            // Les avoirs rédigés par ce compte dans une boutique qui ne lui appartient pas
-            // (personnel d'un autre compte) restent en RESTRICT sur `credit_notes.user_id`.
-            CreditNote::where('user_id', $user->id)->delete();
-
+            // Le plus souvent déjà supprimé par la cascade de `users.shop_id` ci-dessus ;
+            // reste nécessaire pour un compte sans boutique.
             $user->delete();
         });
+    }
+
+    /**
+     * Supprimer une seule boutique, en préservant le compte qui la détient.
+     *
+     * Même travail de déblocage que pour un compte, plus une précaution qui n'a pas lieu
+     * d'être dans l'autre cas : `users.shop_id` est en `onDelete('cascade')`, donc supprimer
+     * une boutique supprime les comptes qui y sont rattachés. Pour le personnel c'est le
+     * comportement voulu — un employé appartient à sa boutique. Pour le propriétaire, non :
+     * il perdrait son compte, ses autres boutiques et son abonnement en supprimant une
+     * succursale. Il est donc déplacé avant, vers une autre de ses boutiques s'il en a.
+     */
+    public function deleteShop(Shop $shop): void
+    {
+        DB::transaction(function () use ($shop) {
+            $this->releaseBlockingRecords([$shop->id]);
+            $this->moveOwnerOff($shop);
+
+            $shop->delete();
+        });
+    }
+
+    /**
+     * Détacher le propriétaire de la boutique qu'il s'apprête à supprimer.
+     *
+     * `shop_id` à null s'il n'en a pas d'autre : c'est l'état d'un compte qui n'a pas encore
+     * créé sa boutique, que l'onboarding sait reprendre (ShopController::createInitial).
+     */
+    private function moveOwnerOff(Shop $shop): void
+    {
+        $owner = $shop->user;
+
+        if (!$owner || $owner->shop_id !== $shop->id) {
+            return;
+        }
+
+        $owner->update([
+            'shop_id' => Shop::where('user_id', $owner->id)->whereKeyNot($shop->id)->value('id'),
+        ]);
     }
 
     /**

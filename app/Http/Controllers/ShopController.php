@@ -8,6 +8,7 @@ use App\Models\Shop;
 use App\Models\ShopTransfer;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
+use App\Services\AccountDeletion;
 use App\Services\ActivityLogger;
 use App\Services\StockMovementService;
 use Illuminate\Http\Request;
@@ -383,14 +384,26 @@ class ShopController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $code_user, Shop $shop)
+    public function destroy(string $code_user, Shop $shop, AccountDeletion $accounts)
     {
         $this->authorize('delete', $shop);
-        
+
         // Sauvegarder le nom avant suppression
         $shopName = $shop->name;
-        
-        $shop->delete();
+
+        // Un `$shop->delete()` nu ne suffisait pas : six clés étrangères déclarées sans
+        // `onDelete` sont en RESTRICT et bloquent la cascade, si bien qu'une boutique ayant
+        // émis un devis ou un avoir n'était pas supprimable. Et la cascade de
+        // `users.shop_id` emportait le compte du propriétaire lui-même quand c'était sa
+        // boutique courante. Le service traite les deux.
+        $accounts->deleteShop($shop);
+
+        // La boutique active vit en session, indépendamment de `users.shop_id` : la laisser
+        // pointer vers une boutique supprimée rend current_shop() null, donc l'interface
+        // sans boutique active alors qu'il en reste.
+        if (session('active_shop_id') == $shop->id) {
+            session()->forget('active_shop_id');
+        }
 
         // Log activity
         ActivityLogger::deleted($shop, $shopName);
