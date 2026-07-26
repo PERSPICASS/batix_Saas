@@ -91,6 +91,11 @@
 <table class="header">
     <tr>
         <td style="width: 55%;">
+            @if ($logo)
+                {{-- Hauteur bornée : un logo téléversé en haute définition écraserait
+                     sinon tout l'en-tête. La largeur suit d'elle-même. --}}
+                <img src="{{ $logo }}" alt="" style="max-height: 48pt; max-width: 160pt; margin-bottom: 6pt;">
+            @endif
             <div class="shop-name">{{ $shop?->name }}</div>
             @if ($shop?->address)
                 <div class="muted">{{ $shop->address }}</div>

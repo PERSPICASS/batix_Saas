@@ -10,6 +10,7 @@ use App\Models\Shop;
 use App\Models\User;
 use App\Services\DocumentPdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -147,6 +148,73 @@ class DocumentPdfTest extends TestCase
         $this->assertSame(0.0, $breakdown[1]['rate']);
         $this->assertSame(1000.0, $breakdown[1]['base']);
         $this->assertSame(0.0, $breakdown[1]['tax']);
+    }
+
+    /**
+     * The logo is embedded as data, not linked. dompdf would otherwise have to fetch the
+     * file over the network from the server itself — slow, dependent on the site being
+     * reachable, and defeated by any protection in front of it.
+     */
+    public function test_the_logo_travels_inside_the_document(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('logos/shop.png', 'fake-png-bytes');
+
+        $shop = Shop::factory()->create(['logo' => 'logos/shop.png']);
+        $pdf = app(DocumentPdf::class);
+
+        $logo = (new \ReflectionMethod($pdf, 'logo'))->invoke($pdf, $shop);
+
+        $this->assertStringStartsWith('data:', $logo);
+        $this->assertStringContainsString(base64_encode('fake-png-bytes'), $logo);
+    }
+
+    public function test_a_shop_without_a_logo_gets_none(): void
+    {
+        $shop = Shop::factory()->create(['logo' => null]);
+        $pdf = app(DocumentPdf::class);
+
+        $this->assertNull((new \ReflectionMethod($pdf, 'logo'))->invoke($pdf, $shop));
+    }
+
+    /**
+     * A document must come out whatever happens: without its logo rather than not at all.
+     */
+    public function test_a_missing_logo_file_does_not_break_the_document(): void
+    {
+        Storage::fake('public');
+
+        $shop = Shop::factory()->create(['logo' => 'logos/disparu.png']);
+        $user = $this->owner($shop);
+        $sale = $this->sale($shop, $user);
+
+        $response = $this->actingAs($user)->get("/{$user->code_user}/ventes/{$sale->id}/pdf");
+
+        $response->assertOk();
+        $this->assertStringStartsWith('%PDF', $response->getContent());
+    }
+
+    /**
+     * The receipt height is computed rather than fitted afterwards, so the logo has to be
+     * counted or it would push the end of the ticket off the roll.
+     */
+    public function test_the_receipt_grows_to_fit_its_logo(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('logos/shop.png', 'fake-png-bytes');
+
+        $pdf = app(DocumentPdf::class);
+        $heights = [];
+
+        foreach ([['logo' => 'logos/shop.png'], ['logo' => null]] as $attributes) {
+            $shop = Shop::factory()->create($attributes);
+            $user = $this->owner($shop);
+            $sale = $this->sale($shop, $user);
+
+            $heights[] = (new \ReflectionMethod($pdf, 'receiptHeight'))->invoke($pdf, $sale);
+        }
+
+        $this->assertGreaterThan($heights[1], $heights[0]);
     }
 
     public function test_another_tenants_ticket_cannot_be_downloaded(): void

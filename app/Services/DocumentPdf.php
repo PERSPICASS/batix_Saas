@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Invoice;
 use App\Models\Quote;
 use App\Models\Sale;
+use App\Models\Shop;
 use App\Support\GlobalDiscount;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\PDF as PdfWrapper;
 
 /**
@@ -41,9 +43,32 @@ class DocumentPdf
 
         return Pdf::loadView('pdf.ticket', [
             'sale' => $sale,
+            'logo' => $this->logo($sale->shop),
             'shop' => $sale->shop,
             'currencySymbol' => get_currency_symbol($sale->shop?->currency),
         ])->setPaper([0, 0, self::RECEIPT_WIDTH, $this->receiptHeight($sale)]);
+    }
+
+    /**
+     * Le logo de la boutique, embarqué dans le document.
+     *
+     * En données plutôt que par URL : dompdf devrait sinon aller chercher le fichier sur le
+     * réseau depuis le serveur lui-même, ce qui est lent, dépend de la joignabilité du site
+     * et échouerait derrière toute protection. Le fichier est lu sur le disque.
+     *
+     * Null si la boutique n'a pas de logo, ou si le fichier a disparu du stockage — un
+     * document doit sortir dans tous les cas, sans logo plutôt que pas du tout.
+     */
+    private function logo(?Shop $shop): ?string
+    {
+        if (!$shop?->logo || !Storage::disk('public')->exists($shop->logo)) {
+            return null;
+        }
+
+        $contents = Storage::disk('public')->get($shop->logo);
+        $mime = Storage::disk('public')->mimeType($shop->logo) ?: 'image/png';
+
+        return 'data:' . $mime . ';base64,' . base64_encode($contents);
     }
 
     /**
@@ -72,6 +97,12 @@ class DocumentPdf
             $height += 20;
         }
 
+        // Le logo occupe sa place en haut : l'oublier pousserait la fin du ticket hors du
+        // ruban, dont la hauteur est calculée et non ajustée après coup.
+        if ($this->logo($sale->shop)) {
+            $height += 40;
+        }
+
         return $height;
     }
 
@@ -81,6 +112,7 @@ class DocumentPdf
 
         return Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice,
+            'logo' => $this->logo($invoice->shop),
             'shop' => $invoice->shop,
             'currencySymbol' => get_currency_symbol($invoice->shop?->currency),
             // Ventilation par taux : une ligne « TVA » unique ne dit pas de quoi le montant
@@ -97,6 +129,7 @@ class DocumentPdf
 
         return Pdf::loadView('pdf.quote', [
             'quote' => $quote,
+            'logo' => $this->logo($quote->shop),
             'shop' => $quote->shop,
             'currencySymbol' => get_currency_symbol($quote->shop?->currency),
             'taxBreakdown' => $this->taxBreakdown($quote->items, 'line_total'),

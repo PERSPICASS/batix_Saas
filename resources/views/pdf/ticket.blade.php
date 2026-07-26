@@ -44,6 +44,9 @@
 @endif
 
 <div class="center">
+    @if ($logo)
+        <img src="{{ $logo }}" alt="" style="max-height: 32pt; max-width: 120pt; margin-bottom: 3pt;">
+    @endif
     <div class="shop-name">{{ $shop?->name }}</div>
     @if ($shop?->address)
         <div class="muted">{{ $shop->address }}@if ($shop->city), {{ $shop->city }}@endif</div>
