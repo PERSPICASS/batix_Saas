@@ -532,6 +532,21 @@ class StockMovementService
 
         // Adjust good stock
         if ($goodDifference !== 0) {
+            // Un excédent constaté entre dans la moyenne pondérée, valorisé au dernier prix
+            // d'achat — c'est `$unitCost`, que l'inventaire a capturé depuis
+            // `products.purchase_price`, ce que ce projet appelle le dernier prix d'achat
+            // (Product::unitCost()). Règle arrêtée le 2026-07-26.
+            //
+            // Un manque, lui, ne touche pas la moyenne : en CUMP une sortie s'évalue au coût
+            // moyen courant et le laisse inchangé. `foldIntoAverageCost` refuse d'ailleurs une
+            // quantité négative, mais le dire ici évite d'avoir à le déduire.
+            //
+            // Avant l'écriture du compteur, comme pour une réception : la moyenne pondère le
+            // stock détenu contre celui qui entre, et après coup le détenu inclurait l'entrée.
+            if ($goodDifference > 0) {
+                $product->foldIntoAverageCost($goodDifference, $unitCost);
+            }
+
             $product->update(['stock_quantity' => $countedGoodQty]);
             self::writeMovement([
                 'shop_id'        => $shopId,
