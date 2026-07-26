@@ -112,8 +112,11 @@ class InventoryController extends Controller
                     'product_id' => $item['product_id'],
                     'expected_quantity' => $product->stock_quantity,
                     'expected_defective_quantity' => $product->defective_stock_quantity,
-                    'counted_quantity' => $item['counted_quantity'] ?? 0,
-                    'defective_quantity' => $item['defective_quantity'] ?? 0,
+                    // Pas de `?? 0` : un null veut dire « pas compté », et l'application de
+                    // l'inventaire saute ces lignes. Les ramener à 0 mettait le stock du
+                    // produit à zéro dès qu'on ajoutait une ligne sans la remplir.
+                    'counted_quantity' => $item['counted_quantity'] ?? null,
+                    'defective_quantity' => $item['defective_quantity'] ?? null,
                     'unit_cost' => $product->purchase_price,
                 ]);
             }
@@ -234,8 +237,11 @@ class InventoryController extends Controller
                     'product_id' => $item['product_id'],
                     'expected_quantity' => $existing->expected_quantity ?? $product->stock_quantity,
                     'expected_defective_quantity' => $existing->expected_defective_quantity ?? $product->defective_stock_quantity,
-                    'counted_quantity' => $item['counted_quantity'] ?? 0,
-                    'defective_quantity' => $item['defective_quantity'] ?? 0,
+                    // Pas de `?? 0` : un null veut dire « pas compté », et l'application de
+                    // l'inventaire saute ces lignes. Les ramener à 0 mettait le stock du
+                    // produit à zéro dès qu'on ajoutait une ligne sans la remplir.
+                    'counted_quantity' => $item['counted_quantity'] ?? null,
+                    'defective_quantity' => $item['defective_quantity'] ?? null,
                     'unit_cost' => $product->purchase_price,
                 ]);
             }
@@ -265,14 +271,19 @@ class InventoryController extends Controller
         $inventory->load('items.product:id,name,stock_quantity,defective_stock_quantity');
 
         return response()->json([
-            'items' => $inventory->items->map(fn (InventoryItem $item) => [
-                'id' => $item->id,
-                'product_name' => $item->product->name,
-                'good_before' => $item->product->stock_quantity,
-                'good_after' => $item->counted_quantity ?? 0,
-                'defective_before' => $item->product->defective_stock_quantity,
-                'defective_after' => $item->defective_quantity,
-            ]),
+            // Les lignes non comptées n'apparaissent pas : elles ne changeront rien, et les
+            // afficher avec un « après » à 0 annonçait l'inverse de ce qui allait se passer.
+            'items' => $inventory->items
+                ->whereNotNull('counted_quantity')
+                ->values()
+                ->map(fn (InventoryItem $item) => [
+                    'id' => $item->id,
+                    'product_name' => $item->product->name,
+                    'good_before' => $item->product->stock_quantity,
+                    'good_after' => $item->counted_quantity,
+                    'defective_before' => $item->product->defective_stock_quantity,
+                    'defective_after' => $item->defective_quantity ?? $item->product->defective_stock_quantity,
+                ]),
         ]);
     }
 
@@ -293,6 +304,13 @@ class InventoryController extends Controller
             return back()->withErrors(['error' => 'Cet inventaire est annulé : il ne peut plus être appliqué.']);
         }
 
+        // Un inventaire dont aucune ligne n'a été comptée n'ajusterait rien, mais poserait
+        // quand même un `completed_at` — donc une nouvelle borne « depuis le dernier
+        // inventaire » qui ne repose sur aucun comptage. Mieux vaut refuser.
+        if ($inventory->items()->whereNotNull('counted_quantity')->doesntExist()) {
+            return back()->withErrors(['error' => "Aucune ligne n'a été comptée : rien à appliquer."]);
+        }
+
         $applied = DB::transaction(function () use ($inventory) {
             // Le statut est relu SOUS VERROU, et pas seulement plus haut. Deux requêtes
             // simultanées lisaient toutes deux « draft » et le même stock, appliquaient
@@ -306,10 +324,17 @@ class InventoryController extends Controller
             }
 
             foreach ($inventory->items as $item) {
+                // Les lignes non comptées sont ignorées : un inventaire partiel ne prétend rien
+                // sur ce qu'il n'a pas regardé. Le défectueux non renseigné vaut l'existant, et
+                // non zéro, pour la même raison.
+                if ($item->counted_quantity === null) {
+                    continue;
+                }
+
                 StockMovementService::recordInventoryAdjustmentWithDefective(
                     $item->product,
                     $item->counted_quantity,
-                    $item->defective_quantity,
+                    $item->defective_quantity ?? $item->product->defective_stock_quantity,
                     $inventory->shop_id,
                     $inventory,
                     $item->unit_cost

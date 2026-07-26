@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef, useEffect } from 'react';
-import { Plus, Trash2, Search, X, ChevronDown, Info } from 'lucide-react';
+import { Plus, Trash2, Search, X, ChevronDown, Info, AlertTriangle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
@@ -20,6 +20,10 @@ interface Product {
     purchase_price: number;
     sold_since_last_inventory: number;
     purchased_since_last_inventory: number;
+    last_counted_quantity: number | null;
+    last_counted_at: string | null;
+    theoretical_stock: number;
+    ledger_drift: number;
     shop: Shop;
 }
 
@@ -387,7 +391,21 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                     <div>
                                                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t.inventory.show.expectedStock}</p>
                                                         <p className="font-semibold text-blue-300">
-                                                            {selectedProduct.stock_quantity}
+                                                            {selectedProduct.theoretical_stock}
+                                                        </p>
+                                                        {/*
+                                                          Le nombre s'explique au lieu de s'affirmer : on montre d'où il
+                                                          vient. Sans comptage antérieur, il n'y a rien à reconstruire et
+                                                          le compteur système est la seule référence — autant le dire.
+                                                        */}
+                                                        <p className="text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+                                                            {selectedProduct.last_counted_at
+                                                                ? t.inventory.form.derivedFrom(
+                                                                      selectedProduct.last_counted_quantity ?? 0,
+                                                                      selectedProduct.purchased_since_last_inventory,
+                                                                      selectedProduct.sold_since_last_inventory,
+                                                                  )
+                                                                : t.inventory.form.noPreviousCount}
                                                         </p>
                                                     </div>
                                                     <div>
@@ -441,6 +459,25 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                         </p>
                                                     </div>
                                                 </div>
+
+                                                {/*
+                                                  Le compteur et l'historique devraient tomber sur le même nombre.
+                                                  Quand ils diffèrent, l'un des deux ment — et c'est utile de le
+                                                  savoir maintenant, plutôt qu'au prochain stock:audit du lundi.
+                                                  L'écart affiché reste calculé sur le compteur, puisque c'est lui
+                                                  que l'application de l'inventaire ajustera.
+                                                */}
+                                                {selectedProduct.ledger_drift !== 0 && (
+                                                    <p className="mt-3 flex items-start gap-1.5 rounded-md bg-amber-500/10 p-2 text-xs text-amber-700 dark:text-amber-300">
+                                                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                                        <span>
+                                                            {t.inventory.form.ledgerDrift(
+                                                                selectedProduct.stock_quantity,
+                                                                selectedProduct.theoretical_stock,
+                                                            )}
+                                                        </span>
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
                                     </div>

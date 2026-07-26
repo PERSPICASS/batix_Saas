@@ -60,6 +60,11 @@ export const inventory = {
             countedGood: 'Quantité en bon état *',
             sold: 'Vendu',
             purchased: 'Acheté',
+            derivedFrom: (last: number, purchased: number, sold: number) =>
+                `${last} au dernier inventaire, +${purchased} reçus, −${sold} vendus`,
+            noPreviousCount: 'Aucun comptage antérieur — compteur système',
+            ledgerDrift: (counter: number, theoretical: number) =>
+                `Le compteur système indique ${counter}, l'historique conclut à ${theoretical}. L'un des deux se trompe : à vérifier.`,
             searchProductPlaceholder: 'Rechercher par nom ou SKU...',
             noProductFound: 'Aucun produit trouvé',
             alreadyAdded: 'déjà ajouté',
@@ -153,6 +158,11 @@ export const inventory = {
             countedGood: 'Good condition quantity *',
             sold: 'Sold',
             purchased: 'Purchased',
+            derivedFrom: (last: number, purchased: number, sold: number) =>
+                `${last} at last count, +${purchased} received, −${sold} sold`,
+            noPreviousCount: 'No previous count — system counter',
+            ledgerDrift: (counter: number, theoretical: number) =>
+                `The system counter says ${counter}, the history concludes ${theoretical}. One of them is wrong: worth checking.`,
             searchProductPlaceholder: 'Search by name or SKU...',
             noProductFound: 'No product found',
             alreadyAdded: 'already added',

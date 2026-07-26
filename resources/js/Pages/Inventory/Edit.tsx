@@ -23,6 +23,10 @@ interface Product {
     purchase_price: number;
     sold_since_last_inventory: number;
     purchased_since_last_inventory: number;
+    last_counted_quantity: number | null;
+    last_counted_at: string | null;
+    theoretical_stock: number;
+    ledger_drift: number;
     shop: Shop;
 }
 
@@ -33,7 +37,7 @@ interface InventoryItem {
     expected_quantity: number;
     expected_defective_quantity: number;
     counted_quantity: number | null;
-    defective_quantity: number;
+    defective_quantity: number | null;
 }
 
 interface Inventory {
@@ -55,7 +59,9 @@ interface Props {
 interface FormItem {
     product_id: number;
     counted_quantity: number | null;
-    defective_quantity: number;
+    // Nullable comme le comptage : un défectueux non renseigné laisse l'existant en place,
+    // il ne déclare pas « zéro pièce défectueuse ».
+    defective_quantity: number | null;
     product_name: string;
     product_sku: string;
     expected_quantity: number;
@@ -102,7 +108,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
             {
                 product_id: product.id,
                 counted_quantity: null,
-                defective_quantity: 0,
+                defective_quantity: null,
                 product_name: product.name,
                 product_sku: product.sku,
                 expected_quantity: product.stock_quantity,
@@ -126,7 +132,7 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
         );
     };
 
-    const updateDefectiveQuantity = (productId: number, quantity: number) => {
+    const updateDefectiveQuantity = (productId: number, quantity: number | null) => {
         setData(
             'items',
             data.items.map((item) =>
@@ -351,8 +357,15 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {data.items.map((item) => {
-                                        const difference = (item.counted_quantity ?? 0) - item.expected_quantity;
-                                        const defectiveDifference = item.defective_quantity - item.expected_defective_quantity;
+                                        // Une ligne non comptée ne constate aucun écart — 0, et non
+                                        // « il manque tout le stock ». Même règle que côté serveur
+                                        // (InventoryItem::saving).
+                                        const difference = item.counted_quantity === null
+                                            ? 0
+                                            : item.counted_quantity - item.expected_quantity;
+                                        const defectiveDifference = item.defective_quantity === null
+                                            ? 0
+                                            : item.defective_quantity - item.expected_defective_quantity;
                                         const isHighlighted = highlightedId === item.product_id;
                                         return (
                                             <tr
@@ -402,11 +415,11 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                     <input
                                                         type="number"
                                                         min="0"
-                                                        value={item.defective_quantity}
+                                                        value={item.defective_quantity ?? ''}
                                                         onChange={(e) =>
                                                             updateDefectiveQuantity(
                                                                 item.product_id,
-                                                                parseInt(e.target.value) || 0
+                                                                e.target.value ? parseInt(e.target.value) : null
                                                             )
                                                         }
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"

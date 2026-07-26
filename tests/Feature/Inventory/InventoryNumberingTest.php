@@ -3,6 +3,7 @@
 namespace Tests\Feature\Inventory;
 
 use App\Models\Inventory;
+use App\Models\InventoryItem;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
@@ -32,15 +33,32 @@ class InventoryNumberingTest extends TestCase
         return Shop::factory()->create(['user_id' => $user->id]);
     }
 
-    private function inventoryIn(Shop $shop, User $user, string $status = 'draft'): Inventory
+    /**
+     * La borne « depuis le dernier inventaire » se prend par produit, à son dernier comptage
+     * effectif : un inventaire terminé mais sans ligne comptée ne borne rien, ce qui est le
+     * point de la fenêtre par produit. D'où le produit passé ici.
+     */
+    private function inventoryIn(Shop $shop, User $user, string $status = 'draft', ?Product $counted = null): Inventory
     {
-        return Inventory::create([
+        $inventory = Inventory::create([
             'shop_id' => $shop->id,
             'user_id' => $user->id,
             'inventory_date' => now()->toDateString(),
             'status' => $status,
             'completed_at' => $status === 'completed' ? now() : null,
         ]);
+
+        if ($counted) {
+            InventoryItem::create([
+                'inventory_id' => $inventory->id,
+                'product_id' => $counted->id,
+                'expected_quantity' => $counted->stock_quantity,
+                'counted_quantity' => $counted->stock_quantity,
+                'unit_cost' => 1,
+            ]);
+        }
+
+        return $inventory;
     }
 
     public function test_each_shop_numbers_its_inventories_from_one(): void
@@ -85,7 +103,7 @@ class InventoryNumberingTest extends TestCase
         $product = Product::factory()->create(['shop_id' => $shop->id, 'parent_id' => null]);
 
         $this->travelTo(now()->startOfDay()->addHours(9));
-        $inventory = $this->inventoryIn($shop, $user, 'completed');
+        $inventory = $this->inventoryIn($shop, $user, 'completed', $product);
 
         // Même jour, deux heures après l'ajustement.
         $this->travelTo(now()->addHours(2));
@@ -125,7 +143,7 @@ class InventoryNumberingTest extends TestCase
         ]);
 
         $this->travelTo(now()->addHours(3));
-        $this->inventoryIn($shop, $user, 'completed');
+        $this->inventoryIn($shop, $user, 'completed', $product);
 
         $enriched = InventoryAnalysisService::enrichProductsWithMovements(
             Product::with('shop')->where('id', $product->id)->get(),
@@ -153,7 +171,7 @@ class InventoryNumberingTest extends TestCase
         $this->receive($shop, $user, $supplier, $product, quantity: 7, on: now()->subDays(3));
 
         $this->travelTo(now()->addHours(2));
-        $this->inventoryIn($shop, $user, 'completed');
+        $this->inventoryIn($shop, $user, 'completed', $product);
 
         $this->receive($shop, $user, $supplier, $product, quantity: 5, on: now()->addDays(2));
 
@@ -207,7 +225,7 @@ class InventoryNumberingTest extends TestCase
         ]);
 
         $this->travelTo(now()->addHour());
-        $this->inventoryIn($shop, $user, 'draft');
+        $this->inventoryIn($shop, $user, 'draft', $product);
 
         $enriched = InventoryAnalysisService::enrichProductsWithMovements(
             Product::with('shop')->where('id', $product->id)->get(),

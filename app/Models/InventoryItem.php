@@ -38,8 +38,15 @@ class InventoryItem extends Model
         // adjustment on completion (StockMovementService::recordInventoryAdjustmentWithDefective)
         // moves stock_quantity and defective_stock_quantity separately.
         static::saving(function ($item) {
-            $item->difference = ($item->counted_quantity ?? 0) - $item->expected_quantity;
-            $item->defective_difference = ($item->defective_quantity ?? 0) - $item->expected_defective_quantity;
+            // Une ligne non comptée ne constate aucun écart. Retrancher l'attendu d'un null
+            // annonçait au contraire un manque égal à tout le stock.
+            $item->difference = $item->counted_quantity === null
+                ? 0
+                : $item->counted_quantity - $item->expected_quantity;
+
+            $item->defective_difference = $item->defective_quantity === null
+                ? 0
+                : $item->defective_quantity - $item->expected_defective_quantity;
         });
     }
 
