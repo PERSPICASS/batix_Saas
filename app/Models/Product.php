@@ -137,8 +137,29 @@ class Product extends Model
     /** Ce que la boutique détient réellement : comptoir + dépôts. */
     public function totalStock(): int
     {
-        return (int) $this->stock_quantity
-            + (int) ($this->depot_products_sum_quantity ?? $this->depotProducts()->sum('quantity'));
+        return (int) $this->stock_quantity + $this->depotStock();
+    }
+
+    /**
+     * Les unités en dépôt, depuis la somme déjà jointe si elle l'a été.
+     *
+     * Deux alias coexistent dans le projet : `depot_stock`, choisi par la liste des produits et
+     * exposé tel quel à l'interface, et `depot_products_sum_quantity`, celui que `withSum()`
+     * fabrique par défaut. Ne reconnaître que le second faisait retomber la liste des produits
+     * sur une requête par ligne, alors même qu'elle avait pris soin de joindre la somme.
+     *
+     * Le repli par requête reste, pour un modèle chargé seul — mais il ne doit jamais être
+     * atteint depuis une collection.
+     */
+    private function depotStock(): int
+    {
+        foreach (['depot_stock', 'depot_products_sum_quantity'] as $alias) {
+            if ($this->getAttribute($alias) !== null) {
+                return (int) $this->getAttribute($alias);
+            }
+        }
+
+        return (int) $this->depotProducts()->sum('quantity');
     }
 
     /**
@@ -152,8 +173,32 @@ class Product extends Model
         return (float) ($this->average_cost ?? $this->purchase_price ?? 0);
     }
 
-    /** Ce que vaut le stock du comptoir. */
+    /**
+     * Ce que vaut tout le stock détenu : comptoir ET dépôts.
+     *
+     * Un seul coût sert de base, celui du produit — la moyenne pondérée, à défaut le prix
+     * d'achat. L'endroit où se trouve la marchandise ne change pas ce qu'elle a coûté : le même
+     * tournevis vaut autant en réserve que sur l'étagère.
+     *
+     * Cette méthode ne couvrait que le comptoir alors que l'interface l'annonce « Valeur du
+     * stock », sans réserve. Tout ce qui dormait en dépôt était donc absent du chiffre censé
+     * dire où est immobilisée la trésorerie.
+     *
+     * Penser à charger `withSum('depotProducts', 'quantity')` avant d'appeler ceci sur une
+     * collection : sans quoi totalStock() interroge la base produit par produit.
+     */
     public function stockValue(): float
+    {
+        return round($this->totalStock() * $this->unitCost(), 2);
+    }
+
+    /**
+     * Ce que vaut le seul stock du comptoir.
+     *
+     * Utile là où la distinction compte — ce qui est vendable immédiatement, par opposition à
+     * ce qui est détenu.
+     */
+    public function counterStockValue(): float
     {
         return round($this->stock_quantity * $this->unitCost(), 2);
     }

@@ -127,10 +127,17 @@ class DepotController extends Controller
                 'quantity' => $dp->quantity,
                 'min_stock_alert' => $dp->min_stock_alert,
                 'purchase_price' => (float) $dp->purchase_price,
+                // Valorisé au coût du PRODUIT — moyenne pondérée, à défaut prix d'achat — et
+                // non au `purchase_price` de la ligne de dépôt, qui vaut 0 tant que personne
+                // ne l'a saisi et qui donnait donc une réserve pleine valant zéro.
+                'unit_cost' => $dp->product->unitCost(),
+                'stock_value' => round($dp->quantity * $dp->product->unitCost(), 2),
                 'is_low_stock' => $dp->isLowStock(),
             ]);
 
-        $allDepotProducts = $depot->depotProducts()->get();
+        // `with('product')` : le total valorise chaque ligne au coût de son produit, ce qui
+        // sans cela ferait une requête par ligne du dépôt.
+        $allDepotProducts = $depot->depotProducts()->with('product')->get();
 
         $depotProductsForTransfer = $allDepotProducts
             ->map(fn($dp) => [
@@ -192,7 +199,7 @@ class DepotController extends Controller
                 'total_products'   => $allDepotProducts->count(),
                 'total_stock'      => $allDepotProducts->sum('quantity'),
                 'low_stock_count'  => $allDepotProducts->filter(fn($dp) => $dp->isLowStock())->count(),
-                'total_value'      => $allDepotProducts->sum(fn($dp) => $dp->quantity * $dp->purchase_price),
+                'total_value'      => round($allDepotProducts->sum(fn($dp) => $dp->quantity * $dp->product->unitCost()), 2),
             ],
             'shops' => $shops,
             'allProducts' => $allProducts,

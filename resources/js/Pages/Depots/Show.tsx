@@ -22,6 +22,8 @@ interface DepotProductItem {
     quantity: number;
     min_stock_alert: number;
     purchase_price: number;
+    unit_cost: number;
+    stock_value: number;
     is_low_stock: boolean;
 }
 
@@ -490,6 +492,16 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                 {product.product_category && <span>• {product.product_category}</span>}
                                                 {product.purchase_price > 0 && (
                                                     <span className="text-emerald-600 dark:text-emerald-400">• PA : {Number(product.purchase_price).toLocaleString('fr-FR')} {currencySymbol}</span>
+                                                )}
+                                                {/*
+                                                  Ce que dort ici : la quantité valorisée au coût du
+                                                  produit (moyenne pondérée, à défaut prix d'achat),
+                                                  et non au prix saisi sur la ligne de dépôt.
+                                                */}
+                                                {product.stock_value > 0 && (
+                                                    <span className="text-amber-600 dark:text-amber-300">
+                                                        • {t.depots.show.lineValue} : {Number(product.stock_value).toLocaleString('fr-FR')} {currencySymbol}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>

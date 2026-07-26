@@ -45,6 +45,9 @@ export const depots = {
             references: 'Références',
             unitsInStock: 'Unités en stock',
         },
+        show: {
+            lineValue: 'Valeur',
+        },
         deleteTitle: 'Supprimer le dépôt',
         deleteMessage: 'Êtes-vous sûr de vouloir supprimer ce dépôt ? Tout le stock associé sera perdu.',
         form: {
@@ -101,6 +104,9 @@ export const depots = {
         card: {
             references: 'References',
             unitsInStock: 'Units in stock',
+        },
+        show: {
+            lineValue: 'Value',
         },
         deleteTitle: 'Delete warehouse',
         deleteMessage: 'Are you sure you want to delete this warehouse? All associated stock will be lost.',
