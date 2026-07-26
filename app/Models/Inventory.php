@@ -17,10 +17,12 @@ class Inventory extends Model
         'notes',
         'total_items',
         'total_discrepancies',
+        'completed_at',
     ];
 
     protected $casts = [
         'inventory_date' => 'date',
+        'completed_at' => 'datetime',
         'total_items' => 'integer',
         'total_discrepancies' => 'integer',
     ];
@@ -31,26 +33,30 @@ class Inventory extends Model
 
         static::creating(function ($inventory) {
             if (empty($inventory->inventory_number)) {
-                $inventory->inventory_number = self::generateInventoryNumber();
+                $inventory->inventory_number = self::generateInventoryNumber($inventory->shop_id);
             }
         });
     }
 
-    public static function generateInventoryNumber(): string
+    /**
+     * Le numéro se déduit du plus élevé déjà émis dans LA BOUTIQUE pour le mois courant.
+     *
+     * Le filtre par boutique n'est pas cosmétique : sans lui, une boutique héritait des
+     * numéros consommés par les autres comptes — donc une numérotation à trous, qui laisse
+     * deviner l'activité de la plateforme. Même schéma que CreditNote et Invoice.
+     */
+    public static function generateInventoryNumber($shopId): string
     {
-        $date = now()->format('Ym');
-        $lastInventory = self::where('inventory_number', 'like', "INV-{$date}%")
+        $prefix = 'INV-' . now()->format('Ym');
+
+        $last = self::where('shop_id', $shopId)
+            ->where('inventory_number', 'like', "{$prefix}%")
             ->orderBy('inventory_number', 'desc')
             ->first();
 
-        if ($lastInventory) {
-            $lastNumber = (int) substr($lastInventory->inventory_number, -4);
-            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
-        } else {
-            $newNumber = '0001';
-        }
+        $next = $last ? ((int) substr($last->inventory_number, -4)) + 1 : 1;
 
-        return "INV-{$date}{$newNumber}";
+        return $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
     }
 
     public function shop(): BelongsTo

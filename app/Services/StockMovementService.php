@@ -547,8 +547,13 @@ class StockMovementService
             ]);
         }
 
-        // Adjust defective stock
-        if ($countedDefectiveQty > 0 || $defectiveDifference !== 0) {
+        // Adjust defective stock.
+        // La condition portait aussi sur `$countedDefectiveQty > 0`, ce qui suffisait à
+        // déclencher l'écriture : un inventaire où le défectueux était inchangé (3 attendus,
+        // 3 comptés) écrivait un mouvement de quantité 0. Sans effet sur les totaux, mais le
+        // registre est ce que stock:audit réconcilie chaque semaine — il n'a pas à porter la
+        // trace d'un ajustement qui n'a pas eu lieu.
+        if ($defectiveDifference !== 0) {
             $product->update(['defective_stock_quantity' => $countedDefectiveQty]);
             self::writeMovement([
                 'shop_id'        => $shopId,

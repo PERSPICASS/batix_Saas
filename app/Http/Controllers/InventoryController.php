@@ -21,14 +21,21 @@ class InventoryController extends Controller
     {
         $activeShopId = get_active_shop_id();
         
+        // `accessibleShopsQuery()` et non `shop.user_id = Auth::id()` : ce filtre-là exigeait
+        // que la boutique soit POSSÉDÉE par l'utilisateur courant. Un gérant ou un caissier
+        // n'en possède aucune — le module leur affichait donc une liste vide, alors que leurs
+        // permissions `inventory` leur en donnaient l'accès, et que show()/edit()/update()
+        // les acceptaient déjà. Un rôle n'est pas une frontière de tenant.
+        $accessibleShopIds = Auth::user()->accessibleShopsQuery()
+            ->when($activeShopId, fn ($q) => $q->where('id', $activeShopId))
+            ->pluck('shops.id');
+
         $query = Inventory::with(['shop', 'user'])
-            ->whereHas('shop', function ($q) use ($activeShopId) {
-                $q->where('user_id', Auth::id());
-                if ($activeShopId) {
-                    $q->where('id', $activeShopId);
-                }
-            })
-            ->orderBy('inventory_date', 'desc');
+            ->whereIn('shop_id', $accessibleShopIds)
+            // Second critère de tri : à dates égales, l'ordre variait d'une page à l'autre,
+            // si bien qu'un inventaire pouvait apparaître deux fois ou pas du tout.
+            ->orderBy('inventory_date', 'desc')
+            ->orderBy('id', 'desc');
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -46,15 +53,15 @@ class InventoryController extends Controller
     {
         $activeShopId = get_active_shop_id();
 
+        // Même correction que index() : les boutiques accessibles, non les boutiques possédées.
+        $accessibleShopIds = Auth::user()->accessibleShopsQuery()
+            ->when($activeShopId, fn ($q) => $q->where('id', $activeShopId))
+            ->pluck('shops.id');
+
         $products = Product::with('shop')
             ->where('is_active', true)
             ->whereNull('parent_id')
-            ->whereHas('shop', function ($q) use ($activeShopId) {
-                $q->where('user_id', Auth::id());
-                if ($activeShopId) {
-                    $q->where('id', $activeShopId);
-                }
-            })
+            ->whereIn('shop_id', $accessibleShopIds)
             ->get();
 
         // Enrich products with movement data
@@ -79,6 +86,9 @@ class InventoryController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => [
                 'required',
+                // `inventory_items` porte un unique (inventory_id, product_id) : deux lignes
+                // sur le même produit provoquaient une 500 au lieu d'une erreur de saisie.
+                'distinct',
                 Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
             ],
             'items.*.counted_quantity' => 'nullable|integer|min:0',
@@ -170,14 +180,28 @@ class InventoryController extends Controller
             return back()->withErrors(['error' => 'Impossible de modifier un inventaire terminé.']);
         }
 
+        // Un inventaire ne déménage pas. Ses lignes portent les quantités attendues des
+        // produits d'UNE boutique ; le transférer ailleurs n'a pas de sens comptable, et
+        // n'était possible que parce que `shop_id` figurait dans les champs modifiables.
+        if ((int) $request->input('shop_id') !== $inventory->shop_id) {
+            return back()->withErrors(['shop_id' => "La boutique d'un inventaire ne peut pas être changée."]);
+        }
+
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
             'inventory_date' => 'required|date',
-            'status' => 'required|in:draft,in_progress,completed,cancelled',
+            // Pas de `completed` ici, et c'est le cœur du problème que ça corrige : seul
+            // complete() termine un inventaire, parce que seul complete() ajuste les stocks.
+            // Accepté ici, ce statut figeait un inventaire « terminé » sans qu'aucun stock ne
+            // bouge — et plus rien ne pouvait le rattraper, update(), complete() et destroy()
+            // refusant tous les trois de toucher un inventaire terminé. Le formulaire ne
+            // proposait déjà que ces trois valeurs (Inventory/Edit.tsx).
+            'status' => 'required|in:draft,in_progress,cancelled',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => [
                 'required',
+                'distinct',
                 Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
             ],
             'items.*.counted_quantity' => 'nullable|integer|min:0',
@@ -262,7 +286,25 @@ class InventoryController extends Controller
             return back()->withErrors(['error' => 'Cet inventaire est déjà terminé.']);
         }
 
-        DB::transaction(function () use ($inventory) {
+        // Un inventaire annulé ne s'applique pas. La garde ne testait que `completed`, si bien
+        // qu'annuler ne protégeait de rien : le comptage d'un inventaire abandonné pouvait
+        // encore écraser les stocks réels.
+        if ($inventory->status === 'cancelled') {
+            return back()->withErrors(['error' => 'Cet inventaire est annulé : il ne peut plus être appliqué.']);
+        }
+
+        $applied = DB::transaction(function () use ($inventory) {
+            // Le statut est relu SOUS VERROU, et pas seulement plus haut. Deux requêtes
+            // simultanées lisaient toutes deux « draft » et le même stock, appliquaient
+            // chacune l'écart, et écrivaient deux mouvements pour un seul écart réel. Le
+            // compteur s'en sortait — il est fixé en valeur absolue — mais le registre non,
+            // et c'est cette divergence que stock:audit signale le lundi suivant.
+            $locked = Inventory::whereKey($inventory->getKey())->lockForUpdate()->first();
+
+            if (!$locked || $locked->status === 'completed') {
+                return false;
+            }
+
             foreach ($inventory->items as $item) {
                 StockMovementService::recordInventoryAdjustmentWithDefective(
                     $item->product,
@@ -274,9 +316,18 @@ class InventoryController extends Controller
                 );
             }
 
-            $inventory->status = 'completed';
-            $inventory->save();
+            $locked->status = 'completed';
+            // Horodater l'ajustement, et non le comptage : `inventory_date` est saisie à la
+            // main, donc inapte à dater ce qui a réellement bougé (InventoryAnalysisService).
+            $locked->completed_at = now();
+            $locked->save();
+
+            return true;
         });
+
+        if (!$applied) {
+            return back()->withErrors(['error' => 'Cet inventaire est déjà terminé.']);
+        }
 
         return redirect()->route('inventory.show', $inventory)->with('success', 'Inventaire terminé et stocks ajustés.');
     }

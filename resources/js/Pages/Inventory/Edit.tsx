@@ -198,14 +198,16 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.shopField}</label>
+                            {/*
+                              Toujours désactivé : un inventaire ne change pas de boutique. Ses
+                              lignes portent les quantités attendues des produits d'une boutique
+                              précise, et le serveur refuse désormais ce changement. Le champ
+                              reste affiché pour dire de quelle boutique il s'agit.
+                            */}
                             <select
                                 value={data.shop_id}
-                                onChange={(e) => {
-                                    setData('shop_id', e.target.value);
-                                    setData('items', []);
-                                }}
-                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                disabled={inventory.status === 'completed'}
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 disabled:opacity-70 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                disabled
                             >
                                 {shops.map((shop) => (
                                     <option key={shop.id} value={shop.id}>
