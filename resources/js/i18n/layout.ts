@@ -1,5 +1,7 @@
 export const layout = {
     fr: {
+        searchMenu: 'Rechercher un menu...',
+        noMenuMatch: 'Aucun menu ne correspond.',
         brandSubtitle: 'Gestion moderne de quincaillerie',
         loading: 'Chargement...',
         closeMenu: 'Fermer le menu',
@@ -48,6 +50,8 @@ export const layout = {
         },
     },
     en: {
+        searchMenu: 'Search a menu...',
+        noMenuMatch: 'No menu matches.',
         brandSubtitle: 'Modern hardware store management',
         loading: 'Loading...',
         closeMenu: 'Close menu',

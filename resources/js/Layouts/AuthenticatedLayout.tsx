@@ -33,6 +33,7 @@ import {
     Moon,
     Receipt,
     ReceiptText,
+    Search,
     ShoppingCart,
     Settings,
     Shield,
@@ -82,6 +83,7 @@ export default function Authenticated({
         : null;
     const showExpiryBanner = daysUntilExpiry !== null && daysUntilExpiry <= 7 && user?.role === 'super_admin';
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [menuSearch, setMenuSearch] = useState('');
     const [reviewOpen, setReviewOpen] = useState(false);
     const myReview = (page.props.myReview as MyReview | null) ?? null;
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -479,6 +481,18 @@ export default function Authenticated({
         return canViewModule(item.module);
     });
 
+    // Recherche insensible à la casse ET aux accents : « depot » doit trouver « Dépôts »,
+    // « categorie » trouver « Catégories ». C'est la première chose qu'on tape.
+    const fold = (value: string) =>
+        value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+
+    // Dans la langue courante uniquement : les libellés sont déjà ceux de l'interface, donc
+    // l'utilisateur cherche ce qu'il voit.
+    const needle = fold(menuSearch.trim());
+    const visibleNavItems = needle
+        ? navItems.filter((item) => fold(item.label).includes(needle))
+        : navItems;
+
     return (
         <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
             <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -525,8 +539,26 @@ export default function Authenticated({
                     </div>
 
                     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+                        {/* Le menu a suffisamment grandi pour qu'on ne le parcoure plus des
+                            yeux. */}
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="search"
+                                value={menuSearch}
+                                onChange={(e) => setMenuSearch(e.target.value)}
+                                placeholder={t.layout.searchMenu}
+                                className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:placeholder-slate-500"
+                            />
+                        </div>
+
                         <nav className="space-y-1">
-                            {navItems.map((item) => (
+                            {visibleNavItems.length === 0 && (
+                                <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                                    {t.layout.noMenuMatch}
+                                </p>
+                            )}
+                            {visibleNavItems.map((item) => (
                                 <Link
                                     key={item.label}
                                     href={item.href}
@@ -535,7 +567,10 @@ export default function Authenticated({
                                             ? 'bg-amber-300 text-slate-950'
                                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
                                     }`}
-                                    onClick={() => setMobileSidebarOpen(false)}
+                                    onClick={() => {
+                                        setMobileSidebarOpen(false);
+                                        setMenuSearch('');
+                                    }}
                                 >
                                     <span className="flex items-center gap-3">
                                         <item.icon className="size-4" />
