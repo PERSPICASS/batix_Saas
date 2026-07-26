@@ -331,6 +331,17 @@ class InventoryController extends Controller
                     continue;
                 }
 
+                // Réaligner l'attendu sur ce qui est RÉELLEMENT mesuré, juste avant de mesurer.
+                //
+                // `expected_quantity` était le compteur au moment de la création de
+                // l'inventaire, alors que l'écart appliqué se calcule sur le compteur au moment
+                // de l'application. Un brouillon laissé ouvert quelques jours affichait donc un
+                // écart qui n'était pas celui écrit au registre — et la fiche d'inventaire
+                // présente ce nombre comme un fait. Les deux ne peuvent plus diverger.
+                $item->expected_quantity = $item->product->stock_quantity;
+                $item->expected_defective_quantity = $item->product->defective_stock_quantity;
+                $item->save();
+
                 StockMovementService::recordInventoryAdjustmentWithDefective(
                     $item->product,
                     $item->counted_quantity,
@@ -340,6 +351,12 @@ class InventoryController extends Controller
                     $item->unit_cost
                 );
             }
+
+            // Les écarts ayant pu changer avec le réalignement, le compte affiché sur la fiche
+            // doit être refait — sinon il reste celui du dernier enregistrement du brouillon.
+            $locked->total_discrepancies = $inventory->items()
+                ->where(fn ($q) => $q->where('difference', '!=', 0)->orWhere('defective_difference', '!=', 0))
+                ->count();
 
             $locked->status = 'completed';
             // Horodater l'ajustement, et non le comptage : `inventory_date` est saisie à la

@@ -8,6 +8,7 @@ import Modal from '@/Components/Modal';
 import InventoryCompletionPreview from '@/Components/InventoryCompletionPreview';
 import ProductImage from '@/Components/ProductImage';
 import { useLocale } from '@/contexts/LocaleContext';
+import { inventoryDiscrepancyValue, inventoryTotalValue } from '@/utils/inventoryValue';
 
 interface Shop {
     id: number;
@@ -99,7 +100,9 @@ export default function InventoryShow({ inventory }: Props) {
     const totalDefective = inventory.items.reduce((sum, item) => sum + item.defective_quantity, 0);
     const totalGoodDifference = inventory.items.reduce((sum, item) => sum + item.difference, 0);
     const totalDefectiveDifference = inventory.items.reduce((sum, item) => sum + item.defective_difference, 0);
-    const totalValue = inventory.items.reduce((sum, item) => sum + ((item.difference + item.defective_difference) * item.unit_cost), 0);
+    // Les défectueuses valent zéro : seul l'écart de stock bon a un coût. Voir
+    // utils/inventoryValue.ts pour la règle et ce qu'elle corrige.
+    const totalValue = inventoryTotalValue(inventory.items);
 
     // Preview of what "Terminer l'inventaire" will actually change, computed against the
     // product's LIVE stock (loaded with the page) — this is exactly what
@@ -343,13 +346,13 @@ export default function InventoryShow({ inventory }: Props) {
                                         </td>
                                         <td className="py-3 text-right">
                                             <span className={`font-medium ${
-                                                (item.difference + item.defective_difference) === 0
+                                                inventoryDiscrepancyValue(item.difference, item.unit_cost) === 0
                                                     ? 'text-slate-500 dark:text-slate-400'
-                                                    : (item.difference + item.defective_difference) > 0
+                                                    : inventoryDiscrepancyValue(item.difference, item.unit_cost) > 0
                                                         ? 'text-green-300'
                                                         : 'text-red-300'
                                             }`}>
-                                                <Currency amount={Math.abs((item.difference + item.defective_difference) * item.unit_cost)} />
+                                                <Currency amount={Math.abs(inventoryDiscrepancyValue(item.difference, item.unit_cost))} />
                                             </span>
                                         </td>
                                     </tr>
