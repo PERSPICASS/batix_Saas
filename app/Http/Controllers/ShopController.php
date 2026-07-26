@@ -154,14 +154,15 @@ class ShopController extends Controller
             $skipped = 0;
 
             foreach ($sources as $source) {
+                [$destination, $created] = $this->copyInto($target, $source);
+
                 // Déjà présent là-bas : on ne recrée pas, et surtout on ne touche à rien —
                 // la boutique de destination a pu ajuster son prix depuis.
-                if ($this->existingProductIn($target, $source)) {
+                if (!$created) {
                     $skipped++;
                     continue;
                 }
 
-                $destination = $this->matchingProductIn($target, $source);
                 $copied++;
 
                 $transfer->items()->create([
@@ -223,51 +224,63 @@ class ShopController extends Controller
     /**
      * Le produit déjà présent dans la boutique de destination, s'il y est.
      *
-     * Rapproché par SKU puis par nom — le SKU d'abord, un nom pouvant être retouché.
+     * Le SKU d'abord, puis le couple NOM + MARQUE — pas le nom seul. Le nom seul faisait
+     * passer pour des doublons tous les produits homonymes : sur un catalogue de 3048
+     * références n'ayant que 1031 noms distincts, la copie n'en créait que 1031.
+     * Nom + marque est aussi ce sur quoi les imports rapprochent leurs lignes.
+     *
+     * Le niveau compte également : une déclinaison « Rouge 5L » n'est pas la même sous deux
+     * peintures différentes, d'où la comparaison du parent côté destination.
      */
-    private function existingProductIn(Shop $target, Product $source): ?Product
+    private function existingProductIn(Shop $target, Product $source, ?int $targetParentId): ?Product
     {
-        $found = null;
-
         if ($source->sku) {
-            $found = Product::where('shop_id', $target->id)->where('sku', $source->sku)->first();
+            $bySku = Product::where('shop_id', $target->id)->where('sku', $source->sku)->first();
+
+            if ($bySku) {
+                return $bySku;
+            }
         }
 
-        return $found ?? Product::where('shop_id', $target->id)->where('name', $source->name)->first();
+        return Product::where('shop_id', $target->id)
+            ->where('name', $source->name)
+            // `where('brand', null)` ne rapproche jamais rien en SQL : il faut whereNull.
+            ->when($source->brand === null, fn ($q) => $q->whereNull('brand'))
+            ->when($source->brand !== null, fn ($q) => $q->where('brand', $source->brand))
+            ->when($targetParentId === null, fn ($q) => $q->whereNull('parent_id'))
+            ->when($targetParentId !== null, fn ($q) => $q->where('parent_id', $targetParentId))
+            ->first();
     }
 
     /**
-     * L'homologue d'un produit dans la boutique de destination.
+     * Le produit correspondant dans la boutique de destination, créé au besoin.
      *
-     * Rapproché par SKU puis par nom — le SKU d'abord, un nom pouvant être retouché. Créé
-     * à stock zéro s'il n'existe pas encore : la quantité arrivera par le mouvement de
-     * transfert, pour que l'entrée figure au registre comme n'importe quelle autre.
+     * Le parent est résolu AVANT de chercher l'existant : c'est lui qui situe une
+     * déclinaison, et une déclinaison ne peut de toute façon pas être créée sans lui.
+     *
+     * @return array{0: Product, 1: bool} Le produit, et s'il vient d'être créé.
      */
-    private function matchingProductIn(Shop $target, Product $source): Product
+    private function copyInto(Shop $target, Product $source): array
     {
-        if ($existing = $this->existingProductIn($target, $source)) {
-            return $existing;
-        }
+        $targetParentId = null;
 
-        // Une déclinaison ne peut pas exister sans son parent : on le retrouve — ou on le
-        // crée — dans la boutique de destination avant d'y rattacher l'enfant.
-        $parentId = null;
         if ($source->parent_id && $source->parent) {
-            $parentId = $this->matchingProductIn($target, $source->parent)->id;
+            [$parent] = $this->copyInto($target, $source->parent);
+            $targetParentId = $parent->id;
         }
 
-        return Product::create([
+        if ($existing = $this->existingProductIn($target, $source, $targetParentId)) {
+            return [$existing, false];
+        }
+
+        return [Product::create([
             'shop_id' => $target->id,
-            'parent_id' => $parentId,
+            'parent_id' => $targetParentId,
             'has_variations' => $source->has_variations,
             // La catégorie est rattachée à une boutique : recopier l'identifiant de la
             // source ferait pointer le produit vers la catégorie d'une AUTRE boutique.
-            // On retrouve donc l'équivalente par son nom, ou on laisse vide.
             'category_id' => $this->matchingCategoryIn($target, $source),
             'name' => $source->name,
-            // Sans le SKU, un second transfert ne retrouverait pas ce produit et en
-            // créerait un doublon. Le code-barres n'est pas repris : il est dérivé de
-            // l'identifiant du produit, donc propre à chaque ligne.
             'sku' => $source->sku,
             'description' => $source->description,
             'brand' => $source->brand,
@@ -280,7 +293,7 @@ class ShopController extends Controller
             'stock_quantity' => 0,
             'track_stock' => true,
             'is_active' => true,
-        ]);
+        ]), true];
     }
 
     /**

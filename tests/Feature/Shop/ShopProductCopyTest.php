@@ -337,6 +337,73 @@ class ShopProductCopyTest extends TestCase
         $this->assertSame(3, Product::where('shop_id', $this->target->id)->count());
     }
 
+    /**
+     * The bug this guards: on a 3048-product catalogue holding only 1031 distinct names,
+     * the copy created 1031 products. The fallback matched on the NAME ALONE, so every
+     * homonym looked like something already copied.
+     */
+    public function test_products_sharing_a_name_are_all_copied(): void
+    {
+        $this->product($this->source, ['name' => 'Coude PVC', 'brand' => 'Nicoll', 'sku' => 'A1']);
+        $this->product($this->source, ['name' => 'Coude PVC', 'brand' => 'Interplast', 'sku' => 'A2']);
+        $this->product($this->source, ['name' => 'Coude PVC', 'brand' => 'Wavin', 'sku' => 'A3']);
+
+        $this->post("/{$this->user->code_user}/boutiques/{$this->source->id}/transferer", [
+            'target_shop_id' => $this->target->id,
+            'all_products' => true,
+        ])->assertSessionHas('success');
+
+        $this->assertSame(3, Product::where('shop_id', $this->target->id)->count());
+    }
+
+    /**
+     * Name AND brand, which is also what the importers match on. Same name and same brand
+     * is the same product.
+     */
+    public function test_the_same_name_and_brand_is_recognised_as_present(): void
+    {
+        $source = $this->product($this->source, ['name' => 'Coude PVC', 'brand' => 'Nicoll', 'sku' => null]);
+        $this->product($this->target, ['name' => 'Coude PVC', 'brand' => 'Nicoll', 'sku' => null]);
+
+        $this->copy([$source->id])->assertSessionHas('info');
+
+        $this->assertSame(1, Product::where('shop_id', $this->target->id)->count());
+    }
+
+    /**
+     * A null brand must not match anything and everything: `where('brand', null)` never
+     * matches in SQL, so it has to be whereNull.
+     */
+    public function test_a_product_without_a_brand_is_still_recognised(): void
+    {
+        $source = $this->product($this->source, ['name' => 'Vis 4x30', 'brand' => null, 'sku' => null]);
+        $this->product($this->target, ['name' => 'Vis 4x30', 'brand' => null, 'sku' => null]);
+
+        $this->copy([$source->id])->assertSessionHas('info');
+
+        $this->assertSame(1, Product::where('shop_id', $this->target->id)->count());
+    }
+
+    /**
+     * The same variation name under two different parents is two different products.
+     */
+    public function test_identical_variation_names_under_different_parents_both_arrive(): void
+    {
+        $first = $this->product($this->source, ['name' => 'Peinture A', 'sku' => 'PA', 'has_variations' => true]);
+        $second = $this->product($this->source, ['name' => 'Peinture B', 'sku' => 'PB', 'has_variations' => true]);
+
+        $this->product($this->source, ['name' => 'Rouge 5L', 'sku' => null, 'parent_id' => $first->id]);
+        $this->product($this->source, ['name' => 'Rouge 5L', 'sku' => null, 'parent_id' => $second->id]);
+
+        $this->post("/{$this->user->code_user}/boutiques/{$this->source->id}/transferer", [
+            'target_shop_id' => $this->target->id,
+            'all_products' => true,
+        ])->assertSessionHas('success');
+
+        $this->assertSame(4, Product::where('shop_id', $this->target->id)->count());
+        $this->assertSame(2, Product::where('shop_id', $this->target->id)->where('name', 'Rouge 5L')->count());
+    }
+
     public function test_a_shop_cannot_copy_to_itself(): void
     {
         $source = $this->product($this->source);
