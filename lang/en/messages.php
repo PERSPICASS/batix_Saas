@@ -7,10 +7,6 @@ return [
         'deleted' => ':resource deleted successfully.',
         'saved' => ':resource saved successfully.',
     ],
-    'profile' => [
-        'updated' => 'Profile updated.',
-    ],
-
     'error' => [
         'general' => 'An error occurred. Please try again.',
         'not_found' => ':resource not found.',

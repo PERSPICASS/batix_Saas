@@ -51,6 +51,31 @@ class UpdateCountryTest extends TestCase
         $this->assertSame("Côte d'Ivoire", $user->fresh()->country);
     }
 
+    /**
+     * Saving must flash a *translated* message, not a translation key.
+     *
+     * `__()` returns the key itself when it cannot resolve it, and ToastContainer displays
+     * whatever the server flashed — so a missing key surfaces as "profile.updated" in the
+     * toast. It happened: the key was first added to the root `lang/` directory, which
+     * Laravel never reads because `resources/lang` exists and wins.
+     */
+    public function test_saving_flashes_a_translated_confirmation(): void
+    {
+        $user = $this->owner('Sénégal');
+
+        foreach (['fr' => 'Profil mis à jour.', 'en' => 'Profile updated.'] as $locale => $expected) {
+            $user->update(['locale' => $locale]);
+
+            $this->actingAs($user->fresh())
+                ->patch($this->profileUrl($user), [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'country' => 'Sénégal',
+                ])
+                ->assertSessionHas('success', $expected);
+        }
+    }
+
     public function test_the_edit_page_exposes_the_current_country(): void
     {
         // The country is not in HandleInertiaRequests' shared auth payload, so the form

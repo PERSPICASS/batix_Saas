@@ -42,8 +42,9 @@ class ProfileController extends Controller
         $request->user()->save();
 
         // Sans message flash, l'enregistrement ne se voyait pas : ToastContainer n'affiche
-        // que ce que le serveur met dans `flash`.
-        return Redirect::route('profile.edit')->with('success', __('messages.profile.updated'));
+        // que ce que le serveur met dans `flash`. La clé vit dans resources/lang, seul
+        // chemin que Laravel lit ici — le `lang/` de la racine n'est jamais chargé.
+        return Redirect::route('profile.edit')->with('success', __('profile.updated'));
     }
 
     /**
