@@ -522,8 +522,19 @@ class DepotController extends Controller
                         $updates['is_active'] = true;
                     }
 
-                    // Propager le prix d'achat du dépôt vers le produit de la boutique
-                    if ($depotProduct->purchase_price > 0) {
+                    // Le prix du dépôt comble un vide, il n'écrase jamais : chaque boutique
+                    // garde le sien. Un dépôt appartient au COMPTE et peut alimenter plusieurs
+                    // boutiques — sans cette garde, une seule ligne de dépôt réécrivait le prix
+                    // d'achat de produits appartenant à des boutiques différentes. Et ce prix
+                    // n'est pas décoratif : c'est le repli de Product::unitCost() en l'absence
+                    // de moyenne pondérée, donc une base de valorisation.
+                    //
+                    // Même règle que le transfert dépôt → dépôt plus bas, qui la respectait
+                    // déjà ; les deux chemins disaient l'inverse l'un de l'autre.
+                    //
+                    // Comparaison en numérique : `purchase_price` est casté en decimal:2, donc
+                    // l'attribut vaut la chaîne « 0.00 », qui est vraie en PHP.
+                    if ($depotProduct->purchase_price > 0 && (float) $shopProduct->purchase_price <= 0) {
                         $updates['purchase_price'] = $depotProduct->purchase_price;
                     }
 
