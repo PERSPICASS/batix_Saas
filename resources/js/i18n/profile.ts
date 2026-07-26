@@ -44,6 +44,7 @@ export const profile = {
                 namePlaceholder: 'Votre nom complet',
                 email: 'Adresse Email',
                 emailPlaceholder: 'votre.email@exemple.com',
+                countryHint: 'Sert de pays par défaut aux nouvelles boutiques. Le pays imprimé sur vos documents est celui de la boutique, modifiable dans sa fiche.',
             },
             password: {
                 title: 'Changer le Mot de Passe',
@@ -121,6 +122,7 @@ export const profile = {
                 namePlaceholder: 'Your full name',
                 email: 'Email Address',
                 emailPlaceholder: 'your.email@example.com',
+                countryHint: 'Used as the default country for new shops. The country printed on your documents is the shop’s own, editable on its page.',
             },
             password: {
                 title: 'Update Password',

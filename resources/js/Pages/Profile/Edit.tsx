@@ -37,7 +37,8 @@ interface UserWithDetails {
 export default function Edit({
     mustVerifyEmail,
     status,
-}: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+    country,
+}: PageProps<{ mustVerifyEmail: boolean; status?: string; country: string | null }>) {
     const { t } = useLocale();
     const { auth } = usePage().props;
     const user = auth.user as unknown as UserWithDetails;
@@ -193,13 +194,22 @@ export default function Edit({
                     )}
 
                     {/* Profile Information Form */}
+                    {/*
+                      Les parenthèses comptent : `&&` lie plus fort que `||`, donc
+                      `A || B && JSX` se lit `A || (B && JSX)`. Pour un super_admin
+                      l'expression valait `true`, et React n'affiche rien d'un booléen —
+                      le formulaire était donc invisible pour les propriétaires de compte,
+                      justement ceux qu'il visait. `admin` n'existe pas non plus comme
+                      rôle (voir le type User) : c'est `admin_platforme`.
+                    */}
                     {
-                        user.role === 'super_admin' || user.role === 'admin' && (
+                        (user.role === 'super_admin' || user.role === 'admin_platforme') && (
                             <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
                                 <div className="p-8">
                                     <UpdateProfileInformationForm
                                         mustVerifyEmail={mustVerifyEmail}
                                         status={status}
+                                        country={country}
                                         className="max-w-xl"
                                     />
                                 </div>

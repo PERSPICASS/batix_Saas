@@ -5,25 +5,32 @@ import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import { User, Mail, CheckCircle } from 'lucide-react';
+import { User, Mail, CheckCircle, Globe } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
+import { countriesI18n } from '@/i18n/countries';
 
 export default function UpdateProfileInformation({
     mustVerifyEmail,
     status,
+    country,
     className = '',
 }: {
     mustVerifyEmail: boolean;
     status?: string;
+    country: string | null;
     className?: string;
 }) {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
     const user = usePage().props.auth.user!;
+    const countries = countriesI18n[locale];
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
             name: user.name,
             email: user.email,
+            // Le pays vient des props de la page, pas de `auth.user` : il n'est pas
+            // partagé globalement (voir ProfileController::edit).
+            country: country ?? '',
         });
 
     const submit: FormEventHandler = (e) => {
@@ -91,6 +98,35 @@ export default function UpdateProfileInformation({
                     </div>
 
                     <InputError message={errors.email} />
+                </div>
+
+                <div>
+                    <label htmlFor="country" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {countries.label}
+                    </label>
+
+                    <div className="relative mt-1">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Globe className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                        </div>
+                        <select
+                            id="country"
+                            className="block w-full pl-10 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                            value={data.country}
+                            onChange={(e) => setData('country', e.target.value)}
+                        >
+                            <option value="">{countries.placeholder}</option>
+                            {countries.list.map((name) => (
+                                <option key={name} value={name}>{name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {t.profile.form.info.countryHint}
+                    </p>
+
+                    <InputError message={errors.country} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (

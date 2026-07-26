@@ -21,6 +21,9 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            // Le pays n'est pas partagé par HandleInertiaRequests : il ne sert qu'ici,
+            // inutile de le joindre au payload de chaque page.
+            'country' => $request->user()->country,
         ]);
     }
 
