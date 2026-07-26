@@ -272,8 +272,16 @@ export default function InventoryShow({ inventory }: Props) {
                             </div>
                             <div>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">{t.inventory.show.differenceValue}</p>
+                                {/*
+                                  Le signe est écrit, et non seulement suggéré par la couleur :
+                                  un excédent et un manque de même montant s'affichaient au
+                                  chiffre près de la même façon. La couleur ne survit ni à une
+                                  capture d'écran, ni à une impression, ni au daltonisme.
+                                  Le moins vient du formatage ; seul le plus doit être ajouté.
+                                */}
                                 <p className={`text-xl font-bold ${totalValue >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                                    <Currency amount={Math.abs(totalValue)} />
+                                    {totalValue > 0 && '+'}
+                                    <Currency amount={totalValue} />
                                 </p>
                             </div>
                         </div>
@@ -345,15 +353,24 @@ export default function InventoryShow({ inventory }: Props) {
                                             </span>
                                         </td>
                                         <td className="py-3 text-right">
-                                            <span className={`font-medium ${
-                                                inventoryDiscrepancyValue(item.difference, item.unit_cost) === 0
-                                                    ? 'text-slate-500 dark:text-slate-400'
-                                                    : inventoryDiscrepancyValue(item.difference, item.unit_cost) > 0
-                                                        ? 'text-green-300'
-                                                        : 'text-red-300'
-                                            }`}>
-                                                <Currency amount={Math.abs(inventoryDiscrepancyValue(item.difference, item.unit_cost))} />
-                                            </span>
+                                            {(() => {
+                                                // Calculé une fois, au lieu de trois appels pour
+                                                // décider d'une couleur puis afficher un montant.
+                                                const value = inventoryDiscrepancyValue(item.difference, item.unit_cost);
+
+                                                return (
+                                                    <span className={`font-medium ${
+                                                        value === 0
+                                                            ? 'text-slate-500 dark:text-slate-400'
+                                                            : value > 0
+                                                                ? 'text-green-300'
+                                                                : 'text-red-300'
+                                                    }`}>
+                                                        {value > 0 && '+'}
+                                                        <Currency amount={value} />
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                     </tr>
                                 ))}
