@@ -37,16 +37,35 @@ class DocumentPdf
     /** Un article occupe deux lignes : son libellé, puis quantité × prix. */
     private const RECEIPT_LINE_HEIGHT = 24;
 
+    /**
+     * Rendre un document dans la langue de sa boutique.
+     *
+     * La locale est posée le temps du rendu puis restaurée : elle ne doit pas déborder sur
+     * la suite de la requête, qui sert par ailleurs l'interface du gérant — lequel peut
+     * naviguer dans une autre langue que celle de ses documents.
+     */
+    private function inShopLocale(?Shop $shop, callable $render): PdfWrapper
+    {
+        $previous = app()->getLocale();
+        app()->setLocale($shop?->documentLocale() ?? 'fr');
+
+        try {
+            return $render();
+        } finally {
+            app()->setLocale($previous);
+        }
+    }
+
     public function forSale(Sale $sale): PdfWrapper
     {
         $sale->loadMissing(['items', 'shop', 'customer', 'user']);
 
-        return Pdf::loadView('pdf.ticket', [
+        return $this->inShopLocale($sale->shop, fn () => Pdf::loadView('pdf.ticket', [
             'sale' => $sale,
             'logo' => $this->logo($sale->shop),
             'shop' => $sale->shop,
             'currencySymbol' => get_currency_symbol($sale->shop?->currency),
-        ])->setPaper([0, 0, self::RECEIPT_WIDTH, $this->receiptHeight($sale)]);
+        ])->setPaper([0, 0, self::RECEIPT_WIDTH, $this->receiptHeight($sale)]));
     }
 
     /**
@@ -110,7 +129,7 @@ class DocumentPdf
     {
         $invoice->loadMissing(['items', 'shop', 'customer', 'user']);
 
-        return Pdf::loadView('pdf.invoice', [
+        return $this->inShopLocale($invoice->shop, fn () => Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice,
             'logo' => $this->logo($invoice->shop),
             'shop' => $invoice->shop,
@@ -120,20 +139,20 @@ class DocumentPdf
             // La ventilation doit se réconcilier avec le tax_amount de la facture : la
             // remise du document réduit la base, donc chaque tranche aussi.
             'taxBreakdown' => $this->taxBreakdown($invoice->items, 'total', (float) $invoice->discount_amount),
-        ])->setPaper('a4');
+        ])->setPaper('a4'));
     }
 
     public function forQuote(Quote $quote): PdfWrapper
     {
         $quote->loadMissing(['items', 'shop', 'customer', 'user']);
 
-        return Pdf::loadView('pdf.quote', [
+        return $this->inShopLocale($quote->shop, fn () => Pdf::loadView('pdf.quote', [
             'quote' => $quote,
             'logo' => $this->logo($quote->shop),
             'shop' => $quote->shop,
             'currencySymbol' => get_currency_symbol($quote->shop?->currency),
             'taxBreakdown' => $this->taxBreakdown($quote->items, 'line_total'),
-        ])->setPaper('a4');
+        ])->setPaper('a4'));
     }
 
     /**

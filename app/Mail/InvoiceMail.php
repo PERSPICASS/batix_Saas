@@ -17,12 +17,16 @@ class InvoiceMail extends Mailable
 
     public function __construct(public Invoice $invoice)
     {
-        $this->locale($this->invoice->shop->user->getLocale() ?? 'fr');
+        // La langue de la BOUTIQUE, pas celle de l'interface du gérant : ce qu'un client
+        // reçoit ne doit pas dépendre de la langue dans laquelle son fournisseur navigue.
+        // Le PDF joint suit la même (voir DocumentPdf::inShopLocale) — les deux se
+        // contredisaient, le corps suivant le gérant et la pièce jointe toujours en français.
+        $this->locale($this->invoice->shop->documentLocale());
     }
 
     public function envelope(): Envelope
     {
-        $locale = $this->invoice->shop->user->getLocale() ?? 'fr';
+        $locale = $this->invoice->shop->documentLocale();
 
         return new Envelope(
             subject: __('mail.invoice.subject', ['number' => $this->invoice->invoice_number], $locale),

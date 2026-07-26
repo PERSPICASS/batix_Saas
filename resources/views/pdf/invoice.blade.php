@@ -1,18 +1,18 @@
 @extends('pdf.layouts.document')
 
-@section('title', 'FACTURE')
+@section('title', __('documents.invoice'))
 @section('number', $invoice->invoice_number)
 
 @section('meta')
-    <div class="muted">Date : {{ $invoice->invoice_date?->format('d/m/Y') }}</div>
+    <div class="muted">{{ __('documents.date') }} : {{ $invoice->invoice_date?->format('d/m/Y') }}</div>
     @if ($invoice->due_date)
-        <div class="muted">Échéance : {{ $invoice->due_date->format('d/m/Y') }}</div>
+        <div class="muted">{{ __('documents.due_date') }} : {{ $invoice->due_date->format('d/m/Y') }}</div>
     @endif
     @if (in_array($invoice->status, ['paid', 'cancelled'], true))
         {{-- Une facture payée ou annulée doit se lire comme telle sur le papier :
              c'est ce qui circule, pas l'écran. --}}
         <div style="margin-top: 5pt;">
-            <span class="badge">{{ $invoice->status === 'paid' ? 'PAYÉE' : 'ANNULÉE' }}</span>
+            <span class="badge">{{ $invoice->status === 'paid' ? __('documents.paid') : __('documents.cancelled') }}</span>
         </div>
     @endif
 @endsection
@@ -34,11 +34,11 @@
     <table class="lines">
         <thead>
             <tr>
-                <th style="width: 46%;">Désignation</th>
-                <th class="right" style="width: 10%;">Qté</th>
-                <th class="right" style="width: 16%;">P.U. HT</th>
-                <th class="right" style="width: 10%;">TVA</th>
-                <th class="right" style="width: 18%;">Total TTC</th>
+                <th style="width: 46%;">{{ __('documents.description') }}</th>
+                <th class="right" style="width: 10%;">{{ __('documents.quantity') }}</th>
+                <th class="right" style="width: 16%;">{{ __('documents.unit_price_excl') }}</th>
+                <th class="right" style="width: 10%;">{{ __('documents.tax') }}</th>
+                <th class="right" style="width: 18%;">{{ __('documents.total_incl') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -67,9 +67,9 @@
         <table class="breakdown">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Taux</th>
-                    <th class="right" style="width: 40%;">Base HT</th>
-                    <th class="right" style="width: 35%;">TVA</th>
+                    <th style="width: 25%;">{{ __('documents.rate') }}</th>
+                    <th class="right" style="width: 40%;">{{ __('documents.base_excl') }}</th>
+                    <th class="right" style="width: 35%;">{{ __('documents.tax') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -93,7 +93,7 @@
             <td style="width: 45%;">
                 <table class="totals">
                     <tr>
-                        <td>Sous-total HT</td>
+                        <td>{{ __('documents.subtotal_excl') }}</td>
                         <td class="right amount">{{ number_format($invoice->subtotal, 2, ',', ' ') }} {{ $currencySymbol }}</td>
                     </tr>
                     {{-- La remise se lit avant la TVA parce qu'elle réduit la base
@@ -101,16 +101,16 @@
                          sur le sous-total non remisé. --}}
                     @if ($invoice->discount_amount > 0)
                         <tr>
-                            <td>Remise</td>
+                            <td>{{ __('documents.discount') }}</td>
                             <td class="right amount">-{{ number_format($invoice->discount_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
                         </tr>
                     @endif
                     <tr>
-                        <td>TVA</td>
+                        <td>{{ __('documents.tax') }}</td>
                         <td class="right amount">{{ number_format($invoice->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
                     </tr>
                     <tr class="grand">
-                        <td>TOTAL TTC</td>
+                        <td>{{ __('documents.grand_total') }}</td>
                         <td class="right amount">{{ number_format($invoice->total, 2, ',', ' ') }} {{ $currencySymbol }}</td>
                     </tr>
                 </table>
@@ -122,7 +122,7 @@
 @section('notes')
     @if ($invoice->notes)
         <div class="notes">
-            <div class="bold">Notes</div>
+            <div class="bold">{{ __('documents.notes') }}</div>
             <div>{{ $invoice->notes }}</div>
         </div>
     @endif

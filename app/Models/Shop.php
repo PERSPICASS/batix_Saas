@@ -26,6 +26,7 @@ class Shop extends Model
         'logo',
         'tax_id',
         'currency',
+        'locale',
         'default_tax_rate',
         'invoice_prefix',
         'invoice_footer',
@@ -99,12 +100,24 @@ class Shop extends Model
 
         return [
             'currency' => $source?->currency ?: 'USD',
+            'locale' => $source?->locale ?: 'fr',
             'default_tax_rate' => $source?->default_tax_rate,
             'tax_id' => $source?->tax_id,
             'invoice_prefix' => $source?->invoice_prefix,
             'invoice_footer' => $source?->invoice_footer,
             'website' => $source?->website,
         ];
+    }
+
+    /**
+     * La langue des documents que cette boutique émet — mails et PDF.
+     *
+     * Distincte de `users.locale`, qui ne gouverne que l'interface : ce qu'un client reçoit
+     * ne doit pas dépendre de la langue dans laquelle son fournisseur navigue.
+     */
+    public function documentLocale(): string
+    {
+        return $this->locale ?: 'fr';
     }
 
     public function user(): BelongsTo

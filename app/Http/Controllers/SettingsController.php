@@ -63,6 +63,9 @@ class SettingsController extends Controller
             'logo' => 'nullable|image|max:2048|mimes:jpeg,jpg,png,gif',
             'tax_id' => 'nullable|string|max:50',
             'currency' => 'required|string|max:3',
+            // La langue des documents émis — mails et PDF. Distincte de users.locale, qui
+            // ne gouverne que l'interface.
+            'locale' => 'nullable|in:fr,en',
             'default_tax_rate' => 'nullable|numeric|min:0|max:100',
             'invoice_prefix' => 'nullable|string|max:10',
             'invoice_footer' => 'nullable|string',

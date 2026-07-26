@@ -42,6 +42,7 @@ interface Shop {
     logo?: string;
     tax_id?: string;
     currency: string;
+    locale?: string;
     default_tax_rate?: number;
     invoice_prefix?: string;
     invoice_footer?: string;
@@ -74,6 +75,7 @@ export default function Settings({ shop, currencies, error }: Props) {
         logo: null as File | null,
         tax_id: shop?.tax_id || '',
         currency: shop?.currency || 'USD',
+        locale: shop?.locale || 'fr',
         default_tax_rate: shop?.default_tax_rate || '',
         invoice_prefix: shop?.invoice_prefix || '',
         invoice_footer: shop?.invoice_footer || '',
@@ -384,6 +386,25 @@ export default function Settings({ shop, currencies, error }: Props) {
                                     ))}
                                 </select>
                                 <InputError message={errors.currency} />
+                            </div>
+
+                            <div>
+                                <label htmlFor="locale" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.settings.fields.documentLocale}
+                                </label>
+                                <select
+                                    id="locale"
+                                    value={data.locale}
+                                    onChange={(e) => setData('locale', e.target.value)}
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                >
+                                    <option value="fr">Français</option>
+                                    <option value="en">English</option>
+                                </select>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                    {t.settings.fields.documentLocaleHelp}
+                                </p>
+                                <InputError message={errors.locale} />
                             </div>
 
                             <div className="md:col-span-2">

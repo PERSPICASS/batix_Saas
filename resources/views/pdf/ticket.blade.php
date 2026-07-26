@@ -40,7 +40,7 @@
 @if ($sale->status === 'cancelled')
     {{-- Un ticket annulé peut avoir été imprimé avant de l'être : le dire explicitement
          évite qu'il circule comme une pièce valide. --}}
-    <div class="cancelled">VENTE ANNULÉE</div>
+    <div class="cancelled">{{ __('documents.sale_cancelled') }}</div>
 @endif
 
 <div class="center">
@@ -52,10 +52,10 @@
         <div class="muted">{{ $shop->address }}@if ($shop->city), {{ $shop->city }}@endif</div>
     @endif
     @if ($shop?->phone)
-        <div class="muted">Tél. {{ $shop->phone }}</div>
+        <div class="muted">{{ __('documents.phone') }} {{ $shop->phone }}</div>
     @endif
     @if ($shop?->tax_id)
-        <div class="muted">N° fiscal : {{ $shop->tax_id }}</div>
+        <div class="muted">{{ __('documents.tax_id') }} : {{ $shop->tax_id }}</div>
     @endif
 </div>
 
@@ -63,22 +63,22 @@
 
 <table>
     <tr>
-        <td>Ticket</td>
+        <td>{{ __('documents.receipt') }}</td>
         <td class="right bold">{{ $sale->ticket_number }}</td>
     </tr>
     <tr>
-        <td>Date</td>
+        <td>{{ __('documents.date') }}</td>
         <td class="right">{{ $sale->sale_date?->format('d/m/Y H:i') }}</td>
     </tr>
     @if ($sale->customer)
         <tr>
-            <td>Client</td>
+            <td>{{ __('documents.customer') }}</td>
             <td class="right">{{ $sale->customer->name }}</td>
         </tr>
     @endif
     @if ($sale->user)
         <tr>
-            <td>Vendeur</td>
+            <td>{{ __('documents.seller') }}</td>
             <td class="right">{{ $sale->user->name }}</td>
         </tr>
     @endif
@@ -104,23 +104,23 @@
 
 <table class="totals">
     <tr>
-        <td>Sous-total</td>
+        <td>{{ __('documents.subtotal') }}</td>
         <td class="right">{{ number_format($sale->subtotal, 2, ',', ' ') }} {{ $currencySymbol }}</td>
     </tr>
     @if ($sale->tax_amount > 0)
         <tr>
-            <td>TVA</td>
+            <td>{{ __('documents.tax') }}</td>
             <td class="right">{{ number_format($sale->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
     @endif
     @if ($sale->discount_amount > 0)
         <tr>
-            <td>Remise</td>
+            <td>{{ __('documents.discount') }}</td>
             <td class="right">-{{ number_format($sale->discount_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
     @endif
     <tr class="grand">
-        <td>TOTAL</td>
+        <td>{{ __('documents.total') }}</td>
         <td class="right">{{ number_format($sale->total, 2, ',', ' ') }} {{ $currencySymbol }}</td>
     </tr>
 </table>
@@ -129,24 +129,24 @@
 
 <table>
     <tr>
-        <td>Payé</td>
+        <td>{{ __('documents.amount_paid') }}</td>
         <td class="right">{{ number_format($sale->amount_paid, 2, ',', ' ') }} {{ $currencySymbol }}</td>
     </tr>
     @if ($sale->change_amount > 0)
         <tr>
-            <td>Rendu</td>
+            <td>{{ __('documents.change') }}</td>
             <td class="right">{{ number_format($sale->change_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
     @endif
     @if ($sale->remaining_amount > 0)
         {{-- Vente à crédit : le reste dû doit figurer sur le ticket que le client emporte. --}}
         <tr>
-            <td class="bold">Reste dû</td>
+            <td class="bold">{{ __('documents.balance_due') }}</td>
             <td class="right bold">{{ number_format($sale->remaining_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
         @if ($sale->credit_due_date)
             <tr>
-                <td>Échéance</td>
+                <td>{{ __('documents.due_date') }}</td>
                 <td class="right">{{ $sale->credit_due_date->format('d/m/Y') }}</td>
             </tr>
         @endif
@@ -159,7 +159,7 @@
     @if ($shop?->invoice_footer)
         <div>{{ $shop->invoice_footer }}</div>
     @endif
-    <div>Merci de votre visite</div>
+    <div>{{ __('documents.thanks') }}</div>
 </div>
 
 </body>

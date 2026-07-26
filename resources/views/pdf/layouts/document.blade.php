@@ -107,13 +107,13 @@
                 <div class="muted">{{ $shop->country }}</div>
             @endif
             @if ($shop?->phone)
-                <div class="muted">Tél. {{ $shop->phone }}</div>
+                <div class="muted">{{ __('documents.phone') }} {{ $shop->phone }}</div>
             @endif
             @if ($shop?->email)
                 <div class="muted">{{ $shop->email }}</div>
             @endif
             @if ($shop?->tax_id)
-                <div class="muted">N° fiscal : {{ $shop->tax_id }}</div>
+                <div class="muted">{{ __('documents.tax_id') }} : {{ $shop->tax_id }}</div>
             @endif
         </td>
         <td class="right" style="width: 45%;">
@@ -125,7 +125,7 @@
 </table>
 
 <div class="party">
-    <div class="muted">@yield('party-label', 'Client')</div>
+    <div class="muted">@yield('party-label', __('documents.customer'))</div>
     @yield('party')
 </div>
 

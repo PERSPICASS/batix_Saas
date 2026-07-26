@@ -17,12 +17,16 @@ class QuoteMail extends Mailable
 
     public function __construct(public Quote $quote)
     {
-        $this->locale($this->quote->shop->user->getLocale() ?? 'fr');
+        // La langue de la BOUTIQUE, pas celle de l'interface du gérant : ce qu'un client
+        // reçoit ne doit pas dépendre de la langue dans laquelle son fournisseur navigue.
+        // Le PDF joint suit la même (voir DocumentPdf::inShopLocale) — les deux se
+        // contredisaient, le corps suivant le gérant et la pièce jointe toujours en français.
+        $this->locale($this->quote->shop->documentLocale());
     }
 
     public function envelope(): Envelope
     {
-        $locale = $this->quote->shop->user->getLocale() ?? 'fr';
+        $locale = $this->quote->shop->documentLocale();
 
         return new Envelope(
             subject: __('mail.quote.subject', ['number' => $this->quote->quote_number], $locale),
