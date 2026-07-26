@@ -226,8 +226,14 @@ export default function Edit({
                     </div>
 
                     {/* Delete Account Form */}
+                    {/*
+                      Le propriétaire du compte seul, et non `admin_platforme` : supprimer
+                      son compte emporte ses boutiques et tout leur contenu (voir
+                      AccountDeletion). Même piège de précédence que plus haut — sans les
+                      parenthèses, le bloc restait invisible.
+                    */}
                     {
-                        user.role === 'super_admin' || user.role === 'admin' && (
+                        user.role === 'super_admin' && (
                             <div className="rounded-2xl border border-gray-200 bg-white shadow-lg dark:border-white/10 dark:bg-white/5">
                                 <div className="p-8">
                                     <DeleteUserForm className="max-w-xl" />

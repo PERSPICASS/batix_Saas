@@ -7,6 +7,10 @@ return [
         'deleted' => ':resource supprimé avec succès.',
         'saved' => ':resource enregistré avec succès.',
     ],
+    'profile' => [
+        'updated' => 'Profil mis à jour.',
+    ],
+
     'error' => [
         'general' => 'Une erreur s\'est produite. Veuillez réessayer.',
         'not_found' => ':resource non trouvé.',
