@@ -3,6 +3,9 @@
 namespace Tests\Feature\Shop;
 
 use App\Models\Customer;
+use App\Models\Depot;
+use App\Models\DepotProduct;
+use App\Models\Product;
 use App\Models\Quote;
 use App\Models\Shop;
 use App\Models\User;
@@ -125,6 +128,52 @@ class DeleteShopTest extends TestCase
             ->delete($this->deleteUrl($owner, $branch));
 
         $this->assertNull(session('active_shop_id'));
+    }
+
+    /**
+     * The same RESTRICT failure, one table further: `depot_products.product_id` blocked the
+     * cascade that deletes the shop's products, so any shop that had ever stocked a depot was
+     * undeletable. Reported from prod on shop 2.
+     */
+    public function test_a_shop_whose_products_are_stocked_in_a_depot_can_be_deleted(): void
+    {
+        [$owner, $shop] = $this->ownerWithShop();
+        $product = Product::factory()->create(['shop_id' => $shop->id]);
+        $line = DepotProduct::factory()->create([
+            'depot_id' => Depot::factory()->forUser($owner),
+            'product_id' => $product->id,
+        ]);
+
+        $this->actingAs($owner)->delete($this->deleteUrl($owner, $shop));
+
+        $this->assertDatabaseMissing('shops', ['id' => $shop->id]);
+        $this->assertDatabaseMissing('products', ['id' => $product->id]);
+        $this->assertDatabaseMissing('depot_products', ['id' => $line->id]);
+    }
+
+    /**
+     * A dépôt belongs to the account, not to a shop: closing one branch must not empty the
+     * dépôt of what the other branches put there.
+     */
+    public function test_the_depot_keeps_the_stock_of_the_shops_that_remain(): void
+    {
+        [$owner, $branch] = $this->ownerWithShop();
+        $kept = Shop::factory()->create(['user_id' => $owner->id]);
+        $depot = Depot::factory()->forUser($owner)->create();
+
+        DepotProduct::factory()->create([
+            'depot_id' => $depot->id,
+            'product_id' => Product::factory()->create(['shop_id' => $branch->id])->id,
+        ]);
+        $keptLine = DepotProduct::factory()->create([
+            'depot_id' => $depot->id,
+            'product_id' => Product::factory()->create(['shop_id' => $kept->id])->id,
+        ]);
+
+        $this->actingAs($owner)->delete($this->deleteUrl($owner, $branch));
+
+        $this->assertDatabaseHas('depots', ['id' => $depot->id]);
+        $this->assertDatabaseHas('depot_products', ['id' => $keptLine->id]);
     }
 
     public function test_another_tenant_cannot_delete_the_shop(): void
