@@ -549,6 +549,7 @@ Route::prefix('{code_user}')
 
     // Dépenses
     Route::get('depenses', [ExpenseController::class, 'index'])->name('expenses.index')->middleware('permission:expenses,view');
+    Route::get('depenses/{expense}/justificatif', [ExpenseController::class, 'receipt'])->name('expenses.receipt')->middleware('permission:expenses,view');
     Route::post('depenses', [ExpenseController::class, 'store'])->name('expenses.store')->middleware('permission:expenses,create');
     Route::match(['POST', 'PATCH'], 'depenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update')->middleware('permission:expenses,edit');
     Route::delete('depenses/{expense}', [ExpenseController::class, 'destroy'])->name('expenses.destroy')->middleware('permission:expenses,delete');

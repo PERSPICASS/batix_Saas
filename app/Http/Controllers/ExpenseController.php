@@ -116,7 +116,7 @@ class ExpenseController extends Controller
 
         $receiptPath = null;
         if ($request->hasFile('receipt')) {
-            $receiptPath = $request->file('receipt')->store('receipts', 'public');
+            $receiptPath = $request->file('receipt')->store('receipts', Expense::RECEIPT_DISK);
         }
 
         $expense = Expense::create([
@@ -159,11 +159,11 @@ class ExpenseController extends Controller
         ]);
 
         if ($request->hasFile('receipt')) {
-            // Supprimer l'ancien justificatif
-            if ($expense->receipt) {
-                Storage::disk('public')->delete($expense->receipt);
+            // Supprimer l'ancien justificatif, sur le disque qui le porte encore
+            if ($disk = $expense->receiptDisk()) {
+                Storage::disk($disk)->delete($expense->receipt);
             }
-            $validated['receipt'] = $request->file('receipt')->store('receipts', 'public');
+            $validated['receipt'] = $request->file('receipt')->store('receipts', Expense::RECEIPT_DISK);
         } else {
             unset($validated['receipt']);
         }
@@ -177,6 +177,36 @@ class ExpenseController extends Controller
             ->with('success', 'Dépense modifiée avec succès.');
     }
 
+    /**
+     * Servir le justificatif d'une dépense.
+     *
+     * Volontairement une route authentifiée et non un lien signé : le fichier n'est consulté
+     * que depuis l'écran des dépenses, par quelqu'un déjà connecté. Un lien signé rouvrirait
+     * précisément ce qu'on ferme ici — une URL qui donne le fichier à qui la détient, session
+     * ou pas. Ici, une adresse recopiée ne sert à rien sans compte ayant accès à la boutique.
+     *
+     * Le contrôle porte sur `accessibleShopsQuery()` et non sur un rôle : `super_admin` est
+     * le rôle de tout compte propriétaire, pas une habilitation de plateforme.
+     */
+    public function receipt(Request $request, string $code_user, Expense $expense)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $expense->shop_id)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $disk = $expense->receiptDisk();
+
+        if ($disk === null) {
+            abort(404);
+        }
+
+        // `inline` pour conserver l'ouverture dans un onglet ; `nosniff` parce qu'un fichier
+        // déposé par un utilisateur ne doit jamais être réinterprété par le navigateur.
+        return Storage::disk($disk)->response($expense->receipt, null, [
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     public function destroy(Request $request, string $code_user, Expense $expense): RedirectResponse
     {
         $codeUser = $code_user;
@@ -186,8 +216,8 @@ class ExpenseController extends Controller
         }
 
         // Supprimer le justificatif si présent
-        if ($expense->receipt) {
-            Storage::disk('public')->delete($expense->receipt);
+        if ($disk = $expense->receiptDisk()) {
+            Storage::disk($disk)->delete($expense->receipt);
         }
 
         ActivityLogger::deleted($expense, $expense->title);

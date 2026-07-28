@@ -430,7 +430,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                                             <div className="flex items-center gap-2">
                                                 <span className="font-medium text-slate-900 dark:text-white">{expense.title}</span>
                                                 {expense.receipt && (
-                                                    <a href={`/storage/${expense.receipt}`} target="_blank" rel="noopener noreferrer"
+                                                    <a href={route('expenses.receipt', { expense: expense.id })} target="_blank" rel="noopener noreferrer"
                                                         title={t.expenses.form.receiptCurrent} className="text-amber-400 hover:text-amber-300">
                                                         <FileText className="size-4" />
                                                     </a>
@@ -527,7 +527,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                         {editExpense?.receipt && !editForm.receipt && (
                             <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-300/30 bg-amber-300/5 px-3 py-2 text-sm">
                                 <FileText className="size-4 shrink-0 text-amber-400" />
-                                <a href={`/storage/${editExpense.receipt}`} target="_blank" rel="noopener noreferrer"
+                                <a href={route('expenses.receipt', { expense: editExpense.id })} target="_blank" rel="noopener noreferrer"
                                     className="truncate text-amber-400 underline hover:text-amber-300">
                                     {t.expenses.form.receiptCurrent}
                                 </a>
