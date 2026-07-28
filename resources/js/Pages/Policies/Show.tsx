@@ -48,7 +48,6 @@ export default function PolicyShow({ auth, policyType, locale, localeLinks }: Pr
                 description={policy.title}
                 canonical={localeLinks[locale]}
                 ogLocale={isFr ? 'fr_FR' : 'en_US'}
-                noIndex
                 hreflangAlternates={[
                     { locale: 'fr', href: localeLinks.fr },
                     { locale: 'en', href: localeLinks.en },

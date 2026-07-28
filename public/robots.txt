@@ -7,8 +7,7 @@ Allow: /fonctionnalites
 Allow: /en/features
 Allow: /tarifs
 Allow: /en/pricing
-Allow: /clients
-Allow: /en/customers
+# /clients et /en/customers retirées avec la page qu'elles servaient.
 Allow: /ressources
 Allow: /en/resources
 Allow: /a-propos
@@ -22,18 +21,25 @@ Allow: /login
 Allow: /register
 Disallow: /admin
 Disallow: /api/
-Disallow: /storage/
 Disallow: /uploads/
+
+# Le disque public sert aussi des données de locataires (produits, logos,
+# justificatifs de dépenses) : il reste fermé. Seules les images du blog en
+# sortent — ce sont elles que les articles déclarent en og:image, et une
+# og:image bloquée n'est ni récupérée par Google ni rendue en aperçu social.
+# La règle la plus spécifique l'emporte, l'ordre entre les deux est indifférent.
+Allow: /storage/blog/
+Disallow: /storage/
 Disallow: *?lang=
 Disallow: *?page=
 Disallow: /search
 
-# Crawler-specific rules
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
+# Pas de groupe par robot ici, volontairement : un robot n'applique qu'un seul
+# groupe, le plus spécifique qui le nomme, et ignore alors « User-agent: * »
+# entièrement. Un groupe « Googlebot / Allow: / » ne renforçait donc rien : il
+# dispensait Googlebot de tous les Disallow ci-dessus (/admin, /api/, /storage/),
+# pendant que Googlebot-Image, lui, retombait sur « * » et restait bloqué sur les
+# images. Les règles communes doivent rester dans un seul groupe.
 
 # Sitemap
 Sitemap: https://batixpro.com/sitemap.xml

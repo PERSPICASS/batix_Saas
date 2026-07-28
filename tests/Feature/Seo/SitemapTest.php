@@ -114,6 +114,61 @@ class SitemapTest extends TestCase
     }
 
     /**
+     * Submitting a URL and then telling Google not to index it is a contradiction, and the
+     * one the Search Console reports as « Exclue par la balise noindex ». The policy pages
+     * were listed in the sitemap and rendered `noindex,nofollow` at the same time.
+     *
+     * The check reads the page component's source because the meta tag is emitted by React,
+     * out of reach of a server-side response assertion.
+     */
+    public function test_no_page_it_submits_is_marked_noindex(): void
+    {
+        foreach ($this->locs() as $path) {
+            $response = $this->get($path);
+
+            if ($response->status() !== 200) {
+                continue; // redirections (auth, legacy) : elles ne rendent pas de composant
+            }
+
+            $component = $response->viewData('page')['component'] ?? null;
+
+            if ($component === null) {
+                continue; // réponse non-Inertia
+            }
+
+            $source = resource_path("js/Pages/{$component}.tsx");
+
+            $this->assertFileExists($source);
+            $this->assertStringNotContainsString(
+                'noIndex',
+                file_get_contents($source),
+                "{$path} is in the sitemap but its component ({$component}) sets noIndex",
+            );
+        }
+    }
+
+    /**
+     * The other half of the same contradiction, reported as « Bloquée par le fichier
+     * robots.txt » : a page we submit must be a page we let crawlers fetch.
+     */
+    public function test_no_page_it_submits_is_blocked_by_robots(): void
+    {
+        preg_match_all('/^Disallow:\s*(\S+)$/mi', file_get_contents(public_path('robots.txt')), $m);
+
+        // Les motifs à joker ne visent pas de chemin nu ; seuls les préfixes sont testables ici.
+        $disallowed = array_filter($m[1], fn ($rule) => !str_contains($rule, '*'));
+
+        foreach ($this->locs() as $path) {
+            foreach ($disallowed as $rule) {
+                $this->assertFalse(
+                    str_starts_with($path, $rule),
+                    "{$path} is in the sitemap but robots.txt disallows {$rule}",
+                );
+            }
+        }
+    }
+
+    /**
      * Every bilingual page must advertise both alternates, or hreflang is a no-op.
      */
     public function test_bilingual_pages_declare_their_alternates(): void
