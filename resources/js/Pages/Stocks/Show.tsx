@@ -31,9 +31,10 @@ interface StockMovement {
     movement_date: string;
     notes: string | null;
     created_at: string;
-    shop: Shop;
-    product: Product;
-    user: User;
+    // `user_id` est nullable (employé supprimé, écriture système) : voir Stocks/Index.tsx.
+    shop: Shop | null;
+    product: Product | null;
+    user: User | null;
 }
 
 interface Props {
@@ -114,7 +115,13 @@ export default function StocksShow({ movement }: Props) {
                             </div>
                             <div>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">Créé par</p>
-                                <p className="font-medium text-slate-700 dark:text-slate-200">{movement.user.name}</p>
+                                {movement.user ? (
+                                    <p className="font-medium text-slate-700 dark:text-slate-200">{movement.user.name}</p>
+                                ) : (
+                                    <p className="font-medium italic text-slate-500 dark:text-slate-400" title={t.stocks.unknownAuthorHint}>
+                                        {t.stocks.unknownAuthor}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -127,13 +134,19 @@ export default function StocksShow({ movement }: Props) {
                         Produit
                     </h3>
                     <div className="flex items-center gap-4 mb-4">
-                        <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-16" />
-                        <div>
-                            <p className="font-semibold text-white text-lg">{movement.product.name}</p>
-                            {movement.product.sku && (
-                                <p className="text-sm font-mono text-slate-400">SKU : {movement.product.sku}</p>
-                            )}
-                        </div>
+                        {movement.product ? (
+                            <>
+                                <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-16" />
+                                <div>
+                                    <p className="font-semibold text-white text-lg">{movement.product.name}</p>
+                                    {movement.product.sku && (
+                                        <p className="text-sm font-mono text-slate-400">SKU : {movement.product.sku}</p>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-slate-500 dark:text-slate-400">{t.stocks.unknownValue}</p>
+                        )}
                     </div>
                 </div>
 
@@ -148,7 +161,9 @@ export default function StocksShow({ movement }: Props) {
                             <span className="text-slate-500 dark:text-slate-400">Boutique</span>
                             <div className="flex items-center gap-2">
                                 <MapPin className="size-4 text-slate-500 dark:text-slate-400" />
-                                <span className="font-medium text-slate-700 dark:text-slate-200">{movement.shop.name}</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                    {movement.shop?.name ?? t.stocks.unknownValue}
+                                </span>
                             </div>
                         </div>
 

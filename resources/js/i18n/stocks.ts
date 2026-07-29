@@ -26,6 +26,11 @@ export const stocks = {
             view: 'Voir',
             delete: 'Supprimer',
         },
+        // Un mouvement garde son histoire même quand son auteur disparaît (compte supprimé,
+        // écriture système) : user_id est nullable depuis juillet 2026.
+        unknownAuthor: 'Auteur inconnu',
+        unknownAuthorHint: 'Écriture système, ou compte de l’auteur supprimé depuis',
+        unknownValue: '—',
         filters: {
             allTypes: 'Tous les types',
             allShops: 'Toutes les boutiques',
@@ -77,6 +82,9 @@ export const stocks = {
             view: 'View',
             delete: 'Delete',
         },
+        unknownAuthor: 'Unknown author',
+        unknownAuthorHint: 'System-written, or the author’s account was deleted since',
+        unknownValue: '—',
         filters: {
             allTypes: 'All types',
             allShops: 'All shops',

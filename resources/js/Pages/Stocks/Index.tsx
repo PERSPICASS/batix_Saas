@@ -32,9 +32,12 @@ interface StockMovement {
     unit_cost: string | null;
     movement_date: string;
     notes: string | null;
-    shop: Shop;
-    product: Product;
-    user: User;
+    // Ces trois relations peuvent manquer : `user_id` est nullable depuis
+    // make_stock_movement_author_optional (un employé supprimé laisse ses mouvements
+    // sans auteur), et rien ne garantit qu'un eager load ait été fait.
+    shop: Shop | null;
+    product: Product | null;
+    user: User | null;
 }
 
 interface PaginatedMovements {
@@ -132,15 +135,18 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
         {
             key: 'product',
             label: t.stocks.columns.product,
-            render: (movement: StockMovement) => (
-                <div className="flex items-center gap-3">
-                    <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-9" />
-                    <div>
-                        <p className="font-medium text-slate-700 dark:text-slate-200">{movement.product.name}</p>
-                        {movement.product.sku && <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {movement.product.sku}</p>}
+            render: (movement: StockMovement) =>
+                movement.product ? (
+                    <div className="flex items-center gap-3">
+                        <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-9" />
+                        <div>
+                            <p className="font-medium text-slate-700 dark:text-slate-200">{movement.product.name}</p>
+                            {movement.product.sku && <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {movement.product.sku}</p>}
+                        </div>
                     </div>
-                </div>
-            ),
+                ) : (
+                    <span className="text-sm text-slate-500 dark:text-slate-400">{t.stocks.unknownValue}</span>
+                ),
         },
         {
             key: 'type',
@@ -160,14 +166,19 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
         {
             key: 'shop',
             label: t.stocks.columns.shop,
-            render: (movement: StockMovement) => movement.shop.name,
+            render: (movement: StockMovement) => movement.shop?.name ?? t.stocks.unknownValue,
         },
         {
             key: 'user',
             label: t.stocks.columns.user,
-            render: (movement: StockMovement) => (
-                <span className="text-sm text-slate-600 dark:text-slate-300">{movement.user.name}</span>
-            ),
+            render: (movement: StockMovement) =>
+                movement.user ? (
+                    <span className="text-sm text-slate-600 dark:text-slate-300">{movement.user.name}</span>
+                ) : (
+                    <span className="text-sm italic text-slate-500 dark:text-slate-400" title={t.stocks.unknownAuthorHint}>
+                        {t.stocks.unknownAuthor}
+                    </span>
+                ),
         },
         {
             key: 'actions',
