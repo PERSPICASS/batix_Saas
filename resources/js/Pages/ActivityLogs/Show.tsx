@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, User, Clock, Zap, MapPin, Globe, Code, Key } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useRoute } from '@/utils/route';
 
 interface ActivityLog {
     id: number;
@@ -43,6 +44,8 @@ interface Props {
 
 export default function Show({ activity }: Props) {
     const { t, locale } = useLocale();
+    // Le lien de retour doit porter le {code_user} du compte, sinon il ne résout pas.
+    const route = useRoute();
     const dateLocale = locale === 'fr' ? 'fr-FR' : 'en-GB';
     const getActionColor = (action: string) => {
         const colors: Record<string, string> = {

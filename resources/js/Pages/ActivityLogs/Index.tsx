@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { History, Search, Filter, Eye, Download, User, Clock, Activity, Key } from 'lucide-react';
 import { useState } from 'react';
 import { useLocale } from '@/contexts/LocaleContext';
+import { useRoute } from '@/utils/route';
 
 interface Activity {
     id: number;
@@ -55,6 +56,9 @@ interface Props {
 
 export default function Index({ activities, filters, filterOptions }: Props) {
     const { t } = useLocale();
+    // Injecte le {code_user} du compte, comme partout ailleurs : les appels ci-dessous
+    // s'appuyaient sur le route() global de Ziggy pour le deviner.
+    const route = useRoute();
     const [search, setSearch] = useState(filters.search || '');
     const [showFilters, setShowFilters] = useState(false);
 
@@ -262,9 +266,18 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <span className="text-xs text-slate-500 whitespace-nowrap">
-                                                    {activity.created_at_human}
-                                                </span>
+                                                <div className="flex items-center gap-3 whitespace-nowrap">
+                                                    <span className="text-xs text-slate-500">
+                                                        {activity.created_at_human}
+                                                    </span>
+                                                    <Link
+                                                        href={route('activity-logs.show', { activityLog: activity.id })}
+                                                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                                                    >
+                                                        <Eye className="size-3.5" />
+                                                        {t.activityLogs.actions.view}
+                                                    </Link>
+                                                </div>
                                             </div>
 
                                             <p className="text-sm text-slate-300 mb-2">{activity.description}</p>

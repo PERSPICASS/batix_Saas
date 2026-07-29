@@ -148,14 +148,24 @@ class ActivityLogController extends Controller
     /**
      * Display a specific activity log
      */
-    public function show(ActivityLog $activityLog): Response
+    /**
+     * Le `{code_user}` du préfixe doit figurer dans la signature, avant le modèle : sans lui,
+     * le dispatcher passe la chaîne du préfixe en premier argument et la liaison échoue.
+     * C'est la convention de tous les show() du groupe (cf. StockMovementController).
+     */
+    public function show(string $code_user, ActivityLog $activityLog): Response
     {
         $user = auth()->user();
 
         // Check permission
         if ($user->role !== 'admin_platforme') {
-            // Non admin_platforme users can only view logs from their account
-            if ($activityLog->account_code !== $user->accountCode()) {
+            $accountCode = $user->accountCode();
+
+            // Deux codes nuls ne sont PAS une correspondance : un log écrit sans utilisateur
+            // authentifié n'a pas d'`account_code` et n'appartient donc à aucun compte. Sans
+            // cette précaution, `null !== null` laisserait passer ces logs — d'autant que le
+            // rôle n'est jamais une frontière de compte ici, tout le monde est super_admin.
+            if ($accountCode === null || $activityLog->account_code !== $accountCode) {
                 abort(403, 'Vous n\'avez pas accès à cet historique.');
             }
         }

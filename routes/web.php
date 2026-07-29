@@ -556,6 +556,7 @@ Route::prefix('{code_user}')
 
     // Logs d'activité
     Route::get('/historique', [ActivityLogController::class, 'index'])->name('activity-logs.index')->middleware('permission:activity_logs,view');
+    Route::get('/historique/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show')->middleware('permission:activity_logs,view');
 
     // Paramètres de la boutique
     Route::get('/parametres', [SettingsController::class, 'index'])->name('settings.index')->middleware('permission:settings,view');
