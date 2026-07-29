@@ -5,15 +5,17 @@ import { useLocale } from '@/contexts/LocaleContext';
 
 interface ActivityLog {
     id: number;
+    // Voir ActivityLogs/Index.tsx : l'objet existe toujours, ses champs peuvent être null
+    // (action sans utilisateur authentifié). `id` manque dès que la relation est perdue.
     user: {
-        id: number;
-        name: string;
-        email: string;
-        role: string;
+        id?: number;
+        name: string | null;
+        email: string | null;
+        role: string | null;
     };
     shop: {
-        id: number;
-        name: string;
+        id?: number;
+        name: string | null;
     };
     action: string;
     action_label: string;
@@ -176,15 +178,28 @@ export default function Show({ activity }: Props) {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <span className="text-sm text-slate-500 dark:text-slate-400">{t.activityLogs.show.name}</span>
-                                    <span className="text-sm text-slate-900 dark:text-white font-medium">{activity.user.name}</span>
+                                    {activity.user.name ? (
+                                        <span className="text-sm text-slate-900 dark:text-white font-medium">{activity.user.name}</span>
+                                    ) : (
+                                        <span
+                                            className="text-sm italic text-slate-500 dark:text-slate-400"
+                                            title={t.activityLogs.unknownUserHint}
+                                        >
+                                            {t.activityLogs.unknownUser}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-slate-500 dark:text-slate-400">{t.activityLogs.show.email}</span>
-                                    <span className="text-sm text-slate-900 dark:text-white font-mono">{activity.user.email}</span>
+                                    <span className="text-sm text-slate-900 dark:text-white font-mono">
+                                        {activity.user.email ?? t.activityLogs.unknownValue}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-slate-500 dark:text-slate-400">{t.activityLogs.show.role}</span>
-                                    <span className="text-sm text-slate-300 capitalize">{activity.user.role.replace('_', ' ')}</span>
+                                    <span className="text-sm text-slate-300 capitalize">
+                                        {activity.user.role?.replace('_', ' ') ?? t.activityLogs.unknownValue}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -197,11 +212,15 @@ export default function Show({ activity }: Props) {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <span className="text-sm text-slate-500 dark:text-slate-400">{t.activityLogs.show.name}</span>
-                                    <span className="text-sm text-slate-900 dark:text-white font-medium">{activity.shop.name}</span>
+                                    <span className="text-sm text-slate-900 dark:text-white font-medium">
+                                        {activity.shop.name ?? t.activityLogs.unknownValue}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-slate-500 dark:text-slate-400">{t.activityLogs.show.id}</span>
-                                    <span className="text-sm text-slate-600 dark:text-slate-300">{activity.shop.id}</span>
+                                    <span className="text-sm text-slate-600 dark:text-slate-300">
+                                        {activity.shop.id ?? t.activityLogs.unknownValue}
+                                    </span>
                                 </div>
                             </div>
                         </div>

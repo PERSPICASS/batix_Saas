@@ -6,15 +6,18 @@ import { useLocale } from '@/contexts/LocaleContext';
 
 interface Activity {
     id: number;
+    // Le contrôleur retombe sur l'instantané user_name/user_email/user_role quand la relation
+    // a disparu — mais ces colonnes sont elles aussi nullable, et ActivityLogger ne les écrit
+    // que s'il y a un utilisateur authentifié. L'objet est donc toujours là, ses champs non.
     user: {
         id?: number;
-        name: string;
-        email: string;
-        role: string;
+        name: string | null;
+        email: string | null;
+        role: string | null;
     };
     shop: {
         id?: number;
-        name: string;
+        name: string | null;
     };
     action: string;
     action_label: string;
@@ -273,7 +276,11 @@ export default function Index({ activities, filters, filterOptions }: Props) {
                                             <div className="flex items-center gap-4 text-xs text-slate-500">
                                                 <span className="flex items-center gap-1">
                                                     <User className="size-3" />
-                                                    {activity.user.name}
+                                                    {activity.user.name ?? (
+                                                        <span className="italic" title={t.activityLogs.unknownUserHint}>
+                                                            {t.activityLogs.unknownUser}
+                                                        </span>
+                                                    )}
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <Clock className="size-3" />

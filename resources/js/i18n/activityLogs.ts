@@ -26,6 +26,12 @@ export const activityLogs = {
         },
         emptyMessage: 'Aucune activité trouvée',
         emptySubtitle: 'Aucune activité ne correspond à vos critères de recherche',
+        // Une action sans utilisateur connecté (visiteur, tâche système) laisse user_id ET
+        // l'instantané user_name/user_email/user_role à null : ActivityLogger ne les écrit
+        // que s'il y a un authentifié.
+        unknownUser: 'Utilisateur inconnu',
+        unknownUserHint: "Action sans utilisateur authentifié, ou compte supprimé sans instantané d'identité",
+        unknownValue: '—',
         ipLabel: 'IP',
         viaApiToken: (name: string) => `via API : ${name}`,
         actions: {
@@ -81,6 +87,9 @@ export const activityLogs = {
         },
         emptyMessage: 'No activity found',
         emptySubtitle: 'No activity matches your search criteria',
+        unknownUser: 'Unknown user',
+        unknownUserHint: 'Action with no authenticated user, or an account deleted without an identity snapshot',
+        unknownValue: '—',
         ipLabel: 'IP',
         viaApiToken: (name: string) => `via API: ${name}`,
         actions: {
