@@ -13,11 +13,8 @@ export default function Guest({ children }: PropsWithChildren) {
 
             <div className="mb-5 text-center">
                 <Link href="/">
-                    <ApplicationLogo className="mx-auto h-16 w-16 fill-current text-amber-300" />
+                    <ApplicationLogo theme="dark" className="mx-auto h-14 w-auto" />
                 </Link>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.22em] text-amber-200">
-                    Batix SaaS
-                </p>
                 <p className="mt-1 text-sm text-slate-300">
                     Espace securise de gestion de quincaillerie
                 </p>

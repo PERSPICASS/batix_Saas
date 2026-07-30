@@ -81,8 +81,11 @@ export default function Welcome({ auth, appUrl, latestPosts = [], reviews = [], 
                 name: 'BATIX PRO',
                 url: appUrl,
                 logo: {
+                    // Google veut le vrai bloc-marque ici, pas le favicon.
                     '@type': 'ImageObject',
-                    url: `${appUrl}/favicon.svg`,
+                    url: `${appUrl}/images/logo-batixpro.png`,
+                    width: 790,
+                    height: 334,
                 },
                 sameAs: [],
                 contactPoint: {

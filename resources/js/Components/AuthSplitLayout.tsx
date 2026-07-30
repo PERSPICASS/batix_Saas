@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { HardHat } from 'lucide-react';
 import { ReactNode } from 'react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import defaultHeroImage from '/resources/images/bath-saloon-2026-03-19-23-10-32-utc.jpg';
 
 interface AuthSplitLayoutProps {
@@ -38,11 +38,8 @@ export default function AuthSplitLayout({
             <div className="grid h-full lg:grid-cols-2">
                 <section className="flex h-full items-center justify-center px-4 py-3 sm:px-8 lg:px-10">
                     <div className="w-full max-w-lg flex flex-col">
-                        <Link href="/" className="inline-flex items-center gap-3">
-                            <div className="rounded-lg bg-amber-300 p-2 text-slate-900">
-                                <HardHat className="size-5" />
-                            </div>
-                            <p className="text-sm font-bold tracking-wide text-slate-900">BATIX PRO</p>
+                        <Link href="/" className="inline-flex">
+                            <ApplicationLogo theme="light" className="h-9 w-auto" />
                         </Link>
 
                         {topLink && (

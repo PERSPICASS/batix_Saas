@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#FBBF24">
+        <meta name="theme-color" content="#F6CF15">
         <meta name="author" content="BATIX PRO">
         <meta name="robots" content="index, follow">
         {{-- Le <title>, la description et le reste des métadonnées sont posés par page via
@@ -19,7 +19,8 @@
         <!-- Favicon & PWA -->
         <link rel="icon" type="image/svg+xml" href="/favicon.svg">
         <link rel="alternate icon" href="/favicon.ico">
-        <link rel="apple-touch-icon" href="/favicon.svg">
+        {{-- iOS ignore le SVG pour l'icone d'ecran d'accueil : il lui faut un PNG. --}}
+        <link rel="apple-touch-icon" href="/icon-192.png">
         <link rel="manifest" href="/manifest.json">
 
         <!-- Fonts -->

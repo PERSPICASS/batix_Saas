@@ -111,12 +111,13 @@ img {
 
 /* Logo */
 
+/* Le bloc-marque est horizontal (~2.4:1) : le 75x75 du stub Laravel l'ecrasait. */
 .logo {
-    height: 75px;
+    height: 44px;
     margin-top: 15px;
     margin-bottom: 10px;
-    max-height: 75px;
-    width: 75px;
+    max-height: 44px;
+    width: auto;
 }
 
 /* Body */

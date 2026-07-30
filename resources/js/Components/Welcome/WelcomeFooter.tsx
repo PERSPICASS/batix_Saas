@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { HardHat, Mail, MessageCircle } from 'lucide-react';
+import { Mail, MessageCircle } from 'lucide-react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import type { Locale } from '@/types/types';
 import { copy } from '@/types/data';
 import { featurePages } from '@/types/featurePages';
@@ -52,12 +53,7 @@ export default function WelcomeFooter({ locale, footerText }: WelcomeFooterProps
                 <div className="grid gap-10 pb-10 sm:grid-cols-2 lg:grid-cols-5">
                     {/* Marque */}
                     <div className="sm:col-span-2 lg:col-span-2">
-                        <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-amber-300 p-2 text-slate-900">
-                                <HardHat className="size-5" />
-                            </div>
-                            <p className="text-sm font-bold tracking-wide text-slate-900">BATIX PRO</p>
-                        </div>
+                        <ApplicationLogo theme="light" className="h-9 w-auto" />
                         <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">{footerText}</p>
                         <div className="mt-5 flex flex-col gap-2 text-sm">
                             <a href="mailto:contact@batixpro.com" className="inline-flex items-center gap-2 text-slate-600 transition hover:text-terre-700">

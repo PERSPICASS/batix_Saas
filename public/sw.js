@@ -16,7 +16,9 @@
  * ligne après un changement d'utilisateur.
  */
 
-const VERSION = 'v3';
+// v4 : nouvelles icônes de marque. Sans ce bump, un appareil déjà installé continuerait
+// de servir les anciennes depuis STATIC_CACHE — mêmes URL, contenu différent.
+const VERSION = 'v4';
 
 // Seule la coquille est versionnée : elle doit correspondre au build servi, donc être
 // remplacée à chaque déploiement.
@@ -40,6 +42,7 @@ const STATIC_ASSETS = [
     '/manifest.json',
     '/icon-192.png',
     '/icon-512.png',
+    '/icon-maskable-512.png',
 ];
 
 /*

@@ -151,7 +151,7 @@ describe('service worker', () => {
     it('falls back to the offline page for a route never visited', async () => {
         const sw = loadServiceWorker(fetchImpl);
 
-        const cache = await sw.caches.open('batix-static-v3');
+        const cache = await sw.caches.open('batix-static-v4');
         await cache.put('/offline.html', okResponse('offline-page'));
 
         online = false;
@@ -221,7 +221,7 @@ describe('service worker', () => {
 
         (await sw.caches.open('batix-pages')).put('https://batixpro.com/dashboard', okResponse('page'));
         (await sw.caches.open('batix-data')).put('https://batixpro.com/dashboard', okResponse('data'));
-        (await sw.caches.open('batix-static-v3')).put('/offline.html', okResponse('shell'));
+        (await sw.caches.open('batix-static-v4')).put('/offline.html', okResponse('shell'));
 
         const event = makeEvent(makeRequest('https://batixpro.com/logout', { method: 'POST' }));
         sw.handlers.fetch(event);
@@ -234,6 +234,6 @@ describe('service worker', () => {
             expect(sw.caches.store.has('batix-data')).toBe(false);
         });
 
-        expect(sw.caches.store.has('batix-static-v3')).toBe(true);
+        expect(sw.caches.store.has('batix-static-v4')).toBe(true);
     });
 });

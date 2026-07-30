@@ -4,8 +4,8 @@
     "description": "Gestion moderne des quincailleries",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#0f172a",
-    "theme_color": "#fcd34d",
+    "background_color": "#101225",
+    "theme_color": "#f6cf15",
     "orientation": "portrait-primary",
     "lang": "fr",
     "icons": [

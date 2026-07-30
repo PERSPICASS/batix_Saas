@@ -22,7 +22,6 @@ import {
     FileText,
     Folder,
     FolderTree,
-    HardHat,
     History,
     Key,
     LayoutDashboard,
@@ -48,6 +47,7 @@ import {
     Warehouse,
     X,
 } from 'lucide-react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import ToastContainer from '@/Components/ToastContainer';
 import OfflineBanner from '@/Components/OfflineBanner';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
@@ -516,18 +516,11 @@ export default function Authenticated({
             >
                 <div className="flex h-full flex-col">
                     <div className="mb-8 flex items-center justify-between">
-                        <Link href="/" className="flex items-center gap-3">
-                            <div className="rounded-lg bg-amber-300 p-2 text-slate-950">
-                                <HardHat className="size-5" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-600 dark:text-amber-200">
-                                    BATIX PRO
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t.layout.brandSubtitle}
-                                </p>
-                            </div>
+                        <Link href="/" className="flex min-w-0 flex-col gap-1">
+                            <ApplicationLogo className="h-9 w-auto" />
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {t.layout.brandSubtitle}
+                            </p>
                         </Link>
                         <button
                             type="button"

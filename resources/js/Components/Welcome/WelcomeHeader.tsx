@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
-import { HardHat, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import { useState } from 'react';
 import type { Locale } from '../../types/types';
 import { copy } from '../../types/data';
@@ -23,16 +24,9 @@ export default function WelcomeHeader({ locale, localeLinks, scrolled, getDashbo
         <header className={`z-50 w-full py-3 transition-all duration-300 ${scrolled ? 'fixed top-0 bg-terre-50 shadow-sm' : 'relative bg-terre-50'}`}>
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 lg:px-8">
                 {/* Logo */}
-                <Link href={isAuthenticated ? getDashboardUrl() : route('welcome')} className="flex items-center gap-3">
-                    <div className="flex items-center gap-3">
-                        <div className="rounded-lg bg-amber-300 p-2 text-slate-900">
-                            <HardHat className="size-5" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-bold tracking-wide text-slate-900">BATIX PRO</p>
-                            <p className="text-xs text-slate-500">{t.brandSubtitle}</p>
-                        </div>
-                    </div>
+                <Link href={isAuthenticated ? getDashboardUrl() : route('welcome')} className="flex flex-col gap-1">
+                    <ApplicationLogo theme="light" className="h-10 w-auto" />
+                    <p className="text-xs text-slate-500">{t.brandSubtitle}</p>
                 </Link>
                 
 
