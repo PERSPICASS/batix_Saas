@@ -36,11 +36,13 @@
         <style>html[data-promo-dismissed="1"] [data-promo-banner]{display:none}</style>
         <script>
             try {
-                if (localStorage.getItem('batix_annual_promo_dismissed') === '1') {
+                // sessionStorage, pas localStorage : le bandeau sert à faire souscrire,
+                // sa fermeture ne vaut donc que pour la visite en cours.
+                if (sessionStorage.getItem('batix_annual_promo_dismissed') === '1') {
                     document.documentElement.dataset.promoDismissed = '1';
                 }
             } catch (e) {
-                // localStorage indisponible (navigation privée stricte) : le bandeau
+                // Stockage indisponible (navigation privée stricte) : le bandeau
                 // s'affiche, ce qui est le comportement dégradé acceptable.
             }
         </script>

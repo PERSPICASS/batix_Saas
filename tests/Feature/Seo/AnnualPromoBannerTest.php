@@ -105,4 +105,38 @@ class AnnualPromoBannerTest extends TestCase
             'le script de masquage pré-peinture a disparu de app.blade.php',
         );
     }
+
+    /**
+     * Le bandeau est un levier d'abonnement : une fermeture définitive perdrait le
+     * message pour de bon auprès de quelqu'un qui n'était pas prêt ce jour-là. La
+     * fermeture ne doit valoir que pour la visite en cours — d'où sessionStorage,
+     * dans le composant comme dans le script pré-peinture.
+     */
+    public function test_dismissal_lasts_only_for_the_current_visit(): void
+    {
+        $sources = [
+            'AnnualPromoBanner.tsx' => resource_path('js/Components/Welcome/AnnualPromoBanner.tsx'),
+            'app.blade.php' => resource_path('views/app.blade.php'),
+        ];
+
+        foreach ($sources as $label => $path) {
+            $source = file_get_contents($path);
+
+            $this->assertStringContainsString(
+                'sessionStorage',
+                $source,
+                "{$label} doit lire la fermeture du bandeau en sessionStorage",
+            );
+
+            // On vise les appels, pas le mot : les deux fichiers mentionnent
+            // localStorage en commentaire pour expliquer pourquoi il est écarté.
+            foreach (['localStorage.getItem', 'localStorage.setItem'] as $call) {
+                $this->assertStringNotContainsString(
+                    $call,
+                    $source,
+                    "{$label} remet la fermeture du bandeau en localStorage : elle redeviendrait définitive",
+                );
+            }
+        }
+    }
 }

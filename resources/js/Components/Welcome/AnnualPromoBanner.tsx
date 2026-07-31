@@ -16,6 +16,12 @@ import type { Locale } from '@/types/types';
  * visiteur qui l'a masqué et le voit réapparaître le temps d'un éclair — est
  * traité en amont, par le script inline de `app.blade.php` qui pose
  * `data-promo-dismissed` sur <html> avant la première peinture.
+ *
+ * La fermeture est volontairement stockée en **sessionStorage et non en
+ * localStorage** : ce bandeau sert à faire souscrire. Le masquer définitivement
+ * au premier clic revenait à perdre le message pour de bon auprès de quelqu'un
+ * qui n'était simplement pas prêt ce jour-là. Il s'efface donc pour la visite en
+ * cours et revient à la suivante.
  */
 export const PROMO_STORAGE_KEY = 'batix_annual_promo_dismissed';
 
@@ -34,7 +40,7 @@ export default function AnnualPromoBanner({ locale, highlight, message, cta, dis
     // DOM après hydratation, pour ne pas laisser un lien invisible dans l'ordre
     // de tabulation ni dans ce que lisent les lecteurs d'écran.
     useEffect(() => {
-        if (window.localStorage.getItem(PROMO_STORAGE_KEY) === '1') {
+        if (window.sessionStorage.getItem(PROMO_STORAGE_KEY) === '1') {
             setHidden(true);
         }
     }, []);
@@ -44,7 +50,7 @@ export default function AnnualPromoBanner({ locale, highlight, message, cta, dis
     }
 
     const onDismiss = () => {
-        window.localStorage.setItem(PROMO_STORAGE_KEY, '1');
+        window.sessionStorage.setItem(PROMO_STORAGE_KEY, '1');
         document.documentElement.dataset.promoDismissed = '1';
         setHidden(true);
     };
