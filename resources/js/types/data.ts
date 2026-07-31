@@ -164,6 +164,16 @@ export const copy = {
             decline: 'Refuser',
             learnMore: 'En savoir plus',
         },
+        // « 2 mois offerts » n'est pas un arrondi commercial : l'abonnement annuel
+        // est facturé price × 10 au lieu de × 12, côté serveur comme à l'affichage
+        // (PaymentController::store, SubscriptionPlan::getPriceFcfaYearlyAttribute).
+        // Ne pas retoucher ce chiffre sans changer le calcul avec.
+        annualPromo: {
+            highlight: '2 mois offerts',
+            message: 'sur tous les abonnements annuels.',
+            cta: 'Voir les tarifs',
+            dismiss: 'Masquer cette annonce',
+        },
     },
     en: {
         title: 'BATIX PRO – Hardware Store Management Software | Inventory, Sales & POS',
@@ -337,6 +347,12 @@ export const copy = {
             accept: 'Accept',
             decline: 'Decline',
             learnMore: 'Learn more',
+        },
+        annualPromo: {
+            highlight: '2 months free',
+            message: 'on every annual subscription.',
+            cta: 'See pricing',
+            dismiss: 'Dismiss this announcement',
         },
     },
 };

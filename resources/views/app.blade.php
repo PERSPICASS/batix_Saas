@@ -27,6 +27,24 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        {{-- Le bandeau « 2 mois offerts » est rendu côté serveur pour tout le monde :
+             le faire apparaître après hydratation décalerait la page vers le bas une
+             fois affichée, ce que Google compte en CLS. Pour le visiteur qui l'a déjà
+             masqué, il faut donc le cacher AVANT la première peinture — d'où ce
+             script, qui doit rester ici, synchrone et avant tout rendu. Le composant
+             React le retire ensuite proprement du DOM (AnnualPromoBanner.tsx). --}}
+        <style>html[data-promo-dismissed="1"] [data-promo-banner]{display:none}</style>
+        <script>
+            try {
+                if (localStorage.getItem('batix_annual_promo_dismissed') === '1') {
+                    document.documentElement.dataset.promoDismissed = '1';
+                }
+            } catch (e) {
+                // localStorage indisponible (navigation privée stricte) : le bandeau
+                // s'affiche, ce qui est le comportement dégradé acceptable.
+            }
+        </script>
+
         <!-- Scripts -->
         @routes
         @viteReactRefresh

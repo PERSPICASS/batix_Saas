@@ -5,6 +5,7 @@ import WelcomeHeader from '@/Components/Welcome/WelcomeHeader';
 import WelcomeFooter from '@/Components/Welcome/WelcomeFooter';
 import GoogleAnalytics from '@/Components/GoogleAnalytics';
 import CookieConsentBanner from '@/Components/CookieConsentBanner';
+import AnnualPromoBanner from '@/Components/Welcome/AnnualPromoBanner';
 import { useCookieConsent } from '@/hooks/useCookieConsent';
 
 interface PublicLayoutProps extends PropsWithChildren {
@@ -34,6 +35,14 @@ export default function PublicLayout({ locale, localeLinks, isAuthenticated, get
     return (
         <div className="relative min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-terre-200 selection:text-terre-900">
             <GoogleAnalytics consent={consent} />
+
+            <AnnualPromoBanner
+                locale={locale}
+                highlight={t.annualPromo.highlight}
+                message={t.annualPromo.message}
+                cta={t.annualPromo.cta}
+                dismiss={t.annualPromo.dismiss}
+            />
 
             <WelcomeHeader
                 locale={locale}
