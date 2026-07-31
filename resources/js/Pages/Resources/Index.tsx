@@ -5,13 +5,14 @@ import { SeoHead } from '@/Components/SeoHead';
 import { PageProps } from '@/types';
 import type { Locale } from '@/types/types';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import { breadcrumbSchema, itemListSchema, webPageSchema } from '@/utils/seoSchemas';
 
 interface Props extends PageProps {
     locale: Locale;
     localeLinks: Record<Locale, string>;
 }
 
-export default function ResourcesIndex({ auth, locale, localeLinks }: Props) {
+export default function ResourcesIndex({ auth, appUrl, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const isFr = locale === 'fr';
 
@@ -52,6 +53,27 @@ export default function ResourcesIndex({ auth, locale, localeLinks }: Props) {
                     { locale: 'fr', href: localeLinks.fr },
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
+                ]}
+                jsonLd={[
+                    webPageSchema(appUrl, {
+                        type: 'CollectionPage',
+                        name: isFr ? 'Ressources' : 'Resources',
+                        description,
+                        url: localeLinks[locale],
+                        locale,
+                    }),
+                    // Construit à partir de `links`, la liste réellement rendue plus bas :
+                    // décrire ici des entrées absentes de la page serait trompeur.
+                    itemListSchema(
+                        links.map((link) => ({
+                            name: link.title,
+                            url: link.href,
+                            description: link.text,
+                        })),
+                    ),
+                    breadcrumbSchema(appUrl, [
+                        { name: isFr ? 'Ressources' : 'Resources', item: localeLinks[locale] },
+                    ]),
                 ]}
             />
 

@@ -10,6 +10,7 @@ import { copy, fadeUp, stagger } from '@/types/data';
 import { featurePages, getFeaturePage } from '@/types/featurePages';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
 import FaqSection from '@/Components/Welcome/FaqSection';
+import { breadcrumbSchema } from '@/utils/seoSchemas';
 
 interface Props extends PageProps {
     slug: string;
@@ -28,21 +29,13 @@ export default function FeatureShow({ auth, appUrl, slug, locale, localeLinks }:
     const otherPages = featurePages.filter((p) => p.slug !== slug);
     const seoTitle = `${page.title[locale]} — BATIX PRO`;
 
-    // Fil d'Ariane : Google l'affiche à la place de l'URL nue sous le titre.
-    const breadcrumbSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'BATIX PRO', item: appUrl },
-            {
-                '@type': 'ListItem',
-                position: 2,
-                name: isFr ? 'Fonctionnalités' : 'Features',
-                item: isFr ? `${appUrl}/fonctionnalites` : `${appUrl}/en/features`,
-            },
-            { '@type': 'ListItem', position: 3, name: page.title[locale], item: localeLinks[locale] },
-        ],
-    };
+    const breadcrumb = breadcrumbSchema(appUrl, [
+        {
+            name: isFr ? 'Fonctionnalités' : 'Features',
+            item: isFr ? `${appUrl}/fonctionnalites` : `${appUrl}/en/features`,
+        },
+        { name: page.title[locale], item: localeLinks[locale] },
+    ]);
 
     return (
         <>
@@ -56,7 +49,7 @@ export default function FeatureShow({ auth, appUrl, slug, locale, localeLinks }:
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
                 ]}
-                jsonLd={[breadcrumbSchema]}
+                jsonLd={[breadcrumb]}
             />
 
             <PublicLayout locale={locale} localeLinks={localeLinks} isAuthenticated={!!auth.user} getDashboardUrl={getDashboardUrl}>

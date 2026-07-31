@@ -1,8 +1,21 @@
 import { Head } from '@inertiajs/react';
 
+/**
+ * Vignette de partage par défaut. Il en existe une par langue : le visuel porte
+ * l'accroche en toutes lettres, une image française sous un lien anglais se voit.
+ * Fichiers dans `public/`, régénérables via `scripts/og-image/` — ne pas les
+ * remplacer par un format autre que 1200×630, c'est le ratio qu'attendent
+ * Facebook, LinkedIn et WhatsApp pour un grand aperçu plutôt qu'une miniature.
+ */
+const OG_IMAGES: Record<string, string> = {
+    fr: 'https://batixpro.com/og-image.jpg',
+    en: 'https://batixpro.com/og-image-en.jpg',
+};
+
 interface SeoHeadProps {
     title: string;
     description: string;
+    /** Absolue et non relative : plusieurs scrapers sociaux ne résolvent pas les chemins relatifs. */
     ogImage?: string;
     ogLocale?: string;
     canonical?: string;
@@ -24,7 +37,7 @@ interface SeoHeadProps {
 export function SeoHead({
     title,
     description,
-    ogImage = 'https://batixpro.com/og-image.jpg',
+    ogImage,
     ogLocale = 'fr_FR',
     canonical,
     noIndex = false,
@@ -35,6 +48,7 @@ export function SeoHead({
     jsonLd,
 }: SeoHeadProps) {
     const fullTitle = `${title} | BATIX PRO`;
+    const resolvedOgImage = ogImage ?? OG_IMAGES[ogLocale.slice(0, 2)] ?? OG_IMAGES.fr;
 
     return (
         <Head>
@@ -50,9 +64,15 @@ export function SeoHead({
             {/* Open Graph */}
             <meta property="og:title" content={fullTitle} />
             <meta property="og:description" content={description} />
-            <meta property="og:image" content={ogImage} />
+            <meta property="og:image" content={resolvedOgImage} />
+            {/* Dimensions annoncées : sans elles, Facebook et WhatsApp affichent
+                d'abord une vignette carrée le temps de télécharger l'image. */}
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta property="og:image:alt" content={fullTitle} />
             <meta property="og:type" content={ogType} />
             <meta property="og:locale" content={ogLocale} />
+            <meta property="og:locale:alternate" content={ogLocale === 'fr_FR' ? 'en_US' : 'fr_FR'} />
             <meta property="og:site_name" content="BATIX PRO" />
             {canonical && <meta property="og:url" content={canonical} />}
 
@@ -68,7 +88,7 @@ export function SeoHead({
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={fullTitle} />
             <meta name="twitter:description" content={description} />
-            <meta name="twitter:image" content={ogImage} />
+            <meta name="twitter:image" content={resolvedOgImage} />
 
             {/* Données structurées */}
             {jsonLd?.map((block, i) => (

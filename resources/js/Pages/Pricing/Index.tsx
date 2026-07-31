@@ -9,6 +9,7 @@ import { copy, faqsByLocale } from '@/types/data';
 import { buildPlanViews } from '@/utils/planViews';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
 import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
+import { breadcrumbSchema, faqSchema } from '@/utils/seoSchemas';
 
 interface Props extends PageProps {
     subscriptionPlans: SubscriptionPlan[];
@@ -16,7 +17,7 @@ interface Props extends PageProps {
     localeLinks: Record<Locale, string>;
 }
 
-export default function PricingIndex({ auth, subscriptionPlans, locale, localeLinks }: Props) {
+export default function PricingIndex({ auth, appUrl, subscriptionPlans, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const t = copy[locale];
     const isFr = locale === 'fr';
@@ -58,21 +59,29 @@ export default function PricingIndex({ auth, subscriptionPlans, locale, localeLi
               }))
         : [];
 
-    const jsonLd = offers.length
-        ? [
-              {
-                  '@context': 'https://schema.org',
-                  '@type': 'SoftwareApplication',
-                  name: 'BATIX PRO',
-                  applicationCategory: 'BusinessApplication',
-                  operatingSystem: 'Web',
-                  description,
-                  url: localeLinks[locale],
-                  inLanguage: isFr ? 'fr-FR' : 'en-US',
-                  offers,
-              },
-          ]
-        : undefined;
+    // Le fil d'Ariane ne dépend pas des offres : il est émis même quand aucun plan
+    // payant n'est actif, alors que SoftwareApplication, lui, ne l'est qu'avec des
+    // prix réels à annoncer.
+    const jsonLd: Record<string, unknown>[] = [
+        faqSchema(faqs),
+        breadcrumbSchema(appUrl, [
+            { name: isFr ? 'Tarifs' : 'Pricing', item: localeLinks[locale] },
+        ]),
+    ];
+
+    if (offers.length) {
+        jsonLd.unshift({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'BATIX PRO',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description,
+            url: localeLinks[locale],
+            inLanguage: isFr ? 'fr-FR' : 'en-US',
+            offers,
+        });
+    }
 
     return (
         <>

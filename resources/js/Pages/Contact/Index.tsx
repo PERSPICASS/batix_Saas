@@ -5,13 +5,14 @@ import { PageProps } from '@/types';
 import type { Locale } from '@/types/types';
 import { copy } from '@/types/data';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import { breadcrumbSchema, webPageSchema } from '@/utils/seoSchemas';
 
 interface Props extends PageProps {
     locale: Locale;
     localeLinks: Record<Locale, string>;
 }
 
-export default function ContactIndex({ auth, locale, localeLinks }: Props) {
+export default function ContactIndex({ auth, appUrl, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const t = copy[locale];
     const isFr = locale === 'fr';
@@ -32,6 +33,20 @@ export default function ContactIndex({ auth, locale, localeLinks }: Props) {
                     { locale: 'fr', href: localeLinks.fr },
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
+                ]}
+                jsonLd={[
+                    {
+                        ...webPageSchema(appUrl, {
+                            type: 'ContactPage',
+                            name: 'Contact',
+                            description,
+                            url: localeLinks[locale],
+                            locale,
+                        }),
+                        // Le contactPoint reste déclaré une seule fois, sur l'accueil.
+                        mainEntity: { '@id': `${appUrl}/#organization` },
+                    },
+                    breadcrumbSchema(appUrl, [{ name: 'Contact', item: localeLinks[locale] }]),
                 ]}
             />
 

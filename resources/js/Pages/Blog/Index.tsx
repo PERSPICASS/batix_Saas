@@ -4,6 +4,7 @@ import { SeoHead } from '@/Components/SeoHead';
 import { PageProps } from '@/types';
 import type { Locale } from '@/types/types';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import { breadcrumbSchema } from '@/utils/seoSchemas';
 import { Calendar, User, Tag, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 
@@ -64,14 +65,7 @@ export default function BlogIndex({ auth, appUrl, posts, locale, localeLinks }: 
         })),
     };
 
-    const breadcrumbSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'BATIX PRO', item: appUrl },
-            { '@type': 'ListItem', position: 2, name: 'Blog', item: canonicalUrl },
-        ],
-    };
+    const breadcrumb = breadcrumbSchema(appUrl, [{ name: 'Blog', item: canonicalUrl }]);
 
     return (
         <>
@@ -85,7 +79,7 @@ export default function BlogIndex({ auth, appUrl, posts, locale, localeLinks }: 
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
                 ]}
-                jsonLd={[blogSchema, breadcrumbSchema]}
+                jsonLd={[blogSchema, breadcrumb]}
             />
 
             <PublicLayout

@@ -3,6 +3,7 @@ import PublicLayout from '@/Layouts/PublicLayout';
 import type { Locale } from '@/types/types';
 import { PageProps } from '@/types';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import { breadcrumbSchema } from '@/utils/seoSchemas';
 import { Calendar, User, Tag, ArrowLeft } from 'lucide-react';
 
 interface Post {
@@ -55,16 +56,10 @@ export default function BlogShow({ auth, post, appUrl, locale, localeLinks }: Pr
         ...(post.category ? { articleSection: post.category } : {}),
     };
 
-    // Fil d'Ariane : Google le rend à la place de l'URL nue sous le titre.
-    const breadcrumbSchema = {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'BATIX PRO', item: appUrl },
-            { '@type': 'ListItem', position: 2, name: 'Blog', item: locale === 'fr' ? `${appUrl}/blog` : `${appUrl}/en/blog` },
-            { '@type': 'ListItem', position: 3, name: postTitle, item: canonicalUrl },
-        ],
-    };
+    const breadcrumb = breadcrumbSchema(appUrl, [
+        { name: 'Blog', item: locale === 'fr' ? `${appUrl}/blog` : `${appUrl}/en/blog` },
+        { name: postTitle, item: canonicalUrl },
+    ]);
 
     return (
         <>
@@ -82,7 +77,7 @@ export default function BlogShow({ auth, post, appUrl, locale, localeLinks }: Pr
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
                 ]}
-                jsonLd={[articleSchema, breadcrumbSchema]}
+                jsonLd={[articleSchema, breadcrumb]}
             />
 
             <PublicLayout

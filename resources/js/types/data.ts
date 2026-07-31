@@ -171,7 +171,7 @@ export const copy = {
         seo: {
             description: 'BATIX PRO is the hardware store management software built for real field teams. Sales, stock, supplier purchases and real-time reports. Free 14-day trial, no credit card required.',
             keywords: 'hardware store software, inventory management, POS hardware store, store management software, BATIX PRO, SaaS hardware, multi-store management',
-            ogImage: '/og-image.jpg',
+            ogImage: '/og-image-en.jpg',
         },
         nav: {
             demo: 'Demo',

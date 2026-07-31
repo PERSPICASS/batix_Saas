@@ -12,13 +12,14 @@ import { useDashboardUrl } from '@/hooks/useDashboardUrl';
 import FaqSection from '@/Components/Welcome/FaqSection';
 import { useMemo } from 'react';
 import FinalCtaSection from '@/Components/Welcome/FinalCtaSection';
+import { breadcrumbSchema, faqSchema, itemListSchema, webPageSchema } from '@/utils/seoSchemas';
 
 interface Props extends PageProps {
     locale: Locale;
     localeLinks: Record<Locale, string>;
 }
 
-export default function FeaturesIndex({ auth, locale, localeLinks }: Props) {
+export default function FeaturesIndex({ auth, appUrl, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const isFr = locale === 'fr';
     const t = copy[locale];
@@ -42,6 +43,30 @@ export default function FeaturesIndex({ auth, locale, localeLinks }: Props) {
                     { locale: 'fr', href: localeLinks.fr },
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
+                ]}
+                jsonLd={[
+                    webPageSchema(appUrl, {
+                        type: 'CollectionPage',
+                        name: isFr ? 'Fonctionnalités' : 'Features',
+                        description,
+                        url: localeLinks[locale],
+                        locale,
+                    }),
+                    itemListSchema(
+                        featurePages.map((page) => ({
+                            name: page.title[locale],
+                            url: isFr
+                                ? route('features.show', page.slug)
+                                : route('en.features.show', page.slug),
+                            description: page.description[locale],
+                        })),
+                    ),
+                    // La FAQ est bien rendue plus bas par <FaqSection> : c'est ce qui
+                    // rend ce bloc légitime aux yeux de Google.
+                    faqSchema(faqs),
+                    breadcrumbSchema(appUrl, [
+                        { name: isFr ? 'Fonctionnalités' : 'Features', item: localeLinks[locale] },
+                    ]),
                 ]}
             />
 

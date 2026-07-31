@@ -9,13 +9,14 @@ import type { Locale } from '@/types/types';
 import { copy, fadeUp, stagger } from '@/types/data';
 import { subprocessors } from '@/i18n/subprocessors';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import { breadcrumbSchema, webPageSchema } from '@/utils/seoSchemas';
 
 interface Props extends PageProps {
     locale: Locale;
     localeLinks: Record<Locale, string>;
 }
 
-export default function SubprocessorsIndex({ auth, locale, localeLinks }: Props) {
+export default function SubprocessorsIndex({ auth, appUrl, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const t = copy[locale];
     const isFr = locale === 'fr';
@@ -38,6 +39,15 @@ export default function SubprocessorsIndex({ auth, locale, localeLinks }: Props)
                     { locale: 'fr', href: localeLinks.fr },
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
+                ]}
+                jsonLd={[
+                    webPageSchema(appUrl, {
+                        name: title,
+                        description,
+                        url: localeLinks[locale],
+                        locale,
+                    }),
+                    breadcrumbSchema(appUrl, [{ name: title, item: localeLinks[locale] }]),
                 ]}
             />
 

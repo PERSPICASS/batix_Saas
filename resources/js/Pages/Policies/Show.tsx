@@ -9,6 +9,7 @@ import type { Locale } from '@/types/types';
 import { copy, fadeUp, stagger } from '@/types/data';
 import { policies } from '@/i18n/policies';
 import { useDashboardUrl } from '@/hooks/useDashboardUrl';
+import { breadcrumbSchema, webPageSchema } from '@/utils/seoSchemas';
 
 type PolicyType = 'terms' | 'privacy' | 'refund';
 
@@ -30,7 +31,7 @@ const policyKeys: Record<PolicyType, keyof (typeof policies)['en']> = {
     refund: 'refundPolicy',
 };
 
-export default function PolicyShow({ auth, policyType, locale, localeLinks }: Props) {
+export default function PolicyShow({ auth, appUrl, policyType, locale, localeLinks }: Props) {
     const getDashboardUrl = useDashboardUrl(auth);
     const isFr = locale === 'fr';
     const t = copy[locale];
@@ -41,17 +42,33 @@ export default function PolicyShow({ auth, policyType, locale, localeLinks }: Pr
     const otherPolicies = (['terms', 'privacy', 'refund'] as PolicyType[]).filter((type) => type !== policyType);
     const otherPolicyLabels = t.policies;
 
+    // La description reprenait le titre à l'identique, ce qui ne dit rien de plus
+    // que le titre déjà affiché juste au-dessus dans le résultat de recherche.
+    // L'introduction du document est le vrai résumé de la page.
+    const description = policy.sections.introduction.content.slice(0, 300);
+
     return (
         <>
             <SeoHead
                 title={policy.title}
-                description={policy.title}
+                description={description}
                 canonical={localeLinks[locale]}
                 ogLocale={isFr ? 'fr_FR' : 'en_US'}
                 hreflangAlternates={[
                     { locale: 'fr', href: localeLinks.fr },
                     { locale: 'en', href: localeLinks.en },
                     { locale: 'x-default', href: localeLinks.fr },
+                ]}
+                jsonLd={[
+                    webPageSchema(appUrl, {
+                        name: policy.title,
+                        description,
+                        url: localeLinks[locale],
+                        locale,
+                    }),
+                    breadcrumbSchema(appUrl, [
+                        { name: policy.title, item: localeLinks[locale] },
+                    ]),
                 ]}
             />
 

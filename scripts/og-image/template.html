@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=block" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1200px;height:630px;overflow:hidden}
+  body{
+    font-family:'Figtree',system-ui,sans-serif;background:#fff;
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:58px 68px 58px 76px;position:relative;
+  }
+  .edge{position:absolute;left:0;top:0;bottom:0;width:16px;
+        background:linear-gradient(180deg,#B06333,#A0522D 55%,#7E4024)}
+  .halo{position:absolute;right:-220px;top:-260px;width:780px;height:780px;border-radius:50%;
+        background:radial-gradient(circle,#FAF1EC 0%,#FDF8F5 48%,rgba(255,255,255,0) 72%)}
+  /* filigrane : la marque seule, entière, jamais rognée */
+  .mark{position:absolute;right:86px;top:50%;transform:translateY(-50%);height:326px;opacity:.10}
+  .top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between}
+  .logo{height:76px;display:block}
+  .main{position:relative;z-index:2;max-width:860px}
+  h1{font-size:74px;line-height:1.04;font-weight:800;color:#0F172A;letter-spacing:-2.6px}
+  h1 .hl{color:#A0522D}
+  .sub{margin-top:26px;font-size:30px;font-weight:500;color:#475569;letter-spacing:-.35px}
+  .sub b{color:#1E293B;font-weight:700}
+  .foot{position:relative;z-index:2;display:flex;align-items:center;gap:18px}
+  .pill{font-size:24px;font-weight:700;padding:15px 30px;border-radius:999px;letter-spacing:-.2px}
+  .pill.solid{background:#A0522D;color:#fff}
+  .pill.soft{background:#FAF1EC;color:#7E4024}
+  .url{margin-left:auto;font-size:28px;font-weight:800;color:#0F172A;letter-spacing:-.5px}
+  .url span{color:#A0522D}
+</style></head>
+<body>
+  <div class="edge"></div><div class="halo"></div>
+  <img class="mark" src="data:image/png;base64,__MARK__" alt="">
+  <div class="top">
+    <img class="logo" src="data:image/png;base64,__LOGO__" alt="BATIX PRO">
+    
+  </div>
+  <div class="main">
+    <h1>Le logiciel de gestion<br>des <span class="hl">quincailleries</span></h1>
+    <div class="sub">Ventes &middot; Stock &middot; Caisse &middot; <b>Multi-boutiques</b></div>
+  </div>
+  <div class="foot">
+    <div class="pill solid">Essai gratuit 14 jours</div>
+    <div class="pill soft">Sans carte bancaire</div>
+    <div class="url">batixpro<span>.com</span></div>
+  </div>
+</body></html>
