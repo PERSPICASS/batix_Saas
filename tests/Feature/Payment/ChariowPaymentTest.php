@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class ChariowPaymentTest extends TestCase
@@ -228,6 +229,62 @@ class ChariowPaymentTest extends TestCase
                 && $request['phone']['country_code'] === 'CI'
                 && $request['custom_metadata']['ref'] === $checkout->reference;
         });
+    }
+
+    /**
+     * Chariow rejette la demande entière (« The redirect url field must be a valid
+     * URL ») dès que l'hôte n'est pas public. En local on omet le champ plutôt que
+     * d'envoyer une valeur refusée — sinon aucun paiement n'est testable en dev.
+     */
+    public function test_a_non_public_return_url_is_omitted_rather_than_sent(): void
+    {
+        URL::forceRootUrl('http://127.0.0.1:8000');
+        $this->fakeCheckout();
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+
+        $this->actingAs($user)->postJson("/chariow/initiate/{$plan->slug}", [
+            'billing_cycle'      => 'monthly',
+            'first_name'         => 'Awa',
+            'last_name'          => 'Diallo',
+            'phone_number'       => '0700000000',
+            'phone_country_code' => 'CI',
+        ])->assertOk();
+
+        Http::assertSent(fn ($request) => !isset($request['redirect_url']));
+    }
+
+    public function test_a_public_return_url_is_sent(): void
+    {
+        URL::forceRootUrl('https://app.batixpro.com');
+        $this->fakeCheckout();
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+
+        $this->actingAs($user)->postJson("/chariow/initiate/{$plan->slug}", [
+            'billing_cycle'      => 'monthly',
+            'first_name'         => 'Awa',
+            'last_name'          => 'Diallo',
+            'phone_number'       => '0700000000',
+            'phone_country_code' => 'CI',
+        ])->assertOk();
+
+        Http::assertSent(fn ($request) => str_contains($request['redirect_url'] ?? '', 'app.batixpro.com/chariow/return'));
+    }
+
+    private function fakeCheckout(): void
+    {
+        Http::fake([
+            'api.chariow.com/*' => Http::response([
+                'data' => [
+                    'step'     => 'payment',
+                    'purchase' => ['id' => 'sal_new'],
+                    'payment'  => ['checkout_url' => 'https://pay.chariow.com/abc', 'transaction_id' => 'txn_new'],
+                ],
+            ]),
+        ]);
     }
 
     public function test_initiate_refuses_a_plan_that_has_no_chariow_product(): void

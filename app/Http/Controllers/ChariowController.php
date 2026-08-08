@@ -83,7 +83,7 @@ class ChariowController extends Controller
             'currency'             => 'XOF',
         ]);
 
-        $result = $this->chariow->createCheckout([
+        $payload = [
             'product_id'  => $productId,
             'email'       => $user->email,
             'first_name'  => $validated['first_name'],
@@ -93,14 +93,19 @@ class ChariowController extends Controller
                 'country_code' => strtoupper($validated['phone_country_code']),
             ],
             'customer_ip'     => $request->ip(),
-            'redirect_url'    => route('chariow.return', ['ref' => $reference]),
             'custom_metadata' => [
                 'ref'     => $reference,
                 'user_id' => (string) $user->id,
                 'plan_id' => (string) $plan->id,
                 'cycle'   => $validated['billing_cycle'],
             ],
-        ]);
+        ];
+
+        if ($returnUrl = $this->publicReturnUrl($reference)) {
+            $payload['redirect_url'] = $returnUrl;
+        }
+
+        $result = $this->chariow->createCheckout($payload);
 
         if (!$result['ok'] || empty($result['checkout_url'])) {
             $checkout->update([
@@ -139,6 +144,35 @@ class ChariowController extends Controller
             'success'     => true,
             'redirectUrl' => $result['checkout_url'],
         ]);
+    }
+
+    /**
+     * URL de retour, seulement si elle est joignable depuis l'extérieur.
+     *
+     * Chariow valide le champ et rejette la demande entière avec « The redirect url
+     * field must be a valid URL » dès que l'hôte n'est pas public — c'est le cas en
+     * local (127.0.0.1, localhost, *.test). Le champ étant optionnel, on l'omet
+     * plutôt que d'envoyer une valeur qu'on sait refusée : Chariow affiche alors sa
+     * propre page de confirmation. Rien n'est perdu, l'activation vient du webhook,
+     * ce retour n'étant qu'un raccourci quand le client revient avant le Pulse.
+     */
+    private function publicReturnUrl(string $reference): ?string
+    {
+        $url  = route('chariow.return', ['ref' => $reference]);
+        $host = parse_url($url, PHP_URL_HOST) ?: '';
+
+        $isLocal = $host === ''
+            || $host === 'localhost'
+            || filter_var($host, FILTER_VALIDATE_IP) !== false
+            || preg_match('/\.(test|local|localhost|internal)$/i', $host) === 1;
+
+        if ($isLocal) {
+            Log::info('Chariow: redirect_url omise, hôte non public', ['host' => $host]);
+
+            return null;
+        }
+
+        return $url;
     }
 
     /**
