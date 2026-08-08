@@ -310,7 +310,26 @@ class ChariowController extends Controller
         // débloque pas un plan à 15 000 XOF pour un produit affiché à 500. La
         // comparaison n'a de sens qu'à devise égale — si Chariow a converti, c'est
         // son taux qui fait foi et on laisse passer en le signalant.
-        if ($listed !== null && $currency === $checkout->currency && $listed + 0.01 < $expected) {
+        $underpriced = $listed !== null
+            && $currency === $checkout->currency
+            && $listed + 0.01 < $expected;
+
+        // Soupape pour un test à prix réduit sur un vrai paiement. On active quand
+        // même, mais en log d'erreur : l'oubli de remettre le garde-fou remonte alors
+        // dans Sentry à chaque vente, au lieu de passer inaperçu.
+        if ($underpriced && !config('services.chariow.price_guard', true)) {
+            Log::error('Chariow: GARDE-FOU DE PRIX DÉSACTIVÉ — activation forcée sous le prix du plan', [
+                'reference' => $checkout->reference,
+                'listed'    => $listed,
+                'expected'  => $expected,
+                'currency'  => $currency,
+                'action'    => 'remettre CHARIOW_PRICE_GUARD=true',
+            ]);
+
+            $underpriced = false;
+        }
+
+        if ($underpriced) {
             Log::error('Chariow: prix du produit inférieur au prix du plan, activation refusée', [
                 'reference' => $checkout->reference,
                 'listed'    => $listed,
@@ -367,7 +386,14 @@ class ChariowController extends Controller
             $user   = $locked->user;
             $plan   = $locked->plan;
             $months = $locked->billing_cycle === 'yearly' ? 12 : 1;
-            $amount = (float) $locked->amount;
+
+            // Le montant facturé est celui réellement encaissé, pas le prix du plan :
+            // une remise ou un produit de test le fait diverger, et une facture qui
+            // annonce 15 000 pour 1 000 reçus est fausse. Repli sur le prix attendu
+            // si la vente ne porte pas de montant.
+            $amount = isset($locked->metadata['amount']['value'])
+                ? (float) $locked->metadata['amount']['value']
+                : (float) $locked->amount;
 
             Subscription::where('user_id', $user->id)
                 ->where('status', 'active')

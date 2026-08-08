@@ -64,6 +64,9 @@ class PaymentController extends Controller
                 config('services.chariow.webhook_secret', '') === '' ? 'CHARIOW_WEBHOOK_SECRET absent de .env' : null,
                 !$plan->chariow_product_id ? "Produit mensuel non mappé (php artisan chariow:link-products)" : null,
                 !$plan->chariow_product_id_yearly ? 'Produit annuel non mappé' : null,
+                !config('services.chariow.price_guard', true)
+                    ? 'GARDE-FOU DE PRIX DÉSACTIVÉ (CHARIOW_PRICE_GUARD=false)'
+                    : null,
             ])) : null,
             'currentPlan' => $currentSubscription ? [
                 'name' => $currentSubscription->plan->name,

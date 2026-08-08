@@ -194,6 +194,39 @@ class ChariowPaymentTest extends TestCase
         $this->assertSame(1, Subscription::count());
         $this->assertSame('active', Subscription::first()->status);
         $this->assertTrue(ChariowCheckout::first()->subscription_activated);
+
+        // La facture doit refléter l'encaissé, pas le prix affiché du plan.
+        $this->assertEquals(0, (float) Subscription::first()->invoices()->first()->total);
+    }
+
+    /**
+     * Soupape pour tester un vrai paiement sur un produit à prix réduit. Elle active
+     * malgré le prix bas, mais chaque passage part en log d'erreur pour qu'un oubli
+     * de la refermer finisse par se voir.
+     */
+    public function test_the_price_guard_can_be_opened_deliberately_for_a_reduced_price_test(): void
+    {
+        config(['services.chariow.price_guard' => false]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+        $this->checkout($user, $plan);
+
+        $this->postPulse($this->salePayload('BTX-TEST-REF', 1000))->assertOk();
+
+        $this->assertSame(1, Subscription::count());
+        $this->assertEquals(1000, (float) Subscription::first()->invoices()->first()->total);
+    }
+
+    public function test_the_price_guard_is_closed_by_default(): void
+    {
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+        $this->checkout($user, $plan);
+
+        $this->postPulse($this->salePayload('BTX-TEST-REF', 1000))->assertOk();
+
+        $this->assertSame(0, Subscription::count());
     }
 
     public function test_a_sale_made_outside_the_app_is_acknowledged_without_side_effects(): void

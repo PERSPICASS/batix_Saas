@@ -115,6 +115,12 @@ return [
         'api_key'        => env('CHARIOW_API_KEY', ''),
         'webhook_secret' => env('CHARIOW_WEBHOOK_SECRET', ''),
         'base_url'       => env('CHARIOW_BASE_URL', 'https://api.chariow.com/v1'),
+
+        // Garde-fou : refuse d'activer un abonnement quand le produit Chariow est
+        // affiché sous le prix du plan. À ne désactiver que le temps d'un test à
+        // prix réduit — chaque activation passée en force part alors en log d'erreur,
+        // donc dans Sentry, pour qu'un oubli finisse par se voir.
+        'price_guard'    => env('CHARIOW_PRICE_GUARD', true),
     ],
 
     /*
