@@ -47,6 +47,7 @@
         "framer-motion": "^12.34.2",
         "html5-qrcode": "^2.3.8",
         "i18n-iso-countries": "^7.14.0",
+        "libphonenumber-js": "^1.13.10",
         "lucide-react": "^0.574.0",
         "recharts": "^3.7.0",
         "ziggy-js": "^2.6.2"

@@ -7,11 +7,13 @@ import {
     Loader2, ShieldCheck, AlertTriangle, Zap, RefreshCw,
     CheckCircle2, XCircle,
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import LemonSqueezyPayment from '@/Components/LemonSqueezyPayment';
 import PaddlePayment from '@/Components/PaddlePayment';
 import { useLocale } from '@/contexts/LocaleContext';
+import { countryAlpha2 } from '@/i18n/countries';
+import { buildPhoneCountries, normalizePhone } from '@/utils/phone';
 
 import logoWave   from '../../../images/logo-wave.jpg';
 import logoOrange from '../../../images/logo_orange_money.png';
@@ -50,6 +52,8 @@ interface Props extends PageProps {
     chariowCycles?: { monthly: boolean; yearly: boolean };
     /** Ce qui manque pour activer Chariow — renseigné uniquement en debug. */
     chariowSetup?: string[] | null;
+    /** Pays du profil (nom localisé), sert de défaut au sélecteur téléphone. */
+    userCountry?: string | null;
 }
 
 type PaymentMode = 'pawapay' | 'jeko' | 'lemonsqueezy' | 'paddle' | 'chariow' | 'manual';
@@ -106,19 +110,6 @@ const JEKO_METHODS = [
     { id: 'moov',   label: 'Moov Money',    logo: logoMoov   },
 ];
 
-// Chariow attend un code pays ISO 3166-1 alpha-2 pour le téléphone (pas l'indicatif).
-const CHARIOW_COUNTRIES = [
-    { iso: 'CI', name: "Côte d'Ivoire", flag: '🇨🇮', dialCode: '+225' },
-    { iso: 'SN', name: 'Sénégal',       flag: '🇸🇳', dialCode: '+221' },
-    { iso: 'BF', name: 'Burkina Faso',  flag: '🇧🇫', dialCode: '+226' },
-    { iso: 'BJ', name: 'Bénin',         flag: '🇧🇯', dialCode: '+229' },
-    { iso: 'TG', name: 'Togo',          flag: '🇹🇬', dialCode: '+228' },
-    { iso: 'ML', name: 'Mali',          flag: '🇲🇱', dialCode: '+223' },
-    { iso: 'CM', name: 'Cameroun',      flag: '🇨🇲', dialCode: '+237' },
-    { iso: 'GN', name: 'Guinée',        flag: '🇬🇳', dialCode: '+224' },
-    { iso: 'FR', name: 'France',        flag: '🇫🇷', dialCode: '+33'  },
-];
-
 // Manual fallback methods (Wave manual + virement) — "wave" has no fixed label, it's translated at render time
 const MANUAL_METHODS = [
     { id: 'wave',         label: null as string | null, logo: logoWave   },
@@ -142,8 +133,9 @@ function getCsrfToken(): string {
 export default function Checkout({
     plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth,
     chariowEnabled = false, chariowCycles = { monthly: false, yearly: false }, chariowSetup = null,
+    userCountry = null,
 }: Props) {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [paymentMode, setPaymentMode] = useState<PaymentMode>('paddle');
 
@@ -152,8 +144,29 @@ export default function Checkout({
     // premier espace, l'utilisateur corrige si besoin.
     const [chariowFirstName, setChariowFirstName] = useState(() => (auth?.user?.name ?? '').split(' ')[0] ?? '');
     const [chariowLastName, setChariowLastName] = useState(() => (auth?.user?.name ?? '').split(' ').slice(1).join(' '));
-    const [chariowCountry, setChariowCountry] = useState(CHARIOW_COUNTRIES[0]);
+    const phoneCountries = useMemo(() => buildPhoneCountries(locale), [locale]);
+
+    // Le pays du profil sert de défaut : présélectionner un pays fixe ferait envoyer
+    // un country_code faux pour tout client qui ne pense pas à toucher au sélecteur.
+    const [chariowCountryIso, setChariowCountryIso] = useState(
+        () => countryAlpha2(userCountry, locale) ?? 'CI'
+    );
     const [chariowPhone, setChariowPhone] = useState('');
+
+    const chariowCountry = phoneCountries.find(c => c.iso === chariowCountryIso) ?? phoneCountries[0];
+
+    /**
+     * Numéro tel que Chariow l'attend : les chiffres nationaux, sans indicatif ni
+     * préfixe d'appel national. C'est libphonenumber qui décide de ce préfixe pays
+     * par pays — le 0 de 0612345678 saute en France, celui de 0700000000 reste en
+     * Côte d'Ivoire. Un retrait uniforme casserait l'un ou l'autre.
+     */
+    const chariowParsedPhone = useMemo(
+        () => normalizePhone(chariowPhone, chariowCountryIso),
+        [chariowPhone, chariowCountryIso]
+    );
+
+    const chariowPhoneValid = chariowParsedPhone?.valid ?? false;
     const [chariowStatus, setChariowStatus] = useState<ChariowStatus>('idle');
     const [chariowError, setChariowError] = useState('');
     const [chariowInitiating, setChariowInitiating] = useState(false);
@@ -361,7 +374,7 @@ export default function Checkout({
 
     const handleChariowSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!chariowFirstName.trim() || !chariowLastName.trim() || !chariowPhone.trim()) return;
+        if (!chariowFirstName.trim() || !chariowLastName.trim() || !chariowPhoneValid || !chariowParsedPhone) return;
 
         setChariowInitiating(true);
         setChariowError('');
@@ -371,8 +384,8 @@ export default function Checkout({
                 billing_cycle:      billingCycle,
                 first_name:         chariowFirstName.trim(),
                 last_name:          chariowLastName.trim(),
-                phone_number:       chariowPhone.replace(/\D/g, ''),
-                phone_country_code: chariowCountry.iso,
+                phone_number:       chariowParsedPhone.nationalNumber,
+                phone_country_code: chariowParsedPhone.country,
             }, {
                 headers: {
                     'X-CSRF-TOKEN': getCsrfToken(),
@@ -689,32 +702,45 @@ export default function Checkout({
                                             <div className="flex gap-2">
                                                 <select
                                                     aria-label="Pays"
-                                                    value={chariowCountry.iso}
-                                                    onChange={e => setChariowCountry(
-                                                        CHARIOW_COUNTRIES.find(c => c.iso === e.target.value) ?? CHARIOW_COUNTRIES[0]
-                                                    )}
-                                                    className="rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                                    value={chariowCountryIso}
+                                                    onChange={e => setChariowCountryIso(e.target.value)}
+                                                    className="max-w-[11rem] rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
                                                 >
-                                                    {CHARIOW_COUNTRIES.map(c => (
-                                                        <option key={c.iso} value={c.iso}>{c.flag} {c.dialCode}</option>
+                                                    {phoneCountries.map(c => (
+                                                        <option key={c.iso} value={c.iso}>
+                                                            {c.name} ({c.dialCode})
+                                                        </option>
                                                     ))}
                                                 </select>
                                                 <input
                                                     id="chariow-phone"
                                                     type="tel"
-                                                    inputMode="numeric"
+                                                    inputMode="tel"
                                                     value={chariowPhone}
                                                     onChange={e => setChariowPhone(e.target.value)}
-                                                    placeholder="0700000000"
+                                                    placeholder={chariowCountry?.dialCode}
+                                                    aria-invalid={chariowPhone.trim() !== '' && !chariowPhoneValid}
                                                     required
                                                     className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
                                                 />
                                             </div>
+
+                                            {chariowPhone.trim() !== '' && !chariowPhoneValid && (
+                                                <p className="text-xs text-red-400">
+                                                    Ce numéro ne correspond pas à un numéro {chariowCountry?.name} valide.
+                                                </p>
+                                            )}
+
+                                            {chariowPhoneValid && (
+                                                <p className="text-xs text-slate-500">
+                                                    Sera transmis comme {chariowParsedPhone?.international}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <button
                                             type="submit"
-                                            disabled={chariowInitiating || !chariowFirstName.trim() || !chariowLastName.trim() || !chariowPhone.trim()}
+                                            disabled={chariowInitiating || !chariowFirstName.trim() || !chariowLastName.trim() || !chariowPhoneValid}
                                             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {chariowInitiating ? (

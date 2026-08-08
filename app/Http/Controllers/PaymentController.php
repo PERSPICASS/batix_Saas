@@ -58,6 +58,7 @@ class PaymentController extends Controller
                 'monthly' => (bool) $plan->chariow_product_id,
                 'yearly'  => (bool) $plan->chariow_product_id_yearly,
             ],
+            'userCountry'  => $user->country,
             'chariowSetup' => config('app.debug') ? array_values(array_filter([
                 config('services.chariow.api_key', '') === '' ? 'CHARIOW_API_KEY absent de .env' : null,
                 config('services.chariow.webhook_secret', '') === '' ? 'CHARIOW_WEBHOOK_SECRET absent de .env' : null,
