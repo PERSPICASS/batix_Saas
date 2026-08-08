@@ -48,6 +48,8 @@ interface Props extends PageProps {
     isSandbox: boolean;
     chariowEnabled?: boolean;
     chariowCycles?: { monthly: boolean; yearly: boolean };
+    /** Ce qui manque pour activer Chariow — renseigné uniquement en debug. */
+    chariowSetup?: string[] | null;
 }
 
 type PaymentMode = 'pawapay' | 'jeko' | 'lemonsqueezy' | 'paddle' | 'chariow' | 'manual';
@@ -139,7 +141,7 @@ function getCsrfToken(): string {
 
 export default function Checkout({
     plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth,
-    chariowEnabled = false, chariowCycles = { monthly: false, yearly: false },
+    chariowEnabled = false, chariowCycles = { monthly: false, yearly: false }, chariowSetup = null,
 }: Props) {
     const { t } = useLocale();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -549,7 +551,7 @@ export default function Checkout({
                         {/* ── Sélection du mode de paiement ── */}
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
                             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.plans.checkout.paymentModeLabel}</p>
-                            <div className={`grid gap-3 ${chariowEnabled ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'}`}>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                                 <button
                                     type="button"
                                     onClick={() => setPaymentMode('paddle')}
@@ -562,20 +564,18 @@ export default function Checkout({
                                     <CreditCard className="inline size-4 mr-2" />
                                     {t.plans.checkout.paddleCard}
                                 </button>
-                                {chariowEnabled && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setPaymentMode('chariow')}
-                                        className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                                            paymentMode === 'chariow'
-                                                ? 'border-amber-300 bg-amber-300/10 text-amber-200'
-                                                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                                        }`}
-                                    >
-                                        <Smartphone className="inline size-4 mr-2" />
-                                        Mobile Money
-                                    </button>
-                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setPaymentMode('chariow')}
+                                    className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                        paymentMode === 'chariow'
+                                            ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                            : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <Smartphone className="inline size-4 mr-2" />
+                                    Mobile Money
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => setPaymentMode('manual')}
@@ -604,7 +604,29 @@ export default function Checkout({
                                     Paiement Mobile Money
                                 </h3>
 
-                                {!chariowCycleAvailable && (
+                                {!chariowEnabled && (
+                                    <div className="space-y-3">
+                                        <div className="flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200">
+                                            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                                            <span>
+                                                Le paiement par Mobile Money arrive très bientôt. En attendant,
+                                                utilisez la carte bancaire ou le paiement manuel.
+                                            </span>
+                                        </div>
+
+                                        {/* Diagnostic de configuration — présent uniquement en debug. */}
+                                        {chariowSetup && chariowSetup.length > 0 && (
+                                            <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-slate-400">
+                                                <p className="mb-2 font-semibold text-slate-300">Configuration Chariow incomplète :</p>
+                                                <ul className="list-disc space-y-1 pl-4">
+                                                    {chariowSetup.map(item => <li key={item}>{item}</li>)}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {chariowEnabled && !chariowCycleAvailable && (
                                     <div className="flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200">
                                         <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                                         Le paiement mobile n'est pas encore disponible pour la facturation
@@ -628,7 +650,7 @@ export default function Checkout({
                                     </div>
                                 )}
 
-                                {chariowStatus === 'idle' && chariowCycleAvailable && (
+                                {chariowStatus === 'idle' && chariowEnabled && chariowCycleAvailable && (
                                     <form onSubmit={handleChariowSubmit} className="space-y-5">
                                         <div className="rounded-xl border border-blue-400/20 bg-blue-400/10 p-3 text-xs text-blue-200">
                                             Payez avec Wave, Orange Money, MTN, Moov ou par carte. Vous choisirez

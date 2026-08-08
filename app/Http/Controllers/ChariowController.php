@@ -108,11 +108,21 @@ class ChariowController extends Controller
                 'metadata' => $result['raw'] ?? null,
             ]);
 
-            // `already_purchased` : Chariow bloque un second achat du même produit par
-            // le même email. Sans ce message explicite, l'utilisateur voit une erreur
-            // générique alors que son problème est concret et actionnable.
+            // `already_purchased` signale presque toujours une erreur de configuration,
+            // pas une erreur de l'utilisateur : Chariow ne bloque le rachat que pour les
+            // types Downloadable / Course / Bundle. Un plan d'abonnement doit être créé
+            // en type « License », le seul qui autorise les achats répétés — sinon tout
+            // renouvellement est refusé, un mois après la mise en service.
+            if (($result['step'] ?? null) === 'already_purchased') {
+                Log::error('Chariow: rachat refusé — le produit n\'est probablement pas de type License', [
+                    'plan'       => $plan->slug,
+                    'product_id' => $productId,
+                    'user_id'    => $user->id,
+                ]);
+            }
+
             $message = ($result['step'] ?? null) === 'already_purchased'
-                ? "Cet email a déjà acheté ce plan sur Chariow. Contactez le support pour le renouveler."
+                ? "Ce plan ne peut pas être racheté avec cet email. Notre équipe a été prévenue — contactez le support."
                 : ($result['message'] ?? "Échec de l'ouverture du paiement. Veuillez réessayer.");
 
             return response()->json(['success' => false, 'message' => $message], 422);

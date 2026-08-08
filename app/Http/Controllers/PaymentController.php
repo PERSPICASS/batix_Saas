@@ -48,14 +48,22 @@ class PaymentController extends Controller
             ],
             'currency'  => $currency,
             'isSandbox' => (bool) config('services.pawapay.sandbox', true),
-            // Chariow n'est proposé que si la clé API est posée ET que le plan est
-            // mappé sur un produit Chariow — sinon le bouton mènerait à un 422.
+            // Le bouton Mobile Money est toujours visible ; c'est `chariowEnabled` qui
+            // décide si le formulaire s'ouvre ou si l'on affiche « bientôt disponible ».
+            // Le détail de ce qui manque ne sort qu'en debug : en production, un client
+            // n'a pas à lire notre configuration.
             'chariowEnabled' => config('services.chariow.api_key', '') !== ''
                 && ($plan->chariow_product_id || $plan->chariow_product_id_yearly),
             'chariowCycles' => [
                 'monthly' => (bool) $plan->chariow_product_id,
                 'yearly'  => (bool) $plan->chariow_product_id_yearly,
             ],
+            'chariowSetup' => config('app.debug') ? array_values(array_filter([
+                config('services.chariow.api_key', '') === '' ? 'CHARIOW_API_KEY absent de .env' : null,
+                config('services.chariow.webhook_secret', '') === '' ? 'CHARIOW_WEBHOOK_SECRET absent de .env' : null,
+                !$plan->chariow_product_id ? "Produit mensuel non mappé (php artisan chariow:link-products)" : null,
+                !$plan->chariow_product_id_yearly ? 'Produit annuel non mappé' : null,
+            ])) : null,
             'currentPlan' => $currentSubscription ? [
                 'name' => $currentSubscription->plan->name,
                 'slug' => $currentSubscription->plan->slug,

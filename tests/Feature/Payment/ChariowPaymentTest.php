@@ -267,6 +267,41 @@ class ChariowPaymentTest extends TestCase
         Http::assertNothingSent();
     }
 
+    /**
+     * Le bouton Mobile Money est toujours rendu, mais le formulaire ne s'ouvre que si
+     * `chariowEnabled` est vrai. C'est ce contrat de props que garde ce test : sans
+     * lui, un plan non mappé rouvrirait le formulaire et mènerait à un 422.
+     */
+    public function test_the_checkout_page_reports_chariow_as_not_ready_when_unconfigured(): void
+    {
+        config(['services.chariow.api_key' => '']);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan(['chariow_product_id' => null, 'chariow_product_id_yearly' => null]);
+
+        $this->actingAs($user)
+            ->get("/plans/{$plan->slug}/checkout")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('chariowEnabled', false)
+                ->where('chariowCycles.monthly', false)
+                ->where('chariowCycles.yearly', false));
+    }
+
+    public function test_the_checkout_page_reports_chariow_as_ready_once_mapped(): void
+    {
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan(['chariow_product_id_yearly' => null]);
+
+        $this->actingAs($user)
+            ->get("/plans/{$plan->slug}/checkout")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('chariowEnabled', true)
+                ->where('chariowCycles.monthly', true)
+                ->where('chariowCycles.yearly', false));
+    }
+
     public function test_the_return_page_does_not_expose_another_users_payment(): void
     {
         Http::fake();
