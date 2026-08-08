@@ -23,9 +23,14 @@ class ChariowPaymentTest extends TestCase
         parent::setUp();
 
         Mail::fake();
+
+        // Valeurs épinglées, y compris le garde-fou : sans ça les tests suivaient le
+        // `.env` local et un CHARIOW_PRICE_GUARD=false posé le temps d'un essai
+        // faisait passer au vert des tests censés vérifier un refus.
         config([
             'services.chariow.api_key'        => 'sk_test_key',
             'services.chariow.webhook_secret' => self::SECRET,
+            'services.chariow.price_guard'    => true,
         ]);
     }
 
@@ -71,15 +76,37 @@ class ChariowPaymentTest extends TestCase
         ], JSON_THROW_ON_ERROR);
     }
 
-    private function postPulse(string $body, ?string $signature = null, string $deliveryId = 'dlv_1')
-    {
+    private function postPulse(
+        string $body,
+        ?string $signature = null,
+        string $deliveryId = 'dlv_1',
+        string $event = 'successful.sale'
+    ) {
         return $this->call('POST', '/chariow/webhook', [], [], [], [
             'HTTP_X_CHARIOW_SIGNATURE' => $signature ?? 'sha256=' . hash_hmac('sha256', $body, self::SECRET),
             'HTTP_X_PULSE_DELIVERY_ID' => $deliveryId,
-            'HTTP_X_PULSE_EVENT'       => 'successful.sale',
+            'HTTP_X_PULSE_EVENT'       => $event,
             'CONTENT_TYPE'             => 'application/json',
             'HTTP_ACCEPT'              => 'application/json',
         ], $body);
+    }
+
+    /**
+     * Chariow nomme le déclencheur `successful_sale` dans la configuration du Pulse et
+     * `successful.sale` dans la documentation du payload. Ne reconnaître qu'une forme
+     * ferait répondre 200 sans rien activer — un paiement encaissé, aucun service rendu,
+     * et pas la moindre erreur pour le signaler.
+     */
+    public function test_the_underscored_event_name_activates_just_like_the_dotted_one(): void
+    {
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+        $this->checkout($user, $plan);
+
+        $this->postPulse($this->salePayload('BTX-TEST-REF'), event: 'successful_sale')->assertOk();
+
+        $this->assertSame(1, Subscription::count());
+        $this->assertSame('active', Subscription::first()->status);
     }
 
     public function test_a_valid_pulse_activates_the_subscription_and_issues_a_paid_invoice(): void

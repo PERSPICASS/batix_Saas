@@ -286,11 +286,17 @@ class ChariowController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        match ($event) {
+        // Chariow nomme le déclencheur `successful_sale` dans la configuration du Pulse
+        // et `successful.sale` dans la documentation du payload. On accepte les deux
+        // plutôt que de parier sur l'un : se tromper de séparateur ferait répondre 200
+        // en n'activant rien, soit exactement le silence qu'on cherche à éviter.
+        $normalizedEvent = str_replace('_', '.', (string) $event);
+
+        match ($normalizedEvent) {
             'successful.sale' => $this->markCompleted($checkout, $payload['sale'] ?? []),
             'failed.sale'     => $checkout->update(['status' => 'failed', 'metadata' => $payload, 'completed_at' => now()]),
             'abandoned.sale'  => $checkout->update(['status' => 'abandoned', 'metadata' => $payload]),
-            default           => null,
+            default           => Log::warning('Chariow: événement de Pulse non traité', ['event' => $event]),
         };
 
         return response()->json(['ok' => true]);
