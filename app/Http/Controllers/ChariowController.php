@@ -107,7 +107,11 @@ class ChariowController extends Controller
 
         $result = $this->chariow->createCheckout($payload);
 
-        if (!$result['ok'] || empty($result['checkout_url'])) {
+        // Vente finalisée sans page de paiement : panier à zéro après remise. Il n'y a
+        // alors pas d'URL Chariow, et en exiger une ferait passer un succès pour un échec.
+        $isCompleted = ($result['step'] ?? null) === 'completed';
+
+        if (!$result['ok'] || (!$isCompleted && empty($result['checkout_url']))) {
             $checkout->update([
                 'status'   => 'failed',
                 'metadata' => $result['raw'] ?? null,
@@ -140,9 +144,13 @@ class ChariowController extends Controller
             'metadata'       => $result['raw'] ?? null,
         ]);
 
+        // Sans page de paiement, on renvoie le client sur notre propre page de retour :
+        // elle relit la vente et active l'abonnement, exactement comme le fera le Pulse.
         return response()->json([
             'success'     => true,
-            'redirectUrl' => $result['checkout_url'],
+            'redirectUrl' => $isCompleted
+                ? route('chariow.return', ['ref' => $reference])
+                : $result['checkout_url'],
         ]);
     }
 
@@ -288,13 +296,24 @@ class ChariowController extends Controller
         $currency = $sale['amount']['currency'] ?? null;
         $expected = (float) $checkout->amount;
 
+        // On compare le prix CATALOGUE, pas le montant encaissé : une remise
+        // légitime (code promo, offre de lancement) fait tomber `amount` sous le prix
+        // du plan sans que le produit soit mal configuré. Comparer l'encaissé ferait
+        // refuser l'activation de tout client ayant utilisé un code promo — et un
+        // code à 100 % est justement le seul moyen de tester la chaîne complète,
+        // Chariow n'ayant pas de sandbox.
+        $listed = isset($sale['original_amount']['value'])
+            ? (float) $sale['original_amount']['value']
+            : $paid;
+
         // Garde-fou sur un produit Chariow mal tarifé côté tableau de bord : on ne
-        // débloque pas un plan à 15 000 XOF pour une vente encaissée à 500. La
+        // débloque pas un plan à 15 000 XOF pour un produit affiché à 500. La
         // comparaison n'a de sens qu'à devise égale — si Chariow a converti, c'est
         // son taux qui fait foi et on laisse passer en le signalant.
-        if ($paid !== null && $currency === $checkout->currency && $paid + 0.01 < $expected) {
-            Log::error('Chariow: montant encaissé inférieur au prix du plan, activation refusée', [
+        if ($listed !== null && $currency === $checkout->currency && $listed + 0.01 < $expected) {
+            Log::error('Chariow: prix du produit inférieur au prix du plan, activation refusée', [
                 'reference' => $checkout->reference,
+                'listed'    => $listed,
                 'paid'      => $paid,
                 'expected'  => $expected,
                 'currency'  => $currency,

@@ -53,14 +53,19 @@ class ChariowPaymentTest extends TestCase
         ], $attributes));
     }
 
-    private function salePayload(string $reference, float $amount = 15000, string $currency = 'XOF'): string
-    {
+    private function salePayload(
+        string $reference,
+        float $amount = 15000,
+        string $currency = 'XOF',
+        ?float $listed = null
+    ): string {
         return json_encode([
             'event' => 'successful.sale',
             'sale'  => [
                 'id'              => 'sal_123',
                 'status'          => 'completed',
                 'amount'          => ['value' => $amount, 'currency' => $currency],
+                'original_amount' => ['value' => $listed ?? $amount, 'currency' => $currency],
                 'custom_metadata' => ['ref' => $reference],
             ],
         ], JSON_THROW_ON_ERROR);
@@ -160,7 +165,8 @@ class ChariowPaymentTest extends TestCase
         $plan = $this->plan();
         $this->checkout($user, $plan);
 
-        // Produit Chariow mal tarifé : 500 XOF encaissés pour un plan à 15 000.
+        // Produit Chariow mal tarifé : affiché ET encaissé à 500 pour un plan à 15 000.
+        // Pas de remise en jeu, donc c'est bien une erreur de configuration.
         $this->postPulse($this->salePayload('BTX-TEST-REF', 500))->assertOk();
 
         $this->assertSame(0, Subscription::count());
@@ -168,6 +174,26 @@ class ChariowPaymentTest extends TestCase
         $checkout = ChariowCheckout::first();
         $this->assertFalse($checkout->subscription_activated);
         $this->assertSame('completed', $checkout->status);
+    }
+
+    /**
+     * Le garde-fou porte sur le prix catalogue, pas sur l'encaissé : une remise
+     * légitime doit activer normalement. Sans ça, tout client muni d'un code promo
+     * paierait sans jamais recevoir son abonnement — et la seule façon de tester la
+     * chaîne complète sans argent réel (un code à 100 %) serait bloquée.
+     */
+    public function test_a_discounted_sale_still_activates_the_subscription(): void
+    {
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+        $this->checkout($user, $plan);
+
+        // Encaissé 0, prix catalogue 15 000 : code promo à 100 %.
+        $this->postPulse($this->salePayload('BTX-TEST-REF', 0, 'XOF', 15000))->assertOk();
+
+        $this->assertSame(1, Subscription::count());
+        $this->assertSame('active', Subscription::first()->status);
+        $this->assertTrue(ChariowCheckout::first()->subscription_activated);
     }
 
     public function test_a_sale_made_outside_the_app_is_acknowledged_without_side_effects(): void
@@ -272,6 +298,66 @@ class ChariowPaymentTest extends TestCase
         ])->assertOk();
 
         Http::assertSent(fn ($request) => str_contains($request['redirect_url'] ?? '', 'app.batixpro.com/chariow/return'));
+    }
+
+    /**
+     * Un code promo à 100 % ramène le panier à zéro : Chariow finalise la vente sans
+     * page de paiement et ne renvoie aucune URL. Exiger `step: payment` faisait passer
+     * ce succès pour un échec — et c'est aussi le seul moyen de tester la chaîne
+     * complète sans argent réel, Chariow n'ayant pas de sandbox.
+     */
+    public function test_a_sale_completed_without_a_payment_page_is_treated_as_a_success(): void
+    {
+        Http::fake([
+            'api.chariow.com/*' => Http::response([
+                'data' => [
+                    'step'     => 'completed',
+                    'purchase' => ['id' => 'sal_free', 'status' => 'completed'],
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+
+        $response = $this->actingAs($user)->postJson("/chariow/initiate/{$plan->slug}", [
+            'billing_cycle'      => 'monthly',
+            'first_name'         => 'Awa',
+            'last_name'          => 'Diallo',
+            'phone_number'       => '0700000000',
+            'phone_country_code' => 'CI',
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+
+        $checkout = ChariowCheckout::first();
+        $this->assertNotNull($checkout);
+        $this->assertSame('sal_free', $checkout->sale_id);
+        // Le client repart vers notre page de retour, pas vers une URL Chariow absente.
+        $this->assertStringContainsString(
+            "/chariow/return?ref={$checkout->reference}",
+            $response->json('redirectUrl')
+        );
+    }
+
+    public function test_an_already_purchased_response_is_still_a_failure(): void
+    {
+        Http::fake([
+            'api.chariow.com/*' => Http::response(['data' => ['step' => 'already_purchased']]),
+        ]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+
+        $this->actingAs($user)->postJson("/chariow/initiate/{$plan->slug}", [
+            'billing_cycle'      => 'monthly',
+            'first_name'         => 'Awa',
+            'last_name'          => 'Diallo',
+            'phone_number'       => '0700000000',
+            'phone_country_code' => 'CI',
+        ])->assertStatus(422);
+
+        $this->assertSame('failed', ChariowCheckout::first()->status);
     }
 
     private function fakeCheckout(): void

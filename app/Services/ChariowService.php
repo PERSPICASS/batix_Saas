@@ -60,10 +60,12 @@ class ChariowService
             $data = $json['data'] ?? [];
             $step = $data['step'] ?? null;
 
-            // `already_purchased` et `completed` ne sont pas des erreurs réseau mais
-            // ne donnent pas d'URL de paiement : le contrôleur doit les distinguer.
+            // `completed` est un succès sans page de paiement : le panier est tombé à
+            // zéro (code promo à 100 %) et Chariow a finalisé la vente directement.
+            // `already_purchased` est en revanche un refus — le contrôleur distingue
+            // les trois cas à partir de `step`.
             return [
-                'ok'             => $step === 'payment',
+                'ok'             => in_array($step, ['payment', 'completed'], true),
                 'step'           => $step,
                 'checkout_url'   => $data['payment']['checkout_url'] ?? null,
                 'transaction_id' => $data['payment']['transaction_id'] ?? null,
