@@ -259,21 +259,30 @@ class ChariowController extends Controller
 
         $payload   = $request->json()->all();
         $reference = $payload['sale']['custom_metadata']['ref'] ?? null;
+        $saleId    = $payload['sale']['id'] ?? null;
 
         Log::info('Chariow Pulse reçu', [
             'event'     => $event,
-            'sale_id'   => $payload['sale']['id'] ?? null,
+            'sale_id'   => $saleId,
             'reference' => $reference,
         ]);
 
-        if (!$reference) {
-            // Vente faite hors de l'app (boutique Chariow directe) : rien à activer.
-            return response()->json(['ok' => true]);
+        // Deux points d'ancrage, et le second n'est pas du luxe : l'API `sales` ne
+        // renvoie pas `custom_metadata` (vérifié sur une vraie vente), donc rien ne
+        // garantit que le Pulse la porte. L'identifiant de vente, lui, est mémorisé
+        // dès l'ouverture de la session de paiement. Sans ce repli, une métadonnée
+        // absente ferait passer toutes les ventes pour des ventes hors application
+        // et aucun abonnement ne s'activerait jamais.
+        $checkout = $reference
+            ? ChariowCheckout::where('reference', $reference)->first()
+            : null;
+
+        if (!$checkout && $saleId) {
+            $checkout = ChariowCheckout::where('sale_id', $saleId)->first();
         }
 
-        $checkout = ChariowCheckout::where('reference', $reference)->first();
-
         if (!$checkout) {
+            // Vente faite hors de l'app (boutique Chariow directe) : rien à activer.
             return response()->json(['ok' => true]);
         }
 

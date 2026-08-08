@@ -229,6 +229,35 @@ class ChariowPaymentTest extends TestCase
         $this->assertSame(0, Subscription::count());
     }
 
+    /**
+     * Régression constatée sur une vraie vente : l'API Chariow renvoie
+     * `custom_metadata: null` alors qu'on y avait mis la référence. Si le Pulse fait
+     * de même, le rattachement doit tenir par l'identifiant de vente, mémorisé à
+     * l'ouverture de la session — sinon aucune vente ne serait jamais reconnue.
+     */
+    public function test_a_sale_without_metadata_is_matched_on_its_sale_id(): void
+    {
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+        $this->checkout($user, $plan, ['sale_id' => 'SALEKQ6C9TKLGCAM41X']);
+
+        $body = json_encode([
+            'event' => 'successful.sale',
+            'sale'  => [
+                'id'              => 'SALEKQ6C9TKLGCAM41X',
+                'status'          => 'completed',
+                'amount'          => ['value' => 15000, 'currency' => 'XOF'],
+                'original_amount' => ['value' => 15000, 'currency' => 'XOF'],
+                'custom_metadata' => null,
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $this->postPulse($body)->assertOk();
+
+        $this->assertSame(1, Subscription::count());
+        $this->assertTrue(ChariowCheckout::first()->subscription_activated);
+    }
+
     public function test_a_sale_made_outside_the_app_is_acknowledged_without_side_effects(): void
     {
         $body = json_encode([
