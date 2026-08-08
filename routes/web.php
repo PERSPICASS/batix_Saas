@@ -45,6 +45,7 @@ use App\Http\Controllers\ReturnsController;
 use App\Http\Controllers\ReturnedInventoryController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\LemonSqueezyController;
+use App\Http\Controllers\ChariowController;
 use App\Http\Controllers\PaddleController;
 use App\Http\Controllers\FixedCostController;
 use App\Http\Controllers\QuoteController;
@@ -130,7 +131,7 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::cl
 | Prestataires de paiement en attente d'accès
 |--------------------------------------------------------------------------
 |
-| Seul Paddle est actif en production (voir plus bas). PawaPay, Jèko et
+| Paddle et Chariow sont actifs en production (voir plus bas). PawaPay, Jèko et
 | LemonSqueezy sont intégrés et fonctionnels côté code, mais leurs routes
 | restent commentées tant que nous n'avons pas les identifiants marchands.
 | Leurs contrôleurs, services et modèles sont conservés intacts.
@@ -185,6 +186,19 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::cl
 // Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->prefix('platform-admin')->group(function () {
 //     Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
 // });
+
+// Routes Chariow (webhook public — signature HMAC vérifiée dans le contrôleur)
+Route::post('/chariow/webhook', [ChariowController::class, 'webhook'])
+    ->name('chariow.webhook')
+    ->middleware('throttle:120,1')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook
+
+Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
+    Route::post('/chariow/initiate/{plan}', [ChariowController::class, 'initiate'])
+        ->name('chariow.initiate')
+        ->middleware('throttle:10,1');
+    Route::get('/chariow/return', [ChariowController::class, 'return'])->name('chariow.return');
+});
 
 // Routes Paddle (webhook public, checkout with auth)
 Route::post('/paddle/webhook', [PaddleController::class, 'webhook'])

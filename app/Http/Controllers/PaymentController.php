@@ -48,6 +48,14 @@ class PaymentController extends Controller
             ],
             'currency'  => $currency,
             'isSandbox' => (bool) config('services.pawapay.sandbox', true),
+            // Chariow n'est proposé que si la clé API est posée ET que le plan est
+            // mappé sur un produit Chariow — sinon le bouton mènerait à un 422.
+            'chariowEnabled' => config('services.chariow.api_key', '') !== ''
+                && ($plan->chariow_product_id || $plan->chariow_product_id_yearly),
+            'chariowCycles' => [
+                'monthly' => (bool) $plan->chariow_product_id,
+                'yearly'  => (bool) $plan->chariow_product_id_yearly,
+            ],
             'currentPlan' => $currentSubscription ? [
                 'name' => $currentSubscription->plan->name,
                 'slug' => $currentSubscription->plan->slug,

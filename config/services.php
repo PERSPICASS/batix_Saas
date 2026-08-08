@@ -105,6 +105,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Chariow — produits digitaux & mobile money (Wave, OM, MTN, Moov)
+    |--------------------------------------------------------------------------
+    | `webhook_secret` est le secret whsec_ du Pulse (Automations → Pulses →
+    | Overview), et non la clé API : les deux sont distincts et se régénèrent
+    | séparément.
+    */
+    'chariow' => [
+        'api_key'        => env('CHARIOW_API_KEY', ''),
+        'webhook_secret' => env('CHARIOW_WEBHOOK_SECRET', ''),
+        'base_url'       => env('CHARIOW_BASE_URL', 'https://api.chariow.com/v1'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Paddle Payment Platform
     |--------------------------------------------------------------------------
     */

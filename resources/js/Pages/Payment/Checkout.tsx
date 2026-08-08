@@ -46,11 +46,14 @@ interface Props extends PageProps {
     paymentNumbers: Record<string, string>;
     currency: string;
     isSandbox: boolean;
+    chariowEnabled?: boolean;
+    chariowCycles?: { monthly: boolean; yearly: boolean };
 }
 
-type PaymentMode = 'pawapay' | 'jeko' | 'lemonsqueezy' | 'paddle' | 'manual';
+type PaymentMode = 'pawapay' | 'jeko' | 'lemonsqueezy' | 'paddle' | 'chariow' | 'manual';
 type PawaPayStatus = 'idle' | 'pending' | 'completed' | 'failed';
 type JekoStatus = 'idle' | 'redirecting' | 'failed';
+type ChariowStatus = 'idle' | 'redirecting' | 'failed';
 
 interface Country {
     name: string;
@@ -101,6 +104,19 @@ const JEKO_METHODS = [
     { id: 'moov',   label: 'Moov Money',    logo: logoMoov   },
 ];
 
+// Chariow attend un code pays ISO 3166-1 alpha-2 pour le téléphone (pas l'indicatif).
+const CHARIOW_COUNTRIES = [
+    { iso: 'CI', name: "Côte d'Ivoire", flag: '🇨🇮', dialCode: '+225' },
+    { iso: 'SN', name: 'Sénégal',       flag: '🇸🇳', dialCode: '+221' },
+    { iso: 'BF', name: 'Burkina Faso',  flag: '🇧🇫', dialCode: '+226' },
+    { iso: 'BJ', name: 'Bénin',         flag: '🇧🇯', dialCode: '+229' },
+    { iso: 'TG', name: 'Togo',          flag: '🇹🇬', dialCode: '+228' },
+    { iso: 'ML', name: 'Mali',          flag: '🇲🇱', dialCode: '+223' },
+    { iso: 'CM', name: 'Cameroun',      flag: '🇨🇲', dialCode: '+237' },
+    { iso: 'GN', name: 'Guinée',        flag: '🇬🇳', dialCode: '+224' },
+    { iso: 'FR', name: 'France',        flag: '🇫🇷', dialCode: '+33'  },
+];
+
 // Manual fallback methods (Wave manual + virement) — "wave" has no fixed label, it's translated at render time
 const MANUAL_METHODS = [
     { id: 'wave',         label: null as string | null, logo: logoWave   },
@@ -121,10 +137,27 @@ function getCsrfToken(): string {
    Main component
 ───────────────────────────────────────────────────────────────────────────── */
 
-export default function Checkout({ plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth }: Props) {
+export default function Checkout({
+    plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth,
+    chariowEnabled = false, chariowCycles = { monthly: false, yearly: false },
+}: Props) {
     const { t } = useLocale();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [paymentMode, setPaymentMode] = useState<PaymentMode>('paddle');
+
+    // Chariow — mobile money. Le nom du compte est un champ unique côté Batix alors
+    // que Chariow exige prénom et nom séparés : on pré-remplit par une découpe au
+    // premier espace, l'utilisateur corrige si besoin.
+    const [chariowFirstName, setChariowFirstName] = useState(() => (auth?.user?.name ?? '').split(' ')[0] ?? '');
+    const [chariowLastName, setChariowLastName] = useState(() => (auth?.user?.name ?? '').split(' ').slice(1).join(' '));
+    const [chariowCountry, setChariowCountry] = useState(CHARIOW_COUNTRIES[0]);
+    const [chariowPhone, setChariowPhone] = useState('');
+    const [chariowStatus, setChariowStatus] = useState<ChariowStatus>('idle');
+    const [chariowError, setChariowError] = useState('');
+    const [chariowInitiating, setChariowInitiating] = useState(false);
+
+    // Un plan peut n'être mappé que sur un seul cycle côté Chariow.
+    const chariowCycleAvailable = billingCycle === 'yearly' ? chariowCycles.yearly : chariowCycles.monthly;
 
     // PawaPay state — étape 1 : pays, étape 2 : opérateur
     const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
@@ -322,6 +355,46 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
         }
     };
 
+    /* ── Chariow submit ───────────────────────────────────────── */
+
+    const handleChariowSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!chariowFirstName.trim() || !chariowLastName.trim() || !chariowPhone.trim()) return;
+
+        setChariowInitiating(true);
+        setChariowError('');
+
+        try {
+            const res = await axios.post(`/chariow/initiate/${plan.slug}`, {
+                billing_cycle:      billingCycle,
+                first_name:         chariowFirstName.trim(),
+                last_name:          chariowLastName.trim(),
+                phone_number:       chariowPhone.replace(/\D/g, ''),
+                phone_country_code: chariowCountry.iso,
+            }, {
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (res.data.success && res.data.redirectUrl) {
+                setChariowStatus('redirecting');
+                window.location.href = res.data.redirectUrl;
+            } else {
+                setChariowError(res.data.message ?? 'Erreur inconnue.');
+                setChariowStatus('failed');
+            }
+        } catch (err: any) {
+            const data = err?.response?.data;
+            const firstFieldError = data?.errors ? (Object.values(data.errors)[0] as string[])?.[0] : null;
+            setChariowError(data?.message ?? firstFieldError ?? 'Impossible de contacter le serveur de paiement.');
+            setChariowStatus('failed');
+        } finally {
+            setChariowInitiating(false);
+        }
+    };
+
     /* ── Manual payment submit ────────────────────────────────── */
 
     const handleManualSubmit = async (e: React.FormEvent) => {
@@ -476,7 +549,7 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                         {/* ── Sélection du mode de paiement ── */}
                         <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
                             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.plans.checkout.paymentModeLabel}</p>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className={`grid gap-3 ${chariowEnabled ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'}`}>
                                 <button
                                     type="button"
                                     onClick={() => setPaymentMode('paddle')}
@@ -489,6 +562,20 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                                     <CreditCard className="inline size-4 mr-2" />
                                     {t.plans.checkout.paddleCard}
                                 </button>
+                                {chariowEnabled && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMode('chariow')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                            paymentMode === 'chariow'
+                                                ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <Smartphone className="inline size-4 mr-2" />
+                                        Mobile Money
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => setPaymentMode('manual')}
@@ -507,6 +594,133 @@ export default function Checkout({ plan, currentPlan, paymentNumbers = {}, curre
                         {/* ══════════════════ PADDLE FLOW ══════════════════ */}
                         {paymentMode === 'paddle' && (
                             <PaddlePayment plan={plan} billingCycle={billingCycle} />
+                        )}
+
+                        {/* ══════════════════ CHARIOW FLOW ══════════════════ */}
+                        {paymentMode === 'chariow' && (
+                            <div className="rounded-2xl border border-gray-200 bg-white p-6 space-y-6 dark:border-white/10 dark:bg-white/5">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <Smartphone className="size-5 text-amber-300" />
+                                    Paiement Mobile Money
+                                </h3>
+
+                                {!chariowCycleAvailable && (
+                                    <div className="flex items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200">
+                                        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                                        Le paiement mobile n'est pas encore disponible pour la facturation
+                                        {billingCycle === 'yearly' ? ' annuelle' : ' mensuelle'} de ce plan.
+                                    </div>
+                                )}
+
+                                {chariowStatus === 'failed' && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-start gap-3 rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-300">
+                                            <XCircle className="mt-0.5 size-4 shrink-0" />
+                                            {chariowError}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setChariowStatus('idle'); setChariowError(''); }}
+                                            className="inline-flex items-center gap-2 text-sm text-amber-300 hover:text-amber-200"
+                                        >
+                                            <RefreshCw className="size-4" /> Réessayer
+                                        </button>
+                                    </div>
+                                )}
+
+                                {chariowStatus === 'idle' && chariowCycleAvailable && (
+                                    <form onSubmit={handleChariowSubmit} className="space-y-5">
+                                        <div className="rounded-xl border border-blue-400/20 bg-blue-400/10 p-3 text-xs text-blue-200">
+                                            Payez avec Wave, Orange Money, MTN, Moov ou par carte. Vous choisirez
+                                            votre opérateur sur la page de paiement sécurisée.
+                                        </div>
+
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <label htmlFor="chariow-first-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Prénom</label>
+                                                <input
+                                                    id="chariow-first-name"
+                                                    type="text"
+                                                    value={chariowFirstName}
+                                                    onChange={e => setChariowFirstName(e.target.value)}
+                                                    maxLength={50}
+                                                    required
+                                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label htmlFor="chariow-last-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Nom</label>
+                                                <input
+                                                    id="chariow-last-name"
+                                                    type="text"
+                                                    value={chariowLastName}
+                                                    onChange={e => setChariowLastName(e.target.value)}
+                                                    maxLength={50}
+                                                    required
+                                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label htmlFor="chariow-phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Numéro de téléphone</label>
+                                            <div className="flex gap-2">
+                                                <select
+                                                    aria-label="Pays"
+                                                    value={chariowCountry.iso}
+                                                    onChange={e => setChariowCountry(
+                                                        CHARIOW_COUNTRIES.find(c => c.iso === e.target.value) ?? CHARIOW_COUNTRIES[0]
+                                                    )}
+                                                    className="rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                                >
+                                                    {CHARIOW_COUNTRIES.map(c => (
+                                                        <option key={c.iso} value={c.iso}>{c.flag} {c.dialCode}</option>
+                                                    ))}
+                                                </select>
+                                                <input
+                                                    id="chariow-phone"
+                                                    type="tel"
+                                                    inputMode="numeric"
+                                                    value={chariowPhone}
+                                                    onChange={e => setChariowPhone(e.target.value)}
+                                                    placeholder="0700000000"
+                                                    required
+                                                    className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={chariowInitiating || !chariowFirstName.trim() || !chariowLastName.trim() || !chariowPhone.trim()}
+                                            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {chariowInitiating ? (
+                                                <><Loader2 className="size-4 animate-spin" /> Redirection…</>
+                                            ) : (
+                                                <><Smartphone className="size-4" /> Payer {formatPrice(displayPrice)} {currencyLabel}</>
+                                            )}
+                                        </button>
+
+                                        <p className="text-center text-xs text-slate-500">
+                                            Powered by <span className="font-semibold text-slate-400">Chariow</span> — paiement sécurisé.
+                                        </p>
+                                    </form>
+                                )}
+
+                                {chariowStatus === 'redirecting' && (
+                                    <div className="flex flex-col items-center gap-4 py-8 text-center">
+                                        <div className="relative">
+                                            <div className="size-16 rounded-full border-4 border-amber-300/20 border-t-amber-300 animate-spin" />
+                                            <Smartphone className="absolute inset-0 m-auto size-6 text-amber-300" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-slate-900 dark:text-white">Redirection vers Chariow</p>
+                                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Veuillez patienter…</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
                         {/* ══════════════════ PAWAPAY FLOW (HIDDEN) ══════════════════ */}

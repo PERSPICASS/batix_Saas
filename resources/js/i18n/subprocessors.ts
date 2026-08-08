@@ -22,6 +22,11 @@ export const subprocessors: Record<'fr' | 'en', Subprocessor[]> = {
             data: "Nom, email et données de paiement de l'abonnement, dans les mêmes conditions que Paddle.",
         },
         {
+            name: 'Chariow',
+            role: 'Paiement mobile money et carte (Wave, Orange Money, MTN Money, Moov Money)',
+            data: "Prénom, nom, email, numéro de téléphone et montant de la transaction. Le paiement est encaissé sur la plateforme Chariow : nous ne recevons jamais vos identifiants de paiement.",
+        },
+        {
             name: 'PawaPay',
             role: 'Paiement mobile money',
             data: 'Numéro de téléphone et montant de la transaction.',
@@ -62,6 +67,11 @@ export const subprocessors: Record<'fr' | 'en', Subprocessor[]> = {
             name: 'LemonSqueezy',
             role: 'Billing & card payments',
             data: 'Name, email and subscription payment data, under the same conditions as Paddle.',
+        },
+        {
+            name: 'Chariow',
+            role: 'Mobile money and card payments (Wave, Orange Money, MTN Money, Moov Money)',
+            data: 'First name, last name, email, phone number and transaction amount. Payment is collected on the Chariow platform: we never receive your payment credentials.',
         },
         {
             name: 'PawaPay',

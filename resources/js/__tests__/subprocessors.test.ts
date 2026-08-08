@@ -18,7 +18,7 @@ describe('subprocessor disclosure', () => {
     it.each(locales)('declares every service the app actually sends data to, in %s', (locale) => {
         const names = subprocessors[locale].map((s) => s.name).join(' | ');
 
-        for (const expected of ['Sentry', 'Paddle', 'LemonSqueezy', 'PawaPay', 'Jèko', 'Brevo', 'Google Analytics']) {
+        for (const expected of ['Sentry', 'Paddle', 'Chariow', 'LemonSqueezy', 'PawaPay', 'Jèko', 'Brevo', 'Google Analytics']) {
             expect(names).toContain(expected);
         }
     });

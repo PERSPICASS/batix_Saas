@@ -32,6 +32,13 @@ class WebhookRoutesTest extends TestCase
         $this->assertNotEquals(419, $response->getStatusCode());
     }
 
+    public function test_chariow_webhook_is_not_blocked_by_csrf(): void
+    {
+        $response = $this->postJson('/chariow/webhook', ['event' => 'test']);
+
+        $this->assertNotEquals(419, $response->getStatusCode());
+    }
+
     // public function test_jeko_webhook_is_not_blocked_by_csrf(): void
     // {
     //     $response = $this->postJson('/jeko/webhook', ['event' => 'test']);

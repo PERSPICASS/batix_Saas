@@ -24,6 +24,8 @@ class SubscriptionPlan extends Model
         'sort_order',
         'paddle_price_id',
         'paddle_price_id_yearly',
+        'chariow_product_id',
+        'chariow_product_id_yearly',
     ];
 
     protected $casts = [
