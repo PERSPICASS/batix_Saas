@@ -290,7 +290,7 @@ Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactor
 
 // Routes avec préfixe code_user (pour tout le compte)
 Route::prefix('{code_user}')
-    ->middleware(['auth', 'verified:verification.code.show', \App\Http\Middleware\ValidateAccountAccess::class, \App\Http\Middleware\CheckTwoFactorAuthentication::class])
+    ->middleware(['auth', 'verified:verification.code.show', \App\Http\Middleware\ValidateAccountAccess::class, \App\Http\Middleware\CheckTwoFactorAuthentication::class, \App\Http\Middleware\EnforceSubscriptionReadOnly::class])
     ->group(function () {
         
     // Dashboard
