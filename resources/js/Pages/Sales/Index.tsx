@@ -4,7 +4,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Plus, Eye, Trash2, Search, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { PageProps } from '@/types';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -91,7 +91,11 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
         router.get(route('sales.index'), {}, { preserveState: false, replace: true });
     };
 
+    // Cf. Depots/Show : sans ce garde-fou, la navigation vers une autre page remonte
+    // le composant, l'effet repart au montage et réémet la requête sans `page`.
+    const isFirstRender = useRef(true);
     useEffect(() => {
+        if (isFirstRender.current) { isFirstRender.current = false; return; }
         const timer = setTimeout(() => {
             router.get(route('sales.index'), {
                 ...(search        ? { search }          : {}),

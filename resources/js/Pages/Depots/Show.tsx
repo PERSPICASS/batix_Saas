@@ -135,8 +135,13 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Debounce search: trigger router.get 400ms after last keystroke
+    // Debounce search: trigger router.get 400ms after last keystroke.
+    // Le garde-fou de premier rendu est indispensable : un clic sur « page 2 » remonte
+    // le composant (Inertia change sa clé), l'effet repartait donc au montage et
+    // renvoyait 400 ms plus tard un router.get SANS paramètre `page` — retour page 1.
+    const isFirstRender = useRef(true);
     useEffect(() => {
+        if (isFirstRender.current) { isFirstRender.current = false; return; }
         const timer = setTimeout(() => {
             router.get(
                 buildRoute('depots.show', { depot: depot.id }),
