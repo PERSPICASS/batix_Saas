@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+{{-- `dark` est posé ici, et non par React : c'est le thème unique de l'application et il
+     doit être en place avant la première peinture. Le faire appliquer après hydratation
+     rendait une image claire pendant une fraction de seconde à chaque chargement complet.
+     Les pages publiques (PublicLayout) et d'authentification (GuestLayout) n'ont aucune
+     variante `dark:` — leurs couleurs sont fixes, cette classe ne les touche pas. --}}
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">

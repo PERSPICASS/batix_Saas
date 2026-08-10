@@ -9,12 +9,6 @@ export const layout = {
         noShop: 'Aucune boutique',
         manageShops: 'Gérer mes boutiques',
         depot: 'Dépôt',
-        theme: {
-            light: 'Mode clair',
-            dark: 'Mode sombre',
-            system: 'Mode système',
-            label: 'Thème',
-        },
         subscription: {
             title: 'Abonnement',
             noPlan: 'Aucun plan',
@@ -59,12 +53,6 @@ export const layout = {
         noShop: 'No shop',
         manageShops: 'Manage my shops',
         depot: 'Warehouse',
-        theme: {
-            light: 'Light mode',
-            dark: 'Dark mode',
-            system: 'System mode',
-            label: 'Theme',
-        },
         subscription: {
             title: 'Subscription',
             noPlan: 'No plan',

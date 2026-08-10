@@ -28,8 +28,6 @@ import {
     Lock,
     LogOut,
     Menu,
-    Monitor,
-    Moon,
     Receipt,
     ReceiptText,
     Search,
@@ -41,7 +39,6 @@ import {
     Truck,
     User,
     Users,
-    Sun,
     TrendingDown,
     TrendingUp,
     Warehouse,
@@ -55,8 +52,6 @@ import AiChatWidget from '@/Components/AiChatWidget';
 import ReviewModal, { type MyReview } from '@/Components/ReviewModal';
 import { useLocale } from '@/contexts/LocaleContext';
 
-type ThemePreference = 'light' | 'dark' | 'system';
-const THEME_STORAGE_KEY = 'batix_theme_preference';
 
 export default function Authenticated({
     header,
@@ -90,13 +85,6 @@ export default function Authenticated({
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
     const isPlatformAdmin = user?.role === 'admin_platforme';
     const isSuperAdmin = user?.role === 'super_admin';
-    const [themePreference, setThemePreference] = useState<ThemePreference>('system');
-    const [systemPrefersDark, setSystemPrefersDark] = useState(() =>
-        typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-    );
-    const isDark = themePreference === 'dark' || (themePreference === 'system' && systemPrefersDark);
-    const [themeMenuOpen, setThemeMenuOpen] = useState(false);
-    const themeMenuRef = useRef<HTMLDivElement>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
 
@@ -136,10 +124,10 @@ export default function Authenticated({
 
     if (!accountCode && user?.role !== 'admin_platforme') {
         return (
-            <div className={`flex h-screen items-center justify-center ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
+            <div className="flex h-screen items-center justify-center bg-slate-950">
                 <div className="text-center">
                     <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-amber-300 border-r-transparent"></div>
-                    <p className={isDark ? 'text-slate-400' : 'text-slate-600'}>{t.layout.loading}</p>
+                    <p className="text-slate-400">{t.layout.loading}</p>
                 </div>
             </div>
         );
@@ -166,29 +154,8 @@ export default function Authenticated({
         setShopMenuOpen(false);
     };
 
-    // Charge la préférence sauvegardée (une seule fois, tous rôles confondus).
-    useEffect(() => {
-        const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
-        if (saved === 'light' || saved === 'dark' || saved === 'system') {
-            setThemePreference(saved);
-        }
-    }, []);
-
-    // Suit le thème du système en direct tant que la préférence est "system".
-    useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handleChange = (event: MediaQueryListEvent) => setSystemPrefersDark(event.matches);
-        mediaQuery.addEventListener('change', handleChange);
-        return () => mediaQuery.removeEventListener('change', handleChange);
-    }, []);
-
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', isDark);
-    }, [isDark]);
-
-    useEffect(() => {
-        window.localStorage.setItem(THEME_STORAGE_KEY, themePreference);
-    }, [themePreference]);
+    // Le thème sombre est désormais le seul thème de l'application : il est posé sur
+    // <html> par app.blade.php, avant la première peinture. Plus rien à faire ici.
 
     useEffect(() => {
         const onClickOutside = (event: MouseEvent) => {
@@ -197,9 +164,6 @@ export default function Authenticated({
             }
             if (shopMenuRef.current && !shopMenuRef.current.contains(event.target as Node)) {
                 setShopMenuOpen(false);
-            }
-            if (themeMenuRef.current && !themeMenuRef.current.contains(event.target as Node)) {
-                setThemeMenuOpen(false);
             }
         };
         window.addEventListener('mousedown', onClickOutside);
@@ -632,56 +596,6 @@ export default function Authenticated({
 
                         <div className="flex items-center gap-2">
                             <LanguageSwitcher />
-
-                            <div className="relative" ref={themeMenuRef}>
-                                <button
-                                    type="button"
-                                    onClick={() => setThemeMenuOpen((prev) => !prev)}
-                                    aria-label={t.layout.theme.label}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                                >
-                                    {themePreference === 'system' ? (
-                                        <Monitor className="size-4 text-slate-600 dark:text-slate-300" />
-                                    ) : isDark ? (
-                                        <Moon className="size-4 text-slate-700 dark:text-slate-200" />
-                                    ) : (
-                                        <Sun className="size-4 text-amber-500" />
-                                    )}
-                                    <span className="hidden sm:inline">
-                                        {themePreference === 'system' ? t.layout.theme.system : themePreference === 'dark' ? t.layout.theme.dark : t.layout.theme.light}
-                                    </span> 
-                                    <ChevronDown className="size-3.5 text-slate-500 dark:text-slate-400" />
-                                </button>  
-
-                                {themeMenuOpen && (
-                                    <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
-                                        {(
-                                            [
-                                                { value: 'light', label: t.layout.theme.light, icon: Sun },
-                                                { value: 'dark', label: t.layout.theme.dark, icon: Moon },
-                                                { value: 'system', label: t.layout.theme.system, icon: Monitor },
-                                            ] as { value: ThemePreference; label: string; icon: typeof Sun }[]
-                                        ).map((option) => (
-                                            <button
-                                                key={option.value}
-                                                type="button"
-                                                onClick={() => {
-                                                    setThemePreference(option.value);
-                                                    setThemeMenuOpen(false);
-                                                }}
-                                                className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition ${
-                                                    themePreference === option.value
-                                                        ? 'bg-amber-300/10 text-amber-600 dark:text-amber-300'
-                                                        : 'text-slate-800 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10'
-                                                }`}
-                                            >
-                                                <option.icon className="size-4" />
-                                                <span>{option.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )} 
-                            </div>
 
                             {lowStockCount > 0 && user?.role !== 'admin_platforme' && (
                                 <Link
