@@ -115,6 +115,13 @@ class HandleInertiaRequests extends Middleware
             ? fn () => $user->getSubscriptionLimits()
             : null;
 
+        // ── Lecture seule : partagé à TOUS les rôles, contrairement à `subscription` ──
+        // L'abonnement vit sur le compte du propriétaire, mais l'employé d'un compte
+        // expiré subit la même restriction et doit donc pouvoir l'afficher. Le miroir
+        // exact de EnforceSubscriptionReadOnly, pour que l'interface cesse de proposer
+        // des actions que le serveur refuse.
+        $readOnly = ($user->role !== 'admin_platforme' && !$user->activeSubscription());
+
         // ── Stock bas : compte produits sous seuil d'alerte ───────────────
         $lowStockCount = ($user->role !== 'admin_platforme' && $shop)
             ? fn () => \App\Models\Product::where('shop_id', $shop->id)
@@ -134,6 +141,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'locale' => fn () => app()->getLocale(),
             'subscription'  => $subscription,
+            'readOnlyAccount' => $readOnly,
             'lowStockCount' => $lowStockCount,
             'shops'         => $shops,
             'activeShop'    => $activeShopData,

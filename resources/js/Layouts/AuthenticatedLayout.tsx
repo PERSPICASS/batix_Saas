@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import ToastContainer from '@/Components/ToastContainer';
+import ReadOnlyAccountGuard from '@/Components/ReadOnlyAccountGuard';
 import OfflineBanner from '@/Components/OfflineBanner';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import AiChatWidget from '@/Components/AiChatWidget';
@@ -811,7 +812,10 @@ export default function Authenticated({
                     )}
                 </header>
 
-                <main className="px-4 py-6 print:p-0 sm:px-6 lg:px-8">{children}</main>
+                <main className="px-4 py-6 print:p-0 sm:px-6 lg:px-8">
+                    <ReadOnlyAccountGuard />
+                    {children}
+                </main>
             </div>
 
             <div className="print:hidden">

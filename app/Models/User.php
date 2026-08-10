@@ -433,8 +433,20 @@ class User extends Authenticatable
         return Subscription::where('user_id', $ownerId)
             ->whereIn('status', ['active', 'trial'])
             ->where(function ($query) {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now()->subDays(self::SUBSCRIPTION_GRACE_PERIOD_DAYS));
+                $query
+                    // Sans date d'expiration, l'abonnement ne s'éteint pas de lui-même.
+                    ->whereNull('expires_at')
+                    // Un abonnement PAYANT garde sa fenêtre de renouvellement : le
+                    // paiement peut être en cours de traitement le jour de l'échéance.
+                    ->orWhere(fn ($q) => $q
+                        ->where('status', '!=', 'trial')
+                        ->where('expires_at', '>', now()->subDays(self::SUBSCRIPTION_GRACE_PERIOD_DAYS)))
+                    // Un ESSAI s'arrête à sa date, sans sursis : rien n'est en cours de
+                    // paiement derrière, et prolonger un essai gratuit de 14 jours
+                    // revenait à en offrir 28.
+                    ->orWhere(fn ($q) => $q
+                        ->where('status', 'trial')
+                        ->where('expires_at', '>', now()));
             })
             // `id` départage à égalité de `started_at` : deux abonnements ouverts dans la
             // même seconde (renouvellement immédiat, correction manuelle) laissaient
@@ -463,7 +475,8 @@ class User extends Authenticatable
     {
         $subscription = $this->activeSubscription();
 
-        if (!$subscription || !$subscription->expires_at) {
+        // Un essai n'a pas de période de grâce : sa date d'expiration est terminale.
+        if (!$subscription || !$subscription->expires_at || $subscription->status === 'trial') {
             return null;
         }
 

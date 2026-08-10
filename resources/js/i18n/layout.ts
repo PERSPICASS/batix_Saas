@@ -9,6 +9,12 @@ export const layout = {
         noShop: 'Aucune boutique',
         manageShops: 'Gérer mes boutiques',
         depot: 'Dépôt',
+        readOnly: {
+            title: 'Compte en lecture seule',
+            body: "Votre période d'essai est terminée. Vous pouvez consulter et exporter vos données, mais plus les modifier.",
+            blocked: 'Action indisponible : votre compte est en lecture seule.',
+            cta: 'Choisir une offre',
+        },
         subscription: {
             title: 'Abonnement',
             noPlan: 'Aucun plan',
@@ -53,6 +59,12 @@ export const layout = {
         noShop: 'No shop',
         manageShops: 'Manage my shops',
         depot: 'Warehouse',
+        readOnly: {
+            title: 'Read-only account',
+            body: 'Your trial has ended. You can still view and export your data, but no longer change it.',
+            blocked: 'Unavailable: your account is read-only.',
+            cta: 'Choose a plan',
+        },
         subscription: {
             title: 'Subscription',
             noPlan: 'No plan',

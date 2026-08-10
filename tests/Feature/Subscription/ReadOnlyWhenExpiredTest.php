@@ -79,10 +79,66 @@ class ReadOnlyWhenExpiredTest extends TestCase
             ->assertOk();
     }
 
-    /** La grâce de 14 jours reste entière : un compte échu d'hier travaille normalement. */
-    public function test_an_account_inside_the_grace_period_still_writes(): void
+    /**
+     * L'interface doit connaître l'état : sans cette prop, elle continuait d'afficher
+     * des boutons de création menant à un envoi refusé. Partagée à tous les rôles,
+     * puisqu'un employé subit la restriction de son compte.
+     */
+    public function test_the_page_is_told_the_account_is_read_only(): void
     {
-        [$owner, $shop] = $this->accountExpiring(now()->subDays(5));
+        [$owner, $shop] = $this->accountExpiring(now()->subDays(20));
+        $employee = User::factory()->create(['role' => 'manager', 'shop_id' => $shop->id]);
+
+        foreach ([$owner, $employee] as $user) {
+            $this->actingAs($user)
+                ->withSession(['active_shop_id' => $shop->id])
+                ->get("/{$owner->accountCode()}/dashboard")
+                ->assertInertia(fn ($page) => $page->where('readOnlyAccount', true));
+        }
+    }
+
+    public function test_a_healthy_account_is_not_flagged_read_only(): void
+    {
+        [$owner, $shop] = $this->accountExpiring(now()->addYear(), 'active');
+
+        $this->actingAs($owner)
+            ->withSession(['active_shop_id' => $shop->id])
+            ->get("/{$owner->accountCode()}/dashboard")
+            ->assertInertia(fn ($page) => $page->where('readOnlyAccount', false));
+    }
+
+    /**
+     * La grâce couvre le renouvellement d'un abonnement PAYANT, dont le paiement peut
+     * être en cours de traitement le jour de l'échéance.
+     */
+    public function test_a_paid_account_inside_the_grace_period_still_writes(): void
+    {
+        [$owner, $shop] = $this->accountExpiring(now()->subDays(5), 'active');
+
+        $this->attemptWrite($owner, $shop)
+            ->assertSessionMissing('error');
+
+        $this->assertSame(1, Product::count());
+    }
+
+    /**
+     * Un essai, lui, s'arrête à sa date : rien n'est en cours de paiement derrière, et
+     * prolonger un essai de 14 jours revenait à en offrir 28.
+     */
+    public function test_a_trial_gets_no_grace_period_at_all(): void
+    {
+        [$owner, $shop] = $this->accountExpiring(now()->subDay(), 'trial');
+
+        $this->attemptWrite($owner, $shop)
+            ->assertSessionHas('error', fn ($m) => str_contains($m, self::READ_ONLY));
+
+        $this->assertSame(0, Product::count());
+        $this->assertNull($owner->fresh()->subscriptionGracePeriodEndsAt());
+    }
+
+    public function test_a_trial_still_running_writes_normally(): void
+    {
+        [$owner, $shop] = $this->accountExpiring(now()->addDays(3), 'trial');
 
         $this->attemptWrite($owner, $shop)
             ->assertSessionMissing('error');
