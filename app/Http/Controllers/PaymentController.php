@@ -170,8 +170,30 @@ class PaymentController extends Controller
     /**
      * Activer directement le plan gratuit.
      */
+    /**
+     * Le plan gratuit est un ESSAI, pas une offre perpétuelle : c'est le même plan que
+     * celui octroyé à la création de la première boutique (ShopController::store), pour
+     * la même durée.
+     *
+     * Il était créé ici avec `expires_at = null`, or activeSubscription() lit une date
+     * nulle comme « n'expire jamais ». Tout compte passé par ce bouton devenait donc
+     * immunisé à vie : ni rappel d'expiration, ni passage en lecture seule, quelle que
+     * soit l'ancienneté de son essai. Et comme le bouton restait cliquable, un essai
+     * épuisé se relançait indéfiniment — d'où le refus explicite ci-dessous.
+     */
+    private const FREE_TRIAL_DAYS = 14;
+
     private function activateFree($user, SubscriptionPlan $plan)
     {
+        $alreadyUsed = Subscription::where('user_id', $user->id)
+            ->where('subscription_plan_id', $plan->id)
+            ->exists();
+
+        if ($alreadyUsed) {
+            return redirect()->route('plans.index')
+                ->with('error', 'Votre essai gratuit a déjà été utilisé. Choisissez une offre payante pour continuer.');
+        }
+
         DB::transaction(function () use ($user, $plan) {
             Subscription::where('user_id', $user->id)
                 ->where('status', 'active')
@@ -180,9 +202,10 @@ class PaymentController extends Controller
             Subscription::create([
                 'user_id'              => $user->id,
                 'subscription_plan_id' => $plan->id,
-                'status'               => 'active',
+                'status'               => 'trial',
                 'started_at'           => now(),
-                'expires_at'           => null,
+                'expires_at'           => now()->addDays(self::FREE_TRIAL_DAYS),
+                'trial_ends_at'        => now()->addDays(self::FREE_TRIAL_DAYS),
                 'amount'               => 0,
                 'billing_cycle'        => 'monthly',
             ]);

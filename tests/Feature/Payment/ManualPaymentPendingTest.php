@@ -55,8 +55,15 @@ class ManualPaymentPendingTest extends TestCase
 
         $response->assertRedirect();
 
+        // Ce qui compte ici est l'accès immédiat, sans revue d'un administrateur — par
+        // opposition au paiement manuel qui reste « pending ». Le statut retenu est
+        // « trial » depuis que le plan gratuit est daté : c'est le même essai que celui
+        // de l'inscription, et non plus un abonnement actif sans fin (cf.
+        // Subscription\FreePlanActivationTest).
         $subscription = Subscription::where('user_id', $user->id)->first();
-        $this->assertSame('active', $subscription->status);
+        $this->assertSame('trial', $subscription->status);
+        $this->assertNotNull($user->fresh()->activeSubscription());
+        $this->assertNotNull($subscription->expires_at);
     }
 
     public function test_platform_admin_activation_flips_pending_subscription_to_active_and_sends_invoice_mail(): void
