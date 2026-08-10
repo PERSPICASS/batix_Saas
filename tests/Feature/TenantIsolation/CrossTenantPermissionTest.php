@@ -20,6 +20,10 @@ class CrossTenantPermissionTest extends TestCase
             $shop->update(['user_id' => $user->id]);
         }
 
+        // Un compte qui agit a un plan : sans lui, EnforceSubscriptionReadOnly répond
+        // avant le contrôleur et ce test d'isolation ne testerait plus rien.
+        $this->subscribeAccount($user->id);
+
         return $user;
     }
 

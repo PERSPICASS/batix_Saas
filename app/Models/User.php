@@ -436,7 +436,11 @@ class User extends Authenticatable
                 $query->whereNull('expires_at')
                     ->orWhere('expires_at', '>', now()->subDays(self::SUBSCRIPTION_GRACE_PERIOD_DAYS));
             })
+            // `id` départage à égalité de `started_at` : deux abonnements ouverts dans la
+            // même seconde (renouvellement immédiat, correction manuelle) laissaient
+            // sinon la base choisir arbitrairement lequel fait foi.
             ->latest('started_at')
+            ->latest('id')
             ->first();
     }
 

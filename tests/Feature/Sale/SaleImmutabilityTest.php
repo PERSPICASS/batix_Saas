@@ -29,6 +29,7 @@ class SaleImmutabilityTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'super_admin', 'shop_id' => $shop->id]);
         $shop->update(['user_id' => $user->id]);
+        $this->subscribeOwnerOf($shop);
 
         return $user;
     }

@@ -57,23 +57,20 @@ class EnforceSubscriptionReadOnly
             return $next($request);
         }
 
-        // Un compte qui n'a JAMAIS eu d'abonnement n'est pas un compte expiré : c'est un
-        // compte qui n'a pas fini de s'inscrire. Le plan gratuit n'est créé qu'à la
-        // première boutique (ShopController::store) — bloquer ici enfermerait tout
-        // nouvel inscrit dehors, incapable de créer cette première boutique. Les quotas
-        // (`canCreateShop`, `canCreateProduct`...) couvrent déjà ce cas en échouant
-        // fermé de leur côté.
-        $latest = $this->latestSubscription($user);
-
-        if (!$latest) {
-            return $next($request);
-        }
-
+        // Aucun abonnement du tout vaut abonnement terminé : un compte sans plan ne doit
+        // pas écrire. Ce cas existe bel et bien en production — une inscription faite
+        // alors qu'aucun plan « free » n'était en base repart sans le moindre essai (cf.
+        // Onboarding\SignupTrialTest) — et c'était précisément le trou par lequel un
+        // compte de démo continuait de travailler des semaines après son expiration.
+        //
+        // L'inscription n'en souffre pas : la création de la première boutique
+        // (/create-shop, ShopController::store) vit hors du groupe {code_user}, donc hors
+        // de portée de ce middleware, et c'est elle qui octroie l'essai gratuit.
         if (in_array($request->route()?->getName(), self::ALWAYS_ALLOWED, true)) {
             return $next($request);
         }
 
-        $message = $this->message($latest);
+        $message = $this->message($this->latestSubscription($user));
 
         if ($request->expectsJson()) {
             return response()->json(['message' => $message], 403);
@@ -93,9 +90,9 @@ class EnforceSubscriptionReadOnly
         return Subscription::where('user_id', $ownerId)->latest('started_at')->first();
     }
 
-    private function message(Subscription $subscription): string
+    private function message(?Subscription $subscription): string
     {
-        $expiredAt = $subscription->expires_at;
+        $expiredAt = $subscription?->expires_at;
 
         $when = $expiredAt ? ' le ' . $expiredAt->translatedFormat('j F Y') : '';
 

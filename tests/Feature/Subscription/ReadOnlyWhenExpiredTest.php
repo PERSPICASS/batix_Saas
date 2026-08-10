@@ -26,6 +26,11 @@ class ReadOnlyWhenExpiredTest extends TestCase
         $shop  = Shop::factory()->create(['user_id' => $owner->id]);
         $plan  = SubscriptionPlan::factory()->create(['max_products' => 100, 'price' => 0]);
 
+        // ShopFactory octroie un abonnement actif au propriétaire, comme le fait la
+        // création de la première boutique en production. Ces tests-ci décrivent
+        // justement l'état d'expiration : on repart d'une table vierge.
+        Subscription::query()->delete();
+
         Subscription::create([
             'user_id'              => $owner->id,
             'subscription_plan_id' => $plan->id,
@@ -118,20 +123,37 @@ class ReadOnlyWhenExpiredTest extends TestCase
     }
 
     /**
-     * Un compte sans le moindre abonnement n'est pas un compte expiré : c'est un compte
-     * qui n'a pas fini de s'inscrire (le plan gratuit n'est créé qu'à la première
-     * boutique, et pas du tout si aucun plan « free » n'existe en base — cf.
-     * Onboarding\SignupTrialTest). Le passer en lecture seule l'enfermerait dehors.
+     * Aucun abonnement du tout vaut abonnement terminé. Ce cas existe en production :
+     * une inscription faite alors qu'aucun plan « free » n'était en base repart sans le
+     * moindre essai (Onboarding\SignupTrialTest), et c'est par ce trou qu'un compte de
+     * démo a continué de travailler des semaines après son expiration.
+     *
+     * L'inscription n'en souffre pas : /create-shop, qui octroie l'essai, vit hors du
+     * groupe {code_user} et n'est donc jamais concerné par ce middleware.
      */
-    public function test_an_account_that_never_had_a_subscription_is_not_locked_out(): void
+    public function test_an_account_without_any_subscription_is_read_only(): void
     {
         $owner = User::factory()->create(['role' => 'super_admin']);
         $shop  = Shop::factory()->create(['user_id' => $owner->id]);
+        Subscription::query()->delete();
 
-        // Le quota refuse quand même la création (aucun plan, donc aucun droit), mais ce
-        // doit être pour cette raison-là, pas parce que le compte serait « expiré ».
         $this->attemptWrite($owner, $shop)
-            ->assertSessionHas('error', fn ($m) => !str_contains($m, self::READ_ONLY));
+            ->assertSessionHas('error', fn ($m) => str_contains($m, self::READ_ONLY));
+
+        $this->assertSame(0, Product::count());
+    }
+
+    public function test_signing_up_is_never_blocked_by_the_read_only_rule(): void
+    {
+        $user = User::factory()->create(['role' => 'super_admin', 'shop_id' => null]);
+        Subscription::query()->delete();
+
+        // La création de la première boutique doit rester possible sans aucun plan.
+        $this->actingAs($user)
+            ->post('/create-shop', ['name' => 'Quincaillerie Naissante'])
+            ->assertSessionMissing('error');
+
+        $this->assertSame(1, Shop::where('user_id', $user->id)->count());
     }
 
     /** Sans ces exceptions, un compte expiré serait enfermé : ni langue, ni fermeture de compte. */

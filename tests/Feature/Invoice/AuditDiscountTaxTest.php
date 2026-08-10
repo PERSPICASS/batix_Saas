@@ -28,6 +28,7 @@ class AuditDiscountTaxTest extends TestCase
     {
         $shop = Shop::factory()->create(['currency' => 'XOF', 'name' => 'Quincaillerie']);
         $shop->update(['user_id' => User::factory()->create(['shop_id' => $shop->id])->id]);
+        $this->subscribeOwnerOf($shop);
 
         return $shop->fresh();
     }
@@ -153,6 +154,7 @@ class AuditDiscountTaxTest extends TestCase
 
         $moroccan = Shop::factory()->create(['currency' => 'MAD']);
         $moroccan->update(['user_id' => User::factory()->create(['shop_id' => $moroccan->id])->id]);
+        $this->subscribeOwnerOf($moroccan);
         $this->legacyInvoice($moroccan->fresh(), 10000);
 
         $this->artisan('tax:audit-discounts')

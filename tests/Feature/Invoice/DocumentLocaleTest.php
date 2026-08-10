@@ -37,6 +37,7 @@ class DocumentLocaleTest extends TestCase
     {
         $shop = Shop::factory()->create(['locale' => $locale, 'currency' => 'XOF']);
         $shop->update(['user_id' => User::factory()->create(['shop_id' => $shop->id])->id]);
+        $this->subscribeOwnerOf($shop);
 
         return $shop->fresh();
     }

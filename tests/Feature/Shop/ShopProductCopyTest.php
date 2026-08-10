@@ -39,6 +39,7 @@ class ShopProductCopyTest extends TestCase
         $this->source = Shop::factory()->create(['name' => 'Boutique Cocody']);
         $this->user = User::factory()->create(['role' => 'super_admin', 'shop_id' => $this->source->id]);
         $this->source->update(['user_id' => $this->user->id]);
+        $this->subscribeOwnerOf($this->source);
 
         $this->target = Shop::factory()->create(['user_id' => $this->user->id, 'name' => 'Boutique Yopougon']);
 
@@ -421,6 +422,7 @@ class ShopProductCopyTest extends TestCase
         $foreign = Shop::factory()->create();
         $foreignOwner = User::factory()->create(['role' => 'super_admin', 'shop_id' => $foreign->id]);
         $foreign->update(['user_id' => $foreignOwner->id]);
+        $this->subscribeOwnerOf($foreign);
 
         $source = $this->product($this->source);
 

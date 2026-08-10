@@ -16,6 +16,7 @@ class CreateSupplierTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'super_admin']);
         $shop->update(['user_id' => $user->id]);
+        $this->subscribeOwnerOf($shop);
 
         return $user;
     }

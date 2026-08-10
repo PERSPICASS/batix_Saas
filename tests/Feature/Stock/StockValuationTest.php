@@ -32,6 +32,7 @@ class StockValuationTest extends TestCase
         $this->shop = Shop::factory()->create();
         $user = User::factory()->create(['role' => 'super_admin', 'shop_id' => $this->shop->id]);
         $this->shop->update(['user_id' => $user->id]);
+        $this->subscribeOwnerOf($this->shop);
         $this->actingAs($user);
     }
 

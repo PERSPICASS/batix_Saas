@@ -31,6 +31,7 @@ class StockAuditTest extends TestCase
         $shop = Shop::factory()->create();
         $user = User::factory()->create(['role' => 'super_admin', 'shop_id' => $shop->id]);
         $shop->update(['user_id' => $user->id]);
+        $this->subscribeOwnerOf($shop);
         $this->actingAs($user);
 
         return $shop->fresh();
