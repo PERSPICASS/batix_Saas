@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -30,6 +31,18 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->environment('production') || request()->server('HTTP_X_FORWARDED_PROTO') === 'https') {
             URL::forceScheme('https');
         }
+
+        // `URL::forceScheme` n'agit que sur le générateur d'URL. Le paginateur, lui,
+        // construit ses liens à partir de `$request->url()` (cf. PaginationState), donc
+        // à partir du schéma réellement vu par PHP — et le nginx du conteneur n'en
+        // transmet aucun : ni `fastcgi_param HTTPS`, ni `X-Forwarded-Proto` (cf. le même
+        // constat dans DocumentLink). Les liens de pagination sortaient en `http://` sur
+        // une page servie en `https://` : la CSP `connect-src 'self'` bloquait la visite
+        // Inertia et la navigation restait sur place.
+        //
+        // Sans schéma forcé, `url()->current()` renvoie exactement ce que renvoyait
+        // `$request->url()` : le remplacement est neutre en local.
+        Paginator::currentPathResolver(fn () => url()->current());
 
         Vite::prefetch(concurrency: 3);
 

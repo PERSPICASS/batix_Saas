@@ -67,11 +67,16 @@ class ValidateAccountAccess
             }
         }
         
-        // Partager le code_user et le propriétaire du compte
-        $request->merge([
-            'account_owner' => $accountOwner,
-            'account_code' => $codeUser,
-        ]);
+        // Partager le code_user et le propriétaire du compte.
+        //
+        // `attributes` et surtout pas `merge()` : sur une requête GET, `merge()` écrit
+        // dans le sac de la QUERY STRING. Ces deux valeurs ressortaient donc de
+        // `$request->query()`, et tout paginateur `withQueryString()` les recollait dans
+        // ses liens — le modèle Eloquent y étant sérialisé par ses propriétés publiques,
+        // les URLs de pagination portaient
+        // `?account_owner[incrementing]=1&account_owner[exists]=1&...`.
+        $request->attributes->set('account_owner', $accountOwner);
+        $request->attributes->set('account_code', $codeUser);
 
         // Permet aux appels route() côté frontend (Ziggy) d'omettre {code_user},
         // puisque c'est un préfixe présent sur toutes les routes de ce groupe.
