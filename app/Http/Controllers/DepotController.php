@@ -710,7 +710,12 @@ class DepotController extends Controller
         }
 
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240',
+            // `mimes` compare l'extension DEVINÉE depuis le contenu : un CSV à
+            // séparateur « ; » (ce qu'Excel produit en locale française) est sniffé
+            // en text/plain, donc deviné « txt » et refusé alors que le fichier est
+            // parfaitement valide. `extensions` verrouille le vrai nom du fichier,
+            // et « txt » n'est toléré que côté contenu.
+            'file' => ['required', 'file', 'max:10240', 'extensions:xlsx,xls,csv', 'mimes:xlsx,xls,csv,txt'],
         ]);
 
         $shopIds       = $user->accessibleShopsQuery()->pluck('id')->toArray();

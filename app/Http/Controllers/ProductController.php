@@ -471,7 +471,9 @@ class ProductController extends Controller
     public function import(Request $request, string $code_user)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,xls,csv|max:10240', // Max 10MB
+            // Même contrainte que l'import de stock dépôt : `mimes` seul rejette les
+            // CSV à séparateur « ; » (sniffés text/plain). Cf. DepotController::importStock.
+            'file' => ['required', 'file', 'max:10240', 'extensions:xlsx,xls,csv', 'mimes:xlsx,xls,csv,txt'], // Max 10MB
         ]);
 
         $shopId = get_active_shop_id();
