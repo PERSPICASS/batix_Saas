@@ -5,6 +5,7 @@ import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
+import { useReadOnlyAccount } from '@/Components/ReadOnlyAccountGuard';
 import { useState, useRef, useEffect, FormEvent } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import ProductImage from '@/Components/ProductImage';
@@ -77,6 +78,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     const route = useRoute();
     const { t } = useLocale();
     const [showImportModal, setShowImportModal] = useState(false);
+    const readOnly = useReadOnlyAccount();
     const [search, setSearch] = useState(filters.search || '');
     const [categoryId, setCategoryId] = useState(filters.category_id || '');
     const [status, setStatus] = useState(filters.status || '');
@@ -315,6 +317,9 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                     <p className="text-sm text-slate-600 dark:text-slate-300">{t.products.description}</p>
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="flex items-center gap-1">
+                            {/* L'import écrit en base : il disparaît quand le compte est en
+                                lecture seule. L'export, lui, reste — c'est une lecture. */}
+                            {!readOnly && (
                             <button
                                 onClick={() => setShowImportModal(true)}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
@@ -322,6 +327,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                                 <Upload className="size-4" />
                                 {t.products.actions.import}
                             </button>
+                            )}
                             <a
                                 href={route('products.export')}
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"

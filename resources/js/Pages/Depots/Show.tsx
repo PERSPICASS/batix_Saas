@@ -3,6 +3,7 @@ import { showToast } from '@/utils/toast';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import React from 'react';
 import { useRoute } from '@/utils/route';
+import { useReadOnlyAccount } from '@/Components/ReadOnlyAccountGuard';
 import { usePage } from '@inertiajs/react';
 import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
@@ -122,6 +123,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [showTransfer, setShowTransfer] = useState(false);
     const [showTransferDepot, setShowTransferDepot] = useState(false);
     const [showImport, setShowImport] = useState(false);
+    const readOnly = useReadOnlyAccount();
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
     const [removeProductId, setRemoveProductId] = useState<number | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
@@ -407,6 +409,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                             Transférer vers un dépôt
                         </button>
                     )}
+                    {/* L'import écrit en stock : masqué en lecture seule. Le modèle à
+                        télécharger reste accessible, c'est un simple GET. */}
+                    {!readOnly && (
                     <button
                         onClick={() => setShowImport(true)}
                         className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
@@ -414,6 +419,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                         <Upload className="size-4" />
                         Importer CSV / Excel
                     </button>
+                    )}
                     <a
                         href={buildRoute('depots.stock.template', { depot: depot.id })}
                         className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"

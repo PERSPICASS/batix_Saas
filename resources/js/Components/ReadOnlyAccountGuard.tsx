@@ -35,6 +35,17 @@ const ALLOWED = [
     '/two-factor',
 ];
 
+/**
+ * Pour les actions qui n'émettent aucune visite Inertia au moment du clic — un bouton
+ * qui ouvre une modale d'import, par exemple : le garde-fou global ne les voit pas
+ * passer, elles doivent donc s'effacer d'elles-mêmes.
+ */
+export const useReadOnlyAccount = (): boolean => {
+    const { readOnlyAccount } = usePage().props as unknown as { readOnlyAccount?: boolean };
+
+    return Boolean(readOnlyAccount);
+};
+
 const isAllowed = (url: string): boolean => {
     const path = url.replace(/^https?:\/\/[^/]+/, '');
 

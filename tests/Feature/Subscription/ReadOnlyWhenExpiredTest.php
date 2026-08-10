@@ -212,6 +212,29 @@ class ReadOnlyWhenExpiredTest extends TestCase
         $this->assertSame(1, Shop::where('user_id', $user->id)->count());
     }
 
+    /**
+     * Les imports sont des écritures en masse : ils passent par le même garde-fou que le
+     * reste, sans avoir à être recensés un à un. Le bouton est masqué côté interface,
+     * mais c'est bien le serveur qui refuse.
+     */
+    public function test_bulk_imports_are_blocked_too(): void
+    {
+        [$owner, $shop] = $this->accountExpiring(now()->subDays(20));
+
+        $path = tempnam(sys_get_temp_dir(), 'imp') . '-stock.csv';
+        file_put_contents($path, "nom;quantite\nCiment;10\n");
+
+        $this->actingAs($owner)
+            ->withSession(['active_shop_id' => $shop->id])
+            ->from("/{$owner->accountCode()}/produits")
+            ->post("/{$owner->accountCode()}/produits-import", [
+                'file' => new \Illuminate\Http\UploadedFile($path, 'stock.csv', null, null, true),
+            ])
+            ->assertSessionHas('error', fn ($m) => str_contains($m, self::READ_ONLY));
+
+        $this->assertSame(0, Product::count());
+    }
+
     /** Sans ces exceptions, un compte expiré serait enfermé : ni langue, ni fermeture de compte. */
     public function test_account_administration_stays_open_when_expired(): void
     {
