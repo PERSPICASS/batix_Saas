@@ -237,46 +237,35 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         });
     };
 
+    // Passe par le routeur Inertia comme tout le reste de l'application. L'ancienne
+    // version faisait un fetch() manuel en recopiant le token CSRF du <meta> : ce
+    // token est figé au dernier chargement complet de page, alors qu'axios relit à
+    // chaque requête le cookie XSRF-TOKEN, lui toujours à jour. Dès que la session
+    // repartait à zéro côté serveur (redéploiement, session expirée), l'onglet
+    // ouvert continuait d'envoyer l'ancien token et l'import — et lui seul —
+    // échouait en « CSRF token mismatch ».
     const handleImport = (e: React.FormEvent) => {
         e.preventDefault();
         const file = fileInputRef.current?.files?.[0];
         if (!file) return;
 
-        setIsImporting(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // Récupérer le token CSRF depuis le meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        if (csrfToken) {
-            formData.append('_token', csrfToken);
-        }
-
-        const url = buildRoute('depots.stock.import', { depot: depot.id });
-
-        fetch(url, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-        })
-        .then(response => response.json().then(data => ({ response, data })))
-        .then(({ response, data }) => {
-            if (response.ok) {
-                setShowImport(false);
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                window.location.reload();
-            } else {
-                throw new Error(data.message || `Erreur HTTP ${response.status}`);
+        router.post(
+            buildRoute('depots.stock.import', { depot: depot.id }),
+            { file },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                onStart: () => setIsImporting(true),
+                onSuccess: () => {
+                    setShowImport(false);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                },
+                onError: (errors) => {
+                    showToast('error', "Erreur lors de l'import : " + (Object.values(errors)[0] ?? 'fichier refusé'));
+                },
+                onFinish: () => setIsImporting(false),
             }
-        })
-        .catch(error => {
-            console.error('Erreur lors de l\'import:', error);
-            showToast('error', "Erreur lors de l'import : " + error.message);
-            setIsImporting(false);
-        });
+        );
     };
 
     return (

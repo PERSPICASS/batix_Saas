@@ -171,6 +171,10 @@ class HandleInertiaRequests extends Middleware
                 // jamais persisté en clair (Sanctum ne stocke qu'un hash).
                 'plainTextToken' => fn () => $request->session()->get('plainTextToken'),
             ],
+            // Détail ligne par ligne d'un import partiellement en échec (stock dépôt,
+            // produits). Flashé par le contrôleur à côté du message d'avertissement,
+            // il n'était lu par aucune page tant qu'il n'était pas partagé ici.
+            'import_errors' => fn () => $request->session()->get('import_errors'),
             'csrf_token' => csrf_token(),
             'whatsapp_number' => config('app.whatsapp_number'),
             'appUrl' => rtrim(config('app.url'), '/'),

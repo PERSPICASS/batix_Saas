@@ -87,6 +87,54 @@ class DepotStockCsvUploadTest extends TestCase
         $this->assertSame('Café moulu 250g', Product::find($line->product_id)->name);
     }
 
+    /**
+     * La page envoie désormais l'import via le routeur Inertia (et non un fetch()
+     * manuel portant le token CSRF figé du <meta>). Ce chemin doit donc répondre
+     * par une redirection flashée, pas par du JSON.
+     */
+    public function test_the_inertia_path_redirects_back_with_a_flash_message(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'imp') . '-stock.csv';
+        file_put_contents($path, "nom;marque;quantite\nPerceuse 500W;Bosch;5\n");
+
+        $response = $this->actingAs($this->owner)
+            ->withSession(['active_shop_id' => $this->shop->id])
+            ->from("/{$this->owner->code_user}/depots/{$this->depot->id}")
+            ->post(
+                "/{$this->owner->code_user}/depots/{$this->depot->id}/stock/import",
+                ['file' => new UploadedFile($path, 'stock.csv', null, null, true)],
+                ['X-Inertia' => 'true', 'X-Requested-With' => 'XMLHttpRequest', 'Accept' => 'text/html, application/xhtml+xml'],
+            );
+
+        $response->assertRedirect("/{$this->owner->code_user}/depots/{$this->depot->id}");
+        $response->assertSessionHas('success');
+
+        $this->assertSame(5, DepotProduct::sole()->quantity);
+    }
+
+    /** Les lignes en erreur doivent atteindre la page : `import_errors` doit être une prop partagée. */
+    public function test_failed_rows_are_reported_to_the_page(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'imp') . '-stock.csv';
+        // 2e ligne : une quantité sans le moindre identifiant → ligne refusée.
+        file_put_contents($path, "nom;quantite\nPerceuse 500W;5\n;7\n");
+
+        $this->actingAs($this->owner)
+            ->withSession(['active_shop_id' => $this->shop->id])
+            ->from("/{$this->owner->code_user}/depots/{$this->depot->id}")
+            ->post(
+                "/{$this->owner->code_user}/depots/{$this->depot->id}/stock/import",
+                ['file' => new UploadedFile($path, 'stock.csv', null, null, true)],
+                ['X-Inertia' => 'true', 'X-Requested-With' => 'XMLHttpRequest', 'Accept' => 'text/html, application/xhtml+xml'],
+            )
+            ->assertSessionHas('warning')
+            ->assertSessionHas('import_errors');
+
+        $this->actingAs($this->owner)
+            ->get("/{$this->owner->code_user}/depots/{$this->depot->id}")
+            ->assertInertia(fn ($page) => $page->has('import_errors', 1));
+    }
+
     public function test_a_file_that_is_not_a_spreadsheet_is_still_rejected(): void
     {
         // PNG déguisé en .csv : l'extension passe, le contenu doit être refusé.
