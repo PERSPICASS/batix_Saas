@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'marketing_model' => env('OPENAI_MARKETING_MODEL', 'gpt-5-mini'),
+    ],
+
 ];
