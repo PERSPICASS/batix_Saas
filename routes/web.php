@@ -50,7 +50,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('marketing')->name('marketing.')->group(function () {
         Route::get('/', [MarketingGrowthController::class, 'index'])->name('index');
         Route::post('/campaigns', [MarketingGrowthController::class, 'storeCampaign'])->name('campaigns.store');
+        Route::post('/campaigns/{campaign}/generate', [MarketingGrowthController::class, 'generateCampaignContents'])->name('campaigns.generate');
         Route::post('/leads', [MarketingGrowthController::class, 'storeLead'])->name('leads.store');
+        Route::post('/leads/{lead}/score', [MarketingGrowthController::class, 'scoreLead'])->name('leads.score');
     });
 
     Route::get('/abonnements', function () {
