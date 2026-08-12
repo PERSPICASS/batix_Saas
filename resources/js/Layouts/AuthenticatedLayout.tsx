@@ -21,6 +21,7 @@ import {
     HardHat,
     LayoutDashboard,
     LogOut,
+    Megaphone,
     Menu,
     Moon,
     ShoppingCart,
@@ -170,6 +171,12 @@ export default function Authenticated({
             href: route('invoices.index'),
             active: route().current('invoices.*'),
             icon: FileText,
+        },
+        {
+            label: 'BATIX Growth',
+            href: route('marketing.index'),
+            active: route().current('marketing.*'),
+            icon: Megaphone,
         },
         {
             label: 'Analitics',
