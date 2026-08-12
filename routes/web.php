@@ -13,6 +13,7 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\MarketingGrowthController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -31,42 +32,26 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    // Routes pour les boutiques
     Route::resource('boutiques', ShopController::class)->names('shops');
-
-    // Routes pour les produits
-    // Routes pour les produits
     Route::resource('produits', ProductController::class)->names('products');
-
-    // Routes pour les catégories
     Route::resource('categories', CategoryController::class)->names('categories');
-
-    // Routes pour les sous-catégories
     Route::resource('sous-categories', SubcategoryController::class)->names('subcategories');
-
-    // Routes pour les clients
     Route::resource('clients', CustomerController::class)->names('customers');
-
-    // Routes pour les factures
     Route::resource('factures', InvoiceController::class)->names('invoices');
-
-    // Routes pour les ventes
     Route::resource('ventes', SaleController::class)->names('sales');
-
-    // Stocks (mouvements de stock)
     Route::resource('stocks', StockMovementController::class)->except(['edit', 'update']);
-
-    // Inventaires
     Route::resource('inventory', InventoryController::class);
     Route::post('inventory/{inventory}/complete', [InventoryController::class, 'complete'])->name('inventory.complete');
-
-    // Utilisateurs
     Route::resource('users', UserController::class);
-
-    // Fournisseurs
     Route::resource('suppliers', SupplierController::class)->parameters([
         'suppliers' => 'supplier'
     ]);
+
+    Route::prefix('marketing')->name('marketing.')->group(function () {
+        Route::get('/', [MarketingGrowthController::class, 'index'])->name('index');
+        Route::post('/campaigns', [MarketingGrowthController::class, 'storeCampaign'])->name('campaigns.store');
+        Route::post('/leads', [MarketingGrowthController::class, 'storeLead'])->name('leads.store');
+    });
 
     Route::get('/abonnements', function () {
         return Inertia::render('Management/Placeholder', [
@@ -82,7 +67,6 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('analytics.index');
 
-    // Paramètres de la boutique
     Route::get('/parametres', [SettingsController::class, 'index'])->name('settings.index');
     Route::patch('/parametres', [SettingsController::class, 'update'])->name('settings.update');
 
