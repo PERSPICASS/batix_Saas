@@ -21,11 +21,16 @@ class MarketingLead extends Model
         'status',
         'score',
         'notes',
+        'ai_summary',
+        'ai_next_action',
+        'whatsapp_script',
         'last_contact_at',
+        'scored_at',
     ];
 
     protected $casts = [
         'last_contact_at' => 'datetime',
+        'scored_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
