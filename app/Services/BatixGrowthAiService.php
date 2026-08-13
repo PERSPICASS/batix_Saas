@@ -17,8 +17,6 @@ class BatixGrowthAiService
             'properties' => [
                 'contents' => [
                     'type' => 'array',
-                    'minItems' => 3,
-                    'maxItems' => 3,
                     'items' => [
                         'type' => 'object',
                         'additionalProperties' => false,
@@ -57,6 +55,10 @@ class BatixGrowthAiService
             ]),
         );
 
+        if (!isset($data['contents']) || !is_array($data['contents']) || count($data['contents']) !== 3) {
+            throw new RuntimeException('La génération IA doit retourner exactement 3 contenus.');
+        }
+
         return $data['contents'];
     }
 
@@ -66,7 +68,7 @@ class BatixGrowthAiService
             'type' => 'object',
             'additionalProperties' => false,
             'properties' => [
-                'score' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 100],
+                'score' => ['type' => 'integer'],
                 'qualification' => ['type' => 'string', 'enum' => ['cold', 'warm', 'qualified']],
                 'summary' => ['type' => 'string'],
                 'next_action' => ['type' => 'string'],
@@ -75,13 +77,13 @@ class BatixGrowthAiService
             'required' => ['score', 'qualification', 'summary', 'next_action', 'whatsapp_message'],
         ];
 
-        return $this->structuredResponse(
+        $result = $this->structuredResponse(
             'batix_growth_lead_score',
             $schema,
             implode("\n", [
                 'Tu es BATIX Growth, assistant commercial de BatixPro.',
                 'Évalue ce prospect uniquement à partir des informations disponibles. Ne déduis pas de données sensibles et n’invente rien.',
-                'Le score doit refléter la probabilité qu’une démonstration BatixPro soit pertinente maintenant.',
+                'Attribue un score entier de 0 à 100 reflétant la pertinence d’une démonstration BatixPro maintenant.',
                 'Un commerce, une quincaillerie, un grossiste ou distributeur avec un problème de ventes/stock/facturation est prioritaire.',
                 'Le message WhatsApp doit être court, humain, non insistant, et inviter à une démonstration ou à préciser le besoin.',
                 '',
@@ -92,6 +94,10 @@ class BatixGrowthAiService
                 'Notes : '.($lead->notes ?: 'aucune'),
             ]),
         );
+
+        $result['score'] = max(0, min(100, (int) $result['score']));
+
+        return $result;
     }
 
     private function structuredResponse(string $schemaName, array $schema, string $input): array
