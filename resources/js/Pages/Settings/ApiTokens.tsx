@@ -41,7 +41,7 @@ export default function ApiTokens({ tokens, availableAbilities }: Props) {
         abilities: [] as string[],
     });
 
-    const resources = ['products', 'customers', 'sales', 'invoices', 'stock-movements'] as const;
+    const resources = ['products', 'customers', 'sales', 'quotes', 'invoices', 'stock-movements'] as const;
 
     const toggleAbility = (ability: string) => {
         setData('abilities', data.abilities.includes(ability)

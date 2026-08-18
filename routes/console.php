@@ -12,6 +12,10 @@ Artisan::command('inspire', function () {
 // Rappels d'expiration d'abonnement — tous les jours à 8h00
 Schedule::command('subscriptions:send-expiry-reminders')->dailyAt('08:00');
 
+// Purge des conversations de l'assistant IA inactives depuis 90 jours — 3h30, après la
+// sauvegarde de 3h00 pour qu'un fil supprimé reste récupérable dans le dernier dump.
+Schedule::command('ai:purge-conversations')->dailyAt('03:30');
+
 // ATTENTION : c'est bien ce fichier qui définit le planning. app/Console/Kernel.php
 // n'est plus lu depuis Laravel 11 (bootstrap/app.php déclare `commands:` ici) ;
 // toute tâche ajoutée là-bas ne s'exécutera jamais. Vérifier avec `schedule:list`.

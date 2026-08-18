@@ -50,6 +50,7 @@ import ReadOnlyAccountGuard from '@/Components/ReadOnlyAccountGuard';
 import OfflineBanner from '@/Components/OfflineBanner';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import AiChatWidget from '@/Components/AiChatWidget';
+import { clearAiChatSession } from '@/utils/aiChatSession';
 import ReviewModal, { type MyReview } from '@/Components/ReviewModal';
 import { useLocale } from '@/contexts/LocaleContext';
 
@@ -761,7 +762,13 @@ export default function Authenticated({
                                                     method="post"
                                                     as="button"
                                                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-200 transition hover:bg-rose-300/10"
-                                                    onClick={() => setUserMenuOpen(false)}
+                                                    onClick={() => {
+                                                        setUserMenuOpen(false);
+                                                        // La conversation IA survit à la navigation
+                                                        // (sessionStorage) : elle ne doit pas survivre
+                                                        // au départ de l'utilisateur.
+                                                        clearAiChatSession();
+                                                    }}
                                                 >
                                                     <LogOut className="size-4" />
                                                     <span>{t.layout.userMenu.logout}</span>
@@ -829,12 +836,19 @@ export default function Authenticated({
                 )}
                 {!isPlatformAdmin && (
                     <>
+                        {/*
+                          * Bouton Avis : à GAUCHE du bouton IA, pas au-dessus. Empilé en
+                          * bottom-24, il retombait dans le panneau de chat ouvert
+                          * (bottom-20, h-96) juste à hauteur du champ de saisie, qu'il
+                          * rendait inatteignable. right-24 dégage les 48px du bouton IA
+                          * (right-6) et sa marge.
+                          */}
                         <button
                             type="button"
                             onClick={() => setReviewOpen(true)}
                             title={t.nav.reviews}
                             aria-label={t.nav.reviews}
-                            className="fixed bottom-24 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-amber-200"
+                            className="fixed bottom-6 right-24 z-40 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-amber-200"
                         >
                             <Star className="size-5" />
                             <span className="hidden sm:inline">{t.nav.reviews}</span>

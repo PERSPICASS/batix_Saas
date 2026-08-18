@@ -74,7 +74,7 @@ export default function PlatformSettings({ settings }: Props) {
                                 value={data.general.platform_name}
                                 onChange={e => setData('general', { ...data.general, platform_name: e.target.value })}
                                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:placeholder-slate-500"
-                                placeholder="Batix SaaS"
+                                placeholder="BATIX PRO"
                             />
                         </div>
 

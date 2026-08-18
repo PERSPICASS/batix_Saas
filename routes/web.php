@@ -560,6 +560,11 @@ Route::prefix('{code_user}')
     // AI Chat — throttle pour limiter le coût d'appels API en rafale (usage normal : quelques
     // messages par minute dans une conversation).
     Route::post('ai-chat', [AiChatController::class, 'chat'])->middleware('throttle:20,1')->name('ai.chat');
+    // Historique de l'assistant : la liste, la relecture d'un fil et sa suppression.
+    // Chaque route revérifie l'appartenance (utilisateur + boutique) côté contrôleur.
+    Route::get('ai-chat/conversations', [AiChatController::class, 'conversations'])->name('ai.conversations');
+    Route::get('ai-chat/conversations/{conversation}', [AiChatController::class, 'conversation'])->name('ai.conversation');
+    Route::delete('ai-chat/conversations/{conversation}', [AiChatController::class, 'destroyConversation'])->name('ai.conversation.destroy');
 
     // Dépenses
     Route::get('depenses', [ExpenseController::class, 'index'])->name('expenses.index')->middleware('permission:expenses,view');

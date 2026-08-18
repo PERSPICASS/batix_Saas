@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\SaleController;
 use App\Http\Controllers\Api\V1\StockMovementController;
 use Illuminate\Http\Request;
@@ -65,6 +66,23 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::middleware('abilities:invoices:read')->group(function () {
         Route::get('/invoices', [InvoiceController::class, 'index']);
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+    });
+    // Création en brouillon uniquement — le contrôleur force le statut, l'émission
+    // (qui déstocke et fige la pièce comptable) reste dans l'application.
+    Route::middleware('abilities:invoices:write')->group(function () {
+        Route::post('/invoices', [InvoiceController::class, 'store']);
+        // Modification limitée aux brouillons par le contrôleur : une facture émise
+        // se corrige par annulation ou avoir, jamais par réécriture.
+        Route::match(['put', 'patch'], '/invoices/{invoice}', [InvoiceController::class, 'update']);
+    });
+
+    Route::middleware('abilities:quotes:read')->group(function () {
+        Route::get('/quotes', [QuoteController::class, 'index']);
+        Route::get('/quotes/{quote}', [QuoteController::class, 'show']);
+    });
+    Route::middleware('abilities:quotes:write')->group(function () {
+        Route::post('/quotes', [QuoteController::class, 'store']);
+        Route::match(['put', 'patch'], '/quotes/{quote}', [QuoteController::class, 'update']);
     });
     Route::middleware('abilities:stock-movements:read')->group(function () {
         Route::get('/stock-movements', [StockMovementController::class, 'index']);

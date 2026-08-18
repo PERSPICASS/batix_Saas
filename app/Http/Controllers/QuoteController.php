@@ -106,60 +106,10 @@ class QuoteController extends Controller
             'terms' => 'nullable|string',
         ]);
 
-        $subtotal = collect($validated['items'])->sum(function ($item) {
-            return $item['quantity'] * $item['unit_price'];
-        });
-
-        // Chaque ligne porte son propre taux (produit, sinon boutique) : un taux global
-        // appliqué au sous-total ne collerait plus dès que deux lignes diffèrent, et le
-        // total du devis contredirait le détail de ses lignes.
-        $taxAmount = $this->taxAmountFor($validated['items'], $shop);
-        $total = $subtotal + $taxAmount;
-
-        // quote_number est généré à partir du dernier numéro connu : deux devis créés au
-        // même instant peuvent calculer le même candidat. Le retry régénère un numéro frais
-        // à chaque tentative (via Quote::generateNumber, rappelé dans la closure) plutôt que
-        // de perdre le devis sur une violation de contrainte brute.
-        $quote = \App\Support\ConcurrencySafe::retryOnDuplicate(function () use ($shop, $validated, $subtotal, $taxAmount, $total) {
-            return \Illuminate\Support\Facades\DB::transaction(function () use ($shop, $validated, $subtotal, $taxAmount, $total) {
-                $quote = Quote::create([
-                    'shop_id' => $shop->id,
-                    'customer_id' => $validated['customer_id'],
-                    'quote_number' => Quote::generateNumber($shop->id),
-                    'quote_date' => $validated['quote_date'],
-                    'expiry_date' => $validated['expiry_date'],
-                    'subtotal' => $subtotal,
-                    'tax_amount' => $taxAmount,
-                    'total' => $total,
-                    'notes' => $validated['notes'] ?? null,
-                    'terms' => $validated['terms'] ?? null,
-                    'status' => 'draft',
-                ]);
-
-                foreach ($validated['items'] as $item) {
-                    // Marquer l'article comme vendu si fourni
-                    if (!empty($item['product_article_id'])) {
-                        \App\Models\ProductArticle::find($item['product_article_id'])?->markAsSold();
-                    }
-
-                    $quote->items()->create([
-                        'product_id' => $item['product_id'],
-                        'product_article_id' => $item['product_article_id'] ?? null,
-                        'article_name' => $item['article_name'] ?? null,
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $item['unit_price'],
-                        'line_total' => $item['quantity'] * $item['unit_price'],
-                        // Le taux du produit d'abord, comme le fait déjà
-                        // SaleCreationService, puis le taux configuré de la boutique.
-                        // Un 18 en dur ignorait les deux : une boutique marocaine à 20 %
-                        // ou non assujettie à 0 % voyait quand même 18 % sur ses devis.
-                        'tax_rate' => $this->taxRateFor($item['product_id'] ?? null, $shop),
-                    ]);
-                }
-
-                return $quote;
-            });
-        });
+        // Totaux, taux de ligne et numérotation vivent dans le service, partagé avec
+        // l'API v1 : un devis créé par l'assistant IA doit être chiffré exactement
+        // comme celui saisi ici.
+        $quote = \App\Services\QuoteWriter::create($validated, $shop);
 
         return redirect()->route('quotes.show', ['code_user' => $code_user, 'quote' => $quote])->with('success', 'Devis créé avec succès');
     }
@@ -233,43 +183,13 @@ class QuoteController extends Controller
             'terms' => 'nullable|string',
         ]);
 
-        $subtotal = collect($validated['items'])->sum(function ($item) {
-            return $item['quantity'] * $item['unit_price'];
-        });
-
-        $taxAmount = $this->taxAmountFor($validated['items'], $quote->shop);
-        $total = $subtotal + $taxAmount;
-
-        $quote->update([
-            'quote_date' => $validated['quote_date'],
-            'expiry_date' => $validated['expiry_date'],
-            'subtotal' => $subtotal,
-            'tax_amount' => $taxAmount,
-            'total' => $total,
-            'notes' => $validated['notes'],
-            'terms' => $validated['terms'],
-        ]);
-
-        $quote->items()->delete();
-        foreach ($validated['items'] as $item) {
-            // Marquer l'article comme vendu si fourni
-            if (!empty($item['product_article_id'])) {
-                \App\Models\ProductArticle::find($item['product_article_id'])?->markAsSold();
-            }
-
-            $quote->items()->create([
-                'product_id' => $item['product_id'],
-                'product_article_id' => $item['product_article_id'] ?? null,
-                'article_name' => $item['article_name'] ?? null,
-                'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
-                'line_total' => $item['quantity'] * $item['unit_price'],
-                'tax_rate' => $this->taxRateFor($item['product_id'] ?? null, $quote->shop),
-            ]);
-        }
+        // Même service que l'API v1 : un devis modifié par l'assistant IA doit être
+        // rechiffré exactement comme celui édité ici.
+        \App\Services\QuoteWriter::update($quote, $validated);
 
         return redirect()->route('quotes.show', ['code_user' => $code_user, 'quote' => $quote])->with('success', 'Devis mis à jour');
     }
+
 
     public function pdf(string $code_user, Quote $quote, \App\Services\DocumentPdf $pdf)
     {

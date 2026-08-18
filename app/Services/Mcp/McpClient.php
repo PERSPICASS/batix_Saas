@@ -2,7 +2,9 @@
 
 namespace App\Services\Mcp;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -24,6 +26,12 @@ class McpClient
 
     private int $nextId = 1;
 
+    /**
+     * Plafond dynamique, en secondes, imposé par le budget de temps de l'appelant.
+     * null = seul $timeoutSeconds s'applique.
+     */
+    private ?int $timeoutCapSeconds = null;
+
     public function __construct(
         private readonly string $baseUrl,
         private readonly string $token,
@@ -35,7 +43,7 @@ class McpClient
      */
     public function initialize(): void
     {
-        $response = $this->http()->post($this->baseUrl, [
+        $response = $this->post([
             'jsonrpc' => '2.0',
             'id' => $this->nextId++,
             'method' => 'initialize',
@@ -56,7 +64,7 @@ class McpClient
         }
 
         // Notification obligatoire du protocole ; réponse 202 sans corps.
-        $this->http()->post($this->baseUrl, [
+        $this->post([
             'jsonrpc' => '2.0',
             'method' => 'notifications/initialized',
         ]);
@@ -109,14 +117,12 @@ class McpClient
             throw new McpUnavailableException('Session MCP non initialisée.');
         }
 
-        $response = $this->http()
-            ->withHeaders(['mcp-session-id' => $this->sessionId])
-            ->post($this->baseUrl, [
-                'jsonrpc' => '2.0',
-                'id' => $this->nextId++,
-                'method' => $method,
-                'params' => empty($params) ? new \stdClass() : $params,
-            ]);
+        $response = $this->post([
+            'jsonrpc' => '2.0',
+            'id' => $this->nextId++,
+            'method' => $method,
+            'params' => empty($params) ? new \stdClass() : $params,
+        ], ['mcp-session-id' => $this->sessionId]);
 
         if (! $response->successful()) {
             throw new McpUnavailableException("Appel MCP {$method} en échec (HTTP {$response->status()}).");
@@ -169,12 +175,58 @@ class McpClient
         return $found;
     }
 
+    /**
+     * Plafonne la durée des appels suivants au temps qu'il reste à l'appelant.
+     *
+     * Sans cela, le timeout de 20 s par appel rend le budget de AiChatService purement
+     * décoratif : deux outils enchaînés dans un même tour consomment 40 s alors que PHP
+     * coupe à 30 (`max_execution_time`), et la requête meurt en erreur fatale — un 500
+     * nu, sans le message d'attente prévu pour l'utilisateur. Ne peut qu'abaisser le
+     * plafond, jamais l'élever.
+     */
+    public function limitTimeoutTo(int $seconds): void
+    {
+        $this->timeoutCapSeconds = max(1, $seconds);
+    }
+
+    private function effectiveTimeout(): int
+    {
+        return $this->timeoutCapSeconds === null
+            ? $this->timeoutSeconds
+            : min($this->timeoutSeconds, $this->timeoutCapSeconds);
+    }
+
+    /**
+     * Envoie une requête à la passerelle en traduisant les pannes de TRANSPORT.
+     *
+     * Sans cette traduction, un timeout ou un refus de connexion remonte en
+     * `ConnectionException` brute jusqu'au contrôleur, qui ne la reconnaît pas et
+     * répond 500 « Une erreur est survenue » — alors qu'il a précisément une branche
+     * dédiée pour dire à l'utilisateur que le service de données ne répond pas.
+     * Le cas est loin d'être théorique : passerelle éteinte, port occupé, ou budget
+     * de temps qui coupe l'appel en cours.
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  array<string, string>  $headers
+     */
+    private function post(array $payload, array $headers = []): Response
+    {
+        try {
+            return $this->http()->withHeaders($headers)->post($this->baseUrl, $payload);
+        } catch (ConnectionException $e) {
+            throw new McpUnavailableException(
+                'Passerelle MCP injoignable : ' . $e->getMessage(),
+                previous: $e,
+            );
+        }
+    }
+
     private function http(): PendingRequest
     {
         // Accept DOIT inclure text/event-stream : le serveur MCP répond 406 sinon.
         // On n'utilise pas acceptJson() qui écraserait cet en-tête.
         return Http::withToken($this->token)
-            ->timeout($this->timeoutSeconds)
+            ->timeout($this->effectiveTimeout())
             ->asJson()
             ->withHeaders(['Accept' => 'application/json, text/event-stream']);
     }

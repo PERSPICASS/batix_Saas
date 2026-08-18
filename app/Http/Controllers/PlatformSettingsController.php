@@ -16,7 +16,7 @@ class PlatformSettingsController extends Controller
         return Inertia::render('PlatformAdmin/Settings/Index', [
             'settings' => [
                 'general' => [
-                    'platform_name'    => PlatformSetting::get('platform_name', 'Batix SaaS'),
+                    'platform_name'    => PlatformSetting::get('platform_name', 'BATIX PRO'),
                     'support_email'    => PlatformSetting::get('support_email', 'support@batixpro.com'),
                     'support_phone'    => PlatformSetting::get('support_phone', ''),
                     'website_url'      => PlatformSetting::get('website_url', ''),

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\Api\V1\Concerns\LinksToApp;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class InvoiceResource extends JsonResource
+class QuoteResource extends JsonResource
 {
     use LinksToApp;
 
@@ -15,26 +15,30 @@ class InvoiceResource extends JsonResource
         return [
             'id' => $this->id,
             'shop_id' => $this->shop_id,
-            'invoice_number' => $this->invoice_number,
-            'web_url' => $this->appDocumentUrl('invoices.show', 'invoice', $this->id),
-            'invoice_date' => $this->invoice_date?->toIso8601String(),
-            'due_date' => $this->due_date?->toIso8601String(),
+            'quote_number' => $this->quote_number,
+            // Lien vers la page du devis dans l'application, pour que l'assistant IA
+            // puisse y renvoyer l'utilisateur sans avoir à deviner une URL.
+            'web_url' => $this->appDocumentUrl('quotes.show', 'quote', $this->id),
+            'quote_date' => $this->quote_date?->toIso8601String(),
+            'expiry_date' => $this->expiry_date?->toIso8601String(),
             'customer' => $this->whenLoaded('customer', fn () => $this->customer ? [
                 'id' => $this->customer->id,
                 'name' => $this->customer->name,
             ] : null),
             'status' => $this->status,
-            'payment_method' => $this->payment_method,
             'subtotal' => (float) $this->subtotal,
             'tax_amount' => (float) $this->tax_amount,
-            'discount_amount' => (float) $this->discount_amount,
             'total' => (float) $this->total,
+            'notes' => $this->notes,
+            'sent_at' => $this->sent_at?->toIso8601String(),
+            'accepted_at' => $this->accepted_at?->toIso8601String(),
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [
                 'product_id' => $item->product_id,
-                'product_name' => $item->product_name,
+                'article_name' => $item->article_name,
                 'quantity' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,
-                'total' => (float) $item->total,
+                'tax_rate' => (float) $item->tax_rate,
+                'line_total' => (float) $item->line_total,
             ])),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

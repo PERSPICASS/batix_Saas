@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\V1\Concerns\ScopesToAccessibleShops;
+use App\Http\Controllers\Api\V1\Concerns\SearchesText;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreProductApiRequest;
 use App\Http\Requests\Api\V1\UpdateProductApiRequest;
@@ -18,16 +19,21 @@ use Illuminate\Support\Facades\DB;
 class ProductController extends Controller
 {
     use ScopesToAccessibleShops;
+    use SearchesText;
 
     public function index(Request $request): AnonymousResourceCollection
     {
         $products = Product::whereIn('shop_id', $this->resolveShopIds($request))
             ->with('category')
             ->when($request->filled('is_active'), fn ($q) => $q->where('is_active', $request->boolean('is_active')))
-            ->when($request->filled('search'), fn ($q) => $q->where(function ($q) use ($request) {
-                $term = $request->query('search');
-                $q->where('name', 'like', "%{$term}%")->orWhere('sku', 'like', "%{$term}%");
-            }))
+            // `brand` est indispensable : le nom du produit ne porte pas la marque
+            // (« Pistolet à peinture électrique 600W » / « Tolsen »), l'API la renvoie,
+            // donc l'assistant la cite — mais chercher « Tolsen » ne trouvait rien.
+            ->when($request->filled('search'), fn ($q) => $this->applyTextSearch(
+                $q,
+                ['name', 'brand', 'sku'],
+                $request->query('search'),
+            ))
             ->orderByDesc('updated_at')
             ->paginate($this->resolvePerPage($request));
 

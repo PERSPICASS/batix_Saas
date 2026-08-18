@@ -21,7 +21,8 @@ class ApiTokenController extends Controller
         'products:read', 'products:write',
         'customers:read', 'customers:write',
         'sales:read', 'sales:write',
-        'invoices:read',
+        'invoices:read', 'invoices:write',
+        'quotes:read', 'quotes:write',
         'stock-movements:read',
     ];
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\V1\Concerns\ScopesToAccessibleShops;
+use App\Http\Controllers\Api\V1\Concerns\SearchesText;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreCustomerApiRequest;
 use App\Http\Requests\Api\V1\UpdateCustomerApiRequest;
@@ -16,11 +17,21 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 class CustomerController extends Controller
 {
     use ScopesToAccessibleShops;
+    use SearchesText;
 
     public function index(Request $request): AnonymousResourceCollection
     {
         $customers = Customer::whereIn('shop_id', $this->resolveShopIds($request))
-            ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%' . $request->query('search') . '%'))
+            // Nom, téléphone ET e-mail : le tool MCP annonce les trois, alors que seul le
+            // nom était interrogé — une recherche par numéro ne pouvait rien trouver.
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $term = $request->query('search');
+
+                $q->where(function ($q) use ($term) {
+                    $this->applyTextSearch($q, ['name', 'phone', 'email'], $term);
+                    $this->orWhereSameDigits($q, 'phone', $term);
+                });
+            })
             ->orderByDesc('updated_at')
             ->paginate($this->resolvePerPage($request));
 

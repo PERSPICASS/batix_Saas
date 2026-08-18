@@ -25,7 +25,7 @@ export default function Guest({ children }: PropsWithChildren) {
             </div>
 
             <p className="mt-6 text-xs text-slate-400">
-                © {new Date().getFullYear()} Batix SaaS
+                © {new Date().getFullYear()} BATIX PRO
             </p>
         </div>
     );
