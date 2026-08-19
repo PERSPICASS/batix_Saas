@@ -29,7 +29,7 @@ const ALLOWED = [
     '/plans',
     '/payment',
     '/paddle',
-    '/chariow',
+    '/moneroo',
     '/create-shop',
     '/lock-screen',
     '/two-factor',

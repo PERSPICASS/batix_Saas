@@ -48,25 +48,16 @@ class PaymentController extends Controller
             ],
             'currency'  => $currency,
             'isSandbox' => (bool) config('services.pawapay.sandbox', true),
-            // Le bouton Mobile Money est toujours visible ; c'est `chariowEnabled` qui
+            // Le bouton Mobile Money est toujours visible ; c'est `monerooEnabled` qui
             // décide si le formulaire s'ouvre ou si l'on affiche « bientôt disponible ».
             // Le détail de ce qui manque ne sort qu'en debug : en production, un client
             // n'a pas à lire notre configuration.
-            'chariowEnabled' => config('services.chariow.api_key', '') !== ''
-                && ($plan->chariow_product_id || $plan->chariow_product_id_yearly),
-            'chariowCycles' => [
-                'monthly' => (bool) $plan->chariow_product_id,
-                'yearly'  => (bool) $plan->chariow_product_id_yearly,
-            ],
+            'monerooEnabled' => config('services.moneroo.api_key', '') !== ''
+                && config('services.moneroo.webhook_secret', '') !== '',
             'userCountry'  => $user->country,
-            'chariowSetup' => config('app.debug') ? array_values(array_filter([
-                config('services.chariow.api_key', '') === '' ? 'CHARIOW_API_KEY absent de .env' : null,
-                config('services.chariow.webhook_secret', '') === '' ? 'CHARIOW_WEBHOOK_SECRET absent de .env' : null,
-                !$plan->chariow_product_id ? "Produit mensuel non mappé (php artisan chariow:link-products)" : null,
-                !$plan->chariow_product_id_yearly ? 'Produit annuel non mappé' : null,
-                !config('services.chariow.price_guard', true)
-                    ? 'GARDE-FOU DE PRIX DÉSACTIVÉ (CHARIOW_PRICE_GUARD=false)'
-                    : null,
+            'monerooSetup' => config('app.debug') ? array_values(array_filter([
+                config('services.moneroo.api_key', '') === '' ? 'MONEROO_API_KEY absent de .env' : null,
+                config('services.moneroo.webhook_secret', '') === '' ? 'MONEROO_WEBHOOK_SECRET absent de .env' : null,
             ])) : null,
             'currentPlan' => $currentSubscription ? [
                 'name' => $currentSubscription->plan->name,

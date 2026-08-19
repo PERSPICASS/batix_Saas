@@ -105,22 +105,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Chariow — produits digitaux & mobile money (Wave, OM, MTN, Moov)
+    | Moneroo — orchestration Mobile Money et carte
     |--------------------------------------------------------------------------
-    | `webhook_secret` est le secret whsec_ du Pulse (Automations → Pulses →
-    | Overview), et non la clé API : les deux sont distincts et se régénèrent
-    | séparément.
+    | La clé API ne doit jamais être envoyée au navigateur. Le secret webhook est
+    | distinct : il signe le corps brut reçu dans X-Moneroo-Signature.
     */
-    'chariow' => [
-        'api_key'        => env('CHARIOW_API_KEY', ''),
-        'webhook_secret' => env('CHARIOW_WEBHOOK_SECRET', ''),
-        'base_url'       => env('CHARIOW_BASE_URL', 'https://api.chariow.com/v1'),
-
-        // Garde-fou : refuse d'activer un abonnement quand le produit Chariow est
-        // affiché sous le prix du plan. À ne désactiver que le temps d'un test à
-        // prix réduit — chaque activation passée en force part alors en log d'erreur,
-        // donc dans Sentry, pour qu'un oubli finisse par se voir.
-        'price_guard'    => env('CHARIOW_PRICE_GUARD', true),
+    'moneroo' => [
+        'api_key'        => env('MONEROO_API_KEY', ''),
+        'webhook_secret' => env('MONEROO_WEBHOOK_SECRET', ''),
+        'base_url'       => env('MONEROO_BASE_URL', 'https://api.moneroo.io'),
     ],
 
     /*

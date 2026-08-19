@@ -35,8 +35,8 @@ export interface NormalizedPhone {
 }
 
 /**
- * Met un numéro saisi sous la forme attendue par Chariow : `phone.country_code`
- * en ISO alpha-2 et `phone.number` en chiffres nationaux.
+ * Normalise un numéro pour les prestataires de paiement : code pays ISO alpha-2,
+ * numéro national et représentation internationale E.164.
  *
  * C'est libphonenumber qui décide du préfixe d'appel national, pays par pays : le
  * `0` de `0612345678` saute en France, celui de `0700000000` reste en Côte
@@ -44,7 +44,7 @@ export interface NormalizedPhone {
  * des deux cas — et le paiement échouerait sans que personne comprenne pourquoi.
  *
  * Retourne `null` si le numéro n'est pas analysable, pour que l'appelant puisse
- * bloquer l'envoi plutôt que de laisser Chariow répondre 422.
+ * bloquer l'envoi plutôt que de laisser le prestataire répondre 422.
  */
 export function normalizePhone(input: string, iso: string): NormalizedPhone | null {
     if (!input.trim()) {
@@ -60,7 +60,7 @@ export function normalizePhone(input: string, iso: string): NormalizedPhone | nu
     return {
         nationalNumber: parsed.nationalNumber,
         country: parsed.country ?? iso,
-        international: parsed.formatInternational(),
+        international: parsed.number,
         valid: parsed.isValid(),
     };
 }
