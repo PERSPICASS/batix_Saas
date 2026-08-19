@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AlertController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\InvoiceController;
+use App\Http\Controllers\Api\V1\LowStockProductController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\QuoteController;
 use App\Http\Controllers\Api\V1\SaleController;
@@ -88,6 +89,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     });
     Route::middleware('abilities:stock-movements:read')->group(function () {
         Route::get('/stock-movements', [StockMovementController::class, 'index']);
+        Route::get('/stock/low-products', LowStockProductController::class);
         Route::get('/alerts', [AlertController::class, 'index']);
     });
 });

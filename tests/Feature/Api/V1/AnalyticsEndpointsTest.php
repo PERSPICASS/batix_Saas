@@ -108,6 +108,66 @@ class AnalyticsEndpointsTest extends TestCase
             ->assertJsonPath('data.0.title', 'Rupture');
     }
 
+    public function test_low_stock_products_returns_the_current_exhaustive_paginated_state(): void
+    {
+        [$user, $shop] = $this->ownerWithShop();
+        Product::factory()->create([
+            'shop_id' => $shop->id, 'name' => 'Rupture', 'stock_quantity' => 0,
+            'min_stock_alert' => 10, 'track_stock' => true, 'is_active' => true,
+        ]);
+        Product::factory()->create([
+            'shop_id' => $shop->id, 'name' => 'Stock bas', 'stock_quantity' => 5,
+            'min_stock_alert' => 10, 'track_stock' => true, 'is_active' => true,
+        ]);
+        Product::factory()->create([
+            'shop_id' => $shop->id, 'name' => 'Au seuil', 'stock_quantity' => 10,
+            'min_stock_alert' => 10, 'track_stock' => true, 'is_active' => true,
+        ]);
+
+        // Ces produits ne contribuent pas au compteur affiché par l'application.
+        Product::factory()->create([
+            'shop_id' => $shop->id, 'stock_quantity' => 11,
+            'min_stock_alert' => 10, 'track_stock' => true, 'is_active' => true,
+        ]);
+        Product::factory()->create([
+            'shop_id' => $shop->id, 'stock_quantity' => 0,
+            'min_stock_alert' => 0, 'track_stock' => true, 'is_active' => true,
+        ]);
+        Product::factory()->create([
+            'shop_id' => $shop->id, 'stock_quantity' => 0,
+            'min_stock_alert' => 10, 'track_stock' => false, 'is_active' => true,
+        ]);
+        Product::factory()->create([
+            'shop_id' => $shop->id, 'stock_quantity' => 0,
+            'min_stock_alert' => 10, 'track_stock' => true, 'is_active' => false,
+        ]);
+
+        $foreignOwner = User::factory()->create(['role' => 'super_admin']);
+        $foreignShop = Shop::factory()->create(['user_id' => $foreignOwner->id]);
+        Product::factory()->create([
+            'shop_id' => $foreignShop->id, 'stock_quantity' => 0,
+            'min_stock_alert' => 10, 'track_stock' => true, 'is_active' => true,
+        ]);
+
+        Sanctum::actingAs($user, ['stock-movements:read']);
+
+        $this->getJson('/api/v1/stock/low-products?per_page=2&page=1')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.total', 3)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonPath('data.0.name', 'Rupture')
+            ->assertJsonPath('data.1.name', 'Stock bas');
+
+        $this->getJson('/api/v1/stock/low-products?per_page=2&page=2')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.name', 'Au seuil');
+
+        $this->getJson("/api/v1/stock/low-products?shop_id={$foreignShop->id}")
+            ->assertForbidden();
+    }
+
     public function test_sales_summary_requires_the_sales_read_ability(): void
     {
         [$user] = $this->ownerWithShop();
