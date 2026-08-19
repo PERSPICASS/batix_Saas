@@ -25,6 +25,16 @@ class MonerooController extends Controller
     {
         abort_if(! $plan->is_active, 404);
 
+        $user = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
+
+        if (! config('services.moneroo.enabled', false)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Le paiement par Mobile Money sera bientôt actif.',
+            ], 503);
+        }
+
         $validated = $request->validate([
             'billing_cycle' => 'required|in:monthly,yearly',
             'first_name' => 'required|string|max:50',
@@ -32,9 +42,6 @@ class MonerooController extends Controller
             'phone' => 'nullable|string|max:25|regex:/^\+[1-9][0-9]{6,14}$/',
             'country' => 'nullable|string|size:2|alpha',
         ]);
-
-        $user = Auth::user();
-        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
 
         if (! $this->moneroo->isConfigured()) {
             return response()->json([

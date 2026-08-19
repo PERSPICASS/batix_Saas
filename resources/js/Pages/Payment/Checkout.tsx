@@ -573,28 +573,41 @@ export default function Checkout({
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setPaymentMode('moneroo')}
+                                    onClick={() => monerooEnabled && setPaymentMode('moneroo')}
+                                    disabled={!monerooEnabled}
+                                    aria-disabled={!monerooEnabled}
                                     className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
                                         paymentMode === 'moneroo'
                                             ? 'border-amber-300 bg-amber-300/10 text-amber-200'
-                                            : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                            : monerooEnabled
+                                                ? 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                                : 'cursor-not-allowed border-white/10 bg-white/[0.03] text-slate-500'
                                     }`}
                                 >
-                                    <Smartphone className="inline size-4 mr-2" />
-                                    Mobile Money
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Smartphone className="size-4" />
+                                        <span className="flex flex-col items-start leading-tight">
+                                            <span>Mobile Money</span>
+                                            {!monerooEnabled && (
+                                                <span className="text-[11px] font-normal text-amber-300">Bientôt actif</span>
+                                            )}
+                                        </span>
+                                    </span>
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setPaymentMode('manual')}
-                                    className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                                        paymentMode === 'manual'
-                                            ? 'border-amber-300 bg-amber-300/10 text-amber-200'
-                                            : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                                    }`}
-                                >
-                                    <Building2 className="inline size-4 mr-2" />
-                                    {t.plans.checkout.manual.title}
-                                </button>
+                                {monerooEnabled && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMode('manual')}
+                                        className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                                            paymentMode === 'manual'
+                                                ? 'border-amber-300 bg-amber-300/10 text-amber-200'
+                                                : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                                        }`}
+                                    >
+                                        <Building2 className="inline size-4 mr-2" />
+                                        {t.plans.checkout.manual.title}
+                                    </button>
+                                )}
                             </div>
                         </div>
 

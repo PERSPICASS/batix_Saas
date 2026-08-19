@@ -111,6 +111,7 @@ return [
     | distinct : il signe le corps brut reçu dans X-Moneroo-Signature.
     */
     'moneroo' => [
+        'enabled'        => env('MONEROO_ENABLED', false),
         'api_key'        => env('MONEROO_API_KEY', ''),
         'webhook_secret' => env('MONEROO_WEBHOOK_SECRET', ''),
         'base_url'       => env('MONEROO_BASE_URL', 'https://api.moneroo.io'),

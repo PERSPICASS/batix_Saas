@@ -48,11 +48,12 @@ class PaymentController extends Controller
             ],
             'currency'  => $currency,
             'isSandbox' => (bool) config('services.pawapay.sandbox', true),
-            // Le bouton Mobile Money est toujours visible ; c'est `monerooEnabled` qui
-            // décide si le formulaire s'ouvre ou si l'on affiche « bientôt disponible ».
+            // Le bouton Mobile Money reste visible, mais inactif tant que le lancement
+            // commercial n'est pas explicitement autorisé par MONEROO_ENABLED.
             // Le détail de ce qui manque ne sort qu'en debug : en production, un client
             // n'a pas à lire notre configuration.
-            'monerooEnabled' => config('services.moneroo.api_key', '') !== ''
+            'monerooEnabled' => (bool) config('services.moneroo.enabled', false)
+                && config('services.moneroo.api_key', '') !== ''
                 && config('services.moneroo.webhook_secret', '') !== '',
             'userCountry'  => $user->country,
             'monerooSetup' => config('app.debug') ? array_values(array_filter([
@@ -97,6 +98,15 @@ class PaymentController extends Controller
         // Plan gratuit → activation directe sans paiement
         if ($plan->price == 0) {
             return $this->activateFree($user, $plan);
+        }
+
+        $mobileMoneyMethods = ['wave', 'orange_money', 'mtn_money', 'moov_money'];
+
+        if (! config('services.moneroo.enabled', false)
+            && in_array($validated['payment_method'], $mobileMoneyMethods, true)) {
+            return response()->json([
+                'message' => 'Le paiement par Mobile Money sera bientôt actif.',
+            ], 503);
         }
 
         DB::transaction(function () use ($user, $plan, $validated) {

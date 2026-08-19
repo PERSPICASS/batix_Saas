@@ -20,9 +20,8 @@ class ManualPaymentPendingTest extends TestCase
         $plan = SubscriptionPlan::factory()->create(['price' => 29.99]);
 
         $response = $this->actingAs($user)->post("/plans/{$plan->slug}/process", [
-            'payment_method' => 'wave',
+            'payment_method' => 'virement',
             'billing_cycle' => 'monthly',
-            'phone' => '0600000000',
             'transaction_ref' => 'REF-123',
         ]);
 
@@ -41,6 +40,25 @@ class ManualPaymentPendingTest extends TestCase
         // The core of the fix: submitting a manual payment must never grant access
         // on its own.
         $this->assertNull($user->fresh()->activeSubscription());
+    }
+
+    public function test_mobile_money_manual_payment_is_rejected_while_disabled(): void
+    {
+        config(['services.moneroo.enabled' => false]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = SubscriptionPlan::factory()->create(['price' => 29.99]);
+
+        $this->actingAs($user)->postJson("/plans/{$plan->slug}/process", [
+            'payment_method' => 'wave',
+            'billing_cycle' => 'monthly',
+            'phone' => '0600000000',
+        ])->assertStatus(503)->assertJson([
+            'message' => 'Le paiement par Mobile Money sera bientôt actif.',
+        ]);
+
+        $this->assertDatabaseCount('subscriptions', 0);
+        $this->assertDatabaseCount('subscription_invoices', 0);
     }
 
     public function test_free_plan_still_activates_instantly_without_review(): void
@@ -115,7 +133,7 @@ class ManualPaymentPendingTest extends TestCase
         ]);
 
         $this->actingAs($user)->post("/plans/{$newPlan->slug}/process", [
-            'payment_method' => 'wave',
+            'payment_method' => 'virement',
             'billing_cycle' => 'monthly',
         ]);
 

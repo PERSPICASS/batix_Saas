@@ -24,6 +24,7 @@ class MonerooPaymentTest extends TestCase
 
         Mail::fake();
         config([
+            'services.moneroo.enabled' => true,
             'services.moneroo.api_key' => 'sk_test_moneroo',
             'services.moneroo.webhook_secret' => self::SECRET,
             'services.moneroo.base_url' => 'https://api.moneroo.io',
@@ -133,6 +134,26 @@ class MonerooPaymentTest extends TestCase
         ])->assertStatus(422);
 
         $this->assertSame(0, MonerooPayment::count());
+    }
+
+    public function test_disabled_mobile_money_cannot_accept_a_payment(): void
+    {
+        config(['services.moneroo.enabled' => false]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+
+        $this->actingAs($user)->postJson("/moneroo/initiate/{$plan->slug}", [
+            'billing_cycle' => 'monthly',
+            'first_name' => 'Awa',
+            'last_name' => 'Koné',
+        ])->assertStatus(503)->assertJson([
+            'success' => false,
+            'message' => 'Le paiement par Mobile Money sera bientôt actif.',
+        ]);
+
+        $this->assertSame(0, MonerooPayment::count());
+        Http::assertNothingSent();
     }
 
     public function test_staff_user_cannot_pay_for_the_account(): void
@@ -326,6 +347,22 @@ class MonerooPaymentTest extends TestCase
                 ->component('Payment/Checkout')
                 ->where('monerooEnabled', true)
                 ->where('monerooSetup', [])
+            );
+    }
+
+    public function test_checkout_keeps_mobile_money_disabled_when_launch_flag_is_off(): void
+    {
+        config(['services.moneroo.enabled' => false]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = $this->plan();
+
+        $this->actingAs($user)
+            ->get("/plans/{$plan->slug}/checkout")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Payment/Checkout')
+                ->where('monerooEnabled', false)
             );
     }
 }
