@@ -32,6 +32,16 @@ trait LinksToApp
             return null;
         }
 
-        return route($routeName, ['code_user' => $ownerCode, $parameter => $documentId]);
+        //return route($routeName, ['code_user' => $ownerCode, $parameter => $documentId]);
+
+        return rtrim((string) config('app.url'), '/')
+        . route(
+            $routeName,
+            [
+                'code_user' => $ownerCode,
+                $parameter => $documentId,
+            ],
+            absolute: false
+        );
     }
 }
