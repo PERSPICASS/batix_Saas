@@ -11,6 +11,7 @@ use App\Http\Resources\Api\V1\InvoiceResource;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Services\ActivityLogger;
+use App\Services\DocumentLink;
 use App\Support\ConcurrencySafe;
 use App\Traits\ResolvesTaxRate;
 use Illuminate\Http\JsonResponse;
@@ -49,6 +50,21 @@ class InvoiceController extends Controller
         abort_unless(in_array($invoice->shop_id, $this->resolveShopIds($request), true), 404);
 
         return new InvoiceResource($invoice->load(['customer', 'items', 'shop.user:id,code_user']));
+    }
+
+    /** Génère à la demande un lien signé court, sans exposer le token Sanctum. */
+    public function downloadLink(Request $request, Invoice $invoice): JsonResponse
+    {
+        abort_unless(in_array($invoice->shop_id, $this->resolveShopIds($request), true), 404);
+
+        $expiresAt = now()->addMinutes(DocumentLink::DOWNLOAD_LIFETIME_MINUTES);
+
+        return response()->json([
+            'data' => [
+                'download_url' => DocumentLink::temporaryForInvoice($invoice, $expiresAt),
+                'expires_at' => $expiresAt->toIso8601String(),
+            ],
+        ]);
     }
 
     /**

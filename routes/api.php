@@ -66,6 +66,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::middleware('abilities:invoices:read')->group(function () {
         Route::get('/invoices', [InvoiceController::class, 'index']);
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+        Route::get('/invoices/{invoice}/download-link', [InvoiceController::class, 'downloadLink']);
     });
     // Création en brouillon uniquement — le contrôleur force le statut, l'émission
     // (qui déstocke et fige la pièce comptable) reste dans l'application.
@@ -79,6 +80,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::middleware('abilities:quotes:read')->group(function () {
         Route::get('/quotes', [QuoteController::class, 'index']);
         Route::get('/quotes/{quote}', [QuoteController::class, 'show']);
+        Route::get('/quotes/{quote}/download-link', [QuoteController::class, 'downloadLink']);
     });
     Route::middleware('abilities:quotes:write')->group(function () {
         Route::post('/quotes', [QuoteController::class, 'store']);

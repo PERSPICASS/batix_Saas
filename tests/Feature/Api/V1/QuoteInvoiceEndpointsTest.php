@@ -98,6 +98,46 @@ class QuoteInvoiceEndpointsTest extends TestCase
         $this->getJson("/api/v1/quotes/{$quote->id}")->assertNotFound();
     }
 
+    public function test_document_download_links_are_short_lived_signed_and_tenant_scoped(): void
+    {
+        [$user, $shop] = $this->ownerWithShop();
+        $customer = Customer::factory()->create(['shop_id' => $shop->id]);
+        $quote = Quote::create([
+            'shop_id' => $shop->id, 'customer_id' => $customer->id,
+            'quote_number' => 'QTE-LINK', 'status' => 'draft',
+            'quote_date' => now(), 'expiry_date' => now()->addDays(10),
+            'subtotal' => 100, 'tax_amount' => 18, 'total' => 118,
+        ]);
+        $invoice = Invoice::create([
+            'shop_id' => $shop->id, 'customer_id' => $customer->id, 'user_id' => $user->id,
+            'invoice_number' => 'INV-LINK', 'status' => 'draft',
+            'invoice_date' => now(), 'due_date' => now()->addDays(30),
+            'subtotal' => 100, 'tax_amount' => 18, 'discount_amount' => 0, 'total' => 118,
+        ]);
+
+        Sanctum::actingAs($user, ['quotes:read', 'invoices:read']);
+
+        $quoteResponse = $this->getJson("/api/v1/quotes/{$quote->id}/download-link")
+            ->assertOk()->assertJsonStructure(['data' => ['download_url', 'expires_at']]);
+        $invoiceResponse = $this->getJson("/api/v1/invoices/{$invoice->id}/download-link")
+            ->assertOk()->assertJsonStructure(['data' => ['download_url', 'expires_at']]);
+
+        $this->assertStringContainsString("/d/devis/{$quote->id}", $quoteResponse->json('data.download_url'));
+        $this->assertStringContainsString("/d/facture/{$invoice->id}", $invoiceResponse->json('data.download_url'));
+        $this->assertStringContainsString('signature=', $quoteResponse->json('data.download_url'));
+        $this->assertStringContainsString('signature=', $invoiceResponse->json('data.download_url'));
+        $this->assertEqualsWithDelta(
+            now()->addMinutes(15)->timestamp,
+            strtotime($quoteResponse->json('data.expires_at')),
+            1,
+        );
+
+        [$otherUser] = $this->ownerWithShop();
+        Sanctum::actingAs($otherUser, ['quotes:read', 'invoices:read']);
+        $this->getJson("/api/v1/quotes/{$quote->id}/download-link")->assertNotFound();
+        $this->getJson("/api/v1/invoices/{$invoice->id}/download-link")->assertNotFound();
+    }
+
     public function test_reading_quotes_requires_the_quotes_read_ability(): void
     {
         [$user] = $this->ownerWithShop();

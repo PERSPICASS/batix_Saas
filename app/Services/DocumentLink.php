@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\URL;
  */
 class DocumentLink
 {
+    /** Durée courte des liens générés à la demande par l'API pour un téléchargement. */
+    public const DOWNLOAD_LIFETIME_MINUTES = 15;
+
     /**
      * Durée de validité d'un lien partagé, en jours.
      *
@@ -41,6 +44,16 @@ class DocumentLink
         return self::sign('public.quote', ['quote' => $quote->id]);
     }
 
+    public static function temporaryForInvoice(Invoice $invoice, \DateTimeInterface $expiresAt): string
+    {
+        return self::signUntil('public.invoice', ['invoice' => $invoice->id], $expiresAt);
+    }
+
+    public static function temporaryForQuote(Quote $quote, \DateTimeInterface $expiresAt): string
+    {
+        return self::signUntil('public.quote', ['quote' => $quote->id], $expiresAt);
+    }
+
     /**
      * La signature ne porte que sur le chemin et la requête, jamais sur le schéma ni sur
      * l'hôte — d'où `absolute: false`, à lire avec le `signed:relative` des routes.
@@ -57,13 +70,18 @@ class DocumentLink
      */
     private static function sign(string $route, array $parameters): string
     {
+        return self::signUntil($route, $parameters, now()->addDays(self::LIFETIME_DAYS));
+    }
+
+    private static function signUntil(string $route, array $parameters, \DateTimeInterface $expiresAt): string
+    {
         $relative = URL::temporarySignedRoute(
             $route,
-            now()->addDays(self::LIFETIME_DAYS),
+            $expiresAt,
             $parameters,
             absolute: false
         );
 
-        return rtrim(config('app.url'), '/') . $relative;
+        return rtrim(config('app.url'), '/').$relative;
     }
 }

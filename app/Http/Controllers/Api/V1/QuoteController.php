@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\UpdateQuoteApiRequest;
 use App\Http\Resources\Api\V1\QuoteResource;
 use App\Models\Quote;
 use App\Services\ActivityLogger;
+use App\Services\DocumentLink;
 use App\Services\QuoteWriter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,6 +49,21 @@ class QuoteController extends Controller
         abort_unless(in_array($quote->shop_id, $this->resolveShopIds($request), true), 404);
 
         return new QuoteResource($quote->load(['customer', 'items', 'shop.user:id,code_user']));
+    }
+
+    /** Génère à la demande un lien signé court, sans exposer le token Sanctum. */
+    public function downloadLink(Request $request, Quote $quote): JsonResponse
+    {
+        abort_unless(in_array($quote->shop_id, $this->resolveShopIds($request), true), 404);
+
+        $expiresAt = now()->addMinutes(DocumentLink::DOWNLOAD_LIFETIME_MINUTES);
+
+        return response()->json([
+            'data' => [
+                'download_url' => DocumentLink::temporaryForQuote($quote, $expiresAt),
+                'expires_at' => $expiresAt->toIso8601String(),
+            ],
+        ]);
     }
 
     public function store(StoreQuoteApiRequest $request): JsonResponse
