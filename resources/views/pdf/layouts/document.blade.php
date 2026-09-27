@@ -135,6 +135,8 @@
 
 @yield('notes')
 
+@include('pdf.partials.fne', ['fne' => $fne ?? null, 'fneTitle' => $fneTitle ?? __('documents.fne_title')])
+
 <div class="footer">
     @if ($shop?->invoice_footer)
         {{ $shop->invoice_footer }}

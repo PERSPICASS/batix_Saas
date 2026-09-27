@@ -20,6 +20,8 @@ class Customer extends Model
         'notes',
         'is_active',
         'total_purchases',
+        'ncc',
+        'fne_template',
     ];
 
     protected $casts = [

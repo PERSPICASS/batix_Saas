@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\Quote;
 use App\Models\Sale;
 use App\Models\Shop;
+use App\Services\Fne\FneDisplay;
 use App\Support\GlobalDiscount;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -139,6 +141,21 @@ class DocumentPdf
             // La ventilation doit se réconcilier avec le tax_amount de la facture : la
             // remise du document réduit la base, donc chaque tranche aussi.
             'taxBreakdown' => $this->taxBreakdown($invoice->items, 'total', (float) $invoice->discount_amount),
+            'fne' => FneDisplay::for($invoice),
+        ])->setPaper('a4'));
+    }
+
+    public function forCreditNote(CreditNote $creditNote): PdfWrapper
+    {
+        $creditNote->loadMissing(['items', 'shop', 'customer', 'invoice']);
+
+        return $this->inShopLocale($creditNote->shop, fn () => Pdf::loadView('pdf.credit-note', [
+            'creditNote' => $creditNote,
+            'logo' => $this->logo($creditNote->shop),
+            'shop' => $creditNote->shop,
+            'currencySymbol' => get_currency_symbol($creditNote->shop?->currency),
+            'fne' => FneDisplay::for($creditNote),
+            'fneTitle' => __('documents.fne_credit_title'),
         ])->setPaper('a4'));
     }
 

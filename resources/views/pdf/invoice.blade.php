@@ -28,6 +28,9 @@
     @if ($invoice->customer?->email)
         <div class="muted">{{ $invoice->customer->email }}</div>
     @endif
+    @if ($invoice->customer?->ncc)
+        <div class="muted">{{ __('documents.ncc') }} : {{ $invoice->customer->ncc }}</div>
+    @endif
 @endsection
 
 @section('lines')

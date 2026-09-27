@@ -78,7 +78,15 @@ class CustomerController extends Controller
             'address' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+            // FNE (Côte d'Ivoire) : le NCC est l'identifiant fiscal du client, exigé
+            // par la DGI quand le client est une entreprise (B2B).
+            'ncc' => 'nullable|string|max:30|required_if:fne_template,B2B',
+            'fne_template' => 'nullable|in:B2C,B2B,B2G',
+        ], [
+            'ncc.required_if' => 'Le NCC est obligatoire pour un client entreprise (B2B).',
         ]);
+
+        $validated['fne_template'] = $validated['fne_template'] ?? 'B2C';
 
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
@@ -144,7 +152,15 @@ class CustomerController extends Controller
             'address' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+            // FNE (Côte d'Ivoire) : le NCC est l'identifiant fiscal du client, exigé
+            // par la DGI quand le client est une entreprise (B2B).
+            'ncc' => 'nullable|string|max:30|required_if:fne_template,B2B',
+            'fne_template' => 'nullable|in:B2C,B2B,B2G',
+        ], [
+            'ncc.required_if' => 'Le NCC est obligatoire pour un client entreprise (B2B).',
         ]);
+
+        $validated['fne_template'] = $validated['fne_template'] ?? 'B2C';
 
         $customer->update($validated);
 

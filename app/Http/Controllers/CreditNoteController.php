@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Services\ActivityLogger;
+use App\Services\DocumentPdf;
+use App\Services\Fne\FneDisplay;
 use App\Support\ConcurrencySafe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -94,6 +96,12 @@ class CreditNoteController extends Controller
             return back()->with('error', "Cette facture n'est pas créditable.");
         }
 
+        // L'avoir FNE se fait sur les identifiants DGI de la facture et de ses lignes : tant
+        // que la facture n'est pas certifiée, ils n'existent pas.
+        if ($invoice->fneEngaged() && $invoice->fne_status !== 'certified') {
+            return back()->with('error', "Cette facture attend encore sa certification FNE : l'avoir pourra être émis une fois celle-ci obtenue.");
+        }
+
         $validated = $request->validate([
             'reason' => 'required|string|max:255',
             'notes' => 'nullable|string',
@@ -161,6 +169,10 @@ class CreditNoteController extends Controller
             return $creditNote;
         }));
 
+        if ($invoice->fne_status === 'certified') {
+            $creditNote->queueFneCertification();
+        }
+
         ActivityLogger::created($creditNote, $creditNote->credit_note_number);
 
         return redirect()
@@ -178,7 +190,42 @@ class CreditNoteController extends Controller
 
         return Inertia::render('CreditNotes/Show', [
             'creditNote' => $creditNote,
+            'fne' => FneDisplay::for($creditNote),
         ]);
+    }
+
+    public function pdf(string $code_user, CreditNote $creditNote, DocumentPdf $pdf)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $creditNote->shop_id)->exists()) {
+            abort(403);
+        }
+
+        return $pdf->forCreditNote($creditNote)->stream("Avoir-{$creditNote->credit_note_number}.pdf");
+    }
+
+    /**
+     * Même règle que pour la facture (InvoiceController::retryFne) : une incertitude ne se
+     * relance qu'après vérification sur l'espace FNE.
+     */
+    public function retryFne(Request $request, string $code_user, CreditNote $creditNote)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $creditNote->shop_id)->exists()) {
+            abort(403);
+        }
+
+        if (!$creditNote->fneRetryable()) {
+            return back()->with('error', "Cet avoir n'est pas en attente d'une relance FNE.");
+        }
+
+        if ($creditNote->fne_status === 'uncertain') {
+            $request->validate(['confirmed' => 'accepted'], [
+                'confirmed.accepted' => "Confirmez que l'avoir n'apparaît pas sur votre espace FNE.",
+            ]);
+        }
+
+        $creditNote->queueFneCertification();
+
+        return back()->with('success', 'Certification FNE relancée.');
     }
 
     private function authorizeInvoice(Invoice $invoice): void

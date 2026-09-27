@@ -31,10 +31,29 @@ class Shop extends Model
         'invoice_prefix',
         'invoice_footer',
         'is_active',
+        'fne_enabled',
+        'fne_environment',
+        'fne_api_key',
+        'fne_base_url',
+        'fne_establishment',
+        'fne_point_of_sale',
+        'fne_zero_rate_code',
+    ];
+
+    /**
+     * La clé FNE est celle de l'entreprise auprès de la DGI : elle signe des factures
+     * fiscales en son nom. La boutique est sérialisée partout (factures, pages Inertia) —
+     * sans ce masque, la clé déchiffrée partirait dans le HTML.
+     */
+    protected $hidden = [
+        'fne_api_key',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'fne_enabled' => 'boolean',
+        'fne_api_key' => 'encrypted',
+        'fne_sticker_warning' => 'boolean',
     ];
 
     protected static function boot()
@@ -118,6 +137,44 @@ class Shop extends Model
     public function documentLocale(): string
     {
         return $this->locale ?: 'fr';
+    }
+
+    /**
+     * `country` est un nom localisé saisi à l'inscription, pas un code ISO : « Côte
+     * d'Ivoire », « Côte-d'Ivoire » (i18n-iso-countries en français), « Ivory Coast »…
+     * On compare donc des lettres nues.
+     */
+    public function isInCoteDIvoire(): bool
+    {
+        $letters = preg_replace('/[^a-z]/', '', strtolower(Str::ascii((string) $this->country)));
+
+        return in_array($letters, ['cotedivoire', 'ivorycoast', 'ci', 'civ'], true);
+    }
+
+    /**
+     * La boutique fait certifier ses factures par la FNE.
+     *
+     * Le pays fait partie de la condition : une clé restée enregistrée après un changement
+     * de pays ne doit pas continuer de consommer des stickers à la DGI.
+     */
+    public function fneActive(): bool
+    {
+        return $this->fne_enabled
+            && filled($this->fne_api_key)
+            && $this->isInCoteDIvoire();
+    }
+
+    /**
+     * L'URL de test est publique et commune ; celle de production est transmise par la
+     * DGI à chaque entreprise après validation de ses spécimens.
+     */
+    public function fneBaseUrl(): ?string
+    {
+        $url = $this->fne_environment === 'prod'
+            ? $this->fne_base_url
+            : config('services.fne.test_url');
+
+        return $url ? rtrim($url, '/') : null;
     }
 
     public function user(): BelongsTo

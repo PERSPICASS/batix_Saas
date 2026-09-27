@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\CertifiedByFne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class CreditNote extends Model
 {
-    use HasFactory;
+    use CertifiedByFne, HasFactory;
 
     protected $fillable = [
         'shop_id',
@@ -37,6 +38,13 @@ class CreditNote extends Model
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'fne_certified_at' => 'datetime',
+        'fne_response' => 'array',
+    ];
+
+    /** La réponse brute de la DGI sert à l'audit, pas aux pages. */
+    protected $hidden = [
+        'fne_response',
     ];
 
     protected static function boot()

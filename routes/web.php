@@ -420,6 +420,7 @@ Route::prefix('{code_user}')
     Route::post('factures/{invoice}/statut', [InvoiceController::class, 'updateStatus'])->name('invoices.status')->middleware('permission:invoices,edit');
     Route::get('factures/export/excel', [InvoiceController::class, 'export'])->name('invoices.export')->middleware('permission:invoices,view');
     Route::get('factures/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('invoices.pdf')->middleware('permission:invoices,view');
+    Route::post('factures/{invoice}/fne/relancer', [InvoiceController::class, 'retryFne'])->name('invoices.fne.retry')->middleware('permission:invoices,edit');
 
     // Avoirs. Pas de module de permission dédié : émettre un avoir fait partie de la
     // facturation, et ajouter un module imposerait de le déclarer pour chacun des rôles
@@ -429,6 +430,8 @@ Route::prefix('{code_user}')
     Route::get('avoirs/{credit_note}', [CreditNoteController::class, 'show'])->name('credit-notes.show')->middleware('permission:invoices,view');
     Route::get('factures/{invoice}/avoir', [CreditNoteController::class, 'create'])->name('credit-notes.create')->middleware('permission:invoices,create');
     Route::post('factures/{invoice}/avoir', [CreditNoteController::class, 'store'])->name('credit-notes.store')->middleware('permission:invoices,create');
+    Route::get('avoirs/{credit_note}/pdf', [CreditNoteController::class, 'pdf'])->name('credit-notes.pdf')->middleware('permission:invoices,view');
+    Route::post('avoirs/{credit_note}/fne/relancer', [CreditNoteController::class, 'retryFne'])->name('credit-notes.fne.retry')->middleware('permission:invoices,create');
 
     // Routes pour les devis
     Route::post('devis/export/excel', [QuoteController::class, 'export'])->name('quotes.export')->middleware('permission:quotes,view');
@@ -580,6 +583,8 @@ Route::prefix('{code_user}')
     // Paramètres de la boutique
     Route::get('/parametres', [SettingsController::class, 'index'])->name('settings.index')->middleware('permission:settings,view');
     Route::patch('/parametres', [SettingsController::class, 'update'])->name('settings.update')->middleware('permission:settings,edit');
+    Route::patch('/parametres/fne', [SettingsController::class, 'updateFne'])->name('settings.fne.update')->middleware('permission:settings,edit');
+    Route::post('/parametres/fne/tester', [SettingsController::class, 'testFne'])->name('settings.fne.test')->middleware('permission:settings,edit');
 
     // Tokens API pour intégrations (super_admin uniquement)
     Route::get('/integrations', [ApiTokenController::class, 'index'])->name('api-tokens.index');

@@ -22,6 +22,7 @@ import {
     X
 } from 'lucide-react';
 import InputError from '@/Components/InputError';
+import FneSettingsCard, { FneSettings } from '@/Components/FneSettingsCard';
 
 interface Currency {
     code: string;
@@ -52,9 +53,10 @@ interface Props {
     shop: Shop | null;
     currencies: Currency[];
     error?: string;
+    fne?: FneSettings | null;
 }
 
-export default function Settings({ shop, currencies, error }: Props) {
+export default function Settings({ shop, currencies, error, fne }: Props) {
     const route = useRoute();
     const { t } = useLocale();
     const { auth } = usePage<PageProps>().props;
@@ -498,6 +500,13 @@ export default function Settings({ shop, currencies, error }: Props) {
                         </button>
                     </div>
                 </form>
+
+                {/* FNE (Côte d'Ivoire) : absente pour toute autre boutique. */}
+                {fne?.available && (
+                    <div className="mt-6">
+                        <FneSettingsCard fne={fne} />
+                    </div>
+                )}
             </div>
         </AuthenticatedLayout>
     );
