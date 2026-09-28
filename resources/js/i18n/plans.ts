@@ -85,9 +85,7 @@ export const plans = {
                 activationNote: "L'abonnement sera activé après vérification manuelle dans quelques minutes.",
                 genericError: 'Une erreur est survenue',
                 waveManual: 'Wave (manuel)',
-                successTitle: 'Paiement réussi !',
-                successMessage: 'Votre abonnement a été activé avec succès. Un email de confirmation vous a été envoyé.',
-                goToDashboard: 'Aller au dashboard',
+                bankTransfer: 'Virement bancaire',
             },
             confirmation: {
                 headTitle: 'Paiement confirmé',
@@ -188,9 +186,7 @@ export const plans = {
                 activationNote: 'Your subscription will be activated after manual verification within a few minutes.',
                 genericError: 'An error occurred',
                 waveManual: 'Wave (manual)',
-                successTitle: 'Payment successful!',
-                successMessage: 'Your subscription has been activated successfully. A confirmation email has been sent to you.',
-                goToDashboard: 'Go to dashboard',
+                bankTransfer: 'Bank transfer',
             },
             confirmation: {
                 headTitle: 'Payment confirmed',

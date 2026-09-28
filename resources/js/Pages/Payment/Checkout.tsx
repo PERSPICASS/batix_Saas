@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { showToast } from '@/utils/toast';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import {
     ArrowLeft, Check, CreditCard, Smartphone, Building2,
@@ -49,6 +49,8 @@ interface Props extends PageProps {
     currency: string;
     isSandbox: boolean;
     monerooEnabled?: boolean;
+    /** Paiement manuel actif et au moins un numéro de réception configuré. */
+    manualEnabled?: boolean;
     /** Ce qui manque pour activer Moneroo — renseigné uniquement en debug. */
     monerooSetup?: string[] | null;
     /** Pays du profil (nom localisé), sert de défaut au sélecteur téléphone. */
@@ -109,12 +111,14 @@ const JEKO_METHODS = [
     { id: 'moov',   label: 'Moov Money',    logo: logoMoov   },
 ];
 
-// Manual fallback methods (Wave manual + virement) — "wave" has no fixed label, it's translated at render time
-const MANUAL_METHODS = [
-    { id: 'wave',         label: null as string | null, logo: logoWave   },
-    { id: 'orange_money', label: 'Orange Money',         logo: logoOrange },
-    { id: 'mtn_money',    label: 'MTN Money',            logo: logoMtn    },
-    { id: 'moov_money',   label: 'Moov Money',           logo: logoMoov   },
+// Manual methods — a null label is translated at render time. Only the ones with a
+// configured receiving number (paymentNumbers) are shown.
+const MANUAL_METHODS: { id: string; label: string | null; logo: string | null }[] = [
+    { id: 'wave',         label: null,           logo: logoWave   },
+    { id: 'orange_money', label: 'Orange Money', logo: logoOrange },
+    { id: 'mtn_money',    label: 'MTN Money',    logo: logoMtn    },
+    { id: 'moov_money',   label: 'Moov Money',   logo: logoMoov   },
+    { id: 'virement',     label: null,           logo: null       },
 ];
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -131,7 +135,7 @@ function getCsrfToken(): string {
 
 export default function Checkout({
     plan, currentPlan, paymentNumbers = {}, currency = 'XOF', isSandbox = false, auth,
-    monerooEnabled = false, monerooSetup = null,
+    monerooEnabled = false, monerooSetup = null, manualEnabled = false,
     userCountry = null,
 }: Props) {
     const { t, locale } = useLocale();
@@ -190,7 +194,7 @@ export default function Checkout({
     const [phone, setPhone] = useState('');
     const [transactionRef, setTransactionRef] = useState('');
     const [submittingManual, setSubmittingManual] = useState(false);
-    const [manualSuccess, setManualSuccess] = useState(false);
+    const manualMethods = MANUAL_METHODS.filter(method => paymentNumbers[method.id]);
 
     // Pricing
     const isLocalCurrency = ['XOF', 'FCFA', 'GNF', 'MRU', 'SLL'].includes(currency);
@@ -323,8 +327,6 @@ export default function Checkout({
         }
     };
 
-    /* ── Manual payment submit ────────────────────────────────────────── */
-
     /* ── Jèko submit ────────────────────────────────────────── */
 
     const handleJekoSubmit = async (e: React.FormEvent) => {
@@ -406,32 +408,21 @@ export default function Checkout({
 
     /* ── Manual payment submit ────────────────────────────────── */
 
-    const handleManualSubmit = async (e: React.FormEvent) => {
+    // Inertia plutôt qu'axios : le token CSRF du <meta> est figé au dernier chargement
+    // complet et expire en prod. Le serveur redirige vers la confirmation « en attente ».
+    const handleManualSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmittingManual(true);
 
-        try {
-            const response = await axios.post(`/plans/${plan.slug}/process`, {
-                payment_method:  manualMethod,
-                billing_cycle:   billingCycle,
-                phone,
-                transaction_ref: transactionRef,
-            }, {
-                headers: {
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (response.status === 200 || response.status === 201) {
-                setManualSuccess(true);
-            }
-        } catch (err: any) {
-            console.error('Payment error:', err);
-            showToast('error', err.response?.data?.message || t.plans.checkout.manual.genericError);
-        } finally {
-            setSubmittingManual(false);
-        }
+        router.post(`/plans/${plan.slug}/process`, {
+            payment_method:  manualMethod,
+            billing_cycle:   billingCycle,
+            phone,
+            transaction_ref: transactionRef,
+        }, {
+            onStart:  () => setSubmittingManual(true),
+            onFinish: () => setSubmittingManual(false),
+            onError:  (errors) => showToast('error', Object.values(errors)[0] || t.plans.checkout.manual.genericError),
+        });
     };
 
     /* ── Plan gratuit ─────────────────────────────────────────────────── */
@@ -594,7 +585,7 @@ export default function Checkout({
                                         </span>
                                     </span>
                                 </button>
-                                {monerooEnabled && (
+                                {manualEnabled && (
                                     <button
                                         type="button"
                                         onClick={() => setPaymentMode('manual')}
@@ -1039,28 +1030,8 @@ export default function Checkout({
                             <LemonSqueezyPayment plan={plan} />
                         )}
 
-                        {/* ══════════════════ MANUAL FLOW — SUCCESS ══════════════════ */}
-                        {paymentMode === 'manual' && manualSuccess && (
-                            <div className="rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-6 text-center space-y-4">
-                                <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-400/20">
-                                    <CheckCircle2 className="size-8 text-emerald-400" />
-                                </div>
-                                <div>
-                                    <p className="text-lg font-semibold text-slate-900 dark:text-white">{t.plans.checkout.manual.successTitle}</p>
-                                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{t.plans.checkout.manual.successMessage}</p>
-                                </div>
-                                <a
-                                    href={`/${auth.user?.code_user}/dashboard`}
-                                    className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-200"
-                                >
-                                    {t.plans.checkout.manual.goToDashboard}
-                                    <ArrowLeft className="size-4 rotate-180" />
-                                </a>
-                            </div>
-                        )}
-
                         {/* ══════════════════ MANUAL FLOW ══════════════════ */}
-                        {paymentMode === 'manual' && !manualSuccess && (
+                        {paymentMode === 'manual' && manualEnabled && (
                             <form onSubmit={handleManualSubmit} className="rounded-2xl border border-gray-200 bg-white p-6 space-y-6 dark:border-white/10 dark:bg-white/5">
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                     <CreditCard className="size-5 text-amber-200" />
@@ -1073,8 +1044,10 @@ export default function Checkout({
 
                                 {/* Méthode */}
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                                    {MANUAL_METHODS.map(method => {
-                                        const label = method.label ?? t.plans.checkout.manual.waveManual;
+                                    {manualMethods.map(method => {
+                                        const label = method.label ?? (method.id === 'virement'
+                                            ? t.plans.checkout.manual.bankTransfer
+                                            : t.plans.checkout.manual.waveManual);
                                         return (
                                             <button
                                                 key={method.id}
@@ -1086,7 +1059,9 @@ export default function Checkout({
                                                         : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
                                                 }`}
                                             >
-                                                <img src={method.logo} alt={label} className="h-8 w-auto object-contain" />
+                                                {method.logo
+                                                    ? <img src={method.logo} alt={label} className="h-8 w-auto object-contain" />
+                                                    : <Building2 className="size-8 text-amber-200" />}
                                                 {label}
                                             </button>
                                         );

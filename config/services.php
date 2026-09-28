@@ -63,6 +63,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'payment' => [
+        // Paiement manuel (vérifié à la main par l'admin plateforme), indépendant de Moneroo.
+        'manual_enabled' => (bool) env('PAYMENT_MANUAL_ENABLED', true),
         'wave'         => env('PAYMENT_WAVE_NUMBER',         ''),
         'orange_money' => env('PAYMENT_ORANGE_NUMBER',       ''),
         'mtn_money'    => env('PAYMENT_MTN_NUMBER',          ''),

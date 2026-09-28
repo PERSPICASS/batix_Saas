@@ -14,6 +14,9 @@ use Inertia\Response;
 
 class PaymentController extends Controller
 {
+    /** Méthodes proposées dans le formulaire de paiement manuel du checkout. */
+    private const MANUAL_METHODS = ['wave', 'orange_money', 'mtn_money', 'moov_money', 'virement'];
+
     /**
      * Page de checkout pour un plan donné.
      */
@@ -28,6 +31,17 @@ class PaymentController extends Controller
         // Devise de la boutique active de l'utilisateur
         $shop = $user->shop ?? \App\Models\Shop::where('user_id', $user->id)->first();
         $currency = $shop?->currency ?? 'XOF';
+
+        // Seules les méthodes dont un numéro est configuré sont proposées : sans
+        // numéro, le client ne saurait pas où envoyer l'argent.
+        $paymentNumbers = array_filter([
+            'wave'         => PlatformSetting::get('payment_wave',         config('services.payment.wave', '')),
+            'orange_money' => PlatformSetting::get('payment_orange_money', config('services.payment.orange_money', '')),
+            'mtn_money'    => PlatformSetting::get('payment_mtn_money',    config('services.payment.mtn_money', '')),
+            'moov_money'   => PlatformSetting::get('payment_moov_money',   config('services.payment.moov_money', '')),
+            'virement'     => PlatformSetting::get('payment_virement',     config('services.payment.virement', '')),
+            'carte'        => PlatformSetting::get('payment_carte',        config('services.payment.carte', '')),
+        ], fn ($value) => filled($value));
 
         return Inertia::render('Payment/Checkout', [
             'plan' => [
@@ -64,14 +78,11 @@ class PaymentController extends Controller
                 'name' => $currentSubscription->plan->name,
                 'slug' => $currentSubscription->plan->slug,
             ] : null,
-            'paymentNumbers' => [
-                'wave'         => PlatformSetting::get('payment_wave',         config('services.payment.wave', '')),
-                'orange_money' => PlatformSetting::get('payment_orange_money', config('services.payment.orange_money', '')),
-                'mtn_money'    => PlatformSetting::get('payment_mtn_money',    config('services.payment.mtn_money', '')),
-                'moov_money'   => PlatformSetting::get('payment_moov_money',   config('services.payment.moov_money', '')),
-                'virement'     => PlatformSetting::get('payment_virement',     config('services.payment.virement', '')),
-                'carte'        => PlatformSetting::get('payment_carte',        config('services.payment.carte', '')),
-            ],
+            'paymentNumbers' => $paymentNumbers,
+            // Indépendant de Moneroo : le paiement manuel est vérifié à la main par
+            // l'admin plateforme, il n'attend aucun lancement commercial.
+            'manualEnabled' => (bool) config('services.payment.manual_enabled', true)
+                && array_intersect_key($paymentNumbers, array_flip(self::MANUAL_METHODS)) !== [],
         ]);
     }
 
@@ -100,14 +111,11 @@ class PaymentController extends Controller
             return $this->activateFree($user, $plan);
         }
 
-        $mobileMoneyMethods = ['wave', 'orange_money', 'mtn_money', 'moov_money'];
-
-        if (! config('services.moneroo.enabled', false)
-            && in_array($validated['payment_method'], $mobileMoneyMethods, true)) {
-            return response()->json([
-                'message' => 'Le paiement par Mobile Money sera bientôt actif.',
-            ], 503);
-        }
+        abort_unless(
+            config('services.payment.manual_enabled', true),
+            503,
+            'Le paiement manuel est momentanément indisponible.'
+        );
 
         DB::transaction(function () use ($user, $plan, $validated) {
             $amount = $validated['billing_cycle'] === 'yearly'

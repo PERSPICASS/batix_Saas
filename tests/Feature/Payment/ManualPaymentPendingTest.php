@@ -42,9 +42,34 @@ class ManualPaymentPendingTest extends TestCase
         $this->assertNull($user->fresh()->activeSubscription());
     }
 
-    public function test_mobile_money_manual_payment_is_rejected_while_disabled(): void
+    public function test_mobile_money_manual_payment_works_while_moneroo_is_disabled(): void
     {
-        config(['services.moneroo.enabled' => false]);
+        // Regression: 563cc4f tied manual payment to MONEROO_ENABLED, which silently
+        // disabled it in prod. Manual payment is checked by a human, not by Moneroo.
+        config([
+            'services.moneroo.enabled' => false,
+            'services.payment.manual_enabled' => true,
+        ]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = SubscriptionPlan::factory()->create(['price' => 29.99]);
+
+        $this->actingAs($user)->post("/plans/{$plan->slug}/process", [
+            'payment_method' => 'wave',
+            'billing_cycle' => 'monthly',
+            'phone' => '0600000000',
+            'transaction_ref' => 'WAVE-42',
+        ])->assertRedirect(route('payment.confirmation', ['planSlug' => $plan->slug, 'status' => 'pending']));
+
+        $subscription = Subscription::where('user_id', $user->id)->sole();
+        $this->assertSame('pending', $subscription->status);
+        $this->assertSame('wave', $subscription->metadata['payment_method']);
+        $this->assertNull($user->fresh()->activeSubscription());
+    }
+
+    public function test_manual_payment_is_rejected_when_switched_off(): void
+    {
+        config(['services.payment.manual_enabled' => false]);
 
         $user = User::factory()->create(['role' => 'super_admin']);
         $plan = SubscriptionPlan::factory()->create(['price' => 29.99]);
@@ -52,13 +77,55 @@ class ManualPaymentPendingTest extends TestCase
         $this->actingAs($user)->postJson("/plans/{$plan->slug}/process", [
             'payment_method' => 'wave',
             'billing_cycle' => 'monthly',
-            'phone' => '0600000000',
         ])->assertStatus(503)->assertJson([
-            'message' => 'Le paiement par Mobile Money sera bientôt actif.',
+            'message' => 'Le paiement manuel est momentanément indisponible.',
         ]);
 
         $this->assertDatabaseCount('subscriptions', 0);
         $this->assertDatabaseCount('subscription_invoices', 0);
+    }
+
+    public function test_checkout_offers_manual_payment_only_for_configured_numbers(): void
+    {
+        config([
+            'services.moneroo.enabled' => false,
+            'services.payment.manual_enabled' => true,
+            'services.payment.wave' => '+225 07 00 00 00 00',
+            'services.payment.orange_money' => '',
+            'services.payment.mtn_money' => '',
+            'services.payment.moov_money' => '',
+            'services.payment.virement' => '',
+            'services.payment.carte' => '',
+        ]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = SubscriptionPlan::factory()->create(['price' => 29.99]);
+
+        $this->actingAs($user)->get("/plans/{$plan->slug}/checkout")
+            ->assertInertia(fn ($page) => $page
+                ->where('manualEnabled', true)
+                ->where('paymentNumbers', ['wave' => '+225 07 00 00 00 00'])
+            );
+    }
+
+    public function test_checkout_hides_manual_payment_without_any_receiving_number(): void
+    {
+        config([
+            'services.payment.manual_enabled' => true,
+            'services.payment.wave' => '',
+            'services.payment.orange_money' => '',
+            'services.payment.mtn_money' => '',
+            'services.payment.moov_money' => '',
+            'services.payment.virement' => '',
+            'services.payment.carte' => 'Visa',
+        ]);
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $plan = SubscriptionPlan::factory()->create(['price' => 29.99]);
+
+        // "carte" alone is not a manual method: nothing to send money to.
+        $this->actingAs($user)->get("/plans/{$plan->slug}/checkout")
+            ->assertInertia(fn ($page) => $page->where('manualEnabled', false));
     }
 
     public function test_free_plan_still_activates_instantly_without_review(): void
