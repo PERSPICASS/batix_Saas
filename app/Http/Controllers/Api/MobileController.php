@@ -12,6 +12,7 @@ use App\Services\SaleCreationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class MobileController extends Controller
@@ -155,13 +156,16 @@ class MobileController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        $shopId = $request->input('shop_id');
+
+        // Client et produits bornés à la boutique visée (même règle que StoreSaleApiRequest).
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'customer_id' => 'nullable|exists:customers,id',
+            'customer_id' => ['nullable', Rule::exists('customers', 'id')->where('shop_id', $shopId)],
             'payment_method' => 'required|in:cash,card,transfer,check,mobile,credit',
             'amount_paid' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('shop_id', $shopId)],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
