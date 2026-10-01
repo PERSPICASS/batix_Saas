@@ -46,4 +46,17 @@ return [
     'notes' => 'Notes',
     'terms' => 'Terms',
     'thanks' => 'Thank you for your visit',
+
+    // Credit note
+    'credit_note' => 'CREDIT NOTE',
+    'credit_note_for' => 'For invoice',
+    'reason' => 'Reason',
+
+    // FNE — standardised electronic invoice (Côte d'Ivoire)
+    'ncc' => 'NCC',
+    'fne_title' => 'Facture normalisée électronique (FNE)',
+    'fne_credit_title' => 'Avoir normalisé électronique (FNE)',
+    'fne_number' => 'FNE No.',
+    'fne_verify' => 'Verification',
+    'fne_pending' => 'FNE certification pending',
 ];

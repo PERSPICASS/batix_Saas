@@ -8,6 +8,7 @@ import { useState } from 'react';
 import Modal from '@/Components/Modal';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import WhatsAppShareButton from '@/Components/WhatsAppShareButton';
+import FnePanel, { FneInfo } from '@/Components/FnePanel';
 
 interface Customer {
     id: number;
@@ -74,6 +75,7 @@ interface Props {
     netTotal: number;
     isCreditable: boolean;
     shareUrl: string;
+    fne: FneInfo | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -92,7 +94,7 @@ const paymentLabels: Record<string, string> = {
     mobile: 'Mobile',
 };
 
-export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netTotal, isCreditable, shareUrl }: Props) {
+export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netTotal, isCreditable, shareUrl, fne }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const [showRecurringModal, setShowRecurringModal] = useState(false);
@@ -169,6 +171,9 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
     // mène à un refus serait trompeur.
     const isDraft = invoice.status === 'draft';
     const isClosed = invoice.status === 'paid' || invoice.status === 'cancelled';
+    // Présentée à la DGI (ou peut-être, si la réponse s'est perdue) : c'est une pièce
+    // fiscale, seul un avoir peut l'annuler. Le serveur le refuse de toute façon.
+    const fneEngaged = fne !== null && fne.status !== 'failed';
 
 
 
@@ -243,6 +248,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                                         <CheckCircle2 className="size-4" /> {t.invoices.actions.markPaid}
                                     </button>
                                 )}
+                                {!fneEngaged && (
                                 <button
                                     type="button"
                                     onClick={() => setPending('cancelled')}
@@ -250,6 +256,7 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
                                 >
                                     <Ban className="size-4" /> {t.invoices.actions.cancelInvoice}
                                 </button>
+                                )}
                             </>
                         )}
                         {/* L'avoir est le seul moyen de corriger une facture émise — y
@@ -266,6 +273,13 @@ export default function InvoicesShow({ invoice, creditNotes, creditedTotal, netT
 
                     {!isDraft && (
                         <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.issuedNotice}</p>
+                    )}
+
+                    {fne && (
+                        <FnePanel fne={fne} retryUrl={route('invoices.fne.retry', { invoice: invoice.id })} />
+                    )}
+                    {fneEngaged && invoice.status !== 'cancelled' && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.fne.creditNoteHint}</p>
                     )}
 
                     {creditNotes.length > 0 && (

@@ -4,10 +4,12 @@ import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import FneCustomerFields, { FneTemplate, isCoteDIvoire } from '@/Components/FneCustomerFields';
 
 interface Shop {
     id: number;
     name: string;
+    country?: string | null;
 }
 
 interface Props {
@@ -29,7 +31,11 @@ export default function CustomersCreate({ shops }: Props) {
         address: '',
         notes: '',
         is_active: true,
+        ncc: '',
+        fne_template: 'B2C' as FneTemplate,
     });
+
+    const showFne = isCoteDIvoire(shops.find((shop) => shop.id.toString() === data.shop_id)?.country);
 
     const onSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -88,6 +94,16 @@ export default function CustomersCreate({ shops }: Props) {
                         />
                         <InputError message={errors.phone} />
                     </label>
+
+                    {showFne && (
+                        <FneCustomerFields
+                            template={data.fne_template}
+                            ncc={data.ncc}
+                            onTemplateChange={(value) => setData('fne_template', value)}
+                            onNccChange={(value) => setData('ncc', value)}
+                            errors={errors}
+                        />
+                    )}
 
                     <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
                         <span>{t.common.form.address}</span>

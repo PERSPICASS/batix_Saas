@@ -8,6 +8,8 @@ use App\Models\Product;
 use App\Services\ActivityLogger;
 use App\Services\DocumentLink;
 use App\Services\DocumentPdf;
+use App\Services\Fne\FneDisplay;
+use App\Services\Fne\FneService;
 use App\Support\ConcurrencySafe;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -126,6 +128,10 @@ class InvoiceController extends Controller
 
         // Vérifier que la boutique appartient à l'utilisateur
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+
+        if (in_array($validated['status'], ['sent', 'paid'], true)) {
+            app(FneService::class)->assertIssuable($shop, Customer::find($validated['customer_id']), array_column($validated['items'], 'tax_rate'));
+        }
         
         // invoice_number est généré à partir du dernier numéro connu : deux factures créées
         // au même instant peuvent calculer le même candidat. Le retry régénère un numéro
@@ -205,6 +211,7 @@ class InvoiceController extends Controller
             'netTotal' => $invoice->netTotal(),
             'isCreditable' => $invoice->isCreditable(),
             'shareUrl' => DocumentLink::forInvoice($invoice),
+            'fne' => FneDisplay::for($invoice),
         ]);
     }
 
@@ -293,6 +300,14 @@ class InvoiceController extends Controller
         // ci-dessous, donc sans cette copie leur contenu précédent ne subsiste nulle
         // part. Le journal recevait auparavant un tableau de changements VIDE : il
         // enregistrait qu'une facture avait été modifiée sans dire en quoi.
+        if ($validated['status'] === 'sent') {
+            app(FneService::class)->assertIssuable(
+                Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']),
+                Customer::find($validated['customer_id']),
+                array_column($validated['items'], 'tax_rate')
+            );
+        }
+
         $original = $invoice->getOriginal();
         $previousItems = $this->itemsSnapshot($invoice);
 
@@ -406,6 +421,13 @@ class InvoiceController extends Controller
                 ->with('error', 'Ce changement de statut n\'est pas autorisé.');
         }
 
+        // Une facture présentée à la DGI est une pièce fiscale — ou l'est peut-être, si la
+        // réponse s'est perdue. Seul un avoir certifié peut l'annuler.
+        if ($to === 'cancelled' && $invoice->fneEngaged()) {
+            return redirect()->route('invoices.show', ['code_user' => $code_user, 'invoice' => $invoice->id])
+                ->with('error', 'Cette facture a été présentée à la FNE : elle ne peut plus être annulée. Émettez un avoir.');
+        }
+
         $attributes = ['status' => $to];
 
         if ($to === 'paid' && !empty($validated['payment_method'])) {
@@ -495,6 +517,8 @@ class InvoiceController extends Controller
         // faisait reculer son statut, contournant les transitions d'updateStatus() : une
         // facture payée redevenait « envoyée », donc réencaissable.
         if ($invoice->status === 'draft') {
+            app(FneService::class)->assertIssuable($invoice->shop, $invoice->customer, $invoice->items->pluck('tax_rate')->all());
+
             $invoice->update(['status' => 'sent']);
             $invoice->load('items')->releaseStock();
         }
@@ -502,6 +526,38 @@ class InvoiceController extends Controller
         \Mail::to($invoice->customer->email)->send(new \App\Mail\InvoiceMail($invoice));
 
         return redirect()->back()->with('success', 'Facture envoyée au client');
+    }
+
+    /**
+     * Représenter à la FNE une facture dont la certification a échoué ou reste incertaine.
+     *
+     * L'incertitude (réponse perdue) ne se lève qu'en consultant l'espace FNE de
+     * l'entreprise : si la DGI avait bien certifié, relancer créerait une seconde facture
+     * fiscale. D'où la confirmation explicite exigée dans ce cas.
+     */
+    public function retryFne(Request $request, string $code_user, Invoice $invoice)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        if (!$invoice->fneRetryable()) {
+            return back()->with('error', "Cette facture n'est pas en attente d'une relance FNE.");
+        }
+
+        if ($invoice->fne_status === 'uncertain') {
+            $request->validate(['confirmed' => 'accepted'], [
+                'confirmed.accepted' => "Confirmez que la facture n'apparaît pas sur votre espace FNE.",
+            ]);
+        }
+
+        if (!$invoice->shop->fneActive()) {
+            return back()->with('error', "La FNE n'est pas active pour cette boutique.");
+        }
+
+        $invoice->queueFneCertification();
+
+        return back()->with('success', 'Certification FNE relancée.');
     }
 
     public function export(string $code_user)

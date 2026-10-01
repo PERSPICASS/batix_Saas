@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shop;
+use App\Services\Fne\FneService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -31,6 +33,7 @@ class SettingsController extends Controller
         return Inertia::render('Settings/Index', [
             'shop' => $shop->load('user'),
             'currencies' => $this->getCurrencies(),
+            'fne' => $this->fneSettings($this->fneShop($request)),
         ]);
     }
 
@@ -110,6 +113,101 @@ class SettingsController extends Controller
 
         return Redirect::route('settings.index', ['code_user' => $user->accountCode()])
             ->with('success', 'Paramètres mis à jour avec succès.');
+    }
+
+    /**
+     * Réglages FNE de la boutique active.
+     *
+     * Par boutique, à la différence du reste de cette page : chaque boutique est un
+     * établissement / point de vente distinct pour la DGI. La clé API n'est jamais
+     * renvoyée au navigateur — on dit seulement si elle existe. Un champ laissé vide
+     * conserve la clé enregistrée.
+     */
+    public function updateFne(Request $request): RedirectResponse
+    {
+        $shop = $this->fneShop($request);
+        abort_unless($shop, 404);
+
+        if (!$shop->isInCoteDIvoire()) {
+            return back()->with('error', "La facturation électronique FNE ne concerne que les boutiques situées en Côte d'Ivoire.");
+        }
+
+        $validated = $request->validate([
+            'fne_enabled' => 'required|boolean',
+            'fne_environment' => 'required|in:test,prod',
+            'fne_api_key' => 'nullable|string|max:500',
+            'fne_base_url' => 'nullable|url|max:255|required_if:fne_environment,prod',
+            'fne_establishment' => 'nullable|string|max:255|required_if:fne_enabled,true,1',
+            'fne_point_of_sale' => 'nullable|string|max:255|required_if:fne_enabled,true,1',
+            'fne_zero_rate_code' => 'required|in:' . implode(',', FneService::ZERO_RATE_CODES),
+        ], [
+            'fne_base_url.required_if' => "L'URL de production est transmise par la DGI après validation de vos spécimens.",
+        ]);
+
+        if (blank($validated['fne_api_key'] ?? null)) {
+            unset($validated['fne_api_key']);
+        }
+
+        if ($validated['fne_enabled'] && blank($validated['fne_api_key'] ?? $shop->fne_api_key)) {
+            return back()->withErrors(['fne_api_key' => 'La clé API FNE est obligatoire pour activer la certification.']);
+        }
+
+        $shop->update($validated);
+
+        return back()->with('success', 'Réglages FNE enregistrés.');
+    }
+
+    public function testFne(Request $request, FneService $fne): RedirectResponse
+    {
+        $shop = $this->fneShop($request);
+        abort_unless($shop, 404);
+
+        $result = $fne->testConnection($shop);
+
+        return back()->with($result['ok'] ? 'success' : 'error', $result['message']);
+    }
+
+    /**
+     * La boutique active, bornée à celles que l'utilisateur peut voir.
+     */
+    private function fneShop(Request $request): ?Shop
+    {
+        $query = $request->user()->accessibleShopsQuery();
+
+        if ($activeId = get_active_shop_id()) {
+            if ($shop = (clone $query)->where('id', $activeId)->first()) {
+                return $shop;
+            }
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function fneSettings(?Shop $shop): ?array
+    {
+        if (!$shop) {
+            return null;
+        }
+
+        return [
+            'shop_id' => $shop->id,
+            'shop_name' => $shop->name,
+            'available' => $shop->isInCoteDIvoire(),
+            'enabled' => (bool) $shop->fne_enabled,
+            'active' => $shop->fneActive(),
+            'environment' => $shop->fne_environment ?: 'test',
+            'has_api_key' => filled($shop->fne_api_key),
+            'base_url' => $shop->fne_base_url,
+            'establishment' => $shop->fne_establishment,
+            'point_of_sale' => $shop->fne_point_of_sale,
+            'zero_rate_code' => $shop->fne_zero_rate_code ?: 'TVAD',
+            'balance_sticker' => $shop->fne_balance_sticker,
+            'sticker_warning' => (bool) $shop->fne_sticker_warning,
+            'test_url' => config('services.fne.test_url'),
+        ];
     }
 
     /**

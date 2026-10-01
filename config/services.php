@@ -120,6 +120,16 @@ return [
     ],
 
     /*
+    | FNE — Facture Normalisée Électronique (DGI Côte d'Ivoire). Seule l'URL de test est
+    | commune : la clé API et l'URL de production sont propres à chaque entreprise et
+    | vivent sur la boutique (shops.fne_*).
+    */
+    'fne' => [
+        'test_url' => env('FNE_TEST_URL', 'http://54.247.95.108/ws'),
+        'timeout'  => (int) env('FNE_TIMEOUT', 30),
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Paddle Payment Platform
     |--------------------------------------------------------------------------

@@ -4,11 +4,13 @@ import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import FneCustomerFields, { FneTemplate, isCoteDIvoire } from '@/Components/FneCustomerFields';
 
-interface Shop { id: number; name: string }
+interface Shop { id: number; name: string; country?: string | null }
 interface Customer {
     id: number; shop_id: number; name: string; email: string;
     phone: string; address: string; notes: string; is_active: boolean;
+    ncc?: string | null; fne_template?: FneTemplate | null;
 }
 interface Props { customer: Customer; shops: Shop[] }
 
@@ -24,7 +26,11 @@ export default function CustomersEdit({ customer, shops }: Props) {
         address: customer.address || '',
         notes: customer.notes || '',
         is_active: customer.is_active,
+        ncc: customer.ncc || '',
+        fne_template: (customer.fne_template || 'B2C') as FneTemplate,
     });
+
+    const showFne = isCoteDIvoire(shops.find((shop) => shop.id === customer.shop_id)?.country);
 
     const onSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -71,6 +77,16 @@ export default function CustomersEdit({ customer, shops }: Props) {
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white" />
                         <InputError message={errors.phone} />
                     </label>
+
+                    {showFne && (
+                        <FneCustomerFields
+                            template={data.fne_template}
+                            ncc={data.ncc}
+                            onTemplateChange={(value) => setData('fne_template', value)}
+                            onNccChange={(value) => setData('ncc', value)}
+                            errors={errors}
+                        />
+                    )}
 
                     <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
                         <span>{t.common.form.address}</span>

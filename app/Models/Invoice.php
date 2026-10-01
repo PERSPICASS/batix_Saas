@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Services\StockMovementService;
+use App\Traits\CertifiedByFne;
 use App\Support\GlobalDiscount;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,7 +15,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    use HasFactory, SoftDeletes;
+    use CertifiedByFne, HasFactory, SoftDeletes;
+
+    /** Posé à l'enregistrement qui fait quitter le brouillon, lu juste après. */
+    private bool $leavingDraft = false;
 
     protected $fillable = [
         'shop_id',
@@ -42,6 +46,13 @@ class Invoice extends Model
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'fne_certified_at' => 'datetime',
+        'fne_response' => 'array',
+    ];
+
+    /** La réponse brute de la DGI sert à l'audit, pas aux pages. */
+    protected $hidden = [
+        'fne_response',
     ];
 
     protected static function boot()
@@ -54,6 +65,28 @@ class Invoice extends Model
             }
         });
         
+        // L'émission — création directement émise, ou brouillon qui passe à `sent`/`paid` —
+        // est le seul moment où la facture part à la FNE : c'est là qu'elle se fige. Placé
+        // sur le modèle plutôt que dans les contrôleurs pour couvrir tous les chemins
+        // (web, API, envoi par mail). Les factures déjà émises avant l'activation de la
+        // FNE ne partent pas quand on les marque payées : elles ne quittent pas le brouillon.
+        static::saving(function ($invoice) {
+            $invoice->leavingDraft = $invoice->isDirty('status')
+                && in_array($invoice->status, ['sent', 'paid'], true)
+                && in_array($invoice->getOriginal('status'), [null, 'draft'], true)
+                && $invoice->fne_status === null;
+        });
+
+        static::saved(function ($invoice) {
+            if ($invoice->leavingDraft) {
+                $invoice->leavingDraft = false;
+
+                if ($invoice->shop?->fneActive()) {
+                    $invoice->queueFneCertification();
+                }
+            }
+        });
+
         static::saved(function ($invoice) {
             if ($invoice->status !== 'paid') {
                 return;

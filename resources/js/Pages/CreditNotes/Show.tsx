@@ -1,9 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Lock, Printer } from 'lucide-react';
+import { ArrowLeft, FileDown, Lock, Printer } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
 import { useLocale } from '@/contexts/LocaleContext';
+import FnePanel, { FneInfo } from '@/Components/FnePanel';
 
 interface Props {
     creditNote: {
@@ -27,9 +28,10 @@ interface Props {
             total: string | number;
         }>;
     };
+    fne: FneInfo | null;
 }
 
-export default function ShowCreditNote({ creditNote }: Props) {
+export default function ShowCreditNote({ creditNote, fne }: Props) {
     const route = useRoute();
     const { t, locale } = useLocale();
 
@@ -62,7 +64,19 @@ export default function ShowCreditNote({ creditNote }: Props) {
                     >
                         <Printer className="size-4" /> {t.common.actions.print || 'Imprimer'}
                     </button>
+                    <a
+                        href={route('credit-notes.pdf', { credit_note: creditNote.id })}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                    >
+                        <FileDown className="size-4" /> PDF
+                    </a>
                 </div>
+
+                {fne && (
+                    <FnePanel fne={fne} retryUrl={route('credit-notes.fne.retry', { credit_note: creditNote.id })} />
+                )}
 
                 <div className="print:hidden flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
                     <Lock className="mt-0.5 size-4 shrink-0" />

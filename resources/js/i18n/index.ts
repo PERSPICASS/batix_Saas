@@ -18,6 +18,7 @@ import { products } from './products';
 import { sales } from './sales';
 import { invoices } from './invoices';
 import { creditNotes } from './creditNotes';
+import { fne } from './fne';
 import { documents } from './documents';
 import { quotes } from './quotes';
 import { purchases } from './purchases';
@@ -70,6 +71,7 @@ export const translations = {
         sales: sales.fr,
         invoices: invoices.fr,
         creditNotes: creditNotes.fr,
+        fne: fne.fr,
         documents: documents.fr,
         quotes: quotes.fr,
         purchases: purchases.fr,
@@ -121,6 +123,7 @@ export const translations = {
         sales: sales.en,
         invoices: invoices.en,
         creditNotes: creditNotes.en,
+        fne: fne.en,
         documents: documents.en,
         quotes: quotes.en,
         purchases: purchases.en,
