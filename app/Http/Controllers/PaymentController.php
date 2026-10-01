@@ -62,25 +62,36 @@ class PaymentController extends Controller
             ],
             'currency'  => $currency,
             'isSandbox' => (bool) config('services.pawapay.sandbox', true),
-            // Le bouton Mobile Money reste visible, mais inactif tant que le lancement
-            // commercial n'est pas explicitement autorisé par MONEROO_ENABLED.
+            // Le bouton Mobile Money reste visible, mais inactif tant que Chariow n'est
+            // pas entièrement configuré. Le secret du Pulse est exigé au même titre que
+            // la clé API : sans lui chaque webhook répond 401, et un client qui paie
+            // sans revenir sur la page de retour ne serait jamais activé.
             // Le détail de ce qui manque ne sort qu'en debug : en production, un client
             // n'a pas à lire notre configuration.
-            'monerooEnabled' => (bool) config('services.moneroo.enabled', false)
-                && config('services.moneroo.api_key', '') !== ''
-                && config('services.moneroo.webhook_secret', '') !== '',
+            'chariowEnabled' => config('services.chariow.api_key', '') !== ''
+                && config('services.chariow.webhook_secret', '') !== ''
+                && ($plan->chariow_product_id || $plan->chariow_product_id_yearly),
+            'chariowCycles' => [
+                'monthly' => (bool) $plan->chariow_product_id,
+                'yearly'  => (bool) $plan->chariow_product_id_yearly,
+            ],
             'userCountry'  => $user->country,
-            'monerooSetup' => config('app.debug') ? array_values(array_filter([
-                config('services.moneroo.api_key', '') === '' ? 'MONEROO_API_KEY absent de .env' : null,
-                config('services.moneroo.webhook_secret', '') === '' ? 'MONEROO_WEBHOOK_SECRET absent de .env' : null,
+            'chariowSetup' => config('app.debug') ? array_values(array_filter([
+                config('services.chariow.api_key', '') === '' ? 'CHARIOW_API_KEY absent de .env' : null,
+                config('services.chariow.webhook_secret', '') === '' ? 'CHARIOW_WEBHOOK_SECRET absent de .env' : null,
+                !$plan->chariow_product_id ? 'Produit mensuel non mappé (php artisan chariow:link-products)' : null,
+                !$plan->chariow_product_id_yearly ? 'Produit annuel non mappé' : null,
+                !config('services.chariow.price_guard', true)
+                    ? 'GARDE-FOU DE PRIX DÉSACTIVÉ (CHARIOW_PRICE_GUARD=false)'
+                    : null,
             ])) : null,
             'currentPlan' => $currentSubscription ? [
                 'name' => $currentSubscription->plan->name,
                 'slug' => $currentSubscription->plan->slug,
             ] : null,
             'paymentNumbers' => $paymentNumbers,
-            // Indépendant de Moneroo : le paiement manuel est vérifié à la main par
-            // l'admin plateforme, il n'attend aucun lancement commercial.
+            // Indépendant de Chariow : le paiement manuel est vérifié à la main par
+            // l'admin plateforme, il n'attend aucune configuration de prestataire.
             'manualEnabled' => (bool) config('services.payment.manual_enabled', true)
                 && array_intersect_key($paymentNumbers, array_flip(self::MANUAL_METHODS)) !== [],
         ]);

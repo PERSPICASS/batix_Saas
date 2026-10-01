@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class MonerooPaymentTest extends TestCase
@@ -333,36 +332,5 @@ class MonerooPaymentTest extends TestCase
 
         $this->assertSame(0, Subscription::count());
         Http::assertNothingSent();
-    }
-
-    public function test_checkout_exposes_moneroo_when_both_secrets_are_configured(): void
-    {
-        $user = User::factory()->create(['role' => 'super_admin']);
-        $plan = $this->plan();
-
-        $this->actingAs($user)
-            ->get("/plans/{$plan->slug}/checkout")
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Payment/Checkout')
-                ->where('monerooEnabled', true)
-                ->where('monerooSetup', [])
-            );
-    }
-
-    public function test_checkout_keeps_mobile_money_disabled_when_launch_flag_is_off(): void
-    {
-        config(['services.moneroo.enabled' => false]);
-
-        $user = User::factory()->create(['role' => 'super_admin']);
-        $plan = $this->plan();
-
-        $this->actingAs($user)
-            ->get("/plans/{$plan->slug}/checkout")
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Payment/Checkout')
-                ->where('monerooEnabled', false)
-            );
     }
 }

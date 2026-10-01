@@ -65,6 +65,8 @@ class SubscriptionPlanSeeder extends Seeder
                 'sort_order'  => 1,
                 'paddle_price_id'        => 'pri_01kw2j14wsvbxxpcsdxgmk9r6c',
                 'paddle_price_id_yearly' => 'pri_01kwcexppmnz8dyh4xanzg18g8',
+                'chariow_product_id'        => 'prd_pu98lf7i',
+                'chariow_product_id_yearly' => 'prd_7v1r04sr',
             ],
             [
                 'name'        => 'Growth',
@@ -91,6 +93,8 @@ class SubscriptionPlanSeeder extends Seeder
                 'sort_order'  => 2,
                 'paddle_price_id'        => 'pri_01kw2hzxvs5zmag2xngcs2wkbw',
                 'paddle_price_id_yearly' => 'pri_01kwcevxy47sr6w8q7wce4vx4q',
+                'chariow_product_id'        => 'prd_b09r5kfe',
+                'chariow_product_id_yearly' => 'prd_4w1s3jcy',
             ],
             [
                 'name'        => 'Pro',
@@ -114,6 +118,8 @@ class SubscriptionPlanSeeder extends Seeder
                 'sort_order'  => 3,
                 'paddle_price_id'        => 'pri_01kw2hybzhy9dvpzm9nvm851p8',
                 'paddle_price_id_yearly' => 'pri_01kwcet0jbth889tj3fvpvn7zr',
+                'chariow_product_id'        => 'prd_9kvdcol0',
+                'chariow_product_id_yearly' => 'prd_xuxiwo4v',
             ],
             [
                 'name'        => 'Entreprise',

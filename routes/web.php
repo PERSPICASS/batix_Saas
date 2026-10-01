@@ -45,6 +45,7 @@ use App\Http\Controllers\ReturnsController;
 use App\Http\Controllers\ReturnedInventoryController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\LemonSqueezyController;
+use App\Http\Controllers\ChariowController;
 use App\Http\Controllers\MonerooController;
 use App\Http\Controllers\PaddleController;
 use App\Http\Controllers\FixedCostController;
@@ -131,10 +132,14 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::cl
 | Prestataires de paiement en attente d'accès
 |--------------------------------------------------------------------------
 |
-| Paddle et Moneroo sont actifs en production (voir plus bas). PawaPay, Jèko et
+| Paddle et Chariow sont actifs en production (voir plus bas). PawaPay, Jèko et
 | LemonSqueezy sont intégrés et fonctionnels côté code, mais leurs routes
 | restent commentées tant que nous n'avons pas les identifiants marchands.
 | Leurs contrôleurs, services et modèles sont conservés intacts.
+|
+| Moneroo est à part : ses routes restent déclarées mais répondent 503 tant que
+| MONEROO_ENABLED est à false, et plus aucun écran n'y mène. Il exige un compte
+| chez un agrégateur que nous n'avons pas ; Chariow tient le Mobile Money d'ici là.
 |
 | Pour réactiver un prestataire :
 |   1. renseigner ses clés dans .env (voir config/services.php) ;
@@ -187,7 +192,20 @@ Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::cl
 //     Route::post('/lemonsqueezy/sync-products', [LemonSqueezyController::class, 'syncProducts'])->name('platform.lemonsqueezy.sync');
 // });
 
-// Routes Moneroo (webhook public — signature HMAC vérifiée dans le contrôleur)
+// Routes Chariow (webhook public — signature HMAC vérifiée dans le contrôleur)
+Route::post('/chariow/webhook', [ChariowController::class, 'webhook'])
+    ->name('chariow.webhook')
+    ->middleware('throttle:120,1')
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class]); // public webhook
+
+Route::middleware(['auth', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->group(function () {
+    Route::post('/chariow/initiate/{plan}', [ChariowController::class, 'initiate'])
+        ->name('chariow.initiate')
+        ->middleware('throttle:10,1');
+    Route::get('/chariow/return', [ChariowController::class, 'return'])->name('chariow.return');
+});
+
+// Routes Moneroo — en sommeil derrière MONEROO_ENABLED (voir l'en-tête ci-dessus)
 Route::post('/moneroo/webhook', [MonerooController::class, 'webhook'])
     ->name('moneroo.webhook')
     ->middleware('throttle:120,1')
