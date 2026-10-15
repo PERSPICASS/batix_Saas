@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FixedCost;
+use App\Services\PlatformMetrics;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,7 +16,9 @@ class FixedCostController extends Controller
         }
 
         $costs = FixedCost::orderBy('category')->get();
-        $totalMonthly = $costs->where('is_active', true)->sum('amount_monthly');
+        // In FCFA, annual costs spread over 12 months (the stored amount is
+        // per billing cycle, in the cost's own currency).
+        $totalMonthly = round(app(PlatformMetrics::class)->monthlyFixedCosts());
 
         return Inertia::render('PlatformAdmin/FixedCosts/Index', [
             'costs' => $costs,
@@ -52,7 +55,7 @@ class FixedCostController extends Controller
 
         FixedCost::create($validated);
 
-        return redirect()->route('platform.fixed-costs.index')->with('success', 'Charge ajoutée avec succès.');
+        return redirect()->route('platform.fixed-costs.index')->with('success', __('platform.flash.cost_created'));
     }
 
     public function edit(FixedCost $cost)
@@ -86,7 +89,7 @@ class FixedCostController extends Controller
 
         $cost->update($validated);
 
-        return redirect()->route('platform.fixed-costs.index')->with('success', 'Charge mise à jour.');
+        return redirect()->route('platform.fixed-costs.index')->with('success', __('platform.flash.cost_updated'));
     }
 
     public function destroy(FixedCost $cost)
@@ -97,6 +100,6 @@ class FixedCostController extends Controller
 
         $cost->delete();
 
-        return redirect()->route('platform.fixed-costs.index')->with('success', 'Charge supprimée.');
+        return redirect()->route('platform.fixed-costs.index')->with('success', __('platform.flash.cost_deleted'));
     }
 }

@@ -50,6 +50,14 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        if (Auth::user()->isSuspended()) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => __('platform.account_suspended'),
+            ]);
+        }
     }
 
     /**

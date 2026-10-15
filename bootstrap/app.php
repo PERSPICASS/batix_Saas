@@ -16,9 +16,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\ForceHttpsInSession::class,
+            \App\Http\Middleware\EnsureAccountIsActive::class,
             \App\Http\Middleware\SetActiveShop::class,
             \App\Http\Middleware\CheckScreenLock::class,
             \App\Http\Middleware\SentryContext::class,
+        ]);
+
+        $middleware->api(append: [
+            \App\Http\Middleware\EnsureAccountIsActive::class,
         ]);
 
         $middleware->trustProxies(at: [

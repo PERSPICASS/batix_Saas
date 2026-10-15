@@ -7,7 +7,7 @@ class CurrencyService
     private static array $exchangeRates = [
         'FCFA' => 1,
         'USD' => 0.0017,
-        'EUR' => 0.0015,
+        'EUR' => 1 / 655.957, // parité fixe FCFA/EUR
         'XOF' => 1, // Same as FCFA
         'CAD' => 0.0023,
         'GBP' => 0.0013,

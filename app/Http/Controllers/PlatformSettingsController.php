@@ -9,18 +9,12 @@ use Inertia\Response;
 
 class PlatformSettingsController extends Controller
 {
-    private array $groups = ['payment', 'contact', 'general'];
-
+    // Only the manual-payment numbers live here: they are read by
+    // PaymentController. A setting nothing reads is not offered.
     public function index(): Response
     {
         return Inertia::render('PlatformAdmin/Settings/Index', [
             'settings' => [
-                'general' => [
-                    'platform_name'    => PlatformSetting::get('platform_name', 'BATIX PRO'),
-                    'support_email'    => PlatformSetting::get('support_email', 'support@batixpro.com'),
-                    'support_phone'    => PlatformSetting::get('support_phone', ''),
-                    'website_url'      => PlatformSetting::get('website_url', ''),
-                ],
                 'payment' => [
                     'wave'         => PlatformSetting::get('payment_wave',         config('services.payment.wave', '')),
                     'orange_money' => PlatformSetting::get('payment_orange_money', config('services.payment.orange_money', '')),
@@ -36,10 +30,6 @@ class PlatformSettingsController extends Controller
     public function update(Request $request)
     {
         $validated = $request->validate([
-            'general.platform_name' => 'nullable|string|max:100',
-            'general.support_email' => 'nullable|email|max:150',
-            'general.support_phone' => 'nullable|string|max:30',
-            'general.website_url'   => 'nullable|url|max:200',
             'payment.wave'          => 'nullable|string|max:50',
             'payment.orange_money'  => 'nullable|string|max:50',
             'payment.mtn_money'     => 'nullable|string|max:50',
@@ -48,14 +38,10 @@ class PlatformSettingsController extends Controller
             'payment.carte'         => 'nullable|string|max:100',
         ]);
 
-        foreach ($validated['general'] ?? [] as $key => $value) {
-            PlatformSetting::set($key, $value, 'general');
-        }
-
         foreach ($validated['payment'] ?? [] as $key => $value) {
             PlatformSetting::set('payment_' . $key, $value, 'payment');
         }
 
-        return back()->with('success', 'Paramètres mis à jour avec succès.');
+        return back()->with('success', __('platform.flash.settings_updated'));
     }
 }

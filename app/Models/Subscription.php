@@ -109,9 +109,17 @@ class Subscription extends Model
      */
     public function renew(int $months = 1): void
     {
+        // Extends from the current end date when it is still ahead, so the
+        // subscriber keeps the days they already paid for.
+        $base = $this->expires_at && $this->expires_at->isFuture()
+            ? $this->expires_at->copy()
+            : now();
+
         $this->update([
             'status' => 'active',
-            'expires_at' => now()->addMonths($months),
+            'started_at' => $this->started_at ?? now(),
+            'cancelled_at' => null,
+            'expires_at' => $base->addMonths($months),
         ]);
     }
 

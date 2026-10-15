@@ -22,7 +22,7 @@ class PlatformReviewController extends Controller
     {
         $this->guard();
 
-        $reviews = Review::latest()->get()->map(fn (Review $r) => [
+        $reviews = Review::latest()->paginate(30)->through(fn (Review $r) => [
             'id' => $r->id,
             'author_name' => $r->author_name,
             'author_company' => $r->author_company,
@@ -52,7 +52,7 @@ class PlatformReviewController extends Controller
             'approved_at' => now(),
         ]);
 
-        return back()->with('success', 'Avis approuvé et publié.');
+        return back()->with('success', __('platform.flash.review_approved'));
     }
 
     public function reject(Review $review): RedirectResponse
@@ -64,7 +64,7 @@ class PlatformReviewController extends Controller
             'approved_at' => null,
         ]);
 
-        return back()->with('success', 'Avis rejeté.');
+        return back()->with('success', __('platform.flash.review_rejected'));
     }
 
     public function destroy(Review $review): RedirectResponse
@@ -73,6 +73,6 @@ class PlatformReviewController extends Controller
 
         $review->delete();
 
-        return back()->with('success', 'Avis supprimé.');
+        return back()->with('success', __('platform.flash.review_deleted'));
     }
 }

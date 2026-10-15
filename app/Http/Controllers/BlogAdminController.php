@@ -69,7 +69,7 @@ class BlogAdminController extends Controller
 
         Post::create($data);
 
-        return redirect()->route('platform.blog.index')->with('success', 'Article créé avec succès.');
+        return redirect()->route('platform.blog.index')->with('success', __('platform.flash.post_created'));
     }
 
     public function edit(Post $post): Response
@@ -127,7 +127,7 @@ class BlogAdminController extends Controller
 
         $post->update($data);
 
-        return redirect()->route('platform.blog.index')->with('success', 'Article mis à jour.');
+        return redirect()->route('platform.blog.index')->with('success', __('platform.flash.post_updated'));
     }
 
     public function destroy(Post $post)
@@ -137,7 +137,7 @@ class BlogAdminController extends Controller
         }
         $post->delete();
 
-        return redirect()->route('platform.blog.index')->with('success', 'Article supprimé.');
+        return redirect()->route('platform.blog.index')->with('success', __('platform.flash.post_deleted'));
     }
 
     public function togglePublished(Post $post)
@@ -146,6 +146,6 @@ class BlogAdminController extends Controller
         $post->published_at = $post->is_published ? ($post->published_at ?? now()) : null;
         $post->save();
 
-        return back()->with('success', $post->is_published ? 'Article publié.' : 'Article dépublié.');
+        return back()->with('success', __($post->is_published ? 'platform.flash.post_published' : 'platform.flash.post_unpublished'));
     }
 }

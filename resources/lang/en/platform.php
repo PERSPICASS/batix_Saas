@@ -1,0 +1,35 @@
+<?php
+
+return [
+    'account_suspended' => 'This account has been suspended. Please contact BATIX PRO support.',
+
+    'flash' => [
+        'only_owner_accounts' => 'Only owner accounts can be suspended.',
+        'account_suspended' => 'Account suspended: the owner and their staff can no longer sign in.',
+        'account_reactivated' => 'Account reactivated.',
+        'shop_suspended' => 'Shop suspended: its account can no longer access it.',
+        'shop_reactivated' => 'Shop reactivated.',
+        'subscription_cancelled' => 'Subscription cancelled.',
+        'subscription_renewed' => 'Subscription extended by :months month(s).',
+        'subscription_activated' => 'Subscription activated.',
+        'subscription_dates_updated' => 'Subscription dates updated.',
+        'plan_created' => 'Subscription plan created.',
+        'plan_updated' => 'Subscription plan updated.',
+        'plan_deleted' => 'Subscription plan deleted.',
+        'plan_enabled' => 'Plan enabled.',
+        'plan_disabled' => 'Plan disabled.',
+        'plan_has_subscriptions' => 'This plan already has subscriptions (even expired ones): disable it instead of deleting it.',
+        'settings_updated' => 'Settings updated.',
+        'post_created' => 'Post created.',
+        'post_updated' => 'Post updated.',
+        'post_deleted' => 'Post deleted.',
+        'post_published' => 'Post published.',
+        'post_unpublished' => 'Post unpublished.',
+        'cost_created' => 'Cost added.',
+        'cost_updated' => 'Cost updated.',
+        'cost_deleted' => 'Cost deleted.',
+        'review_approved' => 'Review approved and published.',
+        'review_rejected' => 'Review rejected.',
+        'review_deleted' => 'Review deleted.',
+    ],
+];

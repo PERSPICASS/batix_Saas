@@ -49,7 +49,7 @@ export default function Index({ plans }: Props) {
     const [planToDelete, setPlanToDelete] = useState<SubscriptionPlan | null>(null);
 
     const togglePlanStatus = (plan: SubscriptionPlan) => {
-        router.post(route('platform.subscriptions.toggle', plan.id), {}, {
+        router.post(route('platform.subscriptions.toggle', plan.slug), {}, {
             preserveScroll: true,
         });
     };
@@ -65,7 +65,7 @@ export default function Index({ plans }: Props) {
 
     const handleDelete = () => {
         if (planToDelete) {
-            router.delete(route('platform.subscriptions.destroy', planToDelete.id), {
+            router.delete(route('platform.subscriptions.destroy', planToDelete.slug), {
                 preserveScroll: true,
                 onSuccess: () => {
                     setShowDeleteModal(false);
@@ -170,7 +170,7 @@ export default function Index({ plans }: Props) {
                             render: (plan) => (
                                 <TableActions>
                                     <Link
-                                        href={route('platform.subscriptions.edit', plan.id)}
+                                        href={route('platform.subscriptions.edit', plan.slug)}
                                         className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                                     >
                                         <Pencil className="size-3.5" /> {t.platformSubscriptionPlans.index.edit}

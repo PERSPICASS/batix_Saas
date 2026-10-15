@@ -7,8 +7,9 @@ use App\Models\User;
 use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
-use App\Models\FixedCost;
+use App\Services\PlatformMetrics;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -16,23 +17,27 @@ use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 
-class PlatformAdminController extends Controller
+class PlatformAdminController extends Controller implements HasMiddleware
 {
+    /**
+     * Defense in depth: the routes already carry platform.admin, but a
+     * controller this privileged must not depend on being routed correctly.
+     */
+    public static function middleware(): array
+    {
+        return ['platform.admin'];
+    }
+
     /**
      * Display the platform admin dashboard.
      */
-    public function index(): Response
+    public function index(PlatformMetrics $metrics): Response
     {
-        // Vérifier que l'utilisateur est admin_platforme
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403, 'Accès réservé aux administrateurs de plateforme.');
-        }
-
         // Statistiques globales
         $totalAccounts = User::where('role', 'super_admin')->count();
         $totalShops = Shop::count();
         $activeShops = Shop::where('is_active', true)->count();
-        $totalUsers = User::count();
+        $totalUsers = User::where('role', '!=', 'admin_platforme')->count();
 
         // Statistiques des abonnements
         $activeSubscriptions = Subscription::where('status', 'active')->count();
@@ -40,86 +45,60 @@ class PlatformAdminController extends Controller
         $expiredSubscriptions = Subscription::where('status', 'expired')->count();
         $cancelledSubscriptions = Subscription::where('status', 'cancelled')->count();
 
-        // Revenus mensuels depuis les abonnements
-        $monthlyRevenue = Subscription::whereIn('status', ['active', 'trial'])
-            ->sum('amount');
-
-        // Charges fixes mensuelles (toutes devises, conversion approximative)
-        $monthlyFixedCosts = FixedCost::where('is_active', true)
-            ->where('billing_cycle', 'monthly')
-            ->get()
-            ->reduce(function($total, $cost) {
-                $rate = match($cost->currency) {
-                    'EUR' => 1.0,
-                    'USD' => 0.92,  // 1 USD ≈ 0.92 EUR
-                    'FCFA' => 0.00152,  // 1 FCFA ≈ 0.00152 EUR
-                    default => 1.0,
-                };
-                return $total + ($cost->amount_monthly * $rate);
-            }, 0);
-
-        // Profit net (Revenus - Charges fixes)
+        // Revenu mensuel = MRR (abonnements payants, annuel ramené au mois), en FCFA,
+        // comme sur la page MRR. Les charges sont converties en FCFA elles aussi.
+        $paying = $metrics->payingAt(now());
+        $monthlyRevenue = $paying->sum(fn ($s) => PlatformMetrics::monthlyAmount($s));
+        $monthlyFixedCosts = $metrics->monthlyFixedCosts();
         $monthlyProfit = $monthlyRevenue - $monthlyFixedCosts;
 
         // Évolution des inscriptions sur les 6 derniers mois
         $accountsGrowth = collect(range(5, 0))->map(function ($monthsAgo) {
-            $date = now()->subMonths($monthsAgo);
-            $count = User::where('role', 'super_admin')
-                ->whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
-            
+            $date = now()->startOfMonth()->subMonths($monthsAgo);
+
             return [
-                'month' => $date->format('M Y'),
-                'count' => $count,
+                'month' => $date->format('Y-m'),
+                'count' => User::where('role', 'super_admin')
+                    ->whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
+                    ->count(),
             ];
         });
 
         // Évolution des boutiques sur les 6 derniers mois
         $shopsGrowth = collect(range(5, 0))->map(function ($monthsAgo) {
-            $date = now()->subMonths($monthsAgo);
-            $count = Shop::whereYear('created_at', $date->year)
-                ->whereMonth('created_at', $date->month)
-                ->count();
-            
+            $date = now()->startOfMonth()->subMonths($monthsAgo);
+
             return [
-                'month' => $date->format('M Y'),
-                'count' => $count,
+                'month' => $date->format('Y-m'),
+                'count' => Shop::whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])->count(),
             ];
         });
 
-        // Répartition des abonnements par plan
-        $subscriptionsByPlan = Subscription::with('plan')
-            ->whereIn('status', ['active', 'trial'])
-            ->get()
-            ->groupBy('plan_id')
-            ->map(function ($subscriptions, $planId) {
-                $plan = $subscriptions->first()->plan;
-                return [
-                    'name' => $plan->name,
-                    'count' => $subscriptions->count(),
-                    'revenue' => $subscriptions->sum('amount'),
-                ];
-            })
+        // Répartition des abonnements payants par plan
+        $subscriptionsByPlan = $paying
+            ->groupBy('subscription_plan_id')
+            ->map(fn ($subs) => [
+                'name' => $subs->first()->plan?->name ?? '—',
+                'count' => $subs->count(),
+                'revenue' => round($subs->sum(fn ($s) => PlatformMetrics::monthlyAmount($s))),
+            ])
             ->values();
 
-        // Évolution des revenus sur les 6 derniers mois
+        // Encaissements réels (factures d'abonnement payées) sur 6 mois
         $revenueGrowth = collect(range(5, 0))->map(function ($monthsAgo) {
-            $date = now()->subMonths($monthsAgo);
-            $revenue = Subscription::whereYear('started_at', $date->year)
-                ->whereMonth('started_at', $date->month)
-                ->whereIn('status', ['active', 'trial'])
-                ->sum('amount');
-            
+            $date = now()->startOfMonth()->subMonths($monthsAgo);
+
             return [
-                'month' => $date->format('M Y'),
-                'revenue' => $revenue,
+                'month' => $date->format('Y-m'),
+                'revenue' => round((float) SubscriptionInvoice::where('status', 'paid')
+                    ->whereBetween('paid_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
+                    ->sum('total')),
             ];
         });
 
         // Comptes récents
         $recentAccounts = User::where('role', 'super_admin')
-            ->with('shops')
+            ->withCount('shops')
             ->latest()
             ->take(5)
             ->get()
@@ -128,8 +107,8 @@ class PlatformAdminController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'code_user' => $user->code_user,
-                'shops_count' => $user->shops->count(),
-                'created_at' => $user->created_at->format('Y-m-d H:i:s'),
+                'shops_count' => $user->shops_count,
+                'created_at' => $user->created_at?->toDateTimeString(),
             ]);
 
         // Boutiques récentes
@@ -143,11 +122,11 @@ class PlatformAdminController extends Controller
                 'slug' => $shop->slug,
                 'is_active' => $shop->is_active,
                 'owner' => [
-                    'id' => $shop->user->id,
-                    'name' => $shop->user->name,
-                    'email' => $shop->user->email,
+                    'id' => $shop->user?->id,
+                    'name' => $shop->user?->name,
+                    'email' => $shop->user?->email,
                 ],
-                'created_at' => $shop->created_at->format('Y-m-d H:i:s'),
+                'created_at' => $shop->created_at?->toDateTimeString(),
             ]);
 
         return Inertia::render('PlatformAdmin/Dashboard', [
@@ -156,10 +135,11 @@ class PlatformAdminController extends Controller
                 'total_shops' => $totalShops,
                 'active_shops' => $activeShops,
                 'total_users' => $totalUsers,
-                'monthly_revenue' => $monthlyRevenue,
-                'monthly_fixed_costs' => $monthlyFixedCosts,
-                'monthly_profit' => $monthlyProfit,
+                'monthly_revenue' => round($monthlyRevenue),
+                'monthly_fixed_costs' => round($monthlyFixedCosts),
+                'monthly_profit' => round($monthlyProfit),
                 'profit_margin' => $monthlyRevenue > 0 ? round(($monthlyProfit / $monthlyRevenue) * 100, 1) : 0,
+                'paying_subscriptions' => $paying->count(),
                 'active_subscriptions' => $activeSubscriptions,
                 'trial_subscriptions' => $trialSubscriptions,
                 'expired_subscriptions' => $expiredSubscriptions,
@@ -177,253 +157,143 @@ class PlatformAdminController extends Controller
     }
 
     /**
-     * MRR Dashboard complet : MRR, ARR, Churn, New MRR, Expansion, NRR
+     * MRR Dashboard complet : MRR, ARR, Churn, New MRR, Expansion, NRR.
+     * Tous les montants sont en FCFA ; voir PlatformMetrics pour la méthode.
      */
-    public function mrrDashboard(): Response
+    public function mrrDashboard(PlatformMetrics $metrics): Response
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
-
         $now = Carbon::now();
-        $lastMonth = $now->copy()->subMonth();
+        $monthStart = $now->copy()->startOfMonth();
 
-        // ── MRR courant ────────────────────────────────────────────────────
-        // MRR = somme des montants normalisés en mensuel des abonnements actifs
-        $activeSubs = Subscription::with('plan')
-            ->where('status', 'active')
-            ->get();
-
-        $currentMrr = $activeSubs->sum(function ($sub) {
-            return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
-        });
-
-        // MRR mois précédent
-        $lastMonthSubs = Subscription::with('plan')
-            ->where('status', 'active')
-            ->where('started_at', '<=', $lastMonth->endOfMonth())
-            ->where(function ($q) use ($lastMonth) {
-                $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', $lastMonth->startOfMonth());
-            })
-            ->get();
-
-        $lastMrr = $lastMonthSubs->sum(function ($sub) {
-            return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
-        });
-
+        // ── Mois en cours : du 1er du mois à maintenant ────────────────────
+        $current = $metrics->movements($monthStart, $now);
+        $currentMrr = $current['end_mrr'];
+        $lastMrr = $current['start_mrr'];
         $mrrGrowth = $lastMrr > 0 ? round((($currentMrr - $lastMrr) / $lastMrr) * 100, 1) : 0;
 
-        // ── ARR ────────────────────────────────────────────────────────────
         $arr = $currentMrr * 12;
-
-        // ── ARPU (Average Revenue Per User) ────────────────────────────────
-        $activeCount = $activeSubs->count();
+        $activeCount = $current['end_count'];
         $arpu = $activeCount > 0 ? round($currentMrr / $activeCount) : 0;
 
-        // ── Churn Rate ─────────────────────────────────────────────────────
-        // Churned = annulés ou expirés ce mois-ci
-        $churnedThisMonth = Subscription::where(function ($q) use ($now) {
-            $q->where('status', 'cancelled')
-              ->whereMonth('cancelled_at', $now->month)
-              ->whereYear('cancelled_at', $now->year);
-        })->orWhere(function ($q) use ($now) {
-            $q->where('status', 'expired')
-              ->whereMonth('expires_at', $now->month)
-              ->whereYear('expires_at', $now->year);
-        })->count();
-
-        $startOfMonthActive = $lastMonthSubs->count();
-        $churnRate = $startOfMonthActive > 0
-            ? round(($churnedThisMonth / $startOfMonthActive) * 100, 2)
+        // Churn = comptes payants au 1er du mois qui ne paient plus
+        $churnRate = $current['start_count'] > 0
+            ? round(($current['churned_count'] / $current['start_count']) * 100, 2)
             : 0;
 
-        // ── MRR Churned (valeur perdue) ─────────────────────────────────────
-        $churnedMrr = Subscription::where(function ($q) use ($now) {
-            $q->where('status', 'cancelled')
-              ->whereMonth('cancelled_at', $now->month)
-              ->whereYear('cancelled_at', $now->year);
-        })->orWhere(function ($q) use ($now) {
-            $q->where('status', 'expired')
-              ->whereMonth('expires_at', $now->month)
-              ->whereYear('expires_at', $now->year);
-        })->get()->sum(function ($sub) {
-            return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
-        });
-
-        // ── New MRR (nouveaux abonnements ce mois) ─────────────────────────
-        $newMrr = Subscription::where('status', 'active')
-            ->whereMonth('started_at', $now->month)
-            ->whereYear('started_at', $now->year)
-            ->get()
-            ->sum(function ($sub) {
-                return $sub->billing_cycle === 'yearly' ? $sub->amount / 12 : $sub->amount;
-            });
-
-        // ── Net Revenue Retention (NRR) ─────────────────────────────────────
-        // NRR = (MRR fin de période - Churn MRR) / MRR début de période × 100
+        // NRR = MRR actuel des comptes déjà clients au 1er / MRR au 1er
         $nrr = $lastMrr > 0
-            ? round((($currentMrr - $churnedMrr) / $lastMrr) * 100, 1)
+            ? round((($lastMrr + $current['expansion_mrr'] - $current['contraction_mrr'] - $current['churned_mrr']) / $lastMrr) * 100, 1)
             : 100;
 
-        // ── LTV estimée ─────────────────────────────────────────────────────
-        // LTV = ARPU / Churn Rate (mensuel)
-        $monthlyChurnRate = $churnRate / 100;
-        $ltv = $monthlyChurnRate > 0 ? round($arpu / $monthlyChurnRate) : 0;
+        // LTV = ARPU / churn mensuel, sur la moyenne des 12 derniers mois
+        // (le churn du seul mois en cours est trop bruité).
+        $history = collect(range(11, 0))->map(function ($monthsAgo) use ($metrics) {
+            $month = Carbon::now()->startOfMonth()->subMonths($monthsAgo);
+            $m = $metrics->movements($month, PlatformMetrics::monthEnd($month));
 
-        // ── Évolution MRR sur 12 mois ────────────────────────────────────────
-        $mrrHistory = collect(range(11, 0))->map(function ($monthsAgo) {
-            $date = Carbon::now()->subMonths($monthsAgo);
-
-            $subs = Subscription::where('status', 'active')
-                ->where('started_at', '<=', $date->copy()->endOfMonth())
-                ->where(function ($q) use ($date) {
-                    $q->whereNull('expires_at')
-                      ->orWhere('expires_at', '>', $date->copy()->startOfMonth());
-                })
-                ->get();
-
-            $mrr = $subs->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
-
-            $newSubs = Subscription::where('status', 'active')
-                ->whereYear('started_at', $date->year)
-                ->whereMonth('started_at', $date->month)
-                ->get();
-            $newMrrMonth = $newSubs->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
-
-            $churned = Subscription::where(function ($q) use ($date) {
-                $q->where('status', 'cancelled')
-                  ->whereYear('cancelled_at', $date->year)
-                  ->whereMonth('cancelled_at', $date->month);
-            })->orWhere(function ($q) use ($date) {
-                $q->where('status', 'expired')
-                  ->whereYear('expires_at', $date->year)
-                  ->whereMonth('expires_at', $date->month);
-            })->get();
-
-            $churnedMrrMonth = $churned->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
-
-            return [
-                'month'      => $date->format('M Y'),
-                'mrr'        => round($mrr),
-                'new_mrr'    => round($newMrrMonth),
-                'churned_mrr'=> round($churnedMrrMonth),
-                'count'      => $subs->count(),
-            ];
+            return ['month' => $month, 'm' => $m];
         });
 
-        // ── Churn par mois (12 mois) ─────────────────────────────────────────
-        $churnHistory = collect(range(11, 0))->map(function ($monthsAgo) {
-            $date = Carbon::now()->subMonths($monthsAgo);
+        $avgChurn = $history->avg(fn ($h) => $h['m']['start_count'] > 0
+            ? $h['m']['churned_count'] / $h['m']['start_count']
+            : 0);
+        $ltv = $avgChurn > 0 ? round($arpu / $avgChurn) : 0;
 
-            $startSubs = Subscription::where('status', 'active')
-                ->where('started_at', '<', $date->copy()->startOfMonth())
-                ->where(function ($q) use ($date) {
-                    $q->whereNull('expires_at')
-                      ->orWhere('expires_at', '>=', $date->copy()->startOfMonth());
-                })
-                ->count();
+        $mrrHistory = $history->map(fn ($h) => [
+            'month' => $h['month']->format('Y-m'),
+            'mrr' => round($h['m']['end_mrr']),
+            'new_mrr' => round($h['m']['new_mrr']),
+            'expansion_mrr' => round($h['m']['expansion_mrr']),
+            'churned_mrr' => round($h['m']['churned_mrr']),
+            'count' => $h['m']['end_count'],
+        ])->values();
 
-            $churned = Subscription::where(function ($q) use ($date) {
-                $q->where('status', 'cancelled')
-                  ->whereYear('cancelled_at', $date->year)
-                  ->whereMonth('cancelled_at', $date->month);
-            })->orWhere(function ($q) use ($date) {
-                $q->where('status', 'expired')
-                  ->whereYear('expires_at', $date->year)
-                  ->whereMonth('expires_at', $date->month);
-            })->count();
+        $churnHistory = $history->map(fn ($h) => [
+            'month' => $h['month']->format('Y-m'),
+            'churned' => $h['m']['churned_count'],
+            'churn_rate' => $h['m']['start_count'] > 0
+                ? round(($h['m']['churned_count'] / $h['m']['start_count']) * 100, 2)
+                : 0,
+        ])->values();
 
-            $rate = $startSubs > 0 ? round(($churned / $startSubs) * 100, 2) : 0;
-
-            return [
-                'month'        => $date->format('M Y'),
-                'churned'      => $churned,
-                'churn_rate'   => $rate,
-            ];
-        });
-
-        // ── Revenue réel (factures payées) sur 12 mois ──────────────────────
+        // ── Encaissements réels (factures payées) sur 12 mois ─────────────
         $revenueHistory = collect(range(11, 0))->map(function ($monthsAgo) {
-            $date = Carbon::now()->subMonths($monthsAgo);
-            $revenue = SubscriptionInvoice::where('status', 'paid')
-                ->whereYear('paid_at', $date->year)
-                ->whereMonth('paid_at', $date->month)
-                ->sum('total');
+            $date = Carbon::now()->startOfMonth()->subMonths($monthsAgo);
 
             return [
-                'month'   => $date->format('M Y'),
-                'revenue' => round($revenue),
+                'month' => $date->format('Y-m'),
+                'revenue' => round((float) SubscriptionInvoice::where('status', 'paid')
+                    ->whereBetween('paid_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
+                    ->sum('total')),
             ];
         });
 
-        // ── Répartition MRR par plan ──────────────────────────────────────────
-        $mrrByPlan = Subscription::with('plan')
-            ->where('status', 'active')
-            ->get()
-            ->groupBy('plan_id')
-            ->map(function ($subs) {
-                $plan = $subs->first()->plan;
-                $mrr = $subs->sum(fn($s) => $s->billing_cycle === 'yearly' ? $s->amount / 12 : $s->amount);
-                return [
-                    'name'  => $plan->name,
-                    'mrr'   => round($mrr),
-                    'count' => $subs->count(),
-                    'color' => '#f59e0b',
-                ];
-            })
-            ->values();
-
-        // ── Top churners récents (30 derniers jours) ─────────────────────────
-        $recentChurns = Subscription::with(['user', 'plan'])
-            ->where(function ($q) {
-                $q->where('status', 'cancelled')
-                  ->where('cancelled_at', '>=', Carbon::now()->subDays(30));
-            })->orWhere(function ($q) {
-                $q->where('status', 'expired')
-                  ->where('expires_at', '>=', Carbon::now()->subDays(30))
-                  ->where('expires_at', '<=', Carbon::now());
-            })
-            ->latest('cancelled_at')
-            ->take(10)
-            ->get()
-            ->map(fn($s) => [
-                'user'          => $s->user->name ?? 'N/A',
-                'email'         => $s->user->email ?? '',
-                'plan'          => $s->plan->name ?? 'N/A',
-                'amount'        => $s->billing_cycle === 'yearly' ? round($s->amount / 12) : $s->amount,
-                'churned_at'    => $s->cancelled_at ?? $s->expires_at,
-                'reason'        => $s->status,
+        // ── Répartition MRR par plan ───────────────────────────────────────
+        $palette = ['#f59e0b', '#3b82f6', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
+        $mrrByPlan = $metrics->payingAt($now)
+            ->groupBy('subscription_plan_id')
+            ->values()
+            ->map(fn ($subs, $i) => [
+                'name' => $subs->first()->plan?->name ?? '—',
+                'mrr' => round($subs->sum(fn ($s) => PlatformMetrics::monthlyAmount($s))),
+                'count' => $subs->count(),
+                'color' => $palette[$i % count($palette)],
             ]);
 
-        // ── Abonnements à risque (expirent dans 30 jours) ────────────────────
+        // ── Comptes perdus sur les 30 derniers jours ───────────────────────
+        $churnWindow = $metrics->movements($now->copy()->subDays(30), $now);
+        $recentChurns = Subscription::with(['user', 'plan'])
+            ->whereIn('user_id', $churnWindow['churned_user_ids'] ?: [0])
+            ->where('amount', '>', 0)
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($subs) {
+                // La dernière souscription payante du compte, et sa date de fin réelle.
+                $s = $subs->sortByDesc(fn ($x) => $x->cancelled_at ?? $x->expires_at)->first();
+
+                return [
+                    'user' => $s->user?->name ?? 'N/A',
+                    'email' => $s->user?->email ?? '',
+                    'plan' => $s->plan?->name ?? 'N/A',
+                    'amount' => round(PlatformMetrics::monthlyAmount($s)),
+                    'churned_at' => ($s->cancelled_at ?? $s->expires_at)?->toDateTimeString(),
+                    'reason' => $s->cancelled_at ? 'cancelled' : 'expired',
+                ];
+            })
+            ->sortByDesc('churned_at')
+            ->take(10)
+            ->values();
+
+        // ── Abonnements à risque (expirent dans 30 jours) ──────────────────
         $atRisk = Subscription::with(['user', 'plan'])
             ->where('status', 'active')
-            ->whereBetween('expires_at', [Carbon::now(), Carbon::now()->addDays(30)])
+            ->where('amount', '>', 0)
+            ->whereBetween('expires_at', [$now, $now->copy()->addDays(30)])
             ->orderBy('expires_at')
             ->take(10)
             ->get()
             ->map(fn($s) => [
-                'user'       => $s->user->name ?? 'N/A',
-                'email'      => $s->user->email ?? '',
-                'plan'       => $s->plan->name ?? 'N/A',
-                'expires_at' => $s->expires_at,
-                'days_left'  => Carbon::now()->diffInDays($s->expires_at),
-                'amount'     => $s->billing_cycle === 'yearly' ? round($s->amount / 12) : $s->amount,
+                'user'       => $s->user?->name ?? 'N/A',
+                'email'      => $s->user?->email ?? '',
+                'plan'       => $s->plan?->name ?? 'N/A',
+                'expires_at' => $s->expires_at?->toDateTimeString(),
+                'days_left'  => (int) floor($now->diffInDays($s->expires_at)),
+                'amount'     => round(PlatformMetrics::monthlyAmount($s)),
             ]);
 
         return Inertia::render('PlatformAdmin/MRR', [
             'kpis' => [
-                'mrr'          => round($currentMrr),
-                'arr'          => round($arr),
-                'arpu'         => $arpu,
-                'mrr_growth'   => $mrrGrowth,
-                'churn_rate'   => $churnRate,
-                'churned_mrr'  => round($churnedMrr),
-                'new_mrr'      => round($newMrr),
-                'nrr'          => $nrr,
-                'ltv'          => $ltv,
-                'active_count' => $activeCount,
+                'mrr'           => round($currentMrr),
+                'arr'           => round($arr),
+                'arpu'          => $arpu,
+                'mrr_growth'    => $mrrGrowth,
+                'churn_rate'    => $churnRate,
+                'churned_mrr'   => round($current['churned_mrr']),
+                'new_mrr'       => round($current['new_mrr']),
+                'expansion_mrr' => round($current['expansion_mrr']),
+                'nrr'           => $nrr,
+                'ltv'           => $ltv,
+                'active_count'  => $activeCount,
             ],
             'mrr_history'    => $mrrHistory,
             'churn_history'  => $churnHistory,
@@ -439,9 +309,6 @@ class PlatformAdminController extends Controller
      */
     public function accounts(Request $request): Response
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $query = User::where('role', 'super_admin')
             ->withCount([
@@ -449,16 +316,15 @@ class PlatformAdminController extends Controller
                 'shops as total_products_count' => function($query) {
                     $query->join('products', 'shops.id', '=', 'products.shop_id');
                 }
-            ])
-            ->with('shops');
+            ]);
 
-        // Recherche
+        // Recherche (insensible à la casse : ILIKE sous Postgres)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('code_user', 'like', "%{$search}%");
+                $q->whereLike('name', "%{$search}%")
+                    ->orWhereLike('email', "%{$search}%")
+                    ->orWhereLike('code_user', "%{$search}%");
             });
         }
 
@@ -475,8 +341,8 @@ class PlatformAdminController extends Controller
             'is_active' => $user->is_active,
             'shops_count' => $user->shops_count ?? 0,
             'products_count' => $user->total_products_count ?? 0,
-            'created_at' => $user->created_at->format('Y-m-d H:i:s'),
-        ]);
+            'created_at' => $user->created_at?->toDateTimeString(),
+        ])->withQueryString();
 
         return Inertia::render('PlatformAdmin/Accounts', [
             'accounts' => $accounts,
@@ -489,9 +355,6 @@ class PlatformAdminController extends Controller
      */
     public function shops(Request $request): Response
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $query = Shop::with('user');
 
@@ -499,11 +362,11 @@ class PlatformAdminController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%")
+                $q->whereLike('name', "%{$search}%")
+                    ->orWhereLike('slug', "%{$search}%")
                     ->orWhereHas('user', function($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%");
+                        $q->whereLike('name', "%{$search}%")
+                            ->orWhereLike('email', "%{$search}%");
                     });
             });
         }
@@ -521,13 +384,13 @@ class PlatformAdminController extends Controller
             'address' => $shop->address,
             'city' => $shop->city,
             'owner' => [
-                'id' => $shop->user->id,
-                'name' => $shop->user->name,
-                'email' => $shop->user->email,
-                'code_user' => $shop->user->code_user,
+                'id' => $shop->user?->id,
+                'name' => $shop->user?->name,
+                'email' => $shop->user?->email,
+                'code_user' => $shop->user?->code_user,
             ],
-            'created_at' => $shop->created_at->format('Y-m-d H:i:s'),
-        ]);
+            'created_at' => $shop->created_at?->toDateTimeString(),
+        ])->withQueryString();
 
         return Inertia::render('PlatformAdmin/Shops', [
             'shops' => $shops,
@@ -540,17 +403,17 @@ class PlatformAdminController extends Controller
      */
     public function toggleAccountStatus(User $user)
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
+        // Only an account owner can be suspended from here; the suspension then
+        // covers their whole staff (User::isSuspended).
         if ($user->role !== 'super_admin') {
-            return back()->withErrors(['error' => 'Seuls les comptes super_admin peuvent être modifiés.']);
+            return back()->with('error', __('platform.flash.only_owner_accounts'));
         }
 
         $user->update(['is_active' => !$user->is_active]);
+        $this->audit($user->is_active ? 'account_reactivated' : 'account_suspended', $user);
 
-        return back()->with('success', 'Statut du compte mis à jour.');
+        return back()->with('success', __($user->is_active ? 'platform.flash.account_reactivated' : 'platform.flash.account_suspended'));
     }
 
     /**
@@ -558,13 +421,11 @@ class PlatformAdminController extends Controller
      */
     public function toggleShopStatus(Shop $shop)
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $shop->update(['is_active' => !$shop->is_active]);
+        $this->audit($shop->is_active ? 'shop_reactivated' : 'shop_suspended', $shop);
 
-        return back()->with('success', 'Statut de la boutique mis à jour.');
+        return back()->with('success', __($shop->is_active ? 'platform.flash.shop_reactivated' : 'platform.flash.shop_suspended'));
     }
 
     /**
@@ -572,9 +433,6 @@ class PlatformAdminController extends Controller
      */
     public function subscriptions(Request $request): Response
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $query = Subscription::query()
             ->with(['user', 'plan'])
@@ -584,8 +442,8 @@ class PlatformAdminController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('user', function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                $q->whereLike('name', "%{$search}%")
+                  ->orWhereLike('email', "%{$search}%");
             });
         }
 
@@ -616,13 +474,11 @@ class PlatformAdminController extends Controller
      */
     public function cancelSubscription(Subscription $subscription): RedirectResponse
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $subscription->cancel();
+        $this->audit('subscription_cancelled', $subscription);
 
-        return back()->with('success', 'Abonnement annulé avec succès.');
+        return back()->with('success', __('platform.flash.subscription_cancelled'));
     }
 
     /**
@@ -630,17 +486,18 @@ class PlatformAdminController extends Controller
      */
     public function renewSubscription(Request $request, Subscription $subscription): RedirectResponse
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $validated = $request->validate([
             'months' => 'required|integer|min:1|max:12',
         ]);
 
         $subscription->renew($validated['months']);
+        $this->audit('subscription_renewed', $subscription, [
+            'months' => $validated['months'],
+            'expires_at' => $subscription->expires_at?->toDateTimeString(),
+        ]);
 
-        return back()->with('success', "Abonnement renouvelé pour {$validated['months']} mois.");
+        return back()->with('success', __('platform.flash.subscription_renewed', ['months' => $validated['months']]));
     }
 
     /**
@@ -648,9 +505,6 @@ class PlatformAdminController extends Controller
      */
     public function activateSubscription(Subscription $subscription): RedirectResponse
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         // Un seul abonnement actif à la fois : on annule les autres avant d'activer celui-ci.
         Subscription::where('user_id', $subscription->user_id)
@@ -660,11 +514,19 @@ class PlatformAdminController extends Controller
 
         $months = $subscription->billing_cycle === 'yearly' ? 12 : 1;
 
+        // A pending request may have sat for weeks: never activate it straight
+        // into the past.
+        $expiresAt = $subscription->expires_at && $subscription->expires_at->isFuture()
+            ? $subscription->expires_at
+            : now()->addMonths($months);
+
         $subscription->update([
-            'status'     => 'active',
-            'started_at' => $subscription->started_at ?? now(),
-            'expires_at' => $subscription->expires_at ?? now()->addMonths($months),
+            'status'       => 'active',
+            'started_at'   => $subscription->started_at ?? now(),
+            'expires_at'   => $expiresAt,
+            'cancelled_at' => null,
         ]);
+        $this->audit('subscription_activated', $subscription);
 
         // Mark related pending invoices as paid
         $subscription->invoices()->where('status', 'pending')->update([
@@ -683,7 +545,7 @@ class PlatformAdminController extends Controller
             }
         }
 
-        return back()->with('success', 'Abonnement activé avec succès.');
+        return back()->with('success', __('platform.flash.subscription_activated'));
     }
 
     /**
@@ -691,9 +553,6 @@ class PlatformAdminController extends Controller
      */
     public function updateSubscriptionDates(Request $request, Subscription $subscription): RedirectResponse
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $validated = $request->validate([
             'started_at' => 'required|date',
@@ -705,17 +564,16 @@ class PlatformAdminController extends Controller
             'expires_at' => $validated['expires_at'],
         ]);
 
-        // Update status based on the new expiration date
-        if ($validated['expires_at']) {
-            $expiresAt = \Carbon\Carbon::parse($validated['expires_at']);
-            if ($expiresAt->isPast()) {
-                $subscription->update(['status' => 'expired']);
-            } elseif ($subscription->status === 'expired') {
-                $subscription->update(['status' => 'active']);
-            }
+        // Only an active/expired subscription follows its end date. A cancelled
+        // or pending one keeps its status: changing dates must not resurrect
+        // it, nor turn a cancellation into an expiry.
+        if (in_array($subscription->status, ['active', 'expired'], true)) {
+            $expired = $validated['expires_at'] && Carbon::parse($validated['expires_at'])->isPast();
+            $subscription->update(['status' => $expired ? 'expired' : 'active']);
         }
+        $this->audit('subscription_dates_updated', $subscription, $validated);
 
-        return back()->with('success', 'Les dates de l\'abonnement ont été mises à jour avec succès.');
+        return back()->with('success', __('platform.flash.subscription_dates_updated'));
     }
 
     /**
@@ -723,9 +581,6 @@ class PlatformAdminController extends Controller
      */
     public function shopProducts(Request $request, Shop $shop): Response
     {
-        if (auth()->user()->role !== 'admin_platforme') {
-            abort(403);
-        }
 
         $query = \App\Models\Product::with(['category', 'subcategory'])
             ->where('shop_id', $shop->id)
@@ -735,9 +590,9 @@ class PlatformAdminController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhere('barcode', 'like', "%{$search}%");
+                $q->whereLike('name', "%{$search}%")
+                    ->orWhereLike('sku', "%{$search}%")
+                    ->orWhereLike('barcode', "%{$search}%");
             });
         }
 
@@ -778,10 +633,12 @@ class PlatformAdminController extends Controller
                 'id' => $product->subcategory->id,
                 'name' => $product->subcategory->name,
             ] : null,
-            'created_at' => $product->created_at->format('Y-m-d H:i:s'),
-        ]);
+            'created_at' => $product->created_at?->toDateTimeString(),
+        ])->withQueryString();
 
-        $categories = \App\Models\Category::orderBy('order')->orderBy('name')->get();
+        // This shop's categories only: categories are per shop.
+        $categories = \App\Models\Category::where('shop_id', $shop->id)
+            ->orderBy('order')->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('PlatformAdmin/ShopProducts', [
             'shop' => [
@@ -789,15 +646,30 @@ class PlatformAdminController extends Controller
                 'name' => $shop->name,
                 'slug' => $shop->slug,
                 'owner' => [
-                    'id' => $shop->user->id,
-                    'name' => $shop->user->name,
-                    'email' => $shop->user->email,
-                    'code_user' => $shop->user->code_user,
+                    'id' => $shop->user?->id,
+                    'name' => $shop->user?->name,
+                    'email' => $shop->user?->email,
+                    'code_user' => $shop->user?->code_user,
                 ],
             ],
             'products' => $products,
             'categories' => $categories,
             'filters' => $request->only(['search', 'category_id', 'status']),
         ]);
+    }
+
+    /**
+     * Trace a platform-admin action in the application log.
+     *
+     * Not in activity_logs on purpose: that table is shown to the account
+     * owners, and ActivityLogger never records admin_platforme actions.
+     */
+    private function audit(string $action, \Illuminate\Database\Eloquent\Model $subject, array $context = []): void
+    {
+        Log::info('platform_admin.' . $action, array_merge([
+            'admin_id' => auth()->id(),
+            'subject' => class_basename($subject),
+            'subject_id' => $subject->getKey(),
+        ], $context));
     }
 }

@@ -44,7 +44,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        put(route('platform.subscriptions.update', plan.id));
+        put(route('platform.subscriptions.update', plan.slug));
     };
 
     const addFeature = () => {

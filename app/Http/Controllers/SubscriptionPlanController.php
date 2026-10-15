@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\SubscriptionPlan;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 
-class SubscriptionPlanController extends Controller
+class SubscriptionPlanController extends Controller implements HasMiddleware
 {
+    /** Everything but the public pricing page is platform-admin only. */
+    public static function middleware(): array
+    {
+        return [new Middleware('platform.admin', except: ['publicIndex'])];
+    }
+
     /**
      * Display a listing of subscription plans.
      */
@@ -17,14 +25,15 @@ class SubscriptionPlanController extends Controller
     {
         $query = SubscriptionPlan::query()
             ->withCount('subscriptions')
+            ->orderBy('sort_order')
             ->orderBy('price');
 
         // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                $q->whereLike('name', "%{$search}%")
+                  ->orWhereLike('slug', "%{$search}%");
             });
         }
 
@@ -66,12 +75,13 @@ class SubscriptionPlanController extends Controller
             'max_depots'   => 'required|integer|min:-1',
             'features' => 'nullable|array',
             'is_active' => 'boolean',
+            'sort_order' => 'sometimes|integer|min:0',
         ]);
 
         SubscriptionPlan::create($validated);
 
         return redirect()->route('platform.subscriptions.index')
-            ->with('success', 'Plan d\'abonnement créé avec succès.');
+            ->with('success', __('platform.flash.plan_created'));
     }
 
     /**
@@ -79,8 +89,6 @@ class SubscriptionPlanController extends Controller
      */
     public function edit(SubscriptionPlan $plan): Response
     {
-        $plan->load('subscriptions');
-        
         return Inertia::render('PlatformAdmin/SubscriptionPlans/Edit', [
             'plan' => $plan,
             'activeSubscriptionsCount' => $plan->activeSubscriptionsCount(),
@@ -103,12 +111,13 @@ class SubscriptionPlanController extends Controller
             'max_depots'   => 'required|integer|min:-1',
             'features' => 'nullable|array',
             'is_active' => 'boolean',
+            'sort_order' => 'sometimes|integer|min:0',
         ]);
 
         $plan->update($validated);
 
         return redirect()->route('platform.subscriptions.index')
-            ->with('success', 'Plan d\'abonnement mis à jour avec succès.');
+            ->with('success', __('platform.flash.plan_updated'));
     }
 
     /**
@@ -116,15 +125,16 @@ class SubscriptionPlanController extends Controller
      */
     public function destroy(SubscriptionPlan $plan): RedirectResponse
     {
-        // Check if plan has active subscriptions
-        if ($plan->activeSubscriptionsCount() > 0) {
-            return back()->with('error', 'Impossible de supprimer un plan avec des abonnements actifs.');
+        // subscriptions.subscription_plan_id is RESTRICT: any subscription ever
+        // taken on this plan (even expired) blocks the delete at the DB level.
+        if ($plan->subscriptions()->exists()) {
+            return back()->with('error', __('platform.flash.plan_has_subscriptions'));
         }
 
         $plan->delete();
 
         return redirect()->route('platform.subscriptions.index')
-            ->with('success', 'Plan d\'abonnement supprimé avec succès.');
+            ->with('success', __('platform.flash.plan_deleted'));
     }
 
     /**
@@ -136,9 +146,7 @@ class SubscriptionPlanController extends Controller
             'is_active' => !$plan->is_active,
         ]);
 
-        $status = $plan->is_active ? 'activé' : 'désactivé';
-
-        return back()->with('success', "Plan {$status} avec succès.");
+        return back()->with('success', __($plan->is_active ? 'platform.flash.plan_enabled' : 'platform.flash.plan_disabled'));
     }
 
     /**

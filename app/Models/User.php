@@ -282,10 +282,44 @@ class User extends Authenticatable
         }
         
         if ($this->role === 'super_admin') {
-            return $this->shops;
+            return $this->shops->where('is_active', true)->values();
         }
         
-        return $this->shop ? collect([$this->shop]) : collect([]);
+        return $this->shop?->is_active ? collect([$this->shop]) : collect([]);
+    }
+
+    /**
+     * Whether a platform admin has suspended this user's access.
+     *
+     * Suspension is enforced at login and on every request
+     * (EnsureAccountIsActive). It covers the owner's whole staff: a member
+     * is blocked when the account owner (their shop's user) is suspended, or
+     * when their own shop is. An owner whose every shop is suspended is
+     * blocked too — otherwise they would just land on "create a shop".
+     */
+    public function isSuspended(): bool
+    {
+        if ($this->role === 'admin_platforme') {
+            return false;
+        }
+
+        // Strict: a freshly created model has no is_active attribute loaded
+        // (null) while the column defaults to true.
+        if ($this->is_active === false) {
+            return true;
+        }
+
+        if ($this->role === 'super_admin') {
+            return $this->shops()->exists()
+                && !$this->shops()->where('is_active', true)->exists();
+        }
+
+        $shop = $this->shop;
+        if (!$shop) {
+            return false;
+        }
+
+        return $shop->is_active === false || $shop->user?->is_active === false;
     }
 
     /**
@@ -303,14 +337,15 @@ class User extends Authenticatable
             return Shop::query();
         }
         
+        // Une boutique suspendue par l'admin plateforme n'est plus accessible.
         if ($this->role === 'super_admin') {
             // Super admin voit toutes ses boutiques
-            return $this->shops();
+            return $this->shops()->where('is_active', true);
         }
         
         // Pour manager/employee: uniquement sa boutique assignée
         if ($this->shop_id) {
-            return Shop::where('id', $this->shop_id);
+            return Shop::where('id', $this->shop_id)->where('is_active', true);
         }
         
         // Fallback: aucune boutique accessible
