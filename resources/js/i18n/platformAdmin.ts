@@ -210,6 +210,9 @@ export const platformAdmin = {
             },
             markDemo: 'Marquer démo',
             unmarkDemo: 'Retirer démo',
+            followupsTitle: 'Relances de fin d\'essai',
+            followupStep: (step: number, date: string) => `J+${step} envoyée le ${date}`,
+            followupsOptedOut: (date: string) => `Désinscrit des relances le ${date}`,
         },
         shops: {
             title: 'Gestion des boutiques',
@@ -546,6 +549,9 @@ export const platformAdmin = {
             },
             markDemo: 'Mark as demo',
             unmarkDemo: 'Unmark demo',
+            followupsTitle: 'Trial follow-ups',
+            followupStep: (step: number, date: string) => `Day +${step} sent on ${date}`,
+            followupsOptedOut: (date: string) => `Unsubscribed from follow-ups on ${date}`,
         },
         shops: {
             title: 'Shops',

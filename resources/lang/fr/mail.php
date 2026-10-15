@@ -121,4 +121,43 @@ return [
         'message_label' => 'Message',
         'footer' => 'Cet email a été envoyé automatiquement depuis la landing page de :appName.',
     ],
+
+    // Relances après la fin de l'essai gratuit (trials:send-followups)
+    'trial_followup' => [
+        'greeting' => 'Bonjour :name,',
+        'cta' => 'Choisir mon offre',
+        'help_cta' => 'Écrire au support sur WhatsApp',
+        'your_activity' => 'Pendant votre essai, vous avez créé **:products produit(s)** et enregistré **:sales vente(s)**. Tout est conservé.',
+        'footer' => ':appName — gestion moderne des quincailleries',
+        'unsubscribe' => 'Ne plus recevoir ces rappels',
+        'steps' => [
+            1 => [
+                'subject' => 'Votre essai :appName est terminé — vos données sont conservées',
+                'title' => 'Votre essai est terminé',
+                'body' => 'Votre essai gratuit de 14 jours est arrivé à son terme. Votre compte passe en lecture seule : vous pouvez toujours consulter vos données, mais plus enregistrer de ventes ni modifier votre stock. Choisissez une offre pour reprendre là où vous en étiez, en deux minutes.',
+            ],
+            3 => [
+                'subject' => 'Ce que :appName change au quotidien dans une quincaillerie',
+                'title' => 'Gagnez du temps chaque jour',
+                'body' => 'Stock à jour à chaque vente, caisse rapide même sans connexion, factures et devis en un clic, créances clients suivies, plusieurs boutiques et dépôts au même endroit : c\'est ce que nos clients retrouvent dès qu\'ils activent leur offre.',
+            ],
+            7 => [
+                'subject' => 'Besoin d\'aide pour démarrer avec :appName ?',
+                'title' => 'On vous aide à démarrer',
+                'body' => 'Importer votre catalogue, paramétrer votre boutique, former votre caissier : si quelque chose vous a freiné pendant l\'essai, notre équipe peut vous accompagner. Écrivez-nous sur WhatsApp, on vous répond rapidement.',
+            ],
+            14 => [
+                'subject' => 'Votre boutique vous attend sur :appName',
+                'title' => 'Vos données vous attendent',
+                'body' => 'Vos produits, vos clients et votre historique sont toujours là. Il suffit d\'activer une offre pour retrouver votre compte exactement comme vous l\'avez laissé.',
+            ],
+            30 => [
+                'subject' => 'Dernier message de :appName',
+                'title' => 'Nous restons à votre disposition',
+                'body' => 'C\'est notre dernier rappel : nous ne vous écrirons plus à ce sujet. Votre compte reste disponible ; le jour où vous souhaitez reprendre, il vous suffit de choisir une offre.',
+            ],
+        ],
+        'unsubscribed_title' => 'Désinscription confirmée',
+        'unsubscribed_body' => 'Vous ne recevrez plus de rappels concernant votre essai. Votre compte reste disponible à tout moment.',
+    ],
 ];

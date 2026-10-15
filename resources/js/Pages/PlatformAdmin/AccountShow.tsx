@@ -20,6 +20,7 @@ interface Account {
     two_factor_enabled: boolean;
     created_at: string | null;
     last_activity_at: string | null;
+    trial_followups_opted_out_at: string | null;
 }
 
 interface Stats {
@@ -87,11 +88,12 @@ interface Props {
     staff: StaffRow[];
     subscriptions: SubscriptionRow[];
     invoices: InvoiceRow[];
+    trial_followups: { step: number; sent_at: string }[];
 }
 
 const card = 'rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5';
 
-export default function AccountShow({ account, stats, shops, staff, subscriptions, invoices }: Props) {
+export default function AccountShow({ account, stats, shops, staff, subscriptions, invoices, trial_followups }: Props) {
     const { t, locale } = useLocale();
     const tr = t.platformAdmin.accountShow;
     const common = t.platformAdmin.common;
@@ -279,6 +281,22 @@ export default function AccountShow({ account, stats, shops, staff, subscription
                         ]}
                     />
                 </section>
+
+                {(trial_followups.length > 0 || account.trial_followups_opted_out_at) && (
+                    <section className={card}>
+                        <h2 className="mb-3 text-base font-semibold text-slate-900 dark:text-white">{tr.followupsTitle}</h2>
+                        <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                            {trial_followups.map((f) => (
+                                <li key={f.step}>{tr.followupStep(f.step, fmtDate(f.sent_at, locale))}</li>
+                            ))}
+                            {account.trial_followups_opted_out_at && (
+                                <li className="text-orange-600 dark:text-orange-300">
+                                    {tr.followupsOptedOut(fmtDate(account.trial_followups_opted_out_at, locale))}
+                                </li>
+                            )}
+                        </ul>
+                    </section>
+                )}
 
                 <section className={card}>
                     <h2 className="mb-4 text-base font-semibold text-slate-900 dark:text-white">{tr.invoicesTitle}</h2>

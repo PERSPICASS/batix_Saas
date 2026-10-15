@@ -12,6 +12,13 @@ Artisan::command('inspire', function () {
 // Rappels d'expiration d'abonnement — tous les jours à 8h00
 Schedule::command('subscriptions:send-expiry-reminders')->dailyAt('08:00');
 
+// Relances APRÈS la fin de l'essai gratuit sans paiement : J+1, 3, 7, 14, 30 (voir
+// SendTrialFollowups). Le rappel ci-dessus, lui, prévient AVANT l'échéance.
+Schedule::command('trials:send-followups')
+    ->dailyAt('09:30')
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::error('Scheduled trials:send-followups failed.'));
+
 // Purge des conversations de l'assistant IA inactives depuis 90 jours — 3h30, après la
 // sauvegarde de 3h00 pour qu'un fil supprimé reste récupérable dans le dernier dump.
 Schedule::command('ai:purge-conversations')->dailyAt('03:30');

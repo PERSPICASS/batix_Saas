@@ -117,6 +117,12 @@ Route::middleware(['signed:relative', 'throttle:60,1'])->group(function () {
     Route::get('/d/devis/{quote}', [PublicDocumentController::class, 'quote'])->name('public.quote');
 });
 
+// Désinscription en un clic des relances de fin d'essai (lien dans TrialFollowupMail).
+// Signée, même raison : sans signature, n'importe qui désinscrirait n'importe quel compte.
+Route::get('/relances-essai/desinscription/{user}', \App\Http\Controllers\TrialFollowupUnsubscribeController::class)
+    ->middleware(['signed:relative', 'throttle:20,1'])
+    ->name('trial-followups.unsubscribe');
+
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');
 

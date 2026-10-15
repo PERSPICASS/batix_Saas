@@ -121,4 +121,43 @@ return [
         'message_label' => 'Message',
         'footer' => 'This email was sent automatically from the landing page of :appName.',
     ],
+
+    // Follow-ups after the free trial ends (trials:send-followups)
+    'trial_followup' => [
+        'greeting' => 'Hello :name,',
+        'cta' => 'Choose my plan',
+        'help_cta' => 'Message support on WhatsApp',
+        'your_activity' => 'During your trial you created **:products product(s)** and recorded **:sales sale(s)**. All of it is kept.',
+        'footer' => ':appName — modern hardware store management',
+        'unsubscribe' => 'Stop these reminders',
+        'steps' => [
+            1 => [
+                'subject' => 'Your :appName trial has ended — your data is kept',
+                'title' => 'Your trial has ended',
+                'body' => 'Your 14-day free trial is over. Your account is now read-only: you can still view your data, but no longer record sales or change your stock. Pick a plan to carry on where you left off, in two minutes.',
+            ],
+            3 => [
+                'subject' => 'What :appName changes in a hardware store, every day',
+                'title' => 'Save time every day',
+                'body' => 'Stock updated with every sale, a fast till that works offline, invoices and quotes in one click, customer credit tracked, several shops and depots in one place: that is what our customers get as soon as they activate a plan.',
+            ],
+            7 => [
+                'subject' => 'Need help getting started with :appName?',
+                'title' => 'We can help you get started',
+                'body' => 'Importing your catalogue, setting up your shop, training your cashier: if something held you back during the trial, our team can help. Message us on WhatsApp and we will get back to you quickly.',
+            ],
+            14 => [
+                'subject' => 'Your shop is waiting for you on :appName',
+                'title' => 'Your data is waiting for you',
+                'body' => 'Your products, customers and history are all still there. Activate a plan to find your account exactly as you left it.',
+            ],
+            30 => [
+                'subject' => 'A last message from :appName',
+                'title' => 'We are here when you need us',
+                'body' => 'This is our last reminder: we will not write to you about this again. Your account stays available; whenever you want to resume, just pick a plan.',
+            ],
+        ],
+        'unsubscribed_title' => 'Unsubscribed',
+        'unsubscribed_body' => 'You will no longer receive reminders about your trial. Your account stays available at any time.',
+    ],
 ];

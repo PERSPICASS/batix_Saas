@@ -443,7 +443,13 @@ class PlatformAdminController extends Controller implements HasMiddleware
                 'two_factor_enabled' => (bool) $user->two_factor_enabled,
                 'created_at' => $user->created_at?->toDateTimeString(),
                 'last_activity_at' => $lastActivity ? Carbon::parse($lastActivity)->toDateTimeString() : null,
+                'trial_followups_opted_out_at' => $user->trial_followups_opted_out_at,
             ],
+            // Relances de fin d'essai déjà envoyées (trials:send-followups).
+            'trial_followups' => DB::table('trial_followups')->where('user_id', $user->id)
+                ->orderBy('step')->get(['step', 'sent_at'])
+                ->map(fn ($f) => ['step' => (int) $f->step, 'sent_at' => Carbon::parse($f->sent_at)->toDateTimeString()])
+                ->values(),
             'stats' => [
                 'shops' => $shops->count(),
                 'staff' => $staff->count(),
