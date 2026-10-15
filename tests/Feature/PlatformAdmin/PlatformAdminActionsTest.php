@@ -142,8 +142,12 @@ class PlatformAdminActionsTest extends TestCase
     {
         $shop = Shop::factory()->create();
         $other = Shop::factory()->create();
-        $mine = Category::factory()->create(['shop_id' => $shop->id]);
-        Category::factory()->create(['shop_id' => $other->id]);
+        // En prod (Postgres) les catégories peuvent être globales (shop_id NULL) ; le
+        // harnais SQLite garde la colonne NOT NULL, d'où une catégorie d'une 3e boutique.
+        $mine = Category::factory()->create(['shop_id' => Shop::factory()->create()->id]);
+        $theirs = Category::factory()->create(['shop_id' => $other->id]);
+        \App\Models\Product::factory()->create(['shop_id' => $shop->id, 'category_id' => $mine->id]);
+        \App\Models\Product::factory()->create(['shop_id' => $other->id, 'category_id' => $theirs->id]);
 
         $this->actingAs($this->admin())
             ->get(route('platform.shops.products', $shop))

@@ -657,8 +657,11 @@ class PlatformAdminController extends Controller implements HasMiddleware
             'created_at' => $product->created_at?->toDateTimeString(),
         ])->withQueryString();
 
-        // This shop's categories only: categories are per shop.
-        $categories = \App\Models\Category::where('shop_id', $shop->id)
+        // Categories actually used by this shop's products. Not `shop_id = shop`:
+        // categories were made global (shop_id NULL) in Feb. 2026 and newer ones
+        // are per shop, so both kinds coexist; listing every row leaked other
+        // tenants' categories.
+        $categories = \App\Models\Category::whereIn('id', \App\Models\Product::where('shop_id', $shop->id)->whereNotNull('category_id')->select('category_id'))
             ->orderBy('order')->orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('PlatformAdmin/ShopProducts', [
