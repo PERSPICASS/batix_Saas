@@ -1,10 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { DollarSign, Edit2, Trash2, Plus } from 'lucide-react';
+import { Wallet, Edit2, Trash2, Plus } from 'lucide-react';
 import Table, { TableActions, TableBadge } from '@/Components/Table';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useLocale } from '@/contexts/LocaleContext';
+import { fmtXAF, intlLocale } from '@/utils/platformFormat';
 
 interface FixedCost {
     id: number;
@@ -24,12 +25,12 @@ interface Props {
 }
 
 export default function FixedCostsIndex({ costs, total_monthly }: Props) {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
     const CATEGORIES = t.platformFixedCosts.categories;
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
     const handleDelete = (id: number) => {
-        router.delete(`/platform-admin/fixed-costs/${id}`, {
+        router.delete(route('platform.fixed-costs.destroy', id), {
             onSuccess: () => setConfirmDelete(null),
         });
     };
@@ -63,10 +64,10 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
             key: 'amount_monthly',
             label: t.platformFixedCosts.index.columns.amount,
             render: (cost: FixedCost) => (
-                <div className="flex items-center gap-2 font-semibold text-amber-300">
-                    <DollarSign className="size-4" />
+                <div className="flex items-center gap-2 font-semibold text-amber-600 dark:text-amber-300">
+                    <Wallet className="size-4" />
                     <div>
-                        <div>{parseFloat(cost.amount_monthly.toString()).toFixed(2)} {cost.currency}</div>
+                        <div>{Number(cost.amount_monthly).toLocaleString(intlLocale(locale), { maximumFractionDigits: 2 })} {cost.currency}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">
                             {cost.billing_cycle === 'monthly' ? t.platformFixedCosts.billingCycles.monthly : t.platformFixedCosts.billingCycles.annual}
                         </div>
@@ -129,7 +130,7 @@ export default function FixedCostsIndex({ costs, total_monthly }: Props) {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex flex-col gap-1">
                         <p className="text-sm text-slate-500 dark:text-slate-400">{t.platformFixedCosts.index.activeCostsLabel} <span className="font-semibold text-slate-900 dark:text-white">{activeCosts.length}</span></p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.platformFixedCosts.index.totalMonthlyLabel} <span className="font-semibold text-amber-300">€{total_monthly.toFixed(2)}</span></p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.platformFixedCosts.index.totalMonthlyLabel} <span className="font-semibold text-amber-600 dark:text-amber-300">{fmtXAF(total_monthly, locale)}</span></p>
                     </div>
                     <Link
                         href={route('platform.fixed-costs.create')}

@@ -22,6 +22,8 @@ export const platformBlog = {
             edit: 'Modifier',
             delete: 'Supprimer',
             deleteTitle: "Supprimer l'article",
+            unpublishTitle: 'Dépublier cet article ?',
+            unpublishMessage: "L'article sera retiré du blog public immédiatement. Vous pourrez le republier plus tard.",
             deleteMessage: "Cette action est irréversible. L'article sera définitivement supprimé.",
         },
         form: {
@@ -85,6 +87,8 @@ export const platformBlog = {
             edit: 'Edit',
             delete: 'Delete',
             deleteTitle: 'Delete post',
+            unpublishTitle: 'Unpublish this post?',
+            unpublishMessage: 'The post will be removed from the public blog immediately. You can publish it again later.',
             deleteMessage: 'This action cannot be undone. The post will be permanently deleted.',
         },
         form: {

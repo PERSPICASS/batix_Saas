@@ -16,6 +16,7 @@ export default function Create() {
         max_users: '',
         max_products: '',
         max_depots: '',
+        sort_order: '0',
         features: [] as string[],
         is_active: true,
     });
@@ -175,6 +176,18 @@ export default function Create() {
                         />
                         <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.unlimitedOrNoneHint}</p>
                         <InputError message={errors.max_depots} />
+                    </label>
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.platformSubscriptionPlans.form.sortOrder}</span>
+                        <input
+                            type="number"
+                            min="0"
+                            value={data.sort_order}
+                            onChange={(e) => setData('sort_order', e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
+                        />
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.sortOrderHint}</p>
+                        <InputError message={errors.sort_order} />
                     </label>
                 </div>
 

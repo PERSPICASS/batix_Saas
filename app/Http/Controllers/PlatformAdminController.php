@@ -645,6 +645,7 @@ class PlatformAdminController extends Controller implements HasMiddleware
                 'id' => $shop->id,
                 'name' => $shop->name,
                 'slug' => $shop->slug,
+                'currency' => $shop->currency,
                 'owner' => [
                     'id' => $shop->user?->id,
                     'name' => $shop->user?->name,

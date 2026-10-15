@@ -10,6 +10,7 @@ export default function CreateFixedCost() {
     const CURRENCIES = Object.entries(t.platformFixedCosts.currencies).map(([code, label]) => ({ code, label }));
     const BILLING_CYCLES = Object.entries(t.platformFixedCosts.billingCycles).map(([value, label]) => ({ value, label }));
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const [formData, setFormData] = useState({
         name: '',
         category: 'infrastructure',
@@ -23,7 +24,11 @@ export default function CreateFixedCost() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        router.post('/platform-admin/fixed-costs', formData);
+        setErrors({});
+        router.post(route('platform.fixed-costs.store'), formData, {
+            onError: (errs) => setErrors(errs as Record<string, string>),
+            onFinish: () => setLoading(false),
+        });
     };
 
     return (
@@ -44,7 +49,14 @@ export default function CreateFixedCost() {
             <Head title={t.platformFixedCosts.create.title} />
 
             <div className="mx-auto max-w-2xl">
-                <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-white/10 bg-white/5 p-6">
+                <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    {Object.keys(errors).length > 0 && (
+                        <ul className="space-y-1 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">
+                            {Object.values(errors).map((message, i) => (
+                                <li key={i}>{message}</li>
+                            ))}
+                        </ul>
+                    )}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{t.platformFixedCosts.form.name}</label>
                         <input

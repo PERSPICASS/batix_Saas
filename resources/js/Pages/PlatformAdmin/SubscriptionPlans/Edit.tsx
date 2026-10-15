@@ -15,6 +15,7 @@ interface SubscriptionPlan {
     max_users: number;
     max_products: number;
     max_depots: number;
+    sort_order: number | null;
     features: string[] | null;
     is_active: boolean;
 }
@@ -36,6 +37,7 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
         max_users:    String(plan.max_users    ?? 0),
         max_products: String(plan.max_products ?? -1),
         max_depots:   String(plan.max_depots   ?? -1),
+        sort_order:   String(plan.sort_order   ?? 0),
         features: plan.features || [],
         is_active: plan.is_active ?? true,
     });
@@ -199,6 +201,18 @@ export default function Edit({ plan, activeSubscriptionsCount }: Props) {
                             />
                             <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.unlimitedOrNoneHint}</p>
                             <InputError message={errors.max_depots} />
+                        </label>
+                        <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                            <span>{t.platformSubscriptionPlans.form.sortOrder}</span>
+                            <input
+                                type="number"
+                                min="0"
+                                value={data.sort_order}
+                                onChange={(e) => setData('sort_order', e.target.value)}
+                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
+                            />
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{t.platformSubscriptionPlans.form.sortOrderHint}</p>
+                            <InputError message={errors.sort_order} />
                         </label>
                     </div>
 

@@ -5,8 +5,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
-import Currency from '@/Components/Currency';
+import PaginationLinks from '@/Components/PaginationLinks';
 import { useLocale } from '@/contexts/LocaleContext';
+import { fmtXAF } from '@/utils/platformFormat';
 
 interface SubscriptionPlan {
     id: number;
@@ -43,14 +44,32 @@ interface Props {
     };
 }
 
-export default function Index({ plans }: Props) {
-    const { t } = useLocale();
+export default function Index({ plans, filters }: Props) {
+    const { t, locale } = useLocale();
+    const tr = t.platformSubscriptionPlans.index;
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [planToDelete, setPlanToDelete] = useState<SubscriptionPlan | null>(null);
+    // Désactiver un plan le retire de la page publique des tarifs : on confirme.
+    const [planToToggle, setPlanToToggle] = useState<SubscriptionPlan | null>(null);
+    const [processing, setProcessing] = useState(false);
+    const [searchTerm, setSearchTerm] = useState(filters.search || '');
+
+    const applyFilters = (next: Partial<Props['filters']>) => {
+        router.get(
+            route('platform.subscriptions.index'),
+            { search: filters.search, status: filters.status, ...next },
+            { preserveState: true }
+        );
+    };
 
     const togglePlanStatus = (plan: SubscriptionPlan) => {
         router.post(route('platform.subscriptions.toggle', plan.slug), {}, {
             preserveScroll: true,
+            onStart: () => setProcessing(true),
+            onFinish: () => {
+                setProcessing(false);
+                setPlanToToggle(null);
+            },
         });
     };
 
@@ -67,7 +86,9 @@ export default function Index({ plans }: Props) {
         if (planToDelete) {
             router.delete(route('platform.subscriptions.destroy', planToDelete.slug), {
                 preserveScroll: true,
-                onSuccess: () => {
+                onStart: () => setProcessing(true),
+                onFinish: () => {
+                    setProcessing(false);
                     setShowDeleteModal(false);
                     setPlanToDelete(null);
                 },
@@ -91,6 +112,37 @@ export default function Index({ plans }: Props) {
             <Head title={t.platformSubscriptionPlans.index.title} />
 
             <section className="space-y-4">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        applyFilters({ search: searchTerm || undefined });
+                    }}
+                    className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5 md:flex-row"
+                >
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder={tr.searchPlaceholder}
+                        className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                    />
+                    <select
+                        value={filters.status || ''}
+                        onChange={(e) => applyFilters({ status: e.target.value || undefined })}
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                    >
+                        <option value="">{tr.allStatuses}</option>
+                        <option value="active">{tr.active}</option>
+                        <option value="inactive">{tr.inactive}</option>
+                    </select>
+                    <button
+                        type="submit"
+                        className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                    >
+                        {tr.search}
+                    </button>
+                </form>
+
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-slate-600 dark:text-slate-300">
                         {t.platformSubscriptionPlans.index.planCount(plans.total)}
@@ -125,7 +177,7 @@ export default function Index({ plans }: Props) {
                             label: t.platformSubscriptionPlans.index.columns.price,
                             align: 'right',
                             render: (plan) => (
-                                <Currency amount={plan.price} className="font-semibold text-emerald-400" />
+                                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{fmtXAF(plan.price, locale)}</span>
                             ),
                         },
                         {
@@ -154,7 +206,7 @@ export default function Index({ plans }: Props) {
                             align: 'center',
                             render: (plan) => (
                                 <button
-                                    onClick={() => togglePlanStatus(plan)}
+                                    onClick={() => setPlanToToggle(plan)}
                                     className="inline-block"
                                 >
                                     <TableBadge variant={plan.is_active ? 'success' : 'danger'}>
@@ -188,24 +240,7 @@ export default function Index({ plans }: Props) {
                     emptyMessage={t.platformSubscriptionPlans.index.emptyMessage}
                 />
 
-                {/* Pagination */}
-                {plans.links && (
-                    <div className="flex items-center justify-center gap-1">
-                        {plans.links.map((link: any, index: number) => (
-                            <Link
-                                key={index}
-                                href={link.url || '#'}
-                                preserveState
-                                className={`rounded-lg px-3 py-2 text-sm ${
-                                    link.active
-                                        ? 'bg-amber-300 text-slate-950 font-semibold'
-                                        : 'border border-white/15 text-slate-200 hover:bg-white/10'
-                                } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
+                <PaginationLinks links={plans.links} />
             </section>
 
             <ConfirmDeleteModal
@@ -213,10 +248,29 @@ export default function Index({ plans }: Props) {
                 title={t.platformSubscriptionPlans.index.deleteTitle}
                 message={t.platformSubscriptionPlans.index.deleteMessage(planToDelete?.name)}
                 onConfirm={handleDelete}
+                processing={processing}
                 onClose={() => {
                     setShowDeleteModal(false);
                     setPlanToDelete(null);
                 }}
+            />
+
+            <ConfirmDeleteModal
+                show={planToToggle !== null}
+                title={planToToggle?.is_active ? tr.disableTitle : tr.enableTitle}
+                message={
+                    planToToggle
+                        ? planToToggle.is_active
+                            ? tr.disableMessage(planToToggle.name)
+                            : tr.enableMessage(planToToggle.name)
+                        : ''
+                }
+                confirmText={planToToggle?.is_active ? tr.disable : tr.enable}
+                processingText={planToToggle?.is_active ? tr.disable : tr.enable}
+                tone={planToToggle?.is_active ? 'danger' : 'success'}
+                processing={processing}
+                onConfirm={() => planToToggle && togglePlanStatus(planToToggle)}
+                onClose={() => setPlanToToggle(null)}
             />
         </AuthenticatedLayout>
     );

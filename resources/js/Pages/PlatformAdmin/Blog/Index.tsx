@@ -25,6 +25,8 @@ interface Props {
 export default function BlogAdminIndex({ posts }: Props) {
     const { t } = useLocale();
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    // Dépublier retire l'article du site public : on confirme d'abord.
+    const [unpublishId, setUnpublishId] = useState<number | null>(null);
 
     const handleDelete = () => {
         if (!deleteId) return;
@@ -34,7 +36,10 @@ export default function BlogAdminIndex({ posts }: Props) {
     };
 
     const handleToggle = (id: number) => {
-        router.post(route('platform.blog.toggle', id));
+        router.post(route('platform.blog.toggle', id), {}, {
+            preserveScroll: true,
+            onFinish: () => setUnpublishId(null),
+        });
     };
 
     return (
@@ -106,7 +111,7 @@ export default function BlogAdminIndex({ posts }: Props) {
                                             </td>
                                             <td className="px-4 py-3 text-center">
                                                 <button
-                                                    onClick={() => handleToggle(post.id)}
+                                                    onClick={() => (post.is_published ? setUnpublishId(post.id) : handleToggle(post.id))}
                                                     title={post.is_published ? t.platformBlog.index.unpublish : t.platformBlog.index.publish}
                                                     className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition"
                                                     style={{
@@ -121,6 +126,8 @@ export default function BlogAdminIndex({ posts }: Props) {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex items-center justify-end gap-1">
+                                                    {/* Un brouillon n'est pas servi par le site (404) */}
+                                                    {post.is_published && (
                                                     <a
                                                         href={route('blog.show', post.slug)}
                                                         target="_blank"
@@ -130,6 +137,7 @@ export default function BlogAdminIndex({ posts }: Props) {
                                                     >
                                                         <ExternalLink className="size-4" />
                                                     </a>
+                                                    )}
                                                     <Link
                                                         href={route('platform.blog.edit', post.id)}
                                                         title={t.platformBlog.index.edit}
@@ -161,6 +169,16 @@ export default function BlogAdminIndex({ posts }: Props) {
                 onConfirm={handleDelete}
                 title={t.platformBlog.index.deleteTitle}
                 message={t.platformBlog.index.deleteMessage}
+            />
+
+            <ConfirmDeleteModal
+                show={!!unpublishId}
+                onClose={() => setUnpublishId(null)}
+                onConfirm={() => unpublishId && handleToggle(unpublishId)}
+                title={t.platformBlog.index.unpublishTitle}
+                message={t.platformBlog.index.unpublishMessage}
+                confirmText={t.platformBlog.index.unpublish}
+                processingText={t.platformBlog.index.unpublish}
             />
         </AuthenticatedLayout>
     );
