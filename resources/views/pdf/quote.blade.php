@@ -24,14 +24,29 @@
 @endsection
 
 @section('lines')
+    {{-- show_unit_prices masque le prix unitaire, show_amounts tout ce qui est un montant
+         (total de ligne, ventilation de TVA, totaux). Le taux de TVA n'a de sens qu'à côté
+         d'un prix : il disparaît quand les deux sont masqués, et le devis devient une
+         liste de matériel. La description absorbe la largeur libérée. --}}
+    @php
+        $showUnitPrices = $quote->show_unit_prices ?? true;
+        $showAmounts = $quote->show_amounts ?? true;
+        $showTaxRate = $showUnitPrices || $showAmounts;
+    @endphp
     <table class="lines">
         <thead>
             <tr>
-                <th style="width: 46%;">{{ __('documents.description') }}</th>
+                <th>{{ __('documents.description') }}</th>
                 <th class="right" style="width: 10%;">{{ __('documents.quantity') }}</th>
-                <th class="right" style="width: 16%;">{{ __('documents.unit_price_excl') }}</th>
-                <th class="right" style="width: 10%;">{{ __('documents.tax') }}</th>
-                <th class="right" style="width: 18%;">{{ __('documents.total_excl') }}</th>
+                @if ($showUnitPrices)
+                    <th class="right" style="width: 16%;">{{ __('documents.unit_price_excl') }}</th>
+                @endif
+                @if ($showTaxRate)
+                    <th class="right" style="width: 10%;">{{ __('documents.tax') }}</th>
+                @endif
+                @if ($showAmounts)
+                    <th class="right" style="width: 18%;">{{ __('documents.total_excl') }}</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -44,9 +59,15 @@
                         @endif
                     </td>
                     <td class="right">{{ $item->quantity }}</td>
-                    <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
-                    <td class="right">{{ rtrim(rtrim(number_format($item->tax_rate, 2, ',', ' '), '0'), ',') }} %</td>
-                    <td class="right">{{ number_format($item->line_total, 2, ',', ' ') }}</td>
+                    @if ($showUnitPrices)
+                        <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
+                    @endif
+                    @if ($showTaxRate)
+                        <td class="right">{{ rtrim(rtrim(number_format($item->tax_rate, 2, ',', ' '), '0'), ',') }} %</td>
+                    @endif
+                    @if ($showAmounts)
+                        <td class="right">{{ number_format($item->line_total, 2, ',', ' ') }}</td>
+                    @endif
                 </tr>
             @endforeach
         </tbody>
@@ -54,6 +75,7 @@
 @endsection
 
 @section('totals')
+    @if ($quote->show_amounts ?? true)
     @if (count($taxBreakdown) > 0)
         <table class="breakdown">
             <thead>
@@ -99,6 +121,7 @@
             </td>
         </tr>
     </table>
+    @endif
 @endsection
 
 @section('notes')

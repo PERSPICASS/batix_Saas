@@ -23,6 +23,8 @@ class Quote extends Model
         'total',
         'notes',
         'terms',
+        'show_unit_prices',
+        'show_amounts',
         'sent_at',
         'accepted_at',
     ];
@@ -35,6 +37,8 @@ class Quote extends Model
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'show_unit_prices' => 'boolean',
+        'show_amounts' => 'boolean',
     ];
 
     public function shop(): BelongsTo

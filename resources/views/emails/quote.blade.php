@@ -5,6 +5,8 @@
 
 {{ __('mail.quote.intro', ['quoteNumber' => $quote->quote_number, 'quoteDate' => $quote->quote_date->format('d/m/Y')]) }}
 
+{{-- Le client qui reçoit un devis sans montants ne doit pas les retrouver dans le mail. --}}
+@if($quote->show_amounts ?? true)
 ## {{ __('mail.quote.details_title') }}
 
 | {{ __('mail.quote.description') }} | {{ __('mail.quote.amount') }} |
@@ -12,6 +14,7 @@
 | {{ __('mail.quote.subtotal') }} | {{ number_format($quote->subtotal, 2, ',', ' ') }} {{ $currencySymbol }} |
 | {{ __('mail.quote.tax') }} | {{ number_format($quote->tax_amount, 2, ',', ' ') }} {{ $currencySymbol }} |
 | **{{ __('mail.quote.total') }}** | **{{ number_format($quote->total, 2, ',', ' ') }} {{ $currencySymbol }}** |
+@endif
 
 ## {{ __('mail.quote.validity_title') }}
 

@@ -104,6 +104,8 @@ class QuoteController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
             'terms' => 'nullable|string',
+            'show_unit_prices' => 'boolean',
+            'show_amounts' => 'boolean',
         ]);
 
         // Totaux, taux de ligne et numérotation vivent dans le service, partagé avec
@@ -181,6 +183,8 @@ class QuoteController extends Controller
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
             'terms' => 'nullable|string',
+            'show_unit_prices' => 'boolean',
+            'show_amounts' => 'boolean',
         ]);
 
         // Même service que l'API v1 : un devis modifié par l'assistant IA doit être

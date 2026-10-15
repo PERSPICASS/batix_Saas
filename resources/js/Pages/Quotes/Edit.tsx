@@ -67,6 +67,8 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
         expiry_date: quote.expiry_date,
         notes: quote.notes || '',
         terms: quote.terms || '',
+        show_unit_prices: quote.show_unit_prices ?? true,
+        show_amounts: quote.show_amounts ?? true,
     });
 
     const filteredProducts = useMemo(() => {
@@ -292,6 +294,30 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     placeholder={t.quotes.form.termsPlaceholder}
                                 />
+                            </div>
+                            <div className="border-t border-gray-200 pt-4 dark:border-white/10">
+                                <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">{t.quotes.form.pdfDisplay}</p>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.show_unit_prices}
+                                            onChange={(e) => setFormData({ ...formData, show_unit_prices: e.target.checked })}
+                                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900/70"
+                                        />
+                                        {t.quotes.form.showUnitPrices}
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.show_amounts}
+                                            onChange={(e) => setFormData({ ...formData, show_amounts: e.target.checked })}
+                                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900/70"
+                                        />
+                                        {t.quotes.form.showAmounts}
+                                    </label>
+                                </div>
+                                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.quotes.form.pdfDisplayHint}</p>
                             </div>
                         </div>
                     </div>

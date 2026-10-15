@@ -68,6 +68,8 @@ class QuoteWriter
                     'total' => $total,
                     'notes' => $data['notes'] ?? null,
                     'terms' => $data['terms'] ?? null,
+                    'show_unit_prices' => $data['show_unit_prices'] ?? true,
+                    'show_amounts' => $data['show_amounts'] ?? true,
                     'status' => 'draft',
                 ]);
 
@@ -97,6 +99,9 @@ class QuoteWriter
                 'total' => $total,
                 'notes' => array_key_exists('notes', $data) ? $data['notes'] : $quote->notes,
                 'terms' => array_key_exists('terms', $data) ? $data['terms'] : $quote->terms,
+                // L'API v1 n'envoie pas ces options : clé absente = choix conservé.
+                'show_unit_prices' => $data['show_unit_prices'] ?? $quote->show_unit_prices,
+                'show_amounts' => $data['show_amounts'] ?? $quote->show_amounts,
             ]);
 
             // Le numéro et le statut ne sont jamais touchés : un devis garde son identité
