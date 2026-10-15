@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Rules\AccessibleCategory;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -19,8 +20,8 @@ class StoreProductApiRequest extends FormRequest
     {
         return [
             'shop_id' => 'required|exists:shops,id',
-            'category_id' => 'nullable|exists:categories,id',
-            'subcategory_id' => 'nullable|exists:subcategories,id',
+            'category_id' => ['nullable', AccessibleCategory::visible($this->user())],
+            'subcategory_id' => ['nullable', AccessibleCategory::subcategory($this->user())],
             'name' => 'required|string|max:255',
             'brand' => 'nullable|string|max:255',
             'sku' => 'nullable|string|max:255',

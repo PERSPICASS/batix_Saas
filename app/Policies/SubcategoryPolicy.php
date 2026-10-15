@@ -5,6 +5,10 @@ namespace App\Policies;
 use App\Models\Subcategory;
 use App\Models\User;
 
+/**
+ * A subcategory follows its category: visible when the category is, managed
+ * only when the category belongs to one of the user's shops. See Category.
+ */
 class SubcategoryPolicy
 {
     public function viewAny(User $user): bool
@@ -14,7 +18,7 @@ class SubcategoryPolicy
 
     public function view(User $user, Subcategory $subcategory): bool
     {
-        return $user->id === $subcategory->category->shop->user_id;
+        return $subcategory->category->isVisibleTo($user);
     }
 
     public function create(User $user): bool
@@ -24,21 +28,21 @@ class SubcategoryPolicy
 
     public function update(User $user, Subcategory $subcategory): bool
     {
-        return $user->id === $subcategory->category->shop->user_id;
+        return $subcategory->category->isManagedBy($user);
     }
 
     public function delete(User $user, Subcategory $subcategory): bool
     {
-        return $user->id === $subcategory->category->shop->user_id;
+        return $subcategory->category->isManagedBy($user);
     }
 
     public function restore(User $user, Subcategory $subcategory): bool
     {
-        return $user->id === $subcategory->category->shop->user_id;
+        return $subcategory->category->isManagedBy($user);
     }
 
     public function forceDelete(User $user, Subcategory $subcategory): bool
     {
-        return $user->id === $subcategory->category->shop->user_id;
+        return $subcategory->category->isManagedBy($user);
     }
 }

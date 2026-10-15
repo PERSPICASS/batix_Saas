@@ -10,6 +10,8 @@ import { useLocale } from '@/contexts/LocaleContext';
 
 interface Category {
     id: number;
+    // null = catégorie du catalogue commun BATIX : lecture seule pour un compte
+    shop_id: number | null;
     name: string;
     description: string | null;
     color: string;
@@ -72,7 +74,13 @@ export default function CategoriesIndex({ categories, shops }: PageProps<{ categ
             key: 'actions',
             label: t.categories.columns.actions,
             align: 'right' as const,
-            render: (category: Category) => (
+            render: (category: Category) => category.shop_id === null ? (
+                <TableActions>
+                    <span title={t.categories.sharedCatalogHint}>
+                        <TableBadge>{t.categories.sharedCatalog}</TableBadge>
+                    </span>
+                </TableActions>
+            ) : (
                 <TableActions>
                     <Link href={route('categories.edit', { category: category.id })}>
                         <TableActionButton>

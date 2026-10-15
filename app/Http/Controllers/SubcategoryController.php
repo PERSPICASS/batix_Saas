@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Rules\AccessibleCategory;
 use App\Models\Subcategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,13 +15,13 @@ class SubcategoryController extends Controller
     /**
      * Display a listing of the resource.
      * 
-     * Les catégories et sous-catégories sont globales (prédéfinies par la plateforme)
+     * Sous-catégories des catégories visibles du compte (globales + ses boutiques).
      */
     public function index(Request $request): Response
     {
         $categoryId = $request->input('category_id');
         
-        $query = Subcategory::with('category')
+        $query = Subcategory::visibleTo(Auth::user())->with('category.shop:id,name')
             ->orderBy('order')
             ->orderBy('name');
 
@@ -30,8 +31,7 @@ class SubcategoryController extends Controller
 
         $subcategories = $query->get();
 
-        // Récupérer les catégories globales pour le filtre
-        $categories = Category::orderBy('order')->orderBy('name')->get();
+        $categories = Category::visibleTo(Auth::user())->orderBy('order')->orderBy('name')->get();
 
         return Inertia::render('Subcategories/Index', [
             'subcategories' => $subcategories,
@@ -45,8 +45,9 @@ class SubcategoryController extends Controller
      */
     public function create(): Response
     {
-        // Les catégories sont globales
-        $categories = Category::orderBy('order')->orderBy('name')->get();
+        // Une sous-catégorie ne s'ajoute que sous une catégorie de ses propres boutiques :
+        // sous une globale, elle deviendrait visible de tous les comptes.
+        $categories = Category::managedBy(Auth::user())->orderBy('order')->orderBy('name')->get();
 
         return Inertia::render('Subcategories/Create', [
             'categories' => $categories,
@@ -59,13 +60,12 @@ class SubcategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => ['required', AccessibleCategory::managed(Auth::user())],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'order' => 'nullable|integer',
         ]);
 
-        // Les catégories sont globales, pas besoin de vérifier le propriétaire
         $category = Category::findOrFail($validated['category_id']);
         
         $category->subcategories()->create($validated);
@@ -94,8 +94,9 @@ class SubcategoryController extends Controller
     {
         $this->authorize('update', $subcategory);
         
-        // Les catégories sont globales
-        $categories = Category::orderBy('order')->orderBy('name')->get();
+        // Une sous-catégorie ne s'ajoute que sous une catégorie de ses propres boutiques :
+        // sous une globale, elle deviendrait visible de tous les comptes.
+        $categories = Category::managedBy(Auth::user())->orderBy('order')->orderBy('name')->get();
         
         return Inertia::render('Subcategories/Edit', [
             'subcategory' => $subcategory,
@@ -111,7 +112,7 @@ class SubcategoryController extends Controller
         $this->authorize('update', $subcategory);
         
         $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => ['required', AccessibleCategory::managed(Auth::user())],
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'order' => 'nullable|integer',

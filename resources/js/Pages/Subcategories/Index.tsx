@@ -16,11 +16,10 @@ interface Subcategory {
     order: number;
     category: {
         id: number;
+        // null = sous une catégorie du catalogue commun BATIX : lecture seule
+        shop_id: number | null;
         name: string;
-        shop: {
-            id: number;
-            name: string;
-        };
+        shop: { id: number; name: string } | null;
     };
 }
 
@@ -40,7 +39,7 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
         if (toDelete === null) return;
 
         setDeleting(true);
-        router.delete(route('subcategories.destroy', { sous_category: toDelete }), {
+        router.delete(route('subcategories.destroy', { subcategory: toDelete }), {
             onFinish: () => { setDeleting(false); setToDelete(null); },
         });
     };
@@ -58,7 +57,7 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
         {
             key: 'shop',
             label: 'Boutique',
-            render: (subcategory: Subcategory) => subcategory.category.shop.name,
+            render: (subcategory: Subcategory) => subcategory.category.shop?.name ?? t.categories.sharedCatalog,
         },
         {
             key: 'is_active',
@@ -74,9 +73,15 @@ export default function SubcategoriesIndex({ subcategories, categories }: PagePr
             key: 'actions',
             label: 'Actions',
             align: 'right' as const,
-            render: (subcategory: Subcategory) => (
+            render: (subcategory: Subcategory) => subcategory.category.shop_id === null ? (
                 <TableActions>
-                    <Link href={route('subcategories.edit', { sous_category: subcategory.id })}>
+                    <span title={t.categories.sharedCatalogHint}>
+                        <TableBadge>{t.categories.sharedCatalog}</TableBadge>
+                    </span>
+                </TableActions>
+            ) : (
+                <TableActions>
+                    <Link href={route('subcategories.edit', { subcategory: subcategory.id })}>
                         <TableActionButton>
                             <Pencil className="size-3.5" /> {t.common.actions.edit}
                         </TableActionButton>

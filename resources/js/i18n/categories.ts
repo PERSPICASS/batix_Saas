@@ -16,6 +16,8 @@ export const categories = {
             edit: 'Modifier',
             delete: 'Supprimer',
         },
+        sharedCatalog: 'Catalogue BATIX',
+        sharedCatalogHint: 'Catégorie commune à tous les comptes : elle ne peut pas être modifiée ici.',
         emptyMessage: 'Aucune catégorie trouvée',
         emptySubMessage: 'Aucune sous-catégorie trouvée',
         form: {
@@ -46,6 +48,8 @@ export const categories = {
             edit: 'Edit',
             delete: 'Delete',
         },
+        sharedCatalog: 'BATIX catalogue',
+        sharedCatalogHint: 'Category shared by every account: it cannot be edited here.',
         emptyMessage: 'No categories found',
         emptySubMessage: 'No subcategories found',
         form: {

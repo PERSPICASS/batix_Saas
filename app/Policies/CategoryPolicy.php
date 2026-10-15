@@ -4,63 +4,46 @@ namespace App\Policies;
 
 use App\Models\Category;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
+/**
+ * Global categories (shop_id NULL) are visible to all and managed by nobody but
+ * the platform; per-shop ones belong to the accounts that can access the shop.
+ * See Category.
+ */
 class CategoryPolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
         return true;
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Category $category): bool
     {
-        return $user->id === $category->shop->user_id;
+        return $category->isVisibleTo($user);
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
         return true;
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Category $category): bool
     {
-        return $user->id === $category->shop->user_id;
+        return $category->isManagedBy($user);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Category $category): bool
     {
-        return $user->id === $category->shop->user_id;
+        return $category->isManagedBy($user);
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Category $category): bool
     {
-        return $user->id === $category->shop->user_id;
+        return $category->isManagedBy($user);
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
     public function forceDelete(User $user, Category $category): bool
     {
-        return $user->id === $category->shop->user_id;
+        return $category->isManagedBy($user);
     }
 }

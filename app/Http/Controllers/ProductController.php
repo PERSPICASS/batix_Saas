@@ -7,6 +7,7 @@ use App\Exports\ProductsExport;
 use App\Exports\ProductsTemplateExport;
 use App\Imports\ProductsImport;
 use App\Models\Category;
+use App\Rules\AccessibleCategory;
 use App\Models\Product;
 use App\Models\Subcategory;
 use App\Services\ActivityLogger;
@@ -92,8 +93,8 @@ class ProductController extends Controller
 
         $shops = Auth::user()->accessibleShops();
         
-        // Les catégories sont globales (prédéfinies par la plateforme)
-        $categories = Category::orderBy('order')->orderBy('name')->get();
+        // Catalogue commun + catégories des boutiques du compte (voir Category).
+        $categories = Category::visibleTo(Auth::user())->orderBy('order')->orderBy('name')->get();
 
         // Quota par boutique active
         $activeShopId = get_active_shop_id() ?? $request->input('shop_id');
@@ -115,11 +116,10 @@ class ProductController extends Controller
     {
         $shops = Auth::user()->accessibleShops();
         
-        // Les catégories sont globales (prédéfinies par la plateforme)
-        $categories = Category::orderBy('order')->orderBy('name')->get();
+        // Catalogue commun + catégories des boutiques du compte (voir Category).
+        $categories = Category::visibleTo(Auth::user())->orderBy('order')->orderBy('name')->get();
         
-        // Les sous-catégories sont aussi globales
-        $subcategories = Subcategory::with('category')
+        $subcategories = Subcategory::visibleTo(Auth::user())->with('category')
             ->orderBy('order')
             ->orderBy('name')
             ->get();
@@ -140,8 +140,8 @@ class ProductController extends Controller
 
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'category_id' => 'nullable|exists:categories,id',
-            'subcategory_id' => 'nullable|exists:subcategories,id',
+            'category_id' => ['nullable', AccessibleCategory::visible(Auth::user())],
+            'subcategory_id' => ['nullable', AccessibleCategory::subcategory(Auth::user())],
             'name' => 'required|string|max:255',
             'brand' => 'nullable|string|max:255',
             'sku' => 'nullable|string|max:255',
@@ -206,11 +206,10 @@ class ProductController extends Controller
         
         $shops = Auth::user()->accessibleShops();
         
-        // Les catégories sont globales (prédéfinies par la plateforme)
-        $categories = Category::orderBy('order')->orderBy('name')->get();
+        // Catalogue commun + catégories des boutiques du compte (voir Category).
+        $categories = Category::visibleTo(Auth::user())->orderBy('order')->orderBy('name')->get();
         
-        // Les sous-catégories sont aussi globales
-        $subcategories = Subcategory::with('category')
+        $subcategories = Subcategory::visibleTo(Auth::user())->with('category')
             ->orderBy('order')
             ->orderBy('name')
             ->get();
@@ -231,8 +230,8 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
-            'subcategory_id' => 'nullable|exists:subcategories,id',
+            'category_id' => ['nullable', AccessibleCategory::visible(Auth::user())],
+            'subcategory_id' => ['nullable', AccessibleCategory::subcategory(Auth::user())],
             'name' => 'required|string|max:255',
             'brand' => 'nullable|string|max:255',
             'sku' => 'nullable|string|max:255',

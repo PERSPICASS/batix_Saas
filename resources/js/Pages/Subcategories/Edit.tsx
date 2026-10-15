@@ -21,7 +21,7 @@ export default function SubcategoriesEdit({ subcategory, categories }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        put(route('subcategories.update', { sous_category: subcategory.id }));
+        put(route('subcategories.update', { subcategory: subcategory.id }));
     };
 
     return (

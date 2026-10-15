@@ -18,8 +18,8 @@ class CategoryController extends Controller
      */
     public function index(Request $request): Response
     {
-        // Les catégories sont globales - pas de filtre par boutique
-        $categories = Category::with('subcategories')
+        // Catalogue commun + catégories des boutiques du compte (voir Category).
+        $categories = Category::visibleTo(Auth::user())->with('subcategories')
             ->orderBy('order')
             ->orderBy('name')
             ->get();

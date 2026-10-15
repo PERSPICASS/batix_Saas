@@ -15,14 +15,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $driver = DB::getDriverName();
-
-        if ($driver !== 'sqlite') {
-            // 1. D'abord modifier la colonne pour permettre NULL (MySQL and PostgreSQL)
-            Schema::table('categories', function (Blueprint $table) {
-                $table->unsignedBigInteger('shop_id')->nullable()->change();
-            });
-        }
+        // 1. D'abord modifier la colonne pour permettre NULL. SQLite était exclu à
+        // l'origine ; Laravel 11+ sait reconstruire la table, et sans ça le harnais de
+        // test (SQLite) ne pouvait pas représenter une catégorie globale — l'état réel
+        // de la prod. (Migration déjà jouée en prod : ce changement ne touche que les
+        // bases neuves.)
+        Schema::table('categories', function (Blueprint $table) {
+            $table->unsignedBigInteger('shop_id')->nullable()->change();
+        });
 
         // 2. Supprimer les doublons - garder une seule catégorie par slug
         $slugs = DB::table('categories')
