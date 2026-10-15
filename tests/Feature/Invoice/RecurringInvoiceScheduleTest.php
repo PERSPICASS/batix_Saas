@@ -96,7 +96,11 @@ class RecurringInvoiceScheduleTest extends TestCase
         // \UnhandledMatchError — an \Error, not an \Exception. Before the fix the job
         // caught only \Exception, so this aborted every cycle queued behind it.
         // sqlite stores `frequency` as text (see the create migration), which lets the
-        // test reproduce a value Postgres' enum would reject.
+        // test reproduce a value Postgres' enum would reject — so this corrupt row
+        // cannot even be written there.
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'pgsql') {
+            $this->markTestSkipped("Postgres' frequency check makes this corrupt row impossible.");
+        }
         $this->makeCycle(['invoice_prefix' => 'REC-BROKEN', 'frequency' => 'fortnightly']);
         $healthy = $this->makeCycle(['invoice_prefix' => 'REC-HEALTHY']);
 

@@ -26,7 +26,9 @@ class DatabaseBackupTest extends TestCase
 {
     public function test_it_refuses_to_run_against_a_non_postgres_connection(): void
     {
-        // The suite's default connection is sqlite.
+        // Forced, so the test holds whether the suite runs on sqlite or (in CI) Postgres.
+        config(['database.default' => 'sqlite']);
+
         $this->artisan('db:backup')
             ->expectsOutputToContain('only supports PostgreSQL')
             ->assertFailed();

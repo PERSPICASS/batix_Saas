@@ -35,7 +35,7 @@ class ProductFactory extends Factory
             'purchase_price' => $purchasePrice,
             'selling_price' => $sellingPrice,
             'tax_rate' => fake()->randomElement([0, 5.5, 10, 20]),
-            'stock_quantity' => fake()->numberBetween(0, 100),
+            'stock_quantity' => fake()->numberBetween(20, 100), // jamais assez bas pour qu'une vente de test passe sous zéro (contrainte Postgres)
             'min_stock_alert' => fake()->numberBetween(5, 20),
             'image' => null,
             'is_active' => true,

@@ -485,7 +485,7 @@ class ChariowPaymentTest extends TestCase
     {
         Http::fake();
 
-        $user = User::factory()->create(['role' => 'user']);
+        $user = User::factory()->create(['role' => 'cashier']);
         $plan = $this->plan();
 
         $this->actingAs($user)->postJson("/chariow/initiate/{$plan->slug}", [

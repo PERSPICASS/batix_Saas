@@ -6,7 +6,73 @@ on:
       - prod
 
 jobs:
+  # Rien ne part en prod sans que la suite passe. Les tests tournent sur Postgres,
+  # comme la prod : le harnais SQLite local accepte des colonnes inexistantes et
+  # ignore les contraintes CHECK (rôles, stock ≥ 0, fréquences) que Postgres impose.
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: batix
+          POSTGRES_PASSWORD: batix
+          POSTGRES_DB: batix_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U batix"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: batix_test
+      DB_USERNAME: batix
+      DB_PASSWORD: batix
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, zip, gd, intl, bcmath
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Npm install
+        run: npm ci
+
+      # tsc + build client + build SSR : un type cassé ou un import manquant arrête tout ici.
+      - name: Typecheck & build
+        run: npm run build
+
+      - name: Frontend tests
+        run: npx vitest run
+
+      - name: Prepare Laravel
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # DB_* ci-dessus priment sur les valeurs sqlite de phpunit.xml (<env> sans force).
+      - name: Backend tests (Postgres)
+        run: php artisan test
+
   deploy:
+    needs: tests
     runs-on: ubuntu-latest
 
     steps:

@@ -244,15 +244,17 @@ class ChariowController extends Controller
 
         // Déduplication sur l'id de livraison, stable à travers les retries. L'insert
         // est la garde elle-même : deux livraisons simultanées ne peuvent pas passer
-        // toutes les deux la contrainte d'unicité.
+        // toutes les deux la contrainte d'unicité. `insertOrIgnore` (ON CONFLICT DO
+        // NOTHING) plutôt qu'un catch : sous Postgres, une violation attrapée dans une
+        // transaction englobante empoisonne tout ce qui suit.
         if ($deliveryId) {
-            try {
-                DB::table('chariow_pulse_deliveries')->insert([
-                    'delivery_id'  => $deliveryId,
-                    'event'        => $event,
-                    'processed_at' => now(),
-                ]);
-            } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+            $inserted = DB::table('chariow_pulse_deliveries')->insertOrIgnore([
+                'delivery_id'  => $deliveryId,
+                'event'        => $event,
+                'processed_at' => now(),
+            ]);
+
+            if ($inserted === 0) {
                 return response()->json(['ok' => true, 'duplicate' => true]);
             }
         }

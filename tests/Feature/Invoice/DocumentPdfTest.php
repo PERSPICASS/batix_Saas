@@ -53,7 +53,7 @@ class DocumentPdfTest extends TestCase
             'remaining_amount' => 0,
         ]);
 
-        $product = Product::factory()->create(['shop_id' => $shop->id]);
+        $product = Product::factory()->create(['shop_id' => $shop->id, 'stock_quantity' => 10]);
         $sale->items()->create([
             'product_id' => $product->id,
             'product_name' => 'Ciment 50kg',
