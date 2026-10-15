@@ -102,7 +102,12 @@ export default function PlatformAdminAccounts({ accounts, filters }: Props) {
             label: tr.columns.account,
             render: (account: Account) => (
                 <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{account.name}</p>
+                    <Link
+                        href={route('platform.accounts.show', account.id)}
+                        className="font-medium text-slate-900 hover:text-amber-600 hover:underline dark:text-white dark:hover:text-amber-300"
+                    >
+                        {account.name}
+                    </Link>
                     <p className="text-xs text-slate-500 dark:text-slate-400">{account.email}</p>
                     <p className="mt-1 text-xs text-slate-500">{common.code}: {account.code_user}</p>
                 </div>

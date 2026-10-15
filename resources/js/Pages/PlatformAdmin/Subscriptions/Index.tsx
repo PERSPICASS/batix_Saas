@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
-import { XCircle, RotateCw, Search, Edit, CheckCircle } from 'lucide-react';
+import { XCircle, RotateCw, Search, Edit, CheckCircle, Coins } from 'lucide-react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import Modal from '@/Components/Modal';
 import InputError from '@/Components/InputError';
 import PaginationLinks from '@/Components/PaginationLinks';
+import SubscriptionAmountModal, { AmountTarget } from '@/Components/SubscriptionAmountModal';
 import { useLocale } from '@/contexts/LocaleContext';
 import { fmtDate, fmtXAF, toDateInput } from '@/utils/platformFormat';
 
@@ -70,6 +71,11 @@ export default function Index({ subscriptions, plans, filters }: Props) {
     const [dialog, setDialog] = useState<Dialog>(null);
     const [selected, setSelected] = useState<Subscription | null>(null);
     const [renewMonths, setRenewMonths] = useState('1');
+    // Un renouvellement manuel suit en général un paiement reçu hors de l'app :
+    // l'enregistrer par défaut, sinon il manque aux revenus encaissés.
+    const [recordPayment, setRecordPayment] = useState(true);
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [amountTarget, setAmountTarget] = useState<AmountTarget | null>(null);
     const [editDates, setEditDates] = useState({ started_at: '', expires_at: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [processing, setProcessing] = useState(false);
@@ -95,7 +101,11 @@ export default function Index({ subscriptions, plans, filters }: Props) {
     const open = (kind: Dialog, subscription: Subscription) => {
         setSelected(subscription);
         setErrors({});
-        if (kind === 'renew') setRenewMonths('1');
+        if (kind === 'renew') {
+            setRenewMonths('1');
+            setRecordPayment(true);
+            setPaymentMethod('');
+        }
         if (kind === 'dates') {
             setEditDates({
                 started_at: toDateInput(subscription.started_at) || new Date().toISOString().slice(0, 10),
@@ -217,7 +227,12 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                             label: tr.columns.account,
                             render: (subscription) => (
                                 <div className="flex flex-col">
-                                    <span className="font-medium text-slate-900 dark:text-white">{subscription.user.name}</span>
+                                    <Link
+                                        href={route('platform.accounts.show', subscription.user.id)}
+                                        className="font-medium text-slate-900 hover:text-amber-600 hover:underline dark:text-white dark:hover:text-amber-300"
+                                    >
+                                        {subscription.user.name}
+                                    </Link>
                                     <span className="text-xs text-slate-500 dark:text-slate-400">{subscription.user.email}</span>
                                     <span className="text-xs text-slate-500">{common.code}: {subscription.user.code_user}</span>
                                 </div>
@@ -287,6 +302,19 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                                     <button onClick={() => open('dates', subscription)} className={outlineButton}>
                                         <Edit className="size-3.5" /> {tr.dates}
                                     </button>
+                                    <button
+                                        onClick={() =>
+                                            setAmountTarget({
+                                                id: subscription.id,
+                                                amount: subscription.amount,
+                                                billing_cycle: subscription.billing_cycle,
+                                                plan_name: subscription.plan.name,
+                                            })
+                                        }
+                                        className={outlineButton}
+                                    >
+                                        <Coins className="size-3.5" /> {tr.amountAction}
+                                    </button>
                                     {subscription.status === 'pending' && (
                                         <TableActionButton variant="success" onClick={() => open('activate', subscription)}>
                                             <CheckCircle className="size-3.5" /> {tr.activate}
@@ -316,6 +344,8 @@ export default function Index({ subscriptions, plans, filters }: Props) {
 
                 <PaginationLinks links={subscriptions.links} />
             </section>
+
+            <SubscriptionAmountModal target={amountTarget} onClose={() => setAmountTarget(null)} />
 
             <ConfirmDeleteModal
                 show={dialog === 'cancel'}
@@ -357,6 +387,33 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                     </label>
                     <InputError message={errors.months} className="mb-2" />
                     <p className="mb-4 text-xs text-slate-500 dark:text-slate-400">{tr.renewHint}</p>
+                    <label className="mb-1 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                        <input type="checkbox" checked={recordPayment} onChange={(e) => setRecordPayment(e.target.checked)} />
+                        {tr.recordPayment}
+                    </label>
+                    {selected && recordPayment && (
+                        <>
+                            <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                                {tr.recordPaymentHint(
+                                    fmtXAF(
+                                        (selected.billing_cycle === 'yearly' ? Number(selected.amount) / 12 : Number(selected.amount)) *
+                                            (Number(renewMonths) || 0),
+                                        locale
+                                    )
+                                )}
+                            </p>
+                            <label className="mb-4 block space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                                <span>{tr.paymentMethod}</span>
+                                <input
+                                    type="text"
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    placeholder="Wave, Orange Money, virement…"
+                                    className={inputClass}
+                                />
+                            </label>
+                        </>
+                    )}
                     <div className="flex justify-end gap-2">
                         <button
                             onClick={close}
@@ -365,7 +422,13 @@ export default function Index({ subscriptions, plans, filters }: Props) {
                             {common.cancel}
                         </button>
                         <button
-                            onClick={() => submit('platform.active-subscriptions.renew', { months: renewMonths })}
+                            onClick={() =>
+                                submit('platform.active-subscriptions.renew', {
+                                    months: renewMonths,
+                                    record_payment: recordPayment,
+                                    payment_method: paymentMethod || null,
+                                })
+                            }
                             disabled={processing}
                             className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50"
                         >

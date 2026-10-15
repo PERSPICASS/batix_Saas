@@ -15,6 +15,7 @@ return [
         'subscription_renewed' => 'Subscription extended by :months month(s).',
         'subscription_activated' => 'Subscription activated.',
         'subscription_dates_updated' => 'Subscription dates updated.',
+        'subscription_amount_updated' => 'Subscription amount updated.',
         'plan_created' => 'Subscription plan created.',
         'plan_updated' => 'Subscription plan updated.',
         'plan_deleted' => 'Subscription plan deleted.',

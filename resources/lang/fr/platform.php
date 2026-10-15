@@ -15,6 +15,7 @@ return [
         'subscription_renewed' => 'Abonnement prolongé de :months mois.',
         'subscription_activated' => 'Abonnement activé.',
         'subscription_dates_updated' => 'Dates de l\'abonnement mises à jour.',
+        'subscription_amount_updated' => 'Montant de l\'abonnement mis à jour.',
         'plan_created' => 'Plan d\'abonnement créé.',
         'plan_updated' => 'Plan d\'abonnement mis à jour.',
         'plan_deleted' => 'Plan d\'abonnement supprimé.',

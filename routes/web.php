@@ -250,6 +250,7 @@ Route::post('/invitation/{token}/accept', [InvitationController::class, 'accept'
 Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->prefix('platform-admin')->group(function () {
     Route::get('/dashboard', [PlatformAdminController::class, 'index'])->name('platform.dashboard');
     Route::get('/accounts', [PlatformAdminController::class, 'accounts'])->name('platform.accounts');
+    Route::get('/accounts/{user}', [PlatformAdminController::class, 'accountShow'])->name('platform.accounts.show');
     Route::post('/accounts/{user}/toggle', [PlatformAdminController::class, 'toggleAccountStatus'])->name('platform.accounts.toggle');
     Route::post('/accounts/{user}/toggle-demo', [PlatformAdminController::class, 'toggleDemo'])->name('platform.accounts.toggle-demo');
     Route::get('/shops', [PlatformAdminController::class, 'shops'])->name('platform.shops');
@@ -273,6 +274,7 @@ Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactor
     Route::get('/active-subscriptions', [PlatformAdminController::class, 'subscriptions'])->name('platform.active-subscriptions');
     Route::post('/active-subscriptions/{subscription}/cancel', [PlatformAdminController::class, 'cancelSubscription'])->name('platform.active-subscriptions.cancel');
     Route::post('/active-subscriptions/{subscription}/renew', [PlatformAdminController::class, 'renewSubscription'])->name('platform.active-subscriptions.renew');
+    Route::post('/active-subscriptions/{subscription}/amount', [PlatformAdminController::class, 'updateSubscriptionAmount'])->name('platform.active-subscriptions.amount');
     Route::post('/active-subscriptions/{subscription}/update-dates', [PlatformAdminController::class, 'updateSubscriptionDates'])->name('platform.active-subscriptions.update-dates');
     Route::post('/active-subscriptions/{subscription}/activate', [PlatformAdminController::class, 'activateSubscription'])->name('platform.active-subscriptions.activate');
 

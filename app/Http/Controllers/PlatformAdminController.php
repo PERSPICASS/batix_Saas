@@ -8,6 +8,8 @@ use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Services\PlatformMetrics;
+use App\Support\ConcurrencySafe;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Support\Facades\Log;
@@ -404,6 +406,105 @@ class PlatformAdminController extends Controller implements HasMiddleware
     }
 
     /**
+     * One account at a glance: owner, shops, staff, subscriptions, payments,
+     * activity. Only account owners (super_admin) have a detail page.
+     */
+    public function accountShow(User $user): Response
+    {
+        abort_unless($user->role === 'super_admin', 404);
+
+        $shops = $user->shops()->withCount(['products', 'customers'])->orderBy('created_at')->get();
+        $shopIds = $shops->pluck('id');
+        $since = now()->subDays(30);
+
+        $sales = \App\Models\Sale::whereIn('shop_id', $shopIds)->where('status', 'completed');
+        $salesByShop = (clone $sales)->where('sale_date', '>=', $since)
+            ->selectRaw('shop_id, count(*) as n, coalesce(sum(total), 0) as total')
+            ->groupBy('shop_id')->get()->keyBy('shop_id');
+
+        $staff = User::whereIn('shop_id', $shopIds)->where('id', '!=', $user->id)
+            ->orderBy('name')->get(['id', 'name', 'email', 'role', 'is_active', 'shop_id', 'created_at']);
+
+        $accountUserIds = $staff->pluck('id')->push($user->id);
+        $lastActivity = \App\Models\ActivityLog::whereIn('user_id', $accountUserIds)->max('created_at');
+
+        $active = $user->activeSubscription();
+
+        return Inertia::render('PlatformAdmin/AccountShow', [
+            'account' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'code_user' => $user->code_user,
+                'country' => $user->country,
+                'is_active' => (bool) $user->is_active,
+                'is_demo' => (bool) $user->is_demo,
+                'email_verified' => $user->email_verified_at !== null,
+                'two_factor_enabled' => (bool) $user->two_factor_enabled,
+                'created_at' => $user->created_at?->toDateTimeString(),
+                'last_activity_at' => $lastActivity ? Carbon::parse($lastActivity)->toDateTimeString() : null,
+            ],
+            'stats' => [
+                'shops' => $shops->count(),
+                'staff' => $staff->count(),
+                'products' => (int) $shops->sum('products_count'),
+                'customers' => (int) $shops->sum('customers_count'),
+                'sales_30d' => (int) $salesByShop->sum('n'),
+                'revenue_30d' => round((float) $salesByShop->sum('total')),
+                'last_sale_at' => (clone $sales)->max('sale_date'),
+            ],
+            'shops' => $shops->map(fn (Shop $shop) => [
+                'id' => $shop->id,
+                'name' => $shop->name,
+                'city' => $shop->city,
+                'country' => $shop->country,
+                'currency' => $shop->currency,
+                'is_active' => (bool) $shop->is_active,
+                'products_count' => $shop->products_count,
+                'customers_count' => $shop->customers_count,
+                'sales_30d' => (int) ($salesByShop[$shop->id]->n ?? 0),
+                'revenue_30d' => round((float) ($salesByShop[$shop->id]->total ?? 0)),
+                'created_at' => $shop->created_at?->toDateTimeString(),
+            ])->values(),
+            'staff' => $staff->map(fn (User $u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'role' => $u->role,
+                'is_active' => (bool) $u->is_active,
+                'shop' => $shops->firstWhere('id', $u->shop_id)?->name,
+                'created_at' => $u->created_at?->toDateTimeString(),
+            ])->values(),
+            'subscriptions' => Subscription::with('plan')->where('user_id', $user->id)
+                ->latest('created_at')->latest('id')->get()
+                ->map(fn (Subscription $s) => [
+                    'id' => $s->id,
+                    'plan' => $s->plan?->name,
+                    'plan_price' => $s->plan ? (float) $s->plan->price : null,
+                    'status' => $s->status,
+                    'amount' => (float) $s->amount,
+                    'billing_cycle' => $s->billing_cycle,
+                    'monthly_amount' => round(PlatformMetrics::monthlyAmount($s)),
+                    'started_at' => $s->started_at?->toDateTimeString(),
+                    'expires_at' => $s->expires_at?->toDateTimeString(),
+                    'cancelled_at' => $s->cancelled_at?->toDateTimeString(),
+                    'is_current' => $active?->id === $s->id,
+                ])->values(),
+            'invoices' => SubscriptionInvoice::where('user_id', $user->id)
+                ->latest('issued_at')->limit(50)->get()
+                ->map(fn (SubscriptionInvoice $i) => [
+                    'id' => $i->id,
+                    'number' => $i->invoice_number,
+                    'total' => (float) $i->total,
+                    'status' => $i->status,
+                    'payment_method' => $i->payment_method,
+                    'issued_at' => $i->issued_at?->toDateTimeString(),
+                    'paid_at' => $i->paid_at?->toDateTimeString(),
+                ])->values(),
+        ]);
+    }
+
+    /**
      * Toggle account status.
      */
     public function toggleAccountStatus(User $user)
@@ -510,15 +611,67 @@ class PlatformAdminController extends Controller implements HasMiddleware
 
         $validated = $request->validate([
             'months' => 'required|integer|min:1|max:12',
+            // A manual renewal usually follows a payment received outside the app
+            // (partner, Wave, transfer…). Without an invoice it never reached the
+            // collected-revenue figures.
+            'record_payment' => 'boolean',
+            'payment_method' => 'nullable|string|max:50',
         ]);
 
-        $subscription->renew($validated['months']);
+        $invoice = DB::transaction(function () use ($subscription, $validated) {
+            $subscription->renew($validated['months']);
+
+            if (! ($validated['record_payment'] ?? false)) {
+                return null;
+            }
+
+            // The subscription's own amount, not the plan price: negotiated
+            // (partner) prices live on the subscription.
+            $perMonth = PlatformMetrics::monthlyAmount($subscription);
+            $total = round($perMonth * $validated['months']);
+
+            return ConcurrencySafe::retryOnDuplicate(fn () => DB::transaction(fn () => SubscriptionInvoice::create([
+                'subscription_id' => $subscription->id,
+                'user_id' => $subscription->user_id,
+                'invoice_number' => SubscriptionInvoice::generateInvoiceNumber(),
+                'amount' => $total,
+                'tax' => 0,
+                'total' => $total,
+                'status' => 'paid',
+                'issued_at' => now(),
+                'paid_at' => now(),
+                'due_at' => now(),
+                'payment_method' => $validated['payment_method'] ?: 'manual',
+                'metadata' => ['source' => 'platform_admin_renewal', 'months' => $validated['months']],
+            ])));
+        });
+
         $this->audit('subscription_renewed', $subscription, [
             'months' => $validated['months'],
             'expires_at' => $subscription->expires_at?->toDateTimeString(),
+            'invoice' => $invoice?->invoice_number,
         ]);
 
         return back()->with('success', __('platform.flash.subscription_renewed', ['months' => $validated['months']]));
+    }
+
+    /**
+     * Set a subscription's amount: negotiated / partner prices. Every figure
+     * (MRR, revenue, renewals recorded above) reads subscriptions.amount, so this
+     * is where a price different from the plan's is recorded.
+     */
+    public function updateSubscriptionAmount(Request $request, Subscription $subscription): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0|max:100000000',
+            'billing_cycle' => 'required|in:monthly,yearly',
+        ]);
+
+        $before = ['amount' => (float) $subscription->amount, 'billing_cycle' => $subscription->billing_cycle];
+        $subscription->update($validated);
+        $this->audit('subscription_amount_updated', $subscription, ['before' => $before, 'after' => $validated]);
+
+        return back()->with('success', __('platform.flash.subscription_amount_updated'));
     }
 
     /**
