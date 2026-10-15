@@ -11,6 +11,16 @@ class Subscription extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        // User::activeSubscription() is memoised per request: any change to a
+        // subscription must be visible to the rest of the same request.
+        $forget = fn (Subscription $s) => User::activeSubscriptionMemo()?->remove("active_subscription.{$s->user_id}");
+
+        static::saved($forget);
+        static::deleted($forget);
+    }
+
     protected $fillable = [
         'user_id',
         'subscription_plan_id',

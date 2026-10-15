@@ -467,6 +467,39 @@ class User extends Authenticatable
             return null;
         }
 
+        // Called a dozen times per page (shared props, read-only guard, limits…):
+        // memoised for the current HTTP request only. See activeSubscriptionMemo().
+        $memo = self::activeSubscriptionMemo();
+        $key = "active_subscription.{$ownerId}";
+
+        if ($memo?->has($key)) {
+            return $memo->get($key);
+        }
+
+        $subscription = $this->queryActiveSubscription($ownerId);
+        $memo?->set($key, $subscription);
+
+        return $subscription;
+    }
+
+    /**
+     * Request-scoped store for activeSubscription(), or null when memoising would
+     * be unsafe. Kept on the request rather than on the model: a queue worker or
+     * the scheduler keeps the same request instance for days (hence no memo
+     * outside HTTP), and tests reuse one User instance across requests while each
+     * request is new. Subscription clears its owner's entry whenever it is saved.
+     */
+    public static function activeSubscriptionMemo(): ?\Symfony\Component\HttpFoundation\ParameterBag
+    {
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            return null;
+        }
+
+        return app()->bound('request') ? request()->attributes : null;
+    }
+
+    private function queryActiveSubscription(int $ownerId): ?Subscription
+    {
         return Subscription::where('user_id', $ownerId)
             ->whereIn('status', ['active', 'trial'])
             ->where(function ($query) {
