@@ -5,6 +5,8 @@ return [
 
     'flash' => [
         'only_owner_accounts' => 'Seuls les comptes propriétaires peuvent être suspendus.',
+        'account_marked_demo' => 'Compte marqué démo : il est exclu des chiffres de la plateforme.',
+        'account_unmarked_demo' => 'Compte réintégré dans les chiffres de la plateforme.',
         'account_suspended' => 'Compte suspendu : le propriétaire et son personnel ne peuvent plus se connecter.',
         'account_reactivated' => 'Compte réactivé.',
         'shop_suspended' => 'Boutique suspendue : elle n\'est plus accessible à son compte.',

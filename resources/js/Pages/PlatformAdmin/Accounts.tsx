@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Search, Store, Power, Package } from 'lucide-react';
+import { Search, Store, Power, Package, FlaskConical } from 'lucide-react';
 import Table, { TableActions, TableBadge } from '@/Components/Table';
 import { useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
@@ -14,6 +14,7 @@ interface Account {
     email: string;
     code_user: string;
     is_active: boolean;
+    is_demo: boolean;
     shops_count: number;
     products_count: number;
     created_at: string;
@@ -76,6 +77,11 @@ export default function PlatformAdminAccounts({ accounts, filters }: Props) {
         );
     };
 
+    // Compte démo : exclu des chiffres de la plateforme, sans autre effet.
+    const toggleDemo = (account: Account) => {
+        router.post(route('platform.accounts.toggle-demo', account.id), {}, { preserveScroll: true });
+    };
+
     const filterButton = (value: string, label: string) => (
         <button
             type="button"
@@ -126,9 +132,16 @@ export default function PlatformAdminAccounts({ accounts, filters }: Props) {
             key: 'status',
             label: common.status,
             render: (account: Account) => (
-                <TableBadge variant={account.is_active ? 'success' : 'danger'}>
-                    {account.is_active ? common.active : tr.suspended}
-                </TableBadge>
+                <div className="flex flex-wrap items-center gap-1">
+                    <TableBadge variant={account.is_active ? 'success' : 'danger'}>
+                        {account.is_active ? common.active : tr.suspended}
+                    </TableBadge>
+                    {account.is_demo && (
+                        <span title={tr.demoHint}>
+                            <TableBadge variant="warning">{tr.demo}</TableBadge>
+                        </span>
+                    )}
+                </div>
             ),
         },
         {
@@ -143,6 +156,16 @@ export default function PlatformAdminAccounts({ accounts, filters }: Props) {
             label: common.actions,
             render: (account: Account) => (
                 <TableActions>
+                    <button
+                        type="button"
+                        onClick={() => toggleDemo(account)}
+                        className={`rounded-lg p-2 transition hover:bg-amber-500/10 ${
+                            account.is_demo ? 'text-amber-600 dark:text-amber-300' : 'text-slate-400'
+                        }`}
+                        title={account.is_demo ? tr.unmarkDemo : tr.markDemo}
+                    >
+                        <FlaskConical className="size-4" />
+                    </button>
                     <button
                         type="button"
                         onClick={() => setConfirmToggle(account)}
@@ -196,6 +219,7 @@ export default function PlatformAdminAccounts({ accounts, filters }: Props) {
                             {filterButton('', common.all)}
                             {filterButton('active', tr.filterActive)}
                             {filterButton('inactive', tr.filterSuspended)}
+                            {filterButton('demo', tr.filterDemo)}
                         </div>
                     </div>
                 </div>

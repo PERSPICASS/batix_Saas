@@ -251,6 +251,7 @@ Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactor
     Route::get('/dashboard', [PlatformAdminController::class, 'index'])->name('platform.dashboard');
     Route::get('/accounts', [PlatformAdminController::class, 'accounts'])->name('platform.accounts');
     Route::post('/accounts/{user}/toggle', [PlatformAdminController::class, 'toggleAccountStatus'])->name('platform.accounts.toggle');
+    Route::post('/accounts/{user}/toggle-demo', [PlatformAdminController::class, 'toggleDemo'])->name('platform.accounts.toggle-demo');
     Route::get('/shops', [PlatformAdminController::class, 'shops'])->name('platform.shops');
     Route::post('/shops/{shop}/toggle', [PlatformAdminController::class, 'toggleShopStatus'])->name('platform.shops.toggle');
     Route::get('/shops/{shop}/products', [PlatformAdminController::class, 'shopProducts'])->name('platform.shops.products');

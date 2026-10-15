@@ -66,6 +66,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            // Hors $fillable exprès : seul l'admin plateforme le pose (forceFill).
+            'is_demo' => 'boolean',
             'invitation_sent_at' => 'datetime',
             'invitation_accepted_at' => 'datetime',
             'email_verification_code_expires_at' => 'datetime',

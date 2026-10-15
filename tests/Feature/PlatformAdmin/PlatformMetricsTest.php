@@ -33,8 +33,9 @@ class PlatformMetricsTest extends TestCase
 
     private function sub(array $attrs, ?SubscriptionPlan $plan = null): Subscription
     {
+        $attrs['user_id'] ??= User::factory()->create(['role' => 'super_admin'])->id;
+
         return Subscription::create(array_merge([
-            'user_id' => User::factory()->create(['role' => 'super_admin'])->id,
             'subscription_plan_id' => ($plan ?? SubscriptionPlan::factory()->create())->id,
             'status' => 'active',
             'amount' => 10000,
@@ -129,5 +130,43 @@ class PlatformMetricsTest extends TestCase
                 ->has('mrr_history', 12)
                 ->where('mrr_history.11.mrr', 10000)
             );
+    }
+
+    /** Les comptes démo (démos commerciales en prod) ne comptent dans aucun chiffre. */
+    public function test_demo_accounts_are_excluded_from_every_figure(): void
+    {
+        $demo = User::factory()->create(['role' => 'super_admin']);
+        $demo->forceFill(['is_demo' => true])->save();
+        $this->sub(['user_id' => $demo->id, 'amount' => 50000]);
+        $this->sub([]);
+
+        $this->assertEqualsWithDelta(10000, $this->metrics->mrrAt(now()), 0.01);
+
+        $admin = User::factory()->create(['role' => 'admin_platforme']);
+        $this->actingAs($admin)->get(route('platform.dashboard'))
+            ->assertInertia(fn ($page) => $page
+                ->where('stats.monthly_revenue', 10000)
+                ->where('stats.total_accounts', 1)
+                ->where('stats.active_subscriptions', 1)
+            );
+    }
+
+    public function test_the_admin_can_mark_an_account_as_demo(): void
+    {
+        $owner = User::factory()->create(['role' => 'super_admin']);
+        $admin = User::factory()->create(['role' => 'admin_platforme']);
+
+        $this->actingAs($admin)->post(route('platform.accounts.toggle-demo', $owner))->assertSessionHas('success');
+
+        $this->assertTrue($owner->fresh()->is_demo);
+    }
+
+    /** is_demo est hors $fillable : un client ne peut pas se sortir lui-même des chiffres. */
+    public function test_is_demo_is_not_mass_assignable(): void
+    {
+        $owner = User::factory()->create(['role' => 'super_admin']);
+        $owner->update(['is_demo' => true]);
+
+        $this->assertFalse((bool) $owner->fresh()->is_demo);
     }
 }

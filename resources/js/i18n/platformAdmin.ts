@@ -129,6 +129,7 @@ export const platformAdmin = {
             searchPlaceholder: 'Rechercher par nom, email ou code…',
             filterActive: 'Actifs',
             filterSuspended: 'Suspendus',
+            filterDemo: 'Démo',
             total: 'Total comptes',
             columns: {
                 account: 'Compte',
@@ -141,6 +142,10 @@ export const platformAdmin = {
             confirmSuspend: (name: string) => `« ${name} » et tout son personnel seront déconnectés et ne pourront plus se connecter, y compris via l'API. Les données sont conservées.`,
             confirmReactivateTitle: 'Réactiver ce compte ?',
             confirmReactivate: (name: string) => `« ${name} » et son personnel pourront de nouveau se connecter.`,
+            demo: 'Démo',
+            demoHint: 'Compte démo : exclu du MRR, des revenus et des compteurs de la plateforme.',
+            markDemo: 'Marquer comme compte démo',
+            unmarkDemo: 'Réintégrer dans les chiffres',
         },
         shops: {
             title: 'Gestion des boutiques',
@@ -392,6 +397,7 @@ export const platformAdmin = {
             searchPlaceholder: 'Search by name, email or code…',
             filterActive: 'Active',
             filterSuspended: 'Suspended',
+            filterDemo: 'Demo',
             total: 'Total accounts',
             columns: {
                 account: 'Account',
@@ -404,6 +410,10 @@ export const platformAdmin = {
             confirmSuspend: (name: string) => `"${name}" and all their staff will be signed out and unable to sign in, including through the API. Data is kept.`,
             confirmReactivateTitle: 'Reactivate this account?',
             confirmReactivate: (name: string) => `"${name}" and their staff will be able to sign in again.`,
+            demo: 'Demo',
+            demoHint: 'Demo account: excluded from MRR, revenue and platform counts.',
+            markDemo: 'Mark as demo account',
+            unmarkDemo: 'Count in figures again',
         },
         shops: {
             title: 'Shops',

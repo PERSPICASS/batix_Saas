@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Models\FixedCost;
+use App\Models\Shop;
 use App\Models\Subscription;
+use App\Models\SubscriptionInvoice;
+use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -19,9 +22,50 @@ use Illuminate\Support\Collection;
  * churned customer from the past months. Movements (new / churn / expansion)
  * are measured per account, so an upgrade, which cancels the old subscription
  * and opens a new one, is an expansion and not a churn.
+ *
+ * Demo accounts (users.is_demo, set on the owner) are left out of every figure:
+ * their subscriptions, invoices, shops and staff. Use the real*() builders
+ * below for any platform-level count.
  */
 class PlatformMetrics
 {
+    /** Subquery: ids of demo account owners. */
+    public static function demoOwnerIds()
+    {
+        return User::select('id')->where('is_demo', true);
+    }
+
+    /** Account owners, demo accounts excluded. */
+    public static function realAccounts()
+    {
+        return User::where('role', 'super_admin')->where('is_demo', false);
+    }
+
+    /** Shops, demo accounts' shops excluded. */
+    public static function realShops()
+    {
+        return Shop::whereNotIn('user_id', self::demoOwnerIds());
+    }
+
+    /** Every user but platform admins, demo owners and their staff. */
+    public static function realUsers()
+    {
+        return User::where('role', '!=', 'admin_platforme')
+            ->where('is_demo', false)
+            ->where(fn ($q) => $q->whereNull('shop_id')
+                ->orWhereNotIn('shop_id', Shop::select('id')->whereIn('user_id', self::demoOwnerIds())));
+    }
+
+    public static function realSubscriptions()
+    {
+        return Subscription::whereNotIn('user_id', self::demoOwnerIds());
+    }
+
+    public static function realInvoices()
+    {
+        return SubscriptionInvoice::whereNotIn('user_id', self::demoOwnerIds());
+    }
+
     /** Monthly value of a subscription (a yearly amount is spread over 12). */
     public static function monthlyAmount(Subscription $subscription): float
     {
@@ -36,7 +80,7 @@ class PlatformMetrics
      */
     public function payingAt(CarbonInterface $moment): Collection
     {
-        return Subscription::with(['plan', 'user'])
+        return self::realSubscriptions()->with(['plan', 'user'])
             ->where('amount', '>', 0)
             ->whereNotIn('status', ['pending', 'trial'])
             ->whereNotNull('started_at')

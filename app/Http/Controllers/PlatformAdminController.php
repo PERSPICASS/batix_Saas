@@ -34,16 +34,17 @@ class PlatformAdminController extends Controller implements HasMiddleware
     public function index(PlatformMetrics $metrics): Response
     {
         // Statistiques globales
-        $totalAccounts = User::where('role', 'super_admin')->count();
-        $totalShops = Shop::count();
-        $activeShops = Shop::where('is_active', true)->count();
-        $totalUsers = User::where('role', '!=', 'admin_platforme')->count();
+        // Comptes démo exclus de tous les chiffres (voir PlatformMetrics).
+        $totalAccounts = PlatformMetrics::realAccounts()->count();
+        $totalShops = PlatformMetrics::realShops()->count();
+        $activeShops = PlatformMetrics::realShops()->where('is_active', true)->count();
+        $totalUsers = PlatformMetrics::realUsers()->count();
 
         // Statistiques des abonnements
-        $activeSubscriptions = Subscription::where('status', 'active')->count();
-        $trialSubscriptions = Subscription::where('status', 'trial')->count();
-        $expiredSubscriptions = Subscription::where('status', 'expired')->count();
-        $cancelledSubscriptions = Subscription::where('status', 'cancelled')->count();
+        $activeSubscriptions = PlatformMetrics::realSubscriptions()->where('status', 'active')->count();
+        $trialSubscriptions = PlatformMetrics::realSubscriptions()->where('status', 'trial')->count();
+        $expiredSubscriptions = PlatformMetrics::realSubscriptions()->where('status', 'expired')->count();
+        $cancelledSubscriptions = PlatformMetrics::realSubscriptions()->where('status', 'cancelled')->count();
 
         // Revenu mensuel = MRR (abonnements payants, annuel ramené au mois), en FCFA,
         // comme sur la page MRR. Les charges sont converties en FCFA elles aussi.
@@ -58,7 +59,7 @@ class PlatformAdminController extends Controller implements HasMiddleware
 
             return [
                 'month' => $date->format('Y-m'),
-                'count' => User::where('role', 'super_admin')
+                'count' => PlatformMetrics::realAccounts()
                     ->whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
                     ->count(),
             ];
@@ -70,7 +71,7 @@ class PlatformAdminController extends Controller implements HasMiddleware
 
             return [
                 'month' => $date->format('Y-m'),
-                'count' => Shop::whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])->count(),
+                'count' => PlatformMetrics::realShops()->whereBetween('created_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])->count(),
             ];
         });
 
@@ -90,14 +91,14 @@ class PlatformAdminController extends Controller implements HasMiddleware
 
             return [
                 'month' => $date->format('Y-m'),
-                'revenue' => round((float) SubscriptionInvoice::where('status', 'paid')
+                'revenue' => round((float) PlatformMetrics::realInvoices()->where('status', 'paid')
                     ->whereBetween('paid_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
                     ->sum('total')),
             ];
         });
 
         // Comptes récents
-        $recentAccounts = User::where('role', 'super_admin')
+        $recentAccounts = PlatformMetrics::realAccounts()
             ->withCount('shops')
             ->latest()
             ->take(5)
@@ -112,7 +113,7 @@ class PlatformAdminController extends Controller implements HasMiddleware
             ]);
 
         // Boutiques récentes
-        $recentShops = Shop::with('user')
+        $recentShops = PlatformMetrics::realShops()->with('user')
             ->latest()
             ->take(5)
             ->get()
@@ -222,7 +223,7 @@ class PlatformAdminController extends Controller implements HasMiddleware
 
             return [
                 'month' => $date->format('Y-m'),
-                'revenue' => round((float) SubscriptionInvoice::where('status', 'paid')
+                'revenue' => round((float) PlatformMetrics::realInvoices()->where('status', 'paid')
                     ->whereBetween('paid_at', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
                     ->sum('total')),
             ];
@@ -265,7 +266,7 @@ class PlatformAdminController extends Controller implements HasMiddleware
             ->values();
 
         // ── Abonnements à risque (expirent dans 30 jours) ──────────────────
-        $atRisk = Subscription::with(['user', 'plan'])
+        $atRisk = PlatformMetrics::realSubscriptions()->with(['user', 'plan'])
             ->where('status', 'active')
             ->where('amount', '>', 0)
             ->whereBetween('expires_at', [$now, $now->copy()->addDays(30)])
@@ -330,7 +331,10 @@ class PlatformAdminController extends Controller implements HasMiddleware
 
         // Filtre par statut
         if ($request->filled('status')) {
-            $query->where('is_active', $request->status === 'active');
+            match ($request->status) {
+                'demo' => $query->where('is_demo', true),
+                default => $query->where('is_active', $request->status === 'active'),
+            };
         }
 
         $accounts = $query->latest()->paginate(20)->through(fn($user) => [
@@ -339,6 +343,7 @@ class PlatformAdminController extends Controller implements HasMiddleware
             'email' => $user->email,
             'code_user' => $user->code_user,
             'is_active' => $user->is_active,
+            'is_demo' => (bool) $user->is_demo,
             'shops_count' => $user->shops_count ?? 0,
             'products_count' => $user->total_products_count ?? 0,
             'created_at' => $user->created_at?->toDateTimeString(),
@@ -414,6 +419,22 @@ class PlatformAdminController extends Controller implements HasMiddleware
         $this->audit($user->is_active ? 'account_reactivated' : 'account_suspended', $user);
 
         return back()->with('success', __($user->is_active ? 'platform.flash.account_reactivated' : 'platform.flash.account_suspended'));
+    }
+
+    /**
+     * Mark / unmark an account as a demo account: it keeps working but leaves
+     * every platform figure (MRR, revenue, counts). See PlatformMetrics.
+     */
+    public function toggleDemo(User $user)
+    {
+        if ($user->role !== 'super_admin') {
+            return back()->with('error', __('platform.flash.only_owner_accounts'));
+        }
+
+        $user->forceFill(['is_demo' => !$user->is_demo])->save();
+        $this->audit($user->is_demo ? 'account_marked_demo' : 'account_unmarked_demo', $user);
+
+        return back()->with('success', __($user->is_demo ? 'platform.flash.account_marked_demo' : 'platform.flash.account_unmarked_demo'));
     }
 
     /**

@@ -5,6 +5,8 @@ return [
 
     'flash' => [
         'only_owner_accounts' => 'Only owner accounts can be suspended.',
+        'account_marked_demo' => 'Account marked as demo: it is excluded from platform figures.',
+        'account_unmarked_demo' => 'Account counted in platform figures again.',
         'account_suspended' => 'Account suspended: the owner and their staff can no longer sign in.',
         'account_reactivated' => 'Account reactivated.',
         'shop_suspended' => 'Shop suspended: its account can no longer access it.',
