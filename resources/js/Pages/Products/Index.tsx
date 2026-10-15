@@ -208,6 +208,16 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
             render: (product: Product) => product.category?.name || '-',
         },
         {
+            key: 'unit_cost',
+            label: t.products.columns.costPrice,
+            align: 'right' as const,
+            render: (product: Product) => (
+                <span className="text-slate-600 dark:text-slate-300">
+                    <Currency amount={product.unit_cost} />
+                </span>
+            ),
+        },
+        {
             key: 'selling_price',
             label: t.products.columns.price,
             align: 'right' as const,
