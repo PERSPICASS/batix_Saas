@@ -130,13 +130,18 @@ class SaleController extends Controller
 
         $shops = Auth::user()->accessibleShops();
 
-        $customers = Customer::where('shop_id', $activeShopId)->get();
+        // The POS ships its whole catalogue (local search + offline cache), so only
+        // the columns Sales/Create.tsx reads: full models made it ~1 KB per product
+        // (3 MB of HTML for 3 000 products), a heavy load on a mobile connection.
+        $customers = Customer::where('shop_id', $activeShopId)->get(['id', 'name']);
+
+        $posColumns = ['id', 'parent_id', 'name', 'sku', 'image', 'selling_price', 'tax_rate', 'stock_quantity', 'has_variations'];
 
         $products = Product::where('shop_id', $activeShopId)
             ->where('is_active', true)
             ->whereNull('parent_id')
-            ->with(['variations' => fn($q) => $q->where('is_active', true)->orderBy('name')])
-            ->get();
+            ->with(['variations' => fn($q) => $q->where('is_active', true)->orderBy('name')->select($posColumns)])
+            ->get($posColumns);
 
         $preorder = null;
         if ($request->filled('preorder_id')) {
