@@ -35,6 +35,14 @@ Schedule::command('db:backup')
     ->withoutOverlapping()
     ->onFailure(fn () => Log::error('Scheduled db:backup failed — see the command output above.'));
 
+// Copie hors serveur des fichiers uploadés (images, justificatifs) — db:backup ne
+// couvre que la base. Miroir incrémental : seuls les fichiers nouveaux ou modifiés
+// partent. Échoue (donc alerte) si aucun bucket n'est configuré.
+Schedule::command('files:backup')
+    ->dailyAt('03:30')
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::error('Scheduled files:backup failed — uploaded files may have no off-site copy.'));
+
 // Audit du stock — tous les lundis à 4h00, après la sauvegarde de 3h.
 //
 // Les compteurs (products.stock_quantity, depot_products.quantity) et le registre des
