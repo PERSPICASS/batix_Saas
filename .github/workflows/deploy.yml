@@ -5,6 +5,13 @@ on:
     branches:
       - prod
 
+# Deux pushes rapprochés lançaient deux déploiements en parallèle sur le même
+# serveur : le second se heurtait au `down` du premier (« removal of container …
+# is already in progress ») et échouait. Ils passent désormais l'un après l'autre.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
 jobs:
   # Rien ne part en prod sans que la suite passe. Les tests tournent sur Postgres,
   # comme la prod : le harnais SQLite local accepte des colonnes inexistantes et
