@@ -61,25 +61,21 @@ class Sale extends Model
 
     public static function generateTicketNumber($shopId): string
     {
-        $date = date('Ymd');
-        $prefix = "TKT-{$date}";
+        $prefix = 'TKT-'.date('Ymd');
 
-        // ticket_number est unique GLOBALEMENT (toutes boutiques confondues) en base,
-        // donc la recherche du dernier numéro ne doit pas être filtrée par shop_id —
-        // sinon deux boutiques du même compte peuvent générer le même numéro le même
-        // jour et la création de vente échoue avec une violation de contrainte unique.
-        $lastSale = static::where('ticket_number', 'like', "{$prefix}%")
-            ->orderBy('ticket_number', 'desc')
-            ->first();
-        
-        if ($lastSale) {
-            $lastNumber = (int) substr($lastSale->ticket_number, -4);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        // Per shop since 2026-10-15 (unique on shop_id + ticket_number, like invoices).
+        // It used to be one counter shared by every tenant, 4 digits a day, found by
+        // sorting the strings: past 9999 sales a day platform-wide, "…10000" sorts
+        // below "…9999", the same number came back forever and every sale of every
+        // shop failed until midnight. The max is now taken numerically, so a busy
+        // shop simply goes to 5 digits.
+        $last = static::where('shop_id', $shopId)
+            ->where('ticket_number', 'like', "{$prefix}%")
+            ->pluck('ticket_number')
+            ->map(fn (string $number) => (int) substr($number, strlen($prefix)))
+            ->max() ?? 0;
+
+        return $prefix.str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
     }
 
     public function shop(): BelongsTo
