@@ -47,6 +47,11 @@ export const subprocessors: Record<'fr' | 'en', Subprocessor[]> = {
             data: "Rapports d'erreur techniques : message et trace d'exécution, adresse de la page, requêtes SQL (sans leurs paramètres) et un identifiant de compte. Ni votre nom ni votre email n'y sont joints.",
         },
         {
+            name: 'Anthropic (Anthropic, PBC)',
+            role: "Assistant IA intégré (modèle de langage Claude)",
+            data: "Uniquement si vous utilisez l'assistant : vos messages, l'historique de la conversation et les données de boutique que l'assistant consulte pour vous répondre (produits, stocks, ventes, clients, factures, devis).",
+        },
+        {
             name: 'Hostinger',
             role: "Hébergement de l'infrastructure (serveur applicatif et base de données)",
             data: 'Toutes les données de votre compte et de votre boutique, stockées sur les serveurs de production.',
@@ -92,6 +97,11 @@ export const subprocessors: Record<'fr' | 'en', Subprocessor[]> = {
             name: 'Sentry (Functional Software, Inc.)',
             role: 'Error and performance monitoring',
             data: 'Technical error reports: exception message and stack trace, page address, SQL queries (without their parameters) and an account identifier. Neither your name nor your email is attached.',
+        },
+        {
+            name: 'Anthropic (Anthropic, PBC)',
+            role: 'Built-in AI assistant (Claude language model)',
+            data: 'Only if you use the assistant: your messages, the conversation history and the shop data the assistant looks up to answer you (products, stock, sales, customers, invoices, quotes).',
         },
         {
             name: 'Hostinger',
