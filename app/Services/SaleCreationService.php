@@ -42,16 +42,27 @@ class SaleCreationService
                 $neededByProduct[$itemData['product_id']] = ($neededByProduct[$itemData['product_id']] ?? 0) + $itemData['quantity'];
             }
 
+            // The shop boundary lives here, not in each caller's validation: the web
+            // form, the offline sync and the API all land in this method, and an
+            // `exists:products,id` rule accepts any tenant's product. Without it, a sale
+            // decremented another account's stock and copied its product onto the ticket.
             $products = Product::whereIn('id', array_keys($neededByProduct))
+                ->where('shop_id', $shop->id)
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+
+            if (!empty($data['customer_id']) && !$shop->customers()->whereKey($data['customer_id'])->exists()) {
+                throw ValidationException::withMessages(['customer_id' => "Ce client n'appartient pas à cette boutique."]);
+            }
 
             $errors = [];
             foreach ($neededByProduct as $productId => $neededQty) {
                 $product = $products->get($productId);
 
-                if ($product && $product->track_stock && $product->stock_quantity < $neededQty) {
+                if (!$product) {
+                    $errors['items'][] = "Le produit #{$productId} n'appartient pas à cette boutique.";
+                } elseif ($product->track_stock && $product->stock_quantity < $neededQty) {
                     $errors['items'][] = "Stock insuffisant pour « {$product->name} » (disponible : {$product->stock_quantity}, demandé : {$neededQty}).";
                 }
             }

@@ -240,7 +240,9 @@ class Invoice extends Model
             // Verrouiller avant de vérifier : deux émissions simultanées de la dernière
             // pièce passeraient sinon toutes deux le contrôle. Même garde que la vente au
             // comptoir (SaleCreationService).
-            $products = Product::whereIn('id', array_keys($needed))->lockForUpdate()->get()->keyBy('id');
+            // Bornée à la boutique de la facture : une ligne ne sort jamais le stock d'un
+            // produit qui ne lui appartient pas, même si la validation venait à le laisser passer.
+            $products = Product::whereIn('id', array_keys($needed))->where('shop_id', $this->shop_id)->lockForUpdate()->get()->keyBy('id');
 
             $errors = [];
             foreach ($needed as $productId => $quantity) {

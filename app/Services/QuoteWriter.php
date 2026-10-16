@@ -135,7 +135,7 @@ class QuoteWriter
         foreach ($items as $item) {
             // Marquer l'article comme vendu si fourni
             if (! empty($item['product_article_id'])) {
-                ProductArticle::find($item['product_article_id'])?->markAsSold();
+                ProductArticle::where('shop_id', $quote->shop_id)->find($item['product_article_id'])?->markAsSold();
             }
 
             $quote->items()->create([

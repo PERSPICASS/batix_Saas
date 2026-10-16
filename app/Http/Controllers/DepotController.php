@@ -12,6 +12,7 @@ use App\Models\Shop;
 use App\Services\StockMovementService;
 use App\Traits\GeneratesBarcode;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -440,7 +441,10 @@ class DepotController extends Controller
         }
 
         $validated = $request->validate([
-            'shop_id'              => 'required|exists:shops,id',
+            'shop_id'              => [
+                'required',
+                Rule::exists('shops', 'id')->whereIn('id', $user->accessibleShopsQuery()->pluck('id')),
+            ],
             'notes'                => 'nullable|string',
             'items'                => 'required|array|min:1',
             'items.*.product_id'   => 'required|exists:products,id',

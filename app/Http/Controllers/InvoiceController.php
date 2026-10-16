@@ -115,8 +115,14 @@ class InvoiceController extends Controller
             'discount_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'nullable|exists:products,id',
-            'items.*.product_article_id' => 'nullable|exists:product_articles,id',
+            'items.*.product_id' => [
+                'nullable',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
+            'items.*.product_article_id' => [
+                'nullable',
+                Rule::exists('product_articles', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'items.*.product_name' => 'required|string',
             'items.*.article_name' => 'nullable|string',
             'items.*.description' => 'nullable|string',
@@ -159,7 +165,7 @@ class InvoiceController extends Controller
 
                 // Marquer l'article comme vendu
                 if (!empty($item['product_article_id'])) {
-                    \App\Models\ProductArticle::find($item['product_article_id'])?->markAsSold();
+                    \App\Models\ProductArticle::where('shop_id', $shop->id)->find($item['product_article_id'])?->markAsSold();
                 }
 
                 $invoice->items()->create($item);
@@ -285,8 +291,14 @@ class InvoiceController extends Controller
             'discount_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'nullable|exists:products,id',
-            'items.*.product_article_id' => 'nullable|exists:product_articles,id',
+            'items.*.product_id' => [
+                'nullable',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
+            'items.*.product_article_id' => [
+                'nullable',
+                Rule::exists('product_articles', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'items.*.product_name' => 'required|string',
             'items.*.article_name' => 'nullable|string',
             'items.*.description' => 'nullable|string',

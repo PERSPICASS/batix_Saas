@@ -7,6 +7,7 @@ use App\Models\Preorder;
 use App\Models\Product;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -85,7 +86,10 @@ class PreorderController extends Controller
     {
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',

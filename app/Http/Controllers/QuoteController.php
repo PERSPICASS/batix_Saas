@@ -98,7 +98,10 @@ class QuoteController extends Controller
                 'required',
                 \Illuminate\Validation\Rule::exists('products', 'id')->where('shop_id', $shop->id),
             ],
-            'items.*.product_article_id' => 'nullable|exists:product_articles,id',
+            'items.*.product_article_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('product_articles', 'id')->where('shop_id', $shop->id),
+            ],
             'items.*.article_name' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
