@@ -323,6 +323,8 @@ class InventoryController extends Controller
                 return false;
             }
 
+            $inventory->load('items.product');
+
             foreach ($inventory->items as $item) {
                 // Les lignes non comptées sont ignorées : un inventaire partiel ne prétend rien
                 // sur ce qu'il n'a pas regardé. Le défectueux non renseigné vaut l'existant, et

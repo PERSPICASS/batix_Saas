@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +45,17 @@ class AppServiceProvider extends ServiceProvider
         // Sans schéma forcé, `url()->current()` renvoie exactement ce que renvoyait
         // `$request->url()` : le remplacement est neutre en local.
         Paginator::currentPathResolver(fn () => url()->current());
+
+        // N+1 : un chargement paresseux dans une boucle. En test il fait échouer le
+        // test, pour qu'un N+1 ne puisse pas revenir sans qu'on le voie ; en local il
+        // n'est que journalisé, pour ne pas casser la page ; en prod, rien.
+        Model::preventLazyLoading(!$this->app->isProduction());
+
+        if (!$this->app->runningUnitTests()) {
+            Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation) {
+                Log::warning('N+1 : chargement paresseux de ' . $model::class . "::{$relation}");
+            });
+        }
 
         Vite::prefetch(concurrency: 3);
 

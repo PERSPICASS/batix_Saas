@@ -22,6 +22,9 @@ use Illuminate\Http\RedirectResponse;
 
 class ShopController extends Controller
 {
+    /** @var array<int, array<string, ?int>> Catégories de destination, par boutique puis par nom. */
+    private array $categoryIdsByName = [];
+
     /**
      * Display a listing of the resource.
      */
@@ -142,6 +145,9 @@ class ShopController extends Controller
                 // parent au passage, ce qui marche mais brouille l'ordre du document.
                 ->orderByRaw('parent_id is not null')
                 ->orderBy('id')
+                // Catégorie et parent lus pour chaque produit copié : sans chargement
+                // groupé, une boutique de 3 000 références coûtait 3 000 requêtes de plus.
+                ->with(['category:id,name', 'parent.category:id,name'])
                 ->get();
 
             $transfer = ShopTransfer::create([
@@ -217,9 +223,16 @@ class ShopController extends Controller
             return null;
         }
 
-        return Category::where('shop_id', $target->id)
-            ->where('name', $source->category->name)
-            ->value('id');
+        // Une même catégorie revient sur des centaines de produits : une requête par nom.
+        $name = $source->category->name;
+
+        if (!array_key_exists($name, $this->categoryIdsByName[$target->id] ?? [])) {
+            $this->categoryIdsByName[$target->id][$name] = Category::where('shop_id', $target->id)
+                ->where('name', $name)
+                ->value('id');
+        }
+
+        return $this->categoryIdsByName[$target->id][$name];
     }
 
     /**
