@@ -231,7 +231,7 @@ class CreditNoteTest extends TestCase
         $this->owner($theirs);
         $foreign = $this->invoice($theirs);
 
-        $this->credit($user, $foreign, 1)->assertForbidden();
+        $this->credit($user, $foreign, 1)->assertNotFound();
 
         $this->assertSame(0, CreditNote::count());
     }
@@ -248,7 +248,7 @@ class CreditNoteTest extends TestCase
 
         $this->actingAs($user)
             ->get("/{$user->code_user}/avoirs/" . CreditNote::firstOrFail()->id)
-            ->assertForbidden();
+            ->assertNotFound();
     }
 
     /**

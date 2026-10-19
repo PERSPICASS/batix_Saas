@@ -81,7 +81,7 @@ class CrossTenantAccessTest extends TestCase
                 'expense_date' => now()->toDateString(),
             ]);
 
-        $response->assertForbidden();
+        $response->assertNotFound();
         $this->assertSame('original', $expenseB->fresh()->title);
     }
 
@@ -97,7 +97,7 @@ class CrossTenantAccessTest extends TestCase
         $response = $this->actingAs($userA)
             ->delete("/{$userA->code_user}/depenses/{$expenseB->id}");
 
-        $response->assertForbidden();
+        $response->assertNotFound();
         $this->assertDatabaseHas('expenses', ['id' => $expenseB->id]);
     }
 

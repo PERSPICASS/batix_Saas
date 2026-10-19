@@ -12,10 +12,11 @@ use App\Support\GlobalDiscount;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BelongsToShop;
 
 class Invoice extends Model
 {
-    use CertifiedByFne, HasFactory, SoftDeletes;
+    use BelongsToShop, CertifiedByFne, HasFactory, SoftDeletes;
 
     /** Posé à l'enregistrement qui fait quitter le brouillon, lu juste après. */
     private bool $leavingDraft = false;

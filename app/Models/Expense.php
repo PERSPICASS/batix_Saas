@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\BelongsToShop;
 
 class Expense extends Model
 {
-    use HasFactory;
+    use BelongsToShop, HasFactory;
 
     /**
      * Le disque des justificatifs, hors du dossier servi par le serveur web.

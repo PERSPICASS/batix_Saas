@@ -229,7 +229,7 @@ class DocumentPdfTest extends TestCase
 
         $this->actingAs($user)
             ->get("/{$user->code_user}/ventes/{$sale->id}/pdf")
-            ->assertForbidden();
+            ->assertNotFound();
     }
 
     public function test_another_tenants_invoice_cannot_be_downloaded(): void
@@ -243,6 +243,6 @@ class DocumentPdfTest extends TestCase
 
         $this->actingAs($user)
             ->get("/{$user->code_user}/factures/{$invoice->id}/pdf")
-            ->assertForbidden();
+            ->assertNotFound();
     }
 }

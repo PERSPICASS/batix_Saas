@@ -136,7 +136,7 @@ class InventoryAccessTest extends TestCase
 
         $this->actingAs($this->staffOf($shop))
             ->get(route('inventory.show', ['code_user' => $owner->code_user, 'inventory' => $foreign->id]))
-            ->assertForbidden();
+            ->assertNotFound();
     }
 
     /**

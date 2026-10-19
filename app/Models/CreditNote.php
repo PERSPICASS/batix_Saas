@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\BelongsToShop;
 
 /**
  * Un avoir corrige une facture émise sans la modifier.
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class CreditNote extends Model
 {
-    use CertifiedByFne, HasFactory;
+    use BelongsToShop, CertifiedByFne, HasFactory;
 
     protected $fillable = [
         'shop_id',

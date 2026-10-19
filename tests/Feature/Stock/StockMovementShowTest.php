@@ -65,6 +65,6 @@ class StockMovementShowTest extends TestCase
         $response = $this->actingAs($user)
             ->get("/{$user->code_user}/stocks/{$foreignMovement->id}");
 
-        $response->assertForbidden();
+        $response->assertNotFound();
     }
 }

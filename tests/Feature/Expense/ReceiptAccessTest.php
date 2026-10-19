@@ -98,7 +98,7 @@ class ReceiptAccessTest extends TestCase
 
         $this->actingAs($intruder)
             ->get($this->receiptUrl($expense, $intruder))
-            ->assertForbidden();
+            ->assertNotFound();
     }
 
     /** Une dépense sans justificatif ne doit pas révéler la différence par une erreur serveur. */

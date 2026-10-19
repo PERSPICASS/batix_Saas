@@ -277,7 +277,7 @@ class InvoiceFreezeTest extends TestCase
 
         $this->actingAs($user)
             ->post("/{$user->code_user}/factures/{$foreign->id}/statut", ['status' => 'paid'])
-            ->assertForbidden();
+            ->assertNotFound();
 
         $this->assertSame('sent', $foreign->fresh()->status);
     }
