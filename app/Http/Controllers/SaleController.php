@@ -241,6 +241,11 @@ class SaleController extends Controller
             // vérification sur la base d'un solde périmé (double encaissement).
             $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
+            // Une vente annulée garde son reste dû en base, mais il n'est plus dû.
+            if (in_array($sale->status, ['cancelled', 'returned'], true)) {
+                return ['error' => 'Cette vente est annulée ou retournée : aucun paiement ne peut y être enregistré.'];
+            }
+
             if ($sale->remaining_amount <= 0) {
                 return ['error' => 'Cette vente n\'a pas de reste à payer.'];
             }
@@ -333,28 +338,42 @@ class SaleController extends Controller
             return back()->with('error', 'Vous ne pouvez annuler que les ventes du jour. Contactez un administrateur pour les ventes plus anciennes.');
         }
 
-        // Impossible d'annuler une vente déjà annulée
-        if ($sale->status === 'cancelled') {
-            return back()->with('error', 'Cette vente est déjà annulée.');
-        }
+        // Le statut est relu sous verrou : deux annulations soumises au même instant
+        // passaient toutes les deux le contrôle et remettaient le stock deux fois.
+        $error = DB::transaction(function () use ($sale) {
+            $sale = Sale::whereKey($sale->id)->lockForUpdate()->firstOrFail();
 
-        DB::transaction(function () use ($sale) {
-            // Remettre le stock uniquement si la vente n'était pas déjà retournée
-            if ($sale->status !== 'returned') {
-                foreach ($sale->items as $item) {
-                    if ($item->product) {
-                        StockMovementService::recordSaleCancellation(
-                            $item->product,
-                            $item->quantity,
-                            $sale->shop_id,
-                            $sale
-                        );
-                    }
+            if ($sale->status === 'cancelled') {
+                return 'Cette vente est déjà annulée.';
+            }
+
+            // Les unités dont le retour est approuvé sont déjà revenues en stock :
+            // annuler la vente les y remettait une seconde fois, et la réactiver
+            // ensuite retirait du stock des articles que le client avait rendus. On
+            // annule donc les retours d'abord, la vente ensuite.
+            if ($sale->returns()->exists()) {
+                return "Cette vente a des retours : annulez-les d'abord, puis annulez la vente.";
+            }
+
+            foreach ($sale->items as $item) {
+                if ($item->product) {
+                    StockMovementService::recordSaleCancellation(
+                        $item->product,
+                        $item->quantity,
+                        $sale->shop_id,
+                        $sale
+                    );
                 }
             }
 
             $sale->update(['status' => 'cancelled']);
+
+            return null;
         });
+
+        if ($error) {
+            return back()->with('error', $error);
+        }
 
         return redirect()->route('sales.index', ['code_user' => $code_user])
             ->with('success', 'Vente ' . $sale->ticket_number . ' annulée avec succès.');
@@ -423,7 +442,9 @@ class SaleController extends Controller
                 }
             }
 
-            $sale->update(['status' => 'completed']);
+            // Une vente à crédit retrouve son statut d'impayée : la passer en
+            // « completed » laissait croire qu'elle était soldée.
+            $sale->update(['status' => $sale->remaining_amount > 0 ? 'pending' : 'completed']);
 
             return null;
         });

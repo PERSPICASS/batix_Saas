@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\GlobalDiscount;
 use App\Traits\BelongsToShop;
 
 class Sale extends Model
@@ -110,9 +111,17 @@ class Sale extends Model
         // la taxe de chaque ligne pour obtenir un sous-total HT, sans quoi la taxe était
         // comptée deux fois dans le total de la vente.
         $this->subtotal = $this->items->sum(fn ($item) => $item->total - $item->tax_amount);
-        $this->tax_amount = $this->items->sum('tax_amount');
-        $this->total = $this->subtotal + $this->tax_amount - $this->discount_amount;
-        $this->change_amount = $this->amount_paid - $this->total;
+
+        // Même règle que SaleCreationService : la remise réduit la base imposable.
+        // Ce recalcul tourne à l'enregistrement de chaque ligne, donc APRÈS le
+        // service, et retranchait encore la remise du TTC : toute vente remisée sur
+        // un produit taxé repartait avec une TVA et un total surévalués, une monnaie
+        // rendue négative, et un reste dû calculé sur l'ancien total.
+        $discount = GlobalDiscount::effective((float) $this->subtotal, (float) $this->discount_amount);
+        $this->discount_amount = $discount;
+        $this->tax_amount = round($this->items->sum('tax_amount') * GlobalDiscount::ratio((float) $this->subtotal, $discount), 2);
+        $this->total = round($this->subtotal - $discount + $this->tax_amount, 2);
+        $this->change_amount = max(0, $this->amount_paid - $this->total);
         $this->save();
     }
 
