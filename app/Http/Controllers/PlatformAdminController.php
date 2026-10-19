@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\SubscriptionInvoiceMail;
 use App\Models\User;
 use App\Models\Shop;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Services\PlatformMetrics;
+use App\Services\SubscriptionActivator;
 use App\Support\ConcurrencySafe;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -686,44 +686,8 @@ class PlatformAdminController extends Controller implements HasMiddleware
     public function activateSubscription(Subscription $subscription): RedirectResponse
     {
 
-        // Un seul abonnement actif à la fois : on annule les autres avant d'activer celui-ci.
-        Subscription::where('user_id', $subscription->user_id)
-            ->where('id', '!=', $subscription->id)
-            ->where('status', 'active')
-            ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
-
-        $months = $subscription->billing_cycle === 'yearly' ? 12 : 1;
-
-        // A pending request may have sat for weeks: never activate it straight
-        // into the past.
-        $expiresAt = $subscription->expires_at && $subscription->expires_at->isFuture()
-            ? $subscription->expires_at
-            : now()->addMonths($months);
-
-        $subscription->update([
-            'status'       => 'active',
-            'started_at'   => $subscription->started_at ?? now(),
-            'expires_at'   => $expiresAt,
-            'cancelled_at' => null,
-        ]);
+        app(SubscriptionActivator::class)->activatePending($subscription);
         $this->audit('subscription_activated', $subscription);
-
-        // Mark related pending invoices as paid
-        $subscription->invoices()->where('status', 'pending')->update([
-            'status' => 'paid',
-            'paid_at' => now(),
-        ]);
-
-        $invoice = $subscription->invoices()->latest()->first();
-        if ($invoice) {
-            try {
-                Mail::to($subscription->user->email)->send(
-                    new SubscriptionInvoiceMail($subscription->user, $subscription->fresh(), $invoice)
-                );
-            } catch (\Throwable $e) {
-                Log::error('SubscriptionInvoiceMail failed', ['user' => $subscription->user_id, 'error' => $e->getMessage()]);
-            }
-        }
 
         return back()->with('success', __('platform.flash.subscription_activated'));
     }

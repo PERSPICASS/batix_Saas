@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\SubscriptionInvoiceMail;
 use App\Models\ChariowCheckout;
-use App\Models\Subscription;
-use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
 use App\Services\ChariowService;
+use App\Services\SubscriptionActivator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ChariowController extends Controller
 {
-    public function __construct(private ChariowService $chariow) {}
+    public function __construct(
+        private ChariowService $chariow,
+        private SubscriptionActivator $activator,
+    ) {}
 
     /**
      * Ouvre une session de paiement Chariow pour un plan.
@@ -389,82 +389,44 @@ class ChariowController extends Controller
      */
     private function activateSubscription(ChariowCheckout $checkout): void
     {
-        // Verrou + re-vérification du flag dans la transaction : le webhook et le
-        // retour navigateur peuvent arriver en même temps, et sans ce verrou les deux
-        // passeraient le test avant que l'un persiste le flag — deux abonnements et
-        // deux factures pour un seul paiement.
-        $result = DB::transaction(function () use ($checkout) {
-            $locked = ChariowCheckout::where('id', $checkout->id)->lockForUpdate()->first();
+        // Le montant facturé est celui réellement encaissé, pas le prix du plan :
+        // une remise ou un produit de test le fait diverger, et une facture qui
+        // annonce 15 000 pour 1 000 reçus est fausse. Repli sur le prix attendu
+        // si la vente ne porte pas de montant.
+        $amount = isset($checkout->metadata['amount']['value'])
+            ? (float) $checkout->metadata['amount']['value']
+            : (float) $checkout->amount;
 
-            if (!$locked || $locked->subscription_activated) {
-                return null;
-            }
+        $this->activator->activatePaid(
+            $checkout->user,
+            $checkout->plan,
+            $checkout->billing_cycle,
+            $amount,
+            'chariow',
+            [
+                'payment_method_display' => 'Chariow',
+                'chariow_sale_id'        => $checkout->sale_id,
+                'chariow_reference'      => $checkout->reference,
+            ],
+            [
+                'chariow_sale_id'        => $checkout->sale_id,
+                'payment_method_display' => 'Chariow',
+            ],
+            // Verrou + re-vérification du drapeau dans la transaction : le webhook et
+            // le retour navigateur peuvent arriver en même temps, et sans ce verrou les
+            // deux passeraient le test — deux abonnements et deux factures pour un
+            // seul paiement. Le drapeau est posé dans la même transaction.
+            claim: function () use ($checkout) {
+                $locked = ChariowCheckout::whereKey($checkout->id)->lockForUpdate()->first();
 
-            $user   = $locked->user;
-            $plan   = $locked->plan;
-            $months = $locked->billing_cycle === 'yearly' ? 12 : 1;
+                if (!$locked || $locked->subscription_activated) {
+                    return false;
+                }
 
-            // Le montant facturé est celui réellement encaissé, pas le prix du plan :
-            // une remise ou un produit de test le fait diverger, et une facture qui
-            // annonce 15 000 pour 1 000 reçus est fausse. Repli sur le prix attendu
-            // si la vente ne porte pas de montant.
-            $amount = isset($locked->metadata['amount']['value'])
-                ? (float) $locked->metadata['amount']['value']
-                : (float) $locked->amount;
+                $locked->update(['subscription_activated' => true]);
 
-            Subscription::where('user_id', $user->id)
-                ->where('status', 'active')
-                ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
-
-            $subscription = Subscription::create([
-                'user_id'              => $user->id,
-                'subscription_plan_id' => $plan->id,
-                'status'               => 'active',
-                'started_at'           => now(),
-                'expires_at'           => now()->addMonths($months),
-                'amount'               => $amount,
-                'billing_cycle'        => $locked->billing_cycle,
-                'metadata'             => [
-                    'payment_method'         => 'chariow',
-                    'payment_method_display' => 'Chariow',
-                    'chariow_sale_id'        => $locked->sale_id,
-                    'chariow_reference'      => $locked->reference,
-                ],
-            ]);
-
-            $invoice = SubscriptionInvoice::create([
-                'subscription_id' => $subscription->id,
-                'user_id'         => $user->id,
-                'invoice_number'  => SubscriptionInvoice::generateInvoiceNumber(),
-                'amount'          => $amount,
-                'tax'             => 0,
-                'total'           => $amount,
-                'status'          => 'paid',
-                'issued_at'       => now(),
-                'paid_at'         => now(),
-                'due_at'          => now(),
-                'payment_method'  => 'chariow',
-                'metadata'        => [
-                    'chariow_sale_id'        => $locked->sale_id,
-                    'payment_method_display' => 'Chariow',
-                ],
-            ]);
-
-            $locked->update(['subscription_activated' => true]);
-
-            return [$user, $subscription, $invoice];
-        });
-
-        if (!$result) {
-            return;
-        }
-
-        [$user, $subscription, $invoice] = $result;
-
-        try {
-            Mail::to($user->email)->send(new SubscriptionInvoiceMail($user, $subscription, $invoice));
-        } catch (\Throwable $e) {
-            Log::error('SubscriptionInvoiceMail failed', ['user' => $user->id, 'error' => $e->getMessage()]);
-        }
+                return true;
+            },
+        );
     }
 }

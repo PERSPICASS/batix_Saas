@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\SubscriptionInvoiceMail;
 use App\Models\SubscriptionPlan;
 use App\Models\Subscription;
-use App\Models\SubscriptionInvoice;
 use App\Models\User;
+use App\Services\SubscriptionActivator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class PaddleController extends Controller
 {
+    public function __construct(private SubscriptionActivator $activator) {}
+
     public function checkout(Request $request, SubscriptionPlan $plan): JsonResponse
     {
         $user = Auth::user();
@@ -121,11 +120,6 @@ class PaddleController extends Controller
             return response()->json(['status' => 'ignored']);
         }
 
-        // Idempotence : Paddle peut renvoyer le même événement plusieurs fois.
-        if (Subscription::where('metadata->paddle_transaction_id', $transactionId)->exists()) {
-            return response()->json(['status' => 'already_processed']);
-        }
-
         $user = User::find($userId);
         $plan = SubscriptionPlan::where('slug', $planSlug)->first();
 
@@ -134,69 +128,25 @@ class PaddleController extends Controller
             return response()->json(['status' => 'ignored']);
         }
 
-        $this->activateSubscription($user, $plan, $billingCycle, $transactionId);
-
-        return response()->json(['status' => 'ok']);
-    }
-
-    /**
-     * Create subscription + invoice after a confirmed Paddle transaction.
-     * Mirrors PawaPayController::activateSubscription / JekoController::activateSubscription.
-     */
-    private function activateSubscription(User $user, SubscriptionPlan $plan, string $billingCycle, string $transactionId): void
-    {
-        $months = $billingCycle === 'yearly' ? 12 : 1;
         $amount = $billingCycle === 'yearly'
             ? round((float) $plan->price * 10)
             : (float) $plan->price;
 
-        $result = DB::transaction(function () use ($user, $plan, $months, $amount, $billingCycle, $transactionId) {
-            Subscription::where('user_id', $user->id)
-                ->where('status', 'active')
-                ->update(['status' => 'cancelled', 'cancelled_at' => now()]);
+        // Idempotence : Paddle peut renvoyer le même événement, y compris en parallèle.
+        // La vérification tourne sous le verrou du compte, pas avant : hors verrou,
+        // deux livraisons simultanées la passaient toutes les deux.
+        $activated = $this->activator->activatePaid(
+            $user,
+            $plan,
+            $billingCycle,
+            $amount,
+            'paddle',
+            ['paddle_transaction_id' => $transactionId],
+            ['paddle_transaction_id' => $transactionId],
+            claim: fn () => !Subscription::where('metadata->paddle_transaction_id', $transactionId)->exists(),
+        );
 
-            $subscription = Subscription::create([
-                'user_id' => $user->id,
-                'subscription_plan_id' => $plan->id,
-                'status' => 'active',
-                'started_at' => now(),
-                'expires_at' => now()->addMonths($months),
-                'amount' => $amount,
-                'billing_cycle' => $billingCycle,
-                'metadata' => [
-                    'payment_method' => 'paddle',
-                    'paddle_transaction_id' => $transactionId,
-                ],
-            ]);
-
-            $invoice = SubscriptionInvoice::create([
-                'subscription_id' => $subscription->id,
-                'user_id' => $user->id,
-                'invoice_number' => SubscriptionInvoice::generateInvoiceNumber(),
-                'amount' => $amount,
-                'tax' => 0,
-                'total' => $amount,
-                'status' => 'paid',
-                'issued_at' => now(),
-                'paid_at' => now(),
-                'due_at' => now(),
-                'payment_method' => 'paddle',
-                'metadata' => [
-                    'paddle_transaction_id' => $transactionId,
-                ],
-            ]);
-
-            return [$subscription, $invoice];
-        });
-
-        try {
-            [$subscription, $invoice] = $result;
-            Mail::to($user->email)->send(
-                new SubscriptionInvoiceMail($user, $subscription, $invoice)
-            );
-        } catch (\Throwable $e) {
-            \Log::error('SubscriptionInvoiceMail failed', ['user' => $user->id, 'error' => $e->getMessage()]);
-        }
+        return response()->json(['status' => $activated ? 'ok' : 'already_processed']);
     }
 
     public function success(Request $request): \Inertia\Response
