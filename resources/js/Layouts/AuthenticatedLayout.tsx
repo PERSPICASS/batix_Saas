@@ -576,27 +576,28 @@ export default function Authenticated({
                 </div>
             </aside>
 
-            <div className="lg:pl-72 print:pl-0">
+            <div className="min-w-0 lg:pl-72 print:pl-0">
                 <header className="print:hidden sticky top-0 z-30 border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setMobileSidebarOpen(true)}
-                                className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10 lg:hidden"
-                            >
-                                <Menu className="size-5" />
-                            </button>
-                            <div>
-                                {header ?? (
-                                    <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                        {t.nav.dashboard}
-                                    </h1>
-                                )}
-                            </div>
+                    {/* Sur mobile, le titre de la page (souvent accompagné de boutons)
+                        passe sous la barre d'icônes : sur une seule ligne, l'ensemble
+                        dépassait l'écran et élargissait toute la page. */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setMobileSidebarOpen(true)}
+                            className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10 lg:hidden"
+                        >
+                            <Menu className="size-5" />
+                        </button>
+                        <div className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
+                            {header ?? (
+                                <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                    {t.nav.dashboard}
+                                </h1>
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                             <LanguageSwitcher />
 
                             {lowStockCount > 0 && user?.role !== 'admin_platforme' && (
@@ -701,7 +702,8 @@ export default function Authenticated({
                                     onClick={() => setUserMenuOpen((prev) => !prev)}
                                     className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-left text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
-                                    <span>
+                                    <User className="size-4 sm:hidden" />
+                                    <span className="hidden sm:block">
                                         <span className="block font-semibold text-amber-600 dark:text-amber-200">
                                             {user?.name ?? 'Visiteur'}
                                         </span>
@@ -716,6 +718,10 @@ export default function Authenticated({
                                     <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {user ? (
                                             <>
+                                                <div className="border-b border-slate-200 px-3 py-2 dark:border-white/10 sm:hidden">
+                                                    <p className="truncate text-sm font-semibold text-amber-600 dark:text-amber-200">{user.name}</p>
+                                                    <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{user.email}</p>
+                                                </div>
                                                 {user.role !== 'admin_platforme' && (
                                                     <>
                                                         <Link
@@ -819,7 +825,7 @@ export default function Authenticated({
                     )}
                 </header>
 
-                <main className="px-4 py-6 print:p-0 sm:px-6 lg:px-8">
+                <main className="min-w-0 px-4 py-6 print:p-0 sm:px-6 lg:px-8">
                     <ReadOnlyAccountGuard />
                     {children}
                 </main>

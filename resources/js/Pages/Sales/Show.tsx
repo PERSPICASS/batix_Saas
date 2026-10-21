@@ -253,8 +253,8 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
     return (
         <AuthenticatedLayout
             header={
-                <div className="print:hidden flex items-center justify-between">
-                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.sales.title} {displayedSale.ticket_number}</h1>
+                <div className="print:hidden flex flex-wrap items-center justify-between gap-2">
+                    <h1 className="min-w-0 truncate text-xl font-semibold text-slate-900 dark:text-white">{t.sales.title} {displayedSale.ticket_number}</h1>
                     <div className="flex items-center gap-2">
 
                         <button
@@ -291,14 +291,14 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
             `}</style>
 
             <div className="space-y-4">
-                <div className='w-full print:hidden flex justify-between items-center'>
+                <div className='w-full print:hidden flex flex-wrap justify-between items-center gap-3'>
                     <Link
                         href={route('sales.index')}
                         className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                     >
                         <ArrowLeft className="size-4" /> {t.sales.title}
                     </Link>
-                    <div className='flex items-center gap-2'>
+                    <div className='flex flex-wrap items-center gap-2'>
                         {canCancel && (
                             <button
                                 onClick={() => setShowCancelModal(true)}
@@ -333,7 +333,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                         </button>
                     </div>
                 </div>
-                <div id="ticket-print" className="rounded-2xl border border-white/10 bg-white/5 p-8 print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black">
+                <div id="ticket-print" className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-8 print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black">
                     {/* En-tête du ticket */}
                     <div className="mb-8 text-center">
                         {displayedSale.shop.logo && (
