@@ -2,8 +2,11 @@ FROM php:8.4-fpm-alpine AS base
 
 WORKDIR /var/www/html
 
-# Install system dependencies
-RUN apk add --no-cache \
+# Install system dependencies. `apk upgrade` first: the php base image can lag
+# the Alpine repo, and a -dev package pinned to a newer musl (musl-dev r3 vs the
+# image's musl r2, 2026-10-21) then makes `apk add` fail with "breaks:".
+RUN apk upgrade --no-cache && \
+    apk add --no-cache \
     curl \
     git \
     zip \
@@ -77,8 +80,10 @@ WORKDIR /var/www/html
 # here too. zip is required by maatwebsite/excel (PhpSpreadsheet → ZipArchive)
 # for the xlsx product import/export; gd by the blog-image command. Runtime
 # shared libs (libzip, libpng…) are kept; the -dev headers are installed as a
-# virtual package and removed once the extensions are built.
-RUN apk add --no-cache \
+# virtual package and removed once the extensions are built. `apk upgrade`
+# first, for the same reason as in the base stage.
+RUN apk upgrade --no-cache && \
+    apk add --no-cache \
     mysql-client \
     postgresql-client \
     nodejs \
