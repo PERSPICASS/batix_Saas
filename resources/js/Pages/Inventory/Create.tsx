@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AddLineButton from '@/Components/AddLineButton';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState, useRef, useEffect } from 'react';
 import { Plus, Trash2, Search, X, ChevronDown, Info, AlertTriangle } from 'lucide-react';
@@ -484,6 +485,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                 );
                             })}
                         </div>
+                        <AddLineButton onClick={addItem} label={t.inventory.form.addProduct} />
                         <InputError message={errors.items} />
                     </div>
 

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AddLineButton from '@/Components/AddLineButton';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowLeft, Plus, Trash2, Save, ShoppingCart, Package, Search, X, ChevronDown } from 'lucide-react';
@@ -542,6 +543,7 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                                 </div>
                             ))}
                         </div>
+                        <AddLineButton onClick={addItem} label={t.purchases.form.addItem} />
                     </div>
 
                     {/* Section 3: Récapitulatif */}

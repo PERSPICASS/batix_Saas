@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AddLineButton from '@/Components/AddLineButton';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useState } from 'react';
 import { Calculator, FileText, Plus, Search, Trash2, UserRound, X } from 'lucide-react';
@@ -550,6 +551,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 </div>
                             ))}
                         </div>
+                        <AddLineButton onClick={addItem} label={t.invoices.form.addLine} />
                         <InputError message={errors.items} />
                     </div>
 
@@ -561,7 +563,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
                                 onChange={(e) => setData('notes', e.target.value)}
                                 rows={4}
                                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
-                                placeholder="{t.invoices.form.additionalInfo}..."
+                                placeholder={`${t.invoices.form.additionalInfo}...`}
                             />
                         </label>
                     </div>

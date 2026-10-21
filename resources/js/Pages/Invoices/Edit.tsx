@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AddLineButton from '@/Components/AddLineButton';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import { Calculator, FilePenLine, Plus, Trash2 } from 'lucide-react';
@@ -398,6 +399,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                 </div>
                             ))}
                         </div>
+                        <AddLineButton onClick={addItem} label={t.invoices.form.addLine} />
                         <InputError message={errors.items} />
                     </div>
 

@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AddLineButton from '@/Components/AddLineButton';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Search, Trash2, X } from 'lucide-react';
 import { FormEventHandler, KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useState } from 'react';
@@ -330,6 +331,7 @@ export default function Create({ shops, customers, products }: Props) {
                                 );
                             })}
                         </div>
+                        <AddLineButton onClick={addItem} label={t.preorders.form.addProduct} />
                         <InputError message={errors.items} />
 
                         {totalAmount > 0 && (

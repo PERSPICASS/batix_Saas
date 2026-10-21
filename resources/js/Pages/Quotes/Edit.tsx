@@ -1,4 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AddLineButton from '@/Components/AddLineButton';
 import { Head, router } from '@inertiajs/react';
 import { FileText, Plus, Trash2, ArrowLeft, Calculator, Search, X } from 'lucide-react';
 import { useState, useMemo, useEffect, KeyboardEvent as ReactKeyboardEvent, FormEventHandler } from 'react';
@@ -268,6 +269,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                                 </div>
                             ))}
                         </div>
+                        <AddLineButton onClick={handleAddItem} label={t.invoices.form.addLine} />
                     </div>
 
                     {/* Notes */}
