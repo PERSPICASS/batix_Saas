@@ -2,6 +2,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useMemo, useState } from 'react';
 import { Calculator, FilePenLine, Plus, Trash2 } from 'lucide-react';
+import { useRoute } from '@/utils/route';
+import { documentTotals } from '@/utils/totals';
+import Currency, { useShopSettings } from '@/Components/Currency';
+import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
 
 interface Customer {
     id: number;
@@ -16,7 +21,12 @@ interface Shop {
 interface Product {
     id: number;
     name: string;
-    sale_price: string;
+    // `selling_price`, le nom réel de la colonne : l'interface déclarait `sale_price`,
+    // qui n'existe ni en base ni comme accesseur, donc choisir un produit posait
+    // `undefined` et vidait le prix au lieu de le remplir.
+    selling_price: string;
+    // NULL = le produit n'a pas de taux propre et suit celui de la boutique.
+    tax_rate: number | string | null;
 }
 
 interface InvoiceItem {
@@ -38,6 +48,7 @@ interface Invoice {
     due_date: string;
     status: string;
     payment_method: string | null;
+    discount_amount: number | string;
     notes: string | null;
     items: InvoiceItem[];
 }
@@ -50,6 +61,10 @@ interface Props {
 }
 
 export default function InvoicesEdit({ invoice, customers, shops, products }: Props) {
+    const { t } = useLocale();
+    const route = useRoute();
+    const { currencySymbol, defaultTaxRate } = useShopSettings();
+
     const [items, setItems] = useState<InvoiceItem[]>(
         invoice.items.map((item) => ({
             id: item.id,
@@ -69,6 +84,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         due_date: invoice.due_date,
         status: invoice.status,
         payment_method: invoice.payment_method || '',
+        discount_amount: invoice.discount_amount || 0,
         notes: invoice.notes || '',
         items: items,
     });
@@ -81,16 +97,12 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         }, 0);
     }, [items]);
 
-    const totalTax = useMemo(() => {
-        return items.reduce((sum, item) => {
-            const qty = Number(item.quantity) || 0;
-            const price = Number(item.unit_price) || 0;
-            const taxRate = Number(item.tax_rate) || 0;
-            return sum + (qty * price * taxRate) / 100;
-        }, 0);
-    }, [items]);
-
-    const total = subtotal + totalTax;
+    // Même calcul que le serveur : la remise réduit la base imposable avant la TVA, elle
+    // n'était jusqu'ici retranchée qu'après.
+    const totals = useMemo(() => documentTotals(items, data.discount_amount), [items, data.discount_amount]);
+    const totalTax = totals.tax;
+    const discountAmount = totals.discount;
+    const total = totals.total;
 
     const addItem = () => {
         const newItem: InvoiceItem = {
@@ -99,7 +111,10 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
             description: '',
             quantity: 1,
             unit_price: 0,
-            tax_rate: 20,
+            // Le taux configuré de la boutique, pas un nombre magique : cet écran
+            // proposait 20 % quand l'écran de création proposait 0 %, pour le même
+            // produit dans la même boutique.
+            tax_rate: defaultTaxRate,
         };
         setItems((prev) => [...prev, newItem]);
     };
@@ -121,7 +136,12 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                         const product = products.find((p) => p.id === Number(value));
                         if (product) {
                             updated.product_name = product.name;
-                            updated.unit_price = product.sale_price;
+                            updated.unit_price = product.selling_price;
+                            // La TVA suit le produit choisi, comme son prix. Sans cette
+                            // ligne, un produit exonéré restait facturé au taux de la
+                            // boutique, alors qu'un devis pour le même produit affichait
+                            // bien 0 % — le serveur, lui, résout depuis le produit.
+                            updated.tax_rate = product.tax_rate ?? defaultTaxRate;
                         }
                     }
                     
@@ -136,20 +156,20 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         e.preventDefault();
         // Set items in data before submitting
         data.items = items;
-        put(route('invoices.update', invoice.id));
+        put(route('invoices.update', { invoice: invoice.id }));
     };
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Modifier facture</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Modifier facture</h1>}
         >
             <Head title="Modifier facture" />
 
             <form onSubmit={submit} className="grid gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-white">
+                            <div className="flex items-center gap-2 text-slate-900 dark:text-white">
                                 <FilePenLine className="size-5 text-amber-200" />
                                 <h2 className="text-lg font-semibold">Informations facture</h2>
                             </div>
@@ -160,34 +180,34 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
 
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label htmlFor="shop_id" className="block text-sm font-medium text-slate-200">
-                                    Boutique *
+                                <label htmlFor="shop_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.invoices.form.shop} *
                                 </label>
                                 <select
                                     id="shop_id"
                                     value={data.shop_id}
                                     onChange={(e) => setData('shop_id', Number(e.target.value))}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
-                                    <option value="">Sélectionner une boutique</option>
+                                    <option value="">{t.invoices.form.selectShop}</option>
                                     {shops.map((shop) => (
                                         <option key={shop.id} value={shop.id}>
                                             {shop.name}
                                         </option>
                                     ))}
                                 </select>
-                                {errors.shop_id && <p className="mt-1 text-sm text-red-400">{errors.shop_id}</p>}
+                                <InputError message={errors.shop_id} />
                             </div>
 
                             <div>
-                                <label htmlFor="customer_id" className="block text-sm font-medium text-slate-200">
-                                    Client *
+                                <label htmlFor="customer_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.invoices.form.customer} *
                                 </label>
                                 <select
                                     id="customer_id"
                                     value={data.customer_id}
                                     onChange={(e) => setData('customer_id', Number(e.target.value))}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
                                     <option value="">Sélectionner un client</option>
                                     {customers.map((customer) => (
@@ -196,37 +216,39 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                         </option>
                                     ))}
                                 </select>
-                                {errors.customer_id && <p className="mt-1 text-sm text-red-400">{errors.customer_id}</p>}
+                                <InputError message={errors.customer_id} />
                             </div>
 
                             <div>
-                                <label htmlFor="status" className="block text-sm font-medium text-slate-200">
-                                    Statut *
+                                <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.invoices.form.status} *
                                 </label>
                                 <select
                                     id="status"
                                     value={data.status}
                                     onChange={(e) => setData('status', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
-                                    <option value="draft">Brouillon</option>
-                                    <option value="sent">Envoyée</option>
-                                    <option value="paid">Payée</option>
-                                    <option value="overdue">En retard</option>
-                                    <option value="cancelled">Annulée</option>
+                                    {/* Seuls les deux statuts qu'un brouillon peut prendre :
+                                        l'encaissement et l'annulation passent par l'action
+                                        dédiée de la page de la facture, une fois émise.
+                                        (« En retard » figurait ici alors que le serveur ne
+                                        l'a jamais accepté.) */}
+                                    <option value="draft">{t.invoices.status.draft}</option>
+                                    <option value="sent">{t.invoices.status.sent}</option>
                                 </select>
-                                {errors.status && <p className="mt-1 text-sm text-red-400">{errors.status}</p>}
+                                <InputError message={errors.status} />
                             </div>
 
                             <div>
-                                <label htmlFor="payment_method" className="block text-sm font-medium text-slate-200">
-                                    Mode de paiement
+                                <label htmlFor="payment_method" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.invoices.form.paymentMethod}
                                 </label>
                                 <select
                                     id="payment_method"
                                     value={data.payment_method}
                                     onChange={(e) => setData('payment_method', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
                                     <option value="">Non payée</option>
                                     <option value="cash">Espèces</option>
@@ -234,49 +256,65 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     <option value="check">Chèque</option>
                                     <option value="transfer">Virement</option>
                                 </select>
-                                {errors.payment_method && <p className="mt-1 text-sm text-red-400">{errors.payment_method}</p>}
+                                <InputError message={errors.payment_method} />
                             </div>
 
                             <div>
-                                <label htmlFor="invoice_date" className="block text-sm font-medium text-slate-200">
-                                    Date de facture *
+                                <label htmlFor="invoice_date" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.invoices.form.invoiceDate} *
                                 </label>
                                 <input
                                     type="date"
                                     id="invoice_date"
                                     value={data.invoice_date}
                                     onChange={(e) => setData('invoice_date', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
-                                {errors.invoice_date && <p className="mt-1 text-sm text-red-400">{errors.invoice_date}</p>}
+                                <InputError message={errors.invoice_date} />
                             </div>
 
                             <div>
-                                <label htmlFor="due_date" className="block text-sm font-medium text-slate-200">
-                                    Date d'échéance *
+                                <label htmlFor="due_date" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.invoices.form.dueDate} *
                                 </label>
                                 <input
                                     type="date"
                                     id="due_date"
                                     value={data.due_date}
                                     onChange={(e) => setData('due_date', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 />
-                                {errors.due_date && <p className="mt-1 text-sm text-red-400">{errors.due_date}</p>}
+                                <InputError message={errors.due_date} />
+                            </div>
+
+                            <div>
+                                <label htmlFor="discount_amount" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                    {t.invoices.form.discount}
+                                </label>
+                                <input
+                                    type="number"
+                                    id="discount_amount"
+                                    min="0"
+                                    step="0.01"
+                                    value={data.discount_amount}
+                                    onChange={(e) => setData('discount_amount', Math.max(Number(e.target.value) || 0, 0))}
+                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                />
+                                <InputError message={errors.discount_amount} />
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">
-                            <h2 className="text-lg font-semibold text-white">Lignes de facture</h2>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Lignes de facture</h2>
                             <button
                                 type="button"
                                 onClick={addItem}
-                                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
+                                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
                                 <Plus className="size-3.5" />
-                                Ajouter ligne
+                                {t.invoices.form.addLine}
                             </button>
                         </div>
 
@@ -285,11 +323,11 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                 <div key={index} className="rounded-xl border border-white/10 bg-slate-900/60 p-3 space-y-3">
                                     <div className="grid gap-2 md:grid-cols-12">
                                         <div className="md:col-span-5 space-y-1">
-                                            <label className="text-xs text-slate-300">Produit #{index + 1}</label>
+                                            <label className="text-xs text-slate-600 dark:text-slate-300">Produit #{index + 1}</label>
                                             <select
                                                 value={item.product_id}
                                                 onChange={(e) => updateItem(index, 'product_id', e.target.value)}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-200"
                                             >
                                                 <option value="">Sélectionner un produit</option>
                                                 {products.map((product) => (
@@ -301,37 +339,37 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                         </div>
 
                                         <div className="md:col-span-2 space-y-1">
-                                            <label className="text-xs text-slate-300">Qté</label>
+                                            <label className="text-xs text-slate-600 dark:text-slate-300">Qté</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={item.quantity}
                                                 onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-200"
                                             />
                                         </div>
 
                                         <div className="md:col-span-2 space-y-1">
-                                            <label className="text-xs text-slate-300">Prix U. (DH)</label>
+                                            <label className="text-xs text-slate-600 dark:text-slate-300">Prix U. ({currencySymbol})</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
                                                 value={item.unit_price}
                                                 onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-200"
                                             />
                                         </div>
 
                                         <div className="md:col-span-2 space-y-1">
-                                            <label className="text-xs text-slate-300">TVA (%)</label>
+                                            <label className="text-xs text-slate-600 dark:text-slate-300">TVA (%)</label>
                                             <input
                                                 type="number"
                                                 step="0.01"
                                                 min="0"
                                                 value={item.tax_rate}
                                                 onChange={(e) => updateItem(index, 'tax_rate', e.target.value)}
-                                                className="w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-200"
                                             />
                                         </div>
 
@@ -348,24 +386,24 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                                     </div>
 
                                     <div className="space-y-1">
-                                        <label className="text-xs text-slate-300">Description</label>
+                                        <label className="text-xs text-slate-600 dark:text-slate-300">Description</label>
                                         <input
                                             type="text"
                                             value={item.description}
                                             onChange={(e) => updateItem(index, 'description', e.target.value)}
                                             placeholder="Description optionnelle"
-                                            className="w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-200"
                                         />
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        {errors.items && <p className="mt-2 text-sm text-red-400">{errors.items}</p>}
+                        <InputError message={errors.items} />
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-                        <label htmlFor="notes" className="block text-sm font-medium text-slate-200">
-                            Notes
+                    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+                        <label htmlFor="notes" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                            {t.invoices.form.notes}
                         </label>
                         <textarea
                             id="notes"
@@ -375,7 +413,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                             className="mt-1 w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                             placeholder="Notes internes..."
                         />
-                        {errors.notes && <p className="mt-1 text-sm text-red-400">{errors.notes}</p>}
+                        <InputError message={errors.notes} />
                     </div>
                 </section>
 
@@ -389,32 +427,26 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                         <div className="flex justify-between">
                             <span>Sous-total HT</span>
                             <span>
-                                {subtotal.toLocaleString('fr-FR', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}{' '}
-                                DH
+                                <Currency amount={subtotal} />
                             </span>
                         </div>
                         <div className="flex justify-between">
                             <span>TVA</span>
                             <span>
-                                {totalTax.toLocaleString('fr-FR', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                })}{' '}
-                                DH
+                                <Currency amount={totalTax} />
                             </span>
                         </div>
-                        <div className="mt-3 border-t border-white/15 pt-3 text-base font-semibold text-white">
+                        <div className="flex justify-between">
+                            <span>Remise</span>
+                            <span className="text-red-300">
+                                -<Currency amount={discountAmount} />
+                            </span>
+                        </div>
+                        <div className="mt-3 border-t border-gray-200 dark:border-white/15 pt-3 text-base font-semibold text-slate-900 dark:text-white">
                             <div className="flex justify-between">
                                 <span>Total TTC</span>
                                 <span className="text-amber-300">
-                                    {total.toLocaleString('fr-FR', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}{' '}
-                                    DH
+                                    <Currency amount={total} />
                                 </span>
                             </div>
                         </div>
@@ -426,13 +458,13 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
                             disabled={processing}
                             className="w-full rounded-lg bg-amber-300 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
                         >
-                            {processing ? 'Enregistrement...' : 'Enregistrer'}
+                            {processing ? t.common.actions.saving : t.invoices.form.updateButton}
                         </button>
                         <Link
                             href={route('invoices.index')}
                             className="block w-full rounded-lg border border-white/15 px-4 py-2.5 text-center text-sm text-slate-200 transition hover:bg-white/10"
                         >
-                            Retour
+                            {t.common.actions.back}
                         </Link>
                     </div>
                 </aside>

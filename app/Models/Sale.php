@@ -6,16 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\GlobalDiscount;
+use App\Traits\BelongsToShop;
 
 class Sale extends Model
 {
-    use HasFactory;
+    use BelongsToShop, HasFactory;
 
     protected $fillable = [
         'shop_id',
         'user_id',
         'customer_id',
         'ticket_number',
+        // Généré par le client hors ligne : rend le rejeu d'une vente en file d'attente
+        // idempotent. Voir la migration add_client_uuid_to_sales_table.
+        'client_uuid',
         'sale_date',
         'payment_method',
         'status',
@@ -25,17 +30,21 @@ class Sale extends Model
         'total',
         'amount_paid',
         'change_amount',
+        'remaining_amount',
+        'credit_due_date',
         'notes',
     ];
 
     protected $casts = [
         'sale_date' => 'datetime',
+        'credit_due_date' => 'date',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'change_amount' => 'decimal:2',
+        'remaining_amount' => 'decimal:2',
     ];
 
     protected static function boot()
@@ -54,22 +63,21 @@ class Sale extends Model
 
     public static function generateTicketNumber($shopId): string
     {
-        $date = date('Ymd');
-        $prefix = "TKT-{$date}";
-        
-        $lastSale = static::where('shop_id', $shopId)
+        $prefix = 'TKT-'.date('Ymd');
+
+        // Per shop since 2026-10-15 (unique on shop_id + ticket_number, like invoices).
+        // It used to be one counter shared by every tenant, 4 digits a day, found by
+        // sorting the strings: past 9999 sales a day platform-wide, "…10000" sorts
+        // below "…9999", the same number came back forever and every sale of every
+        // shop failed until midnight. The max is now taken numerically, so a busy
+        // shop simply goes to 5 digits.
+        $last = static::where('shop_id', $shopId)
             ->where('ticket_number', 'like', "{$prefix}%")
-            ->orderBy('ticket_number', 'desc')
-            ->first();
-        
-        if ($lastSale) {
-            $lastNumber = (int) substr($lastSale->ticket_number, -4);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+            ->pluck('ticket_number')
+            ->map(fn (string $number) => (int) substr($number, strlen($prefix)))
+            ->max() ?? 0;
+
+        return $prefix.str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
     }
 
     public function shop(): BelongsTo
@@ -99,16 +107,39 @@ class Sale extends Model
 
     public function calculateTotals(): void
     {
-        $this->subtotal = $this->items->sum('total');
-        $this->tax_amount = $this->items->sum('tax_amount');
-        $this->total = $this->subtotal + $this->tax_amount - $this->discount_amount;
-        $this->change_amount = $this->amount_paid - $this->total;
+        // item.total est TTC (subtotal + tax_amount, voir SaleItem::saving()) : soustraire
+        // la taxe de chaque ligne pour obtenir un sous-total HT, sans quoi la taxe était
+        // comptée deux fois dans le total de la vente.
+        $this->subtotal = $this->items->sum(fn ($item) => $item->total - $item->tax_amount);
+
+        // Même règle que SaleCreationService : la remise réduit la base imposable.
+        // Ce recalcul tourne à l'enregistrement de chaque ligne, donc APRÈS le
+        // service, et retranchait encore la remise du TTC : toute vente remisée sur
+        // un produit taxé repartait avec une TVA et un total surévalués, une monnaie
+        // rendue négative, et un reste dû calculé sur l'ancien total.
+        $discount = GlobalDiscount::effective((float) $this->subtotal, (float) $this->discount_amount);
+        $this->discount_amount = $discount;
+        $this->tax_amount = round($this->items->sum('tax_amount') * GlobalDiscount::ratio((float) $this->subtotal, $discount), 2);
+        $this->total = round($this->subtotal - $discount + $this->tax_amount, 2);
+        $this->change_amount = max(0, $this->amount_paid - $this->total);
         $this->save();
     }
 
     public function isCompleted(): bool
     {
         return $this->status === 'completed';
+    }
+
+    public function isCredit(): bool
+    {
+        return $this->remaining_amount > 0;
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->isCredit()
+            && $this->credit_due_date
+            && $this->credit_due_date->isPast();
     }
 
     public function isReturned(): bool

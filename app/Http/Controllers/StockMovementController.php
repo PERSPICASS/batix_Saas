@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\StockMovement;
 use App\Models\Shop;
 use App\Models\Product;
+use App\Services\StockMovementService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -14,7 +18,16 @@ class StockMovementController extends Controller
 {
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
+        
+        $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
+        
         $query = StockMovement::with(['shop', 'product', 'user'])
+            ->whereIn('shop_id', $shopIds)
+            ->when($activeShopId, function ($q) use ($activeShopId) {
+                $q->where('shop_id', $activeShopId);
+            })
             ->orderBy('movement_date', 'desc')
             ->orderBy('created_at', 'desc');
 
@@ -47,24 +60,39 @@ class StockMovementController extends Controller
 
         return Inertia::render('Stocks/Index', [
             'movements' => $movements,
-            'shops' => Shop::select('id', 'name')->get(),
+            'shops' => $shops,
             'filters' => $request->only(['search', 'type', 'shop_id', 'date_from', 'date_to']),
         ]);
     }
 
     public function create(): Response
     {
+        $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
+        
+        $products = Product::with('shop')
+            ->where('is_active', true)
+            ->whereIn('shop_id', $shopIds)
+            ->get();
+
         return Inertia::render('Stocks/Create', [
-            'shops' => Shop::select('id', 'name')->get(),
-            'products' => Product::with('shop')->where('is_active', true)->get(),
+            'shops' => $shops,
+            'products' => $products,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $request->input('shop_id'))->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'product_id' => 'required|exists:products,id',
+            'product_id' => [
+                'required',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'type' => 'required|in:in,out,transfer,adjustment',
             'quantity' => 'required|integer|not_in:0',
             'unit_cost' => 'nullable|numeric|min:0',
@@ -72,38 +100,43 @@ class StockMovementController extends Controller
             'movement_date' => 'required|date',
         ]);
 
-        $validated['user_id'] = auth()->id();
-        $movement = StockMovement::create($validated);
+        DB::transaction(function () use ($validated) {
+            $product = Product::findOrFail($validated['product_id']);
+            StockMovementService::recordManualAdjustment(
+                $product,
+                (int) $validated['quantity'],
+                $validated['type'],
+                (int) $validated['shop_id'],
+                $validated['notes'] ?? null,
+                $validated['movement_date'],
+                isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null
+            );
+        });
 
-        // Update product stock
-        $product = Product::findOrFail($validated['product_id']);
-        if (in_array($validated['type'], ['in', 'return', 'adjustment']) && $validated['quantity'] > 0) {
-            $product->stock_quantity += abs($validated['quantity']);
-        } elseif (in_array($validated['type'], ['out', 'sale']) || $validated['quantity'] < 0) {
-            $product->stock_quantity -= abs($validated['quantity']);
-        }
-        $product->save();
-
-        return redirect()->route('stocks.index')->with('success', 'Mouvement de stock créé avec succès.');
+        return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement de stock créé avec succès.');
     }
 
-    public function show(StockMovement $stock): Response
+    public function show(string $code_user, StockMovement $stockMovement): Response
     {
-        $stock->load(['shop', 'product', 'user']);
-        return Inertia::render('Stocks/Show', ['movement' => $stock]);
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $stockMovement->shop_id)->exists()) {
+            abort(403);
+        }
+
+        $stockMovement->load(['shop', 'product', 'user']);
+        return Inertia::render('Stocks/Show', ['movement' => $stockMovement]);
     }
 
-    public function destroy(StockMovement $stock): RedirectResponse
+    public function destroy(string $code_user, StockMovement $stockMovement): RedirectResponse
     {
-        $product = $stock->product;
-        if (in_array($stock->type, ['in', 'return']) || $stock->quantity > 0) {
-            $product->stock_quantity -= abs($stock->quantity);
-        } else {
-            $product->stock_quantity += abs($stock->quantity);
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $stockMovement->shop_id)->exists()) {
+            abort(403);
         }
-        $product->save();
-        $stock->delete();
 
-        return redirect()->route('stocks.index')->with('success', 'Mouvement supprimé et stock ajusté.');
+        DB::transaction(function () use ($stockMovement) {
+            StockMovementService::reverseMovement($stockMovement);
+            $stockMovement->delete();
+        });
+
+        return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement supprimé et stock ajusté.');
     }
 }

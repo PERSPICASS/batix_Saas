@@ -49,4 +49,10 @@ class Subcategory extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    /** Subcategories inherit their category's visibility (see Category). */
+    public function scopeVisibleTo($query, User $user)
+    {
+        return $query->whereHas('category', fn ($q) => $q->visibleTo($user));
+    }
 }

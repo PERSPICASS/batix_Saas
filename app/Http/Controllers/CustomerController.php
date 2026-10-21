@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,13 +17,17 @@ class CustomerController extends Controller
      */
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         $search = $request->input('search');
         
         $query = Customer::with('shop')
             ->orderBy('name');
 
-        if ($shopId) {
+        // Filtrer par boutique active si sélectionnée
+        if ($activeShopId) {
+            $query->where('shop_id', $activeShopId);
+        } elseif ($shopId && Auth::user()->accessibleShopsQuery()->where('id', $shopId)->exists()) {
             $query->where('shop_id', $shopId);
         } else {
             // Afficher les clients de toutes les boutiques de l'utilisateur
@@ -42,7 +48,7 @@ class CustomerController extends Controller
 
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
-            'shops' => Auth::user()->shops,
+            'shops' => Auth::user()->accessibleShops(),
             'filters' => $request->only(['shop_id', 'search']),
         ]);
     }
@@ -52,7 +58,7 @@ class CustomerController extends Controller
      */
     public function create(): Response
     {
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
 
         return Inertia::render('Customers/Create', [
             'shops' => $shops,
@@ -70,29 +76,40 @@ class CustomerController extends Controller
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'tax_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+            // FNE (Côte d'Ivoire) : le NCC est l'identifiant fiscal du client, exigé
+            // par la DGI quand le client est une entreprise (B2B).
+            'ncc' => 'nullable|string|max:30|required_if:fne_template,B2B',
+            'fne_template' => 'nullable|in:B2C,B2B,B2G',
+        ], [
+            'ncc.required_if' => 'Le NCC est obligatoire pour un client entreprise (B2B).',
         ]);
 
-        // Vérifier que la boutique appartient à l'utilisateur
-        $shop = Auth::user()->shops()->findOrFail($validated['shop_id']);
-        
-        $shop->customers()->create($validated);
+        $validated['fne_template'] = $validated['fne_template'] ?? 'B2C';
 
-        return redirect()->route('customers.index')->with('success', 'Client créé avec succès.');
+        // Vérifier que la boutique appartient à l'utilisateur
+        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+        
+        $customer = $shop->customers()->create($validated);
+
+        // Log activity
+        ActivityLogger::created($customer, $customer->name);
+
+        return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client créé avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Customer $customer)
+    public function show(string $code_user, Customer $customer)
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
+            abort(403);
+        }
+
         $customer->load(['shop', 'invoices.items']);
-        
+
         return Inertia::render('Customers/Show', [
             'customer' => $customer,
         ]);
@@ -101,10 +118,14 @@ class CustomerController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Customer $customer): Response
+    public function edit(string $code_user, Customer $customer): Response
     {
-        $shops = Auth::user()->shops;
-        
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
+            abort(403);
+        }
+
+        $shops = Auth::user()->accessibleShops();
+
         return Inertia::render('Customers/Edit', [
             'customer' => $customer,
             'shops' => $shops,
@@ -114,42 +135,59 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Customer $customer)
+    public function update(Request $request, string $code_user, Customer $customer)
     {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
+            abort(403);
+        }
+
         $validated = $request->validate([
-            'shop_id' => 'required|exists:shops,id',
+            'shop_id' => [
+                'required',
+                Rule::exists('shops', 'id')->whereIn('id', Auth::user()->accessibleShopsQuery()->pluck('id')),
+            ],
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'postal_code' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'tax_number' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+            // FNE (Côte d'Ivoire) : le NCC est l'identifiant fiscal du client, exigé
+            // par la DGI quand le client est une entreprise (B2B).
+            'ncc' => 'nullable|string|max:30|required_if:fne_template,B2B',
+            'fne_template' => 'nullable|in:B2C,B2B,B2G',
+        ], [
+            'ncc.required_if' => 'Le NCC est obligatoire pour un client entreprise (B2B).',
         ]);
 
-        // Vérifier que la boutique appartient à l'utilisateur
-        Auth::user()->shops()->findOrFail($validated['shop_id']);
-        
+        $validated['fne_template'] = $validated['fne_template'] ?? 'B2C';
+
         $customer->update($validated);
 
-        return redirect()->route('customers.index')->with('success', 'Client modifié avec succès.');
+        // Log activity
+        ActivityLogger::updated($customer, [], $customer->name);
+
+        return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client modifié avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Customer $customer)
+    public function destroy(string $code_user, Customer $customer)
     {
         // Vérifier que la boutique du client appartient à l'utilisateur
-        if ($customer->shop->user_id !== Auth::id()) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
             abort(403);
         }
 
+        // Sauvegarder le nom avant suppression
+        $customerName = $customer->name;
+        
         $customer->delete();
 
-        return redirect()->route('customers.index')->with('success', 'Client supprimé avec succès.');
+        // Log activity
+        ActivityLogger::deleted($customer, $customerName);
+
+        return redirect()->route('customers.index', ['code_user' => request()->route('code_user')])->with('success', 'Client supprimé avec succès.');
     }
 }

@@ -1,0 +1,38 @@
+export const permissions = {
+    fr: {
+        title: 'Permissions',
+        selectUser: 'Sélectionner un utilisateur',
+        reset: 'Réinitialiser',
+        resetTitle: 'Réinitialiser les permissions',
+        resetConfirm: 'Rétablir les permissions de :name aux valeurs par défaut de son rôle ? Les réglages personnalisés seront perdus.',
+        noUserSelected: 'Aucun utilisateur sélectionné',
+        columns: {
+            module: 'Module',
+            view: 'Voir',
+            create: 'Créer',
+            edit: 'Modifier',
+            delete: 'Supprimer',
+        },
+        save: 'Enregistrer les permissions',
+        saving: 'Enregistrement...',
+        saveSuccess: 'Permissions enregistrées',
+    },
+    en: {
+        title: 'Permissions',
+        selectUser: 'Select a user',
+        reset: 'Reset',
+        resetTitle: 'Reset permissions',
+        resetConfirm: "Restore :name's permissions to their role's defaults? Any custom settings will be lost.",
+        noUserSelected: 'No user selected',
+        columns: {
+            module: 'Module',
+            view: 'View',
+            create: 'Create',
+            edit: 'Edit',
+            delete: 'Delete',
+        },
+        save: 'Save permissions',
+        saving: 'Saving...',
+        saveSuccess: 'Permissions saved',
+    },
+} as const;

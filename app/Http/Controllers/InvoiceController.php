@@ -5,9 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Services\ActivityLogger;
+use App\Services\DocumentLink;
+use App\Services\DocumentPdf;
+use App\Services\Fne\FneDisplay;
+use App\Services\Fne\FneService;
+use App\Support\ConcurrencySafe;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,20 +26,27 @@ class InvoiceController extends Controller
      */
     public function index(Request $request): Response
     {
+        $activeShopId = get_active_shop_id();
         $shopId = $request->input('shop_id');
         $status = $request->input('status');
         $search = $request->input('search');
         
+        $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
+        
+        // withCount plutôt que with : la liste n'a besoin que de savoir si des avoirs
+        // existent, pour n'afficher le bouton que là où il mène quelque part. Charger les
+        // avoirs eux-mêmes ferait 20 requêtes de plus par page pour un simple compteur.
         $query = Invoice::with(['shop', 'customer', 'user'])
+            ->withCount('creditNotes')
+            ->whereIn('shop_id', $shopIds)
             ->orderBy('invoice_date', 'desc');
 
-        if ($shopId) {
+        // Filtrer par boutique active si sélectionnée
+        if ($activeShopId) {
+            $query->where('shop_id', $activeShopId);
+        } elseif ($shopId) {
             $query->where('shop_id', $shopId);
-        } else {
-            // Afficher les factures de toutes les boutiques de l'utilisateur
-            $query->whereHas('shop', function ($q) {
-                $q->where('user_id', Auth::id());
-            });
         }
 
         if ($status) {
@@ -51,7 +66,7 @@ class InvoiceController extends Controller
 
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,
-            'shops' => Auth::user()->shops,
+            'shops' => $shops,
             'filters' => $request->only(['shop_id', 'status', 'search']),
         ]);
     }
@@ -61,15 +76,17 @@ class InvoiceController extends Controller
      */
     public function create(): Response
     {
-        $shops = Auth::user()->shops;
+        $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
         
-        $customers = Customer::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
+        $customers = Customer::whereIn('shop_id', $shopIds)
+            ->with('shop')
+            ->get();
         
-        $products = Product::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with(['shop', 'category'])->get();
+        $products = Product::whereIn('shop_id', $shopIds)
+            ->whereNull('parent_id')
+            ->with(['shop', 'category', 'variations' => fn($q) => $q->where('is_active', true)->orderBy('name')])
+            ->get();
 
         return Inertia::render('Invoices/Create', [
             'shops' => $shops,
@@ -85,7 +102,12 @@ class InvoiceController extends Controller
     {
         $validated = $request->validate([
             'shop_id' => 'required|exists:shops,id',
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where(function ($query) use ($request) {
+                    $query->where('shop_id', $request->input('shop_id'));
+                }),
+            ],
             'invoice_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:invoice_date',
             'status' => 'required|in:draft,sent,paid,cancelled',
@@ -93,8 +115,16 @@ class InvoiceController extends Controller
             'discount_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'nullable|exists:products,id',
+            'items.*.product_id' => [
+                'nullable',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
+            'items.*.product_article_id' => [
+                'nullable',
+                Rule::exists('product_articles', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'items.*.product_name' => 'required|string',
+            'items.*.article_name' => 'nullable|string',
             'items.*.description' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -103,58 +133,118 @@ class InvoiceController extends Controller
         ]);
 
         // Vérifier que la boutique appartient à l'utilisateur
-        $shop = Auth::user()->shops()->findOrFail($validated['shop_id']);
+        $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+
+        if (in_array($validated['status'], ['sent', 'paid'], true)) {
+            app(FneService::class)->assertIssuable($shop, Customer::find($validated['customer_id']), array_column($validated['items'], 'tax_rate'));
+        }
         
-        DB::transaction(function () use ($validated, $shop) {
+        // invoice_number est généré à partir du dernier numéro connu : deux factures créées
+        // au même instant peuvent calculer le même candidat. Le retry régénère un numéro
+        // frais à chaque tentative plutôt que de perdre la facture sur une violation de
+        // contrainte brute.
+        $invoice = ConcurrencySafe::retryOnDuplicate(fn () => DB::transaction(function () use ($validated, $shop) {
             $items = $validated['items'];
             unset($validated['items']);
-            
+
             $validated['user_id'] = Auth::id();
-            
+
             $invoice = $shop->invoices()->create($validated);
             
             foreach ($items as $item) {
+                // Si un product_id est fourni et que c'est une déclinaison, enrichir le product_name
+                if (!empty($item['product_id'])) {
+                    $product = \App\Models\Product::find($item['product_id']);
+                    if ($product && $product->parent_id && !str_contains($item['product_name'], ' › ')) {
+                        $parent = $product->parent ?? \App\Models\Product::find($product->parent_id);
+                        if ($parent) {
+                            $item['product_name'] = "{$parent->name} › {$product->name}";
+                        }
+                    }
+                }
+
+                // Marquer l'article comme vendu
+                if (!empty($item['product_article_id'])) {
+                    \App\Models\ProductArticle::where('shop_id', $shop->id)->find($item['product_article_id'])?->markAsSold();
+                }
+
                 $invoice->items()->create($item);
             }
             
             // Le calcul des totaux se fait automatiquement via les observers
-        });
 
-        return redirect()->route('invoices.index')->with('success', 'Facture créée avec succès.');
+            return $invoice;
+        }));
+
+        // Une facture créée directement émise sort sa marchandise tout de suite ; un
+        // brouillon attendra son émission.
+        if (in_array($invoice->status, ['sent', 'paid'], true)) {
+            $invoice->load('items')->releaseStock();
+        }
+
+        // Log activity
+        ActivityLogger::created($invoice, $invoice->invoice_number);
+
+        return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture créée avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Invoice $invoice)
+    public function show(string $code_user, Invoice $invoice)
     {
-        $invoice->load(['shop', 'customer', 'user', 'items.product']);
-        
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        $invoice->load(['shop', 'customer', 'user', 'items.product.parent']);
+
+        // Enrichir le product_name des anciens items de déclinaisons qui ne l'ont pas encore
+        $invoice->items->each(function ($item) {
+            if ($item->product && $item->product->parent_id && !str_contains($item->product_name, ' › ')) {
+                $item->product_name = "{$item->product->parent->name} › {$item->product->name}";
+            }
+        });
+
         return Inertia::render('Invoices/Show', [
             'invoice' => $invoice,
+            // La facture n'est jamais retouchée par un avoir : ce qu'elle vaut réellement
+            // est un calcul, pas une colonne.
+            'creditNotes' => $invoice->creditNotes()
+                ->latest('id')
+                ->get(['id', 'credit_note_number', 'credit_note_date', 'reason', 'total']),
+            'creditedTotal' => $invoice->creditedTotal(),
+            'netTotal' => $invoice->netTotal(),
+            'isCreditable' => $invoice->isCreditable(),
+            'shareUrl' => DocumentLink::forInvoice($invoice),
+            'fne' => FneDisplay::for($invoice),
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Invoice $invoice): Response
+    public function edit(string $code_user, Invoice $invoice): Response
     {
-        // Ne pas permettre la modification des factures payées
-        if ($invoice->status === 'paid') {
-            return redirect()->route('invoices.show', $invoice)
-                ->with('error', 'Impossible de modifier une facture payée.');
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
         }
+
+        if ($error = $this->refuseUnlessDraft($invoice)) {
+            return $error;
+        }
+
+        $shops = Auth::user()->accessibleShops();
+        $shopIds = $shops->pluck('id');
         
-        $shops = Auth::user()->shops;
+        $customers = Customer::whereIn('shop_id', $shopIds)
+            ->with('shop')
+            ->get();
         
-        $customers = Customer::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with('shop')->get();
-        
-        $products = Product::whereHas('shop', function ($q) {
-            $q->where('user_id', Auth::id());
-        })->with(['shop', 'category'])->get();
+        $products = Product::whereIn('shop_id', $shopIds)
+            ->whereNull('parent_id')
+            ->with(['shop', 'category', 'variations' => fn($q) => $q->where('is_active', true)->orderBy('name')])
+            ->get();
         
         $invoice->load('items');
         
@@ -169,26 +259,48 @@ class InvoiceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Invoice $invoice)
+    public function update(Request $request, string $code_user, Invoice $invoice)
     {
-        // Ne pas permettre la modification des factures payées
-        if ($invoice->status === 'paid') {
-            return redirect()->route('invoices.show', $invoice)
-                ->with('error', 'Impossible de modifier une facture payée.');
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
         }
-        
+
+        if ($error = $this->refuseUnlessDraft($invoice)) {
+            return $error;
+        }
+
         $validated = $request->validate([
-            'shop_id' => 'required|exists:shops,id',
-            'customer_id' => 'required|exists:customers,id',
+            'shop_id' => [
+                'required',
+                Rule::exists('shops', 'id')->whereIn('id', Auth::user()->accessibleShopsQuery()->pluck('id')),
+            ],
+            'customer_id' => [
+                'required',
+                Rule::exists('customers', 'id')->where(function ($query) use ($request) {
+                    $query->where('shop_id', $request->input('shop_id'));
+                }),
+            ],
             'invoice_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:invoice_date',
-            'status' => 'required|in:draft,sent,paid,cancelled',
+            // On n'arrive ici que sur un brouillon, et un brouillon n'a que deux issues :
+            // rester brouillon, ou être émis. Encaisser et annuler passent par
+            // updateStatus() — sans cette restriction, ce formulaire contournerait la
+            // table de transitions en posant `paid` directement.
+            'status' => 'required|in:draft,sent',
             'payment_method' => 'nullable|in:cash,card,transfer,check,mobile',
             'discount_amount' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'nullable|exists:products,id',
+            'items.*.product_id' => [
+                'nullable',
+                Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
+            'items.*.product_article_id' => [
+                'nullable',
+                Rule::exists('product_articles', 'id')->where('shop_id', $request->input('shop_id')),
+            ],
             'items.*.product_name' => 'required|string',
+            'items.*.article_name' => 'nullable|string',
             'items.*.description' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
@@ -196,46 +308,303 @@ class InvoiceController extends Controller
             'items.*.discount_amount' => 'nullable|numeric|min:0',
         ]);
 
-        // Vérifier que la boutique appartient à l'utilisateur
-        Auth::user()->shops()->findOrFail($validated['shop_id']);
-        
+        // Instantané d'avant modification : les lignes sont détruites puis recréées
+        // ci-dessous, donc sans cette copie leur contenu précédent ne subsiste nulle
+        // part. Le journal recevait auparavant un tableau de changements VIDE : il
+        // enregistrait qu'une facture avait été modifiée sans dire en quoi.
+        if ($validated['status'] === 'sent') {
+            app(FneService::class)->assertIssuable(
+                Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']),
+                Customer::find($validated['customer_id']),
+                array_column($validated['items'], 'tax_rate')
+            );
+        }
+
+        $original = $invoice->getOriginal();
+        $previousItems = $this->itemsSnapshot($invoice);
+
         DB::transaction(function () use ($validated, $invoice) {
             $items = $validated['items'];
             unset($validated['items']);
-            
+
             $invoice->update($validated);
-            
+
             // Supprimer les anciens items et créer les nouveaux
             $invoice->items()->delete();
-            
+
             foreach ($items as $item) {
                 $invoice->items()->create($item);
             }
-            
+
             // Le calcul des totaux se fait automatiquement via les observers
         });
 
-        return redirect()->route('invoices.index')->with('success', 'Facture modifiée avec succès.');
+        // Recharger avant de comparer : les observers recalculent les totaux après coup,
+        // donc getChanges() ne refléterait que leur dernière écriture.
+        $invoice->refresh();
+
+        // Même forme que LogsActivity : ['champ' => ['old' => …, 'new' => …]].
+        $changes = [];
+        foreach ($invoice->getAttributes() as $key => $value) {
+            if (in_array($key, ['created_at', 'updated_at'], true)) {
+                continue;
+            }
+
+            $old = $original[$key] ?? null;
+
+            // Comparaison en chaînes : les décimaux castés ne se comparent pas de façon
+            // fiable à ce qui sortait de la base.
+            if ((string) $old !== (string) $value) {
+                $changes[$key] = ['old' => $old, 'new' => $value];
+            }
+        }
+
+        $newItems = $this->itemsSnapshot($invoice);
+        if ($previousItems !== $newItems) {
+            $changes['items'] = ['old' => $previousItems, 'new' => $newItems];
+        }
+
+        if ($invoice->status === 'sent') {
+            $invoice->load('items')->releaseStock();
+        }
+
+        ActivityLogger::updated($invoice, $changes, $invoice->invoice_number);
+
+        return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture modifiée avec succès.');
+    }
+
+    /**
+     * Une facture n'est modifiable — et supprimable — que tant qu'elle est un brouillon.
+     *
+     * Passé `draft`, le document est parti chez le client : le réécrire rendrait
+     * indéfendable ce que le client détient, et update() détruit les lignes pour les
+     * recréer. Le statut, lui, doit continuer d'évoluer : c'est le rôle d'updateStatus(),
+     * qui ne touche à rien d'autre.
+     *
+     * Renvoie une redirection à retourner tel quel, ou null si l'appel peut continuer.
+     */
+    private function refuseUnlessDraft(Invoice $invoice, string $route = 'invoices.show'): ?RedirectResponse
+    {
+        if ($invoice->status === 'draft') {
+            return null;
+        }
+
+        $params = ['code_user' => request()->route('code_user')];
+
+        if ($route === 'invoices.show') {
+            $params['invoice'] = $invoice->id;
+        }
+
+        return redirect()->route($route, $params)
+            ->with('error', 'Une facture émise ne peut plus être modifiée ni supprimée. Utilisez « Marquer payée » ou « Annuler ».');
+    }
+
+    /**
+     * Faire évoluer le statut d'une facture émise, sans toucher à son contenu.
+     *
+     * Seul chemin restant pour encaisser ou annuler, l'écran d'édition étant fermé dès
+     * l'émission. Les transitions sont explicitement énumérées : `paid` et `cancelled`
+     * sont terminaux, et rien ne ramène une facture en arrière.
+     *
+     * L'annulation reste ici un simple statut. Tant qu'il n'existe pas d'avoir, c'est
+     * l'approximation la moins mauvaise — mais c'est bien un avoir qu'il faudra émettre.
+     */
+    public function updateStatus(Request $request, string $code_user, Invoice $invoice)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:paid,cancelled',
+            'payment_method' => 'nullable|in:cash,card,transfer,check,mobile',
+        ]);
+
+        $allowed = [
+            'draft' => ['cancelled'],
+            'sent' => ['paid', 'cancelled'],
+        ];
+
+        $from = $invoice->status;
+        $to = $validated['status'];
+
+        if (!in_array($to, $allowed[$from] ?? [], true)) {
+            return redirect()->route('invoices.show', ['code_user' => $code_user, 'invoice' => $invoice->id])
+                ->with('error', 'Ce changement de statut n\'est pas autorisé.');
+        }
+
+        // Une facture présentée à la DGI est une pièce fiscale — ou l'est peut-être, si la
+        // réponse s'est perdue. Seul un avoir certifié peut l'annuler.
+        if ($to === 'cancelled' && $invoice->fneEngaged()) {
+            return redirect()->route('invoices.show', ['code_user' => $code_user, 'invoice' => $invoice->id])
+                ->with('error', 'Cette facture a été présentée à la FNE : elle ne peut plus être annulée. Émettez un avoir.');
+        }
+
+        $attributes = ['status' => $to];
+
+        if ($to === 'paid' && !empty($validated['payment_method'])) {
+            $attributes['payment_method'] = $validated['payment_method'];
+        }
+
+        $invoice->update($attributes);
+
+        // Une facture annulée n'a rien vendu : la marchandise revient. `paid` ne change
+        // rien, la sortie ayant déjà eu lieu à l'émission.
+        if ($to === 'cancelled') {
+            $invoice->load('items.product')->restoreStock();
+        }
+
+        ActivityLogger::updated(
+            $invoice,
+            ['status' => ['old' => $from, 'new' => $to]],
+            $invoice->invoice_number
+        );
+
+        return redirect()->route('invoices.show', ['code_user' => $code_user, 'invoice' => $invoice->id])
+            ->with('success', $to === 'paid' ? 'Facture marquée comme payée.' : 'Facture annulée.');
+    }
+
+    /**
+     * Les lignes d'une facture, réduites à ce qui doit figurer au journal.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function itemsSnapshot(Invoice $invoice): array
+    {
+        return $invoice->items()
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($item) => [
+                'product_name' => $item->product_name,
+                'quantity' => $item->quantity,
+                'unit_price' => (string) $item->unit_price,
+                'total' => (string) $item->total,
+            ])
+            ->all();
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Invoice $invoice)
+    public function destroy(string $code_user, Invoice $invoice)
     {
-        // Ne pas permettre la suppression des factures payées
-        if ($invoice->status === 'paid') {
-            return redirect()->route('invoices.index')
-                ->with('error', 'Impossible de supprimer une facture payée.');
-        }
-        
         // Vérifier que la boutique de la facture appartient à l'utilisateur
-        if ($invoice->shop->user_id !== Auth::id()) {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
             abort(403);
         }
 
+        // Une facture émise ne se supprime pas, elle s'annule : updateStatus().
+        if ($error = $this->refuseUnlessDraft($invoice, 'invoices.index')) {
+            return $error;
+        }
+
+        // Sauvegarder le numéro avant suppression
+        $invoiceNumber = $invoice->invoice_number;
+        
         $invoice->delete();
 
-        return redirect()->route('invoices.index')->with('success', 'Facture supprimée avec succès.');
+        // Log activity
+        ActivityLogger::deleted($invoice, $invoiceNumber);
+
+        return redirect()->route('invoices.index', ['code_user' => request()->route('code_user')])->with('success', 'Facture supprimée avec succès.');
+    }
+
+    public function pdf(string $code_user, Invoice $invoice, DocumentPdf $pdf)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        return $pdf->forInvoice($invoice)->stream("Facture-{$invoice->invoice_number}.pdf");
+    }
+
+    public function send(string $code_user, Invoice $invoice)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        // Le passage à `sent` n'a lieu qu'à la première émission. Renvoyer une facture
+        // déjà payée est légitime — le client redemande son exemplaire — mais cela
+        // faisait reculer son statut, contournant les transitions d'updateStatus() : une
+        // facture payée redevenait « envoyée », donc réencaissable.
+        if ($invoice->status === 'draft') {
+            app(FneService::class)->assertIssuable($invoice->shop, $invoice->customer, $invoice->items->pluck('tax_rate')->all());
+
+            $invoice->update(['status' => 'sent']);
+            $invoice->load('items')->releaseStock();
+        }
+
+        \Mail::to($invoice->customer->email)->send(new \App\Mail\InvoiceMail($invoice));
+
+        return redirect()->back()->with('success', 'Facture envoyée au client');
+    }
+
+    /**
+     * Représenter à la FNE une facture dont la certification a échoué ou reste incertaine.
+     *
+     * L'incertitude (réponse perdue) ne se lève qu'en consultant l'espace FNE de
+     * l'entreprise : si la DGI avait bien certifié, relancer créerait une seconde facture
+     * fiscale. D'où la confirmation explicite exigée dans ce cas.
+     */
+    public function retryFne(Request $request, string $code_user, Invoice $invoice)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        if (!$invoice->fneRetryable()) {
+            return back()->with('error', "Cette facture n'est pas en attente d'une relance FNE.");
+        }
+
+        if ($invoice->fne_status === 'uncertain') {
+            $request->validate(['confirmed' => 'accepted'], [
+                'confirmed.accepted' => "Confirmez que la facture n'apparaît pas sur votre espace FNE.",
+            ]);
+        }
+
+        if (!$invoice->shop->fneActive()) {
+            return back()->with('error', "La FNE n'est pas active pour cette boutique.");
+        }
+
+        $invoice->queueFneCertification();
+
+        return back()->with('success', 'Certification FNE relancée.');
+    }
+
+    public function export(string $code_user)
+    {
+        $activeShopId = get_active_shop_id();
+
+        if (!$activeShopId || !Auth::user()->accessibleShopsQuery()->where('id', $activeShopId)->exists()) {
+            return back()->with('error', 'Veuillez sélectionner une boutique.');
+        }
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\InvoicesExport($activeShopId),
+            'Factures-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
+    public function createRecurring(Request $request, string $code_user, Invoice $invoice)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $invoice->shop_id)->exists()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'frequency' => 'required|in:monthly,quarterly,semi-annual,annual',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after:start_date',
+        ]);
+
+        $recurringInvoice = $invoice->toRecurringInvoice(
+            $validated['frequency'],
+            \Carbon\Carbon::parse($validated['start_date']),
+            $validated['end_date'] ? \Carbon\Carbon::parse($validated['end_date']) : null
+        );
+
+        return redirect()->route('recurring-invoices.show', ['code_user' => $code_user, 'recurring_invoice' => $recurringInvoice])
+            ->with('success', 'Cycle de facturation créé avec succès');
     }
 }

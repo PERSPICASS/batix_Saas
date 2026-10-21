@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\BelongsToShop;
 
 class StockMovement extends Model
 {
+    use BelongsToShop;
+
     protected $fillable = [
         'shop_id',
         'product_id',
+        'depot_id',
         'user_id',
         'type',
         'quantity',
@@ -29,6 +33,25 @@ class StockMovement extends Model
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    /**
+     * Le dépôt concerné, ou null pour le stock du comptoir.
+     */
+    public function depot(): BelongsTo
+    {
+        return $this->belongsTo(Depot::class);
+    }
+
+    /** Mouvements du comptoir, ceux que reflète products.stock_quantity. */
+    public function scopeAtCounter($query)
+    {
+        return $query->whereNull('depot_id');
+    }
+
+    public function scopeInDepot($query, int $depotId)
+    {
+        return $query->where('depot_id', $depotId);
     }
 
     public function product(): BelongsTo

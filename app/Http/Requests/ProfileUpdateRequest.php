@@ -25,6 +25,10 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            // Le pays n'était saisissable qu'à l'inscription : une erreur y était
+            // définitive. Il sert de défaut aux boutiques créées ensuite
+            // (ShopController), d'où l'intérêt de pouvoir le corriger.
+            'country' => ['nullable', 'string', 'max:100'],
         ];
     }
 }

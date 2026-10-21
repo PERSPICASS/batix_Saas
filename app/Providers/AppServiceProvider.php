@@ -2,9 +2,16 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Inertia\Inertia;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,7 +29,55 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Forcer HTTPS en production
+        if ($this->app->environment('production') || request()->server('HTTP_X_FORWARDED_PROTO') === 'https') {
+            URL::forceScheme('https');
+        }
+
+        // `URL::forceScheme` n'agit que sur le générateur d'URL. Le paginateur, lui,
+        // construit ses liens à partir de `$request->url()` (cf. PaginationState), donc
+        // à partir du schéma réellement vu par PHP — et le nginx du conteneur n'en
+        // transmet aucun : ni `fastcgi_param HTTPS`, ni `X-Forwarded-Proto` (cf. le même
+        // constat dans DocumentLink). Les liens de pagination sortaient en `http://` sur
+        // une page servie en `https://` : la CSP `connect-src 'self'` bloquait la visite
+        // Inertia et la navigation restait sur place.
+        //
+        // Sans schéma forcé, `url()->current()` renvoie exactement ce que renvoyait
+        // `$request->url()` : le remplacement est neutre en local.
+        Paginator::currentPathResolver(fn () => url()->current());
+
+        // N+1 : un chargement paresseux dans une boucle. En test il fait échouer le
+        // test, pour qu'un N+1 ne puisse pas revenir sans qu'on le voie ; en local il
+        // n'est que journalisé, pour ne pas casser la page ; en prod, rien.
+        Model::preventLazyLoading(!$this->app->isProduction());
+
+        if (!$this->app->runningUnitTests()) {
+            Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation) {
+                Log::warning('N+1 : chargement paresseux de ' . $model::class . "::{$relation}");
+            });
+        }
+
         Vite::prefetch(concurrency: 3);
+
+        // Limite par défaut du groupe de middleware "api" (routes/api.php) : 60 req/min,
+        // par token si authentifié via Sanctum, sinon par IP.
+        RateLimiter::for('api', function ($request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Redirect pour les utilisateurs déjà connectés (middleware guest)
+        // Évite l'erreur "Missing parameter: code_user" sur route('dashboard')
+        RedirectIfAuthenticated::redirectUsing(function ($request) {
+            $user = Auth::user();
+            if (!$user) return '/';
+            if (!$user->hasVerifiedEmail()) {
+                return route('register'); // → Register étape 2 (OTP)
+            }
+            if ($user->code_user) {
+                return route('dashboard', ['code_user' => $user->code_user]);
+            }
+            return route('register'); // → Register étape 3 (boutique inline)
+        });
 
         // Partager les boutiques de l'utilisateur avec toutes les vues Inertia
         Inertia::share([
@@ -38,6 +93,9 @@ class AppServiceProvider extends ServiceProvider
                     });
                 }
                 return [];
+            },
+            'activeShop' => function () {
+                return get_active_shop();
             },
         ]);
     }

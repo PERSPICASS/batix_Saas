@@ -1,0 +1,199 @@
+name: Deploy PROD
+
+on:
+  push:
+    branches:
+      - prod
+
+# Deux pushes rapprochés lançaient deux déploiements en parallèle sur le même
+# serveur : le second se heurtait au `down` du premier (« removal of container …
+# is already in progress ») et échouait. Ils passent désormais l'un après l'autre.
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  # Rien ne part en prod sans que la suite passe. Les tests tournent sur Postgres,
+  # comme la prod : le harnais SQLite local accepte des colonnes inexistantes et
+  # ignore les contraintes CHECK (rôles, stock ≥ 0, fréquences) que Postgres impose.
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: batix
+          POSTGRES_PASSWORD: batix
+          POSTGRES_DB: batix_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U batix"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: batix_test
+      DB_USERNAME: batix
+      DB_PASSWORD: batix
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pgsql, zip, gd, intl, bcmath
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Composer install
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Npm install
+        run: npm ci
+
+      # tsc + build client + build SSR : un type cassé ou un import manquant arrête tout ici.
+      - name: Typecheck & build
+        run: npm run build
+
+      - name: Frontend tests
+        run: npx vitest run
+
+      - name: Prepare Laravel
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # DB_* ci-dessus priment sur les valeurs sqlite de phpunit.xml (<env> sans force).
+      - name: Backend tests (Postgres)
+        run: php artisan test
+
+  deploy:
+    needs: tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.VPS_HOST }}
+          username: ${{ vars.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          debug: true
+          script: |
+            set -e
+
+            cd /opt/batix/apps/prod/batix_Saas
+            C="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+
+            echo "=== 1. Git update ==="
+            git fetch origin prod
+            git reset --hard origin/prod
+
+            # Construire AVANT de couper. Le build dure ~3 min, pendant lesquelles les
+            # conteneurs actuels continuent de servir. Le `down` venait avant : le site
+            # était donc éteint pendant tout le build, et un build raté (set -e) le
+            # laissait éteint au lieu de conserver la version précédente en ligne.
+            echo "=== 2. Build (le site tourne toujours) ==="
+            $C build --no-cache
+
+            # Seule fenêtre d'indisponibilité : quelques secondes.
+            # Le volume public doit être supprimé pour que Docker le repeuple avec les
+            # assets de la nouvelle image — il ne remplit un volume que s'il est vide.
+            echo "=== 3. Bascule ==="
+            $C down --remove-orphans
+            docker volume rm batix_prod_batix_public || true
+            $C up -d --remove-orphans
+
+            # Le `docker volume rm` ci-dessus repart d'un public/ vierge, reconstruit à
+            # partir de l'image. Or public/storage est un lien symbolique créé à
+            # l'exécution (et gitignoré, donc absent de l'image) : sans cette étape il
+            # disparaît à chaque déploiement et TOUTES les images téléversées — blog,
+            # produits, justificatifs de dépenses — renvoient 404, alors que les
+            # fichiers eux-mêmes sont intacts dans storage/ (bind-mount de l'hôte).
+            # `--force` rend l'étape idempotente : elle recrée le lien sans échouer
+            # s'il existe déjà.
+            echo "=== 4. Lien symbolique storage ==="
+            # `storage:link --force` ne sait écraser qu'un lien symbolique existant
+            # (isRemovableSymlink() = is_link() && force). Face à un vrai répertoire il
+            # échoue — c'est précisément ce qui est arrivé. On le retire donc d'abord,
+            # avec `rmdir` et non `rm -rf` : rmdir refuse un répertoire non vide, ce qui
+            # garantit qu'aucun fichier ne peut être détruit par cette étape.
+            $C exec -T app sh -lc '
+              if [ -e public/storage ] && [ ! -L public/storage ]; then
+                if [ -n "$(ls -A public/storage 2>/dev/null)" ]; then
+                  echo "public/storage est un répertoire NON VIDE : rapatrier son contenu vers storage/app/public avant de relancer." >&2
+                  exit 1
+                fi
+                rmdir public/storage
+              fi
+            '
+            $C exec -T app php artisan storage:link --force
+            # Vérification : un lien absent doit arrêter le déploiement, pas se
+            # découvrir plus tard sur une page produit vide.
+            $C exec -T app test -L public/storage \
+              || { echo "::error::public/storage n'est pas un lien symbolique — les images seront en 404."; exit 1; }
+
+            echo "=== 5. Laravel migrate ==="
+            $C exec -T app php artisan migrate --force
+
+            # `optimize` réécrit bootstrap/cache/config.php, mais php-fpm tourne avec
+            # opcache.validate_timestamps=0 : il ne relit jamais un fichier modifié et
+            # garde l'ancienne config compilée en mémoire. Sans ce restart, la nouvelle
+            # config n'est prise que si AUCUNE requête n'est arrivée entre `up -d` et
+            # `optimize` — soit par pure chance de timing. (Le CLI, lui, a
+            # opcache.enable_cli=0 : `artisan tinker` affiche donc la bonne valeur
+            # pendant que le site en sert une autre.)
+            echo "=== 6. Cache Laravel + rechargement opcache ==="
+            $C exec -T app php artisan optimize:clear
+            $C exec -T app php artisan optimize
+            $C restart app
+            # nginx résout `app:9000` une seule fois au démarrage et garde l'IP en
+            # cache : le relancer après app évite un 502 si l'IP a changé.
+            $C restart nginx
+
+            echo "=== 7. Verify build ==="
+            $C exec -T app ls -la public/build
+            $C exec -T nginx ls -la /var/www/html/public/build
+            $C ps ssr
+
+            echo "=== 8. Docker cleanup ==="
+            docker system prune -af
+            docker builder prune -af
+
+            echo "=== Deploy SUCCESS ==="
+
+      # Un SSR à l'arrêt ne casse rien de visible : le site répond normalement, seul le
+      # SEO s'éteint. C'est resté invisible pendant des jours. D'où cette vérification
+      # sur le HTML réellement servi — la seule chose qu'un crawler regarde.
+      - name: Verify SSR is serving the SEO markup
+        run: |
+          sleep 15
+          html=$(curl -sL --max-time 30 https://batixpro.com/)
+          title=$(printf '%s' "$html" | grep -o '<title[^>]*>[^<]*</title>' | head -1)
+          ld=$(printf '%s' "$html" | grep -c 'application/ld+json' || true)
+          echo "title           : ${title:-<aucun>}"
+          echo "json-ld blocks  : $ld"
+
+          if printf '%s' "$title" | grep -q '>BATIXPRO<'; then
+            echo "::error::Le SSR ne rend pas : toutes les pages renvoient le titre placeholder. Les crawlers reçoivent une coquille vide. Voir docs/SSR_DEPLOYMENT.md"
+            exit 1
+          fi
+
+          if [ "$ld" -lt 1 ]; then
+            echo "::error::Aucun JSON-LD dans le HTML servi — le service ssr est absent ou arrêté. Voir docs/SSR_DEPLOYMENT.md"
+            exit 1
+          fi
+
+          echo "SSR OK — le HTML servi contient le vrai titre et $ld bloc(s) JSON-LD."

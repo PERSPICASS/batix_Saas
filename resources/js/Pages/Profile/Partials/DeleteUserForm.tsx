@@ -7,12 +7,14 @@ import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
 import { FormEventHandler, useRef, useState } from 'react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function DeleteUserForm({
     className = '',
 }: {
     className?: string;
 }) {
+    const { t } = useLocale();
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const passwordInput = useRef<HTMLInputElement>(null);
 
@@ -55,12 +57,11 @@ export default function DeleteUserForm({
             <header className="mb-6">
                 <h2 className="text-lg font-semibold text-red-400 flex items-center gap-2">
                     <Trash2 className="h-5 w-5" />
-                    Supprimer le Compte
+                    {t.profile.form.delete.title}
                 </h2>
 
-                <p className="mt-2 text-sm text-slate-300">
-                    Une fois votre compte supprimé, toutes ses ressources et données seront définitivement supprimées. 
-                    Avant de supprimer votre compte, veuillez télécharger toutes les données ou informations que vous souhaitez conserver.
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    {t.profile.form.delete.description}
                 </p>
             </header>
 
@@ -68,31 +69,29 @@ export default function DeleteUserForm({
                 onClick={confirmUserDeletion}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-900"
             >
-                Supprimer le Compte
+                {t.profile.form.delete.button}
             </button>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
-                <form onSubmit={deleteUser} className="p-6 bg-slate-900 rounded-lg">
+                <form onSubmit={deleteUser} className="p-6 bg-white dark:bg-slate-900 rounded-lg">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="flex-shrink-0 w-12 h-12 bg-red-900/30 rounded-full flex items-center justify-center border border-red-500/30">
                             <AlertTriangle className="h-6 w-6 text-red-400" />
                         </div>
-                        <h2 className="text-lg font-semibold text-white">
-                            Êtes-vous sûr de vouloir supprimer votre compte ?
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                            {t.profile.form.delete.modalTitle}
                         </h2>
                     </div>
 
                     <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
                         <p className="text-sm text-red-200">
-                            ⚠️ <strong>Cette action est irréversible.</strong> Une fois votre compte supprimé, toutes ses ressources et 
-                            données seront définitivement supprimées. Veuillez entrer votre mot de passe pour confirmer 
-                            que vous souhaitez supprimer définitivement votre compte.
+                            ⚠️ {t.profile.form.delete.modalDescription}
                         </p>
                     </div>
 
                     <div className="mt-6">
                         <label htmlFor="password" className="sr-only">
-                            Mot de passe
+                            {t.profile.form.delete.passwordLabel}
                         </label>
 
                         <input
@@ -102,21 +101,21 @@ export default function DeleteUserForm({
                             ref={passwordInput}
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
-                            className="mt-1 block w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                            className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             autoFocus
-                            placeholder="Entrez votre mot de passe"
+                            placeholder={t.profile.form.delete.passwordPlaceholder}
                         />
 
-                        {errors.password && <p className="mt-2 text-sm text-red-400">{errors.password}</p>}
+                        <InputError message={errors.password} />
                     </div>
 
                     <div className="mt-6 flex justify-end gap-3">
                         <button
                             type="button"
                             onClick={closeModal}
-                            className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-900"
                         >
-                            Annuler
+                            {t.profile.form.delete.cancel}
                         </button>
 
                         <button
@@ -124,7 +123,7 @@ export default function DeleteUserForm({
                             disabled={processing}
                             className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50"
                         >
-                            Supprimer le Compte
+                            {t.profile.form.delete.confirm}
                         </button>
                     </div>
                 </form>

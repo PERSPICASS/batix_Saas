@@ -1,8 +1,14 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Eye, Pencil, Trash2, ClipboardCheck } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, ClipboardCheck, CheckCircle } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
+import axios from 'axios';
+import { useRoute } from '@/utils/route';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
+import Modal from '@/Components/Modal';
+import InventoryCompletionPreview, { CompletionPreviewRow } from '@/Components/InventoryCompletionPreview';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -42,30 +48,90 @@ interface Props {
 }
 
 export default function InventoryIndex({ inventories, filters }: Props) {
+    const route = useRoute();
+    const { t, locale } = useLocale();
+
     const [statusFilter, setStatusFilter] = useState(filters.status || '');
+    const [deleteModal, setDeleteModal] = useState<{ show: boolean; inventory: Inventory | null }>({ show: false, inventory: null });
+    const [completeModal, setCompleteModal] = useState<{ show: boolean; inventory: Inventory | null }>({ show: false, inventory: null });
+    const [completePreview, setCompletePreview] = useState<CompletionPreviewRow[]>([]);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     const handleSearch = () => {
         router.get(route('inventory.index'), { status: statusFilter }, { preserveState: true });
     };
 
     const handleDelete = (inventory: Inventory) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer l'inventaire ${inventory.inventory_number} ?`)) {
-            router.delete(route('inventory.destroy', inventory.id));
-        }
+        setDeleteModal({ show: true, inventory });
+    };
+
+    const confirmDelete = () => {
+        if (!deleteModal.inventory) return;
+        setProcessing(true);
+        router.delete(route('inventory.destroy', { inventory: deleteModal.inventory.id }), {
+            onSuccess: () => {
+                setDeleteModal({ show: false, inventory: null });
+                setProcessing(false);
+            },
+            onError: () => setProcessing(false),
+        });
     };
 
     const handleComplete = (inventory: Inventory) => {
-        if (confirm(`Terminer cet inventaire ? Les différences seront appliquées au stock.`)) {
-            router.post(route('inventory.complete', inventory.id));
-        }
+        setCompleteModal({ show: true, inventory });
+        setCompletePreview([]);
+        setPreviewLoading(true);
+        axios.get(route('inventory.completion-preview', { inventory: inventory.id }))
+            .then(({ data }) => {
+                const rows: CompletionPreviewRow[] = data.items
+                    .map((item: {
+                        id: number;
+                        product_name: string;
+                        good_before: number;
+                        good_after: number;
+                        defective_before: number;
+                        defective_after: number;
+                    }) => ({
+                        id: item.id,
+                        productName: item.product_name,
+                        goodBefore: item.good_before,
+                        goodAfter: item.good_after,
+                        goodChanged: item.good_after !== item.good_before,
+                        defectiveBefore: item.defective_before,
+                        defectiveAfter: item.defective_after,
+                        defectiveChanged: item.defective_after !== item.defective_before,
+                    }))
+                    .filter((row: CompletionPreviewRow) => row.goodChanged || row.defectiveChanged);
+                setCompletePreview(rows);
+            })
+            .finally(() => setPreviewLoading(false));
+    };
+
+    const confirmComplete = () => {
+        if (!completeModal.inventory) return;
+        setProcessing(true);
+        router.post(route('inventory.complete', { inventory: completeModal.inventory.id }), {}, {
+            onSuccess: () => {
+                setCompleteModal({ show: false, inventory: null });
+                setProcessing(false);
+            },
+            onError: () => setProcessing(false),
+        });
     };
 
     const getStatusBadge = (status: string) => {
+        const statusLabels: Record<string, string> = {
+            draft: t.inventory.status.draft,
+            in_progress: t.inventory.status.in_progress,
+            completed: t.inventory.status.completed,
+            cancelled: t.inventory.status.cancelled,
+        };
         const statuses: Record<string, { label: string; bg: string; text: string }> = {
-            draft: { label: 'Brouillon', bg: 'bg-slate-500/20', text: 'text-slate-300' },
-            in_progress: { label: 'En cours', bg: 'bg-blue-500/20', text: 'text-blue-300' },
-            completed: { label: 'Terminé', bg: 'bg-green-500/20', text: 'text-green-300' },
-            cancelled: { label: 'Annulé', bg: 'bg-red-500/20', text: 'text-red-300' },
+            draft: { label: statusLabels.draft, bg: 'bg-slate-500/20', text: 'text-slate-600 dark:text-slate-300' },
+            in_progress: { label: statusLabels.in_progress, bg: 'bg-blue-500/20', text: 'text-blue-300' },
+            completed: { label: statusLabels.completed, bg: 'bg-green-500/20', text: 'text-green-300' },
+            cancelled: { label: statusLabels.cancelled, bg: 'bg-red-500/20', text: 'text-red-300' },
         };
 
         const statusInfo = statuses[status] || statuses.draft;
@@ -80,24 +146,24 @@ export default function InventoryIndex({ inventories, filters }: Props) {
     const columns = [
         {
             key: 'inventory_number',
-            label: 'Numéro',
+            label: t.inventory.columns.number,
             render: (inventory: Inventory) => (
                 <span className="font-medium text-amber-300">{inventory.inventory_number}</span>
             ),
         },
         {
             key: 'inventory_date',
-            label: 'Date',
-            render: (inventory: Inventory) => new Date(inventory.inventory_date).toLocaleDateString('fr-FR'),
+            label: t.inventory.columns.date,
+            render: (inventory: Inventory) => new Date(inventory.inventory_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB'),
         },
         {
             key: 'shop',
-            label: 'Boutique',
+            label: t.inventory.columns.shop,
             render: (inventory: Inventory) => inventory.shop.name,
         },
         {
             key: 'total_items',
-            label: 'Produits',
+            label: t.inventory.columns.items,
             align: 'center' as const,
             render: (inventory: Inventory) => (
                 <span className="font-semibold text-slate-200">{inventory.total_items}</span>
@@ -105,7 +171,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
         },
         {
             key: 'total_discrepancies',
-            label: 'Écarts',
+            label: t.inventory.columns.discrepancies,
             align: 'center' as const,
             render: (inventory: Inventory) => (
                 <span className={`font-semibold ${inventory.total_discrepancies > 0 ? 'text-amber-400' : 'text-green-400'}`}>
@@ -115,41 +181,41 @@ export default function InventoryIndex({ inventories, filters }: Props) {
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.inventory.columns.status,
             render: (inventory: Inventory) => getStatusBadge(inventory.status),
         },
         {
             key: 'user',
-            label: 'Créé par',
+            label: t.inventory.createdBy,
             render: (inventory: Inventory) => (
-                <span className="text-sm text-slate-300">{inventory.user.name}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{inventory.user.name}</span>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t.inventory.columns.actions,
             align: 'right' as const,
             render: (inventory: Inventory) => (
                 <TableActions>
                     <Link
-                        href={route('inventory.show', inventory.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        href={route('inventory.show', { inventory: inventory.id })}
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
-                        <Eye className="size-3.5" /> Voir
+                        <Eye className="size-3.5" /> {t.inventory.actions.view}
                     </Link>
                     {inventory.status !== 'completed' && (
                         <>
                             <Link
-                                href={route('inventory.edit', inventory.id)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                                href={route('inventory.edit', { inventory: inventory.id })}
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                             >
-                                <Pencil className="size-3.5" /> Modifier
+                                <Pencil className="size-3.5" /> {t.inventory.actions.edit}
                             </Link>
                             <TableActionButton variant="success" onClick={() => handleComplete(inventory)}>
-                                <ClipboardCheck className="size-3.5" /> Terminer
+                                <ClipboardCheck className="size-3.5" /> {t.inventory.actions.validate}
                             </TableActionButton>
                             <TableActionButton variant="danger" onClick={() => handleDelete(inventory)}>
-                                <Trash2 className="size-3.5" /> Supprimer
+                                <Trash2 className="size-3.5" /> {t.inventory.actions.delete}
                             </TableActionButton>
                         </>
                     )}
@@ -159,36 +225,35 @@ export default function InventoryIndex({ inventories, filters }: Props) {
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Inventaires</h1>}>
-            <Head title="Inventaires" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.inventory.title}</h1>}>
+            <Head title={t.inventory.title} />
 
             <section className="space-y-6">
-                {/* Filters */}
                 <div className="flex items-center justify-between">
                     <div className="flex gap-4">
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200"
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                         >
-                            <option value="">Tous les statuts</option>
-                            <option value="draft">Brouillon</option>
-                            <option value="in_progress">En cours</option>
-                            <option value="completed">Terminé</option>
-                            <option value="cancelled">Annulé</option>
+                            <option value="">{t.inventory.filters.allStatuses}</option>
+                            <option value="draft">{t.inventory.status.draft}</option>
+                            <option value="in_progress">{t.inventory.status.in_progress}</option>
+                            <option value="completed">{t.inventory.status.completed}</option>
+                            <option value="cancelled">{t.inventory.status.cancelled}</option>
                         </select>
                         <button
                             onClick={handleSearch}
-                            className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/5"
+                            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                         >
-                            Filtrer
+                            {t.inventory.filters.filter}
                         </button>
                     </div>
                     <Link
                         href={route('inventory.create')}
                         className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                     >
-                        <Plus className="size-4" /> Nouvel inventaire
+                        <Plus className="size-4" /> {t.inventory.actions.new}
                     </Link>
                 </div>
 
@@ -212,6 +277,54 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                         ))}
                     </div>
                 )}
+
+                {/* Modal de suppression */}
+                <ConfirmDeleteModal
+                    show={deleteModal.show}
+                    onClose={() => setDeleteModal({ show: false, inventory: null })}
+                    onConfirm={confirmDelete}
+                    message={t.inventory.deleteMessage(deleteModal.inventory?.inventory_number ?? '')}
+                    processing={processing}
+                />
+
+                <Modal show={completeModal.show} onClose={() => setCompleteModal({ show: false, inventory: null })} maxWidth="2xl">
+                    <div className="bg-white p-6 dark:bg-slate-900">
+                        <div className="flex items-start gap-4">
+                            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-green-500/20">
+                                <CheckCircle className="size-6 text-green-400" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.inventory.completeModal.title}</h3>
+                                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{t.inventory.completeModal.previewIntro}</p>
+
+                                {previewLoading ? (
+                                    <p className="mt-4 text-sm text-slate-400">{t.common.misc.loading}</p>
+                                ) : (
+                                    <InventoryCompletionPreview rows={completePreview} />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setCompleteModal({ show: false, inventory: null })}
+                                disabled={processing}
+                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                            >
+                                {t.common.actions.cancel}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmComplete}
+                                disabled={processing || previewLoading}
+                                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-500 disabled:opacity-50"
+                            >
+                                {processing ? t.common.actions.processing : t.inventory.completeModal.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </Modal>
             </section>
         </AuthenticatedLayout>
     );

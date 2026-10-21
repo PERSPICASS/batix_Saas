@@ -1,10 +1,15 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
+import FneCustomerFields, { FneTemplate, isCoteDIvoire } from '@/Components/FneCustomerFields';
 
 interface Shop {
     id: number;
     name: string;
+    country?: string | null;
 }
 
 interface Props {
@@ -12,19 +17,25 @@ interface Props {
 }
 
 export default function CustomersCreate({ shops }: Props) {
+    const { t } = useLocale();
+    const route = useRoute();
+
+    const { props } = usePage();
+    const activeShop = props.activeShop as { id: number; name: string } | null;
+
     const { data, setData, post, processing, errors } = useForm({
-        shop_id: '',
+        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         name: '',
         email: '',
         phone: '',
         address: '',
-        city: '',
-        postal_code: '',
-        country: 'France',
-        tax_number: '',
         notes: '',
         is_active: true,
+        ncc: '',
+        fne_template: 'B2C' as FneTemplate,
     });
+
+    const showFne = isCoteDIvoire(shops.find((shop) => shop.id.toString() === data.shop_id)?.country);
 
     const onSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -32,143 +43,113 @@ export default function CustomersCreate({ shops }: Props) {
     };
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Nouveau client</h1>}>
-            <Head title="Nouveau client" />
-            <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.customers.actions.new}</h1>}>
+            <Head title={t.customers.actions.new} />
+            <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Boutique *</span>
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+                        <span>{t.common.form.shopField}</span>
                         <select
                             value={data.shop_id}
-                            onChange={(e) => setData('shop_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            disabled
+                            className="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-slate-500 cursor-not-allowed dark:border-white/10 dark:bg-slate-800/50 dark:text-slate-400"
                         >
-                            <option value="">Sélectionner une boutique</option>
                             {shops.map((shop) => (
                                 <option key={shop.id} value={shop.id}>
                                     {shop.name}
                                 </option>
                             ))}
                         </select>
-                        {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{t.common.form.shopHint}</p>
+                        <InputError message={errors.shop_id} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Nom *</span>
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.common.form.name}</span>
                         <input
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.name && <span className="text-xs text-red-400">{errors.name}</span>}
+                        <InputError message={errors.name} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Email</span>
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.common.form.email}</span>
                         <input
                             type="email"
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.email && <span className="text-xs text-red-400">{errors.email}</span>}
+                        <InputError message={errors.email} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Téléphone</span>
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.common.form.phone}</span>
                         <input
                             value={data.phone}
                             onChange={(e) => setData('phone', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.phone && <span className="text-xs text-red-400">{errors.phone}</span>}
+                        <InputError message={errors.phone} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Numéro de TVA</span>
-                        <input
-                            value={data.tax_number}
-                            onChange={(e) => setData('tax_number', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                    {showFne && (
+                        <FneCustomerFields
+                            template={data.fne_template}
+                            ncc={data.ncc}
+                            onTemplateChange={(value) => setData('fne_template', value)}
+                            onNccChange={(value) => setData('ncc', value)}
+                            errors={errors}
                         />
-                        {errors.tax_number && <span className="text-xs text-red-400">{errors.tax_number}</span>}
-                    </label>
+                    )}
 
-                    <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Adresse</span>
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+                        <span>{t.common.form.address}</span>
                         <input
                             value={data.address}
                             onChange={(e) => setData('address', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.address && <span className="text-xs text-red-400">{errors.address}</span>}
+                        <InputError message={errors.address} />
                     </label>
 
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Ville</span>
-                        <input
-                            value={data.city}
-                            onChange={(e) => setData('city', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.city && <span className="text-xs text-red-400">{errors.city}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Code postal</span>
-                        <input
-                            value={data.postal_code}
-                            onChange={(e) => setData('postal_code', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.postal_code && <span className="text-xs text-red-400">{errors.postal_code}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200">
-                        <span>Pays</span>
-                        <input
-                            value={data.country}
-                            onChange={(e) => setData('country', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.country && <span className="text-xs text-red-400">{errors.country}</span>}
-                    </label>
-
-                    <label className="block space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Notes</span>
+                    <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+                        <span>{t.common.form.notes}</span>
                         <textarea
                             value={data.notes}
                             onChange={(e) => setData('notes', e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.notes && <span className="text-xs text-red-400">{errors.notes}</span>}
+                        <InputError message={errors.notes} />
                     </label>
 
-                    <label className="flex items-center gap-2 text-sm text-slate-200 md:col-span-2">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
                         <input
                             type="checkbox"
                             checked={data.is_active}
                             onChange={(e) => setData('is_active', e.target.checked)}
-                            className="rounded border-white/15 bg-slate-900/70"
+                            className="rounded border border-gray-300 bg-white dark:border-white/15 dark:bg-slate-900/70"
                         />
-                        <span>Client actif</span>
+                        <span>{t.common.form.activeCustomer}</span>
                     </label>
                 </div>
 
                 <div className="flex justify-end gap-2">
                     <Link
                         href={route('customers.index')}
-                        className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 hover:bg-white/10"
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
-                        Annuler
+                        {t.common.form.cancel}
                     </Link>
                     <button
                         type="submit"
                         disabled={processing}
                         className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50"
                     >
-                        {processing ? 'Enregistrement...' : 'Enregistrer'}
+                        {processing ? t.common.form.saving : t.common.form.save}
                     </button>
                 </div>
             </form>

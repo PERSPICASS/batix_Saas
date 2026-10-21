@@ -11,16 +11,22 @@ class InventoryItem extends Model
         'inventory_id',
         'product_id',
         'expected_quantity',
+        'expected_defective_quantity',
         'counted_quantity',
+        'defective_quantity',
         'difference',
+        'defective_difference',
         'unit_cost',
         'notes',
     ];
 
     protected $casts = [
         'expected_quantity' => 'integer',
+        'expected_defective_quantity' => 'integer',
         'counted_quantity' => 'integer',
+        'defective_quantity' => 'integer',
         'difference' => 'integer',
+        'defective_difference' => 'integer',
         'unit_cost' => 'decimal:2',
     ];
 
@@ -28,10 +34,19 @@ class InventoryItem extends Model
     {
         parent::boot();
 
+        // Kept as two independent deltas (not blended) because the actual stock
+        // adjustment on completion (StockMovementService::recordInventoryAdjustmentWithDefective)
+        // moves stock_quantity and defective_stock_quantity separately.
         static::saving(function ($item) {
-            if ($item->counted_quantity !== null) {
-                $item->difference = $item->counted_quantity - $item->expected_quantity;
-            }
+            // Une ligne non comptée ne constate aucun écart. Retrancher l'attendu d'un null
+            // annonçait au contraire un manque égal à tout le stock.
+            $item->difference = $item->counted_quantity === null
+                ? 0
+                : $item->counted_quantity - $item->expected_quantity;
+
+            $item->defective_difference = $item->defective_quantity === null
+                ? 0
+                : $item->defective_quantity - $item->expected_defective_quantity;
         });
     }
 

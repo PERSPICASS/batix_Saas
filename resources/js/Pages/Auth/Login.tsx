@@ -1,11 +1,13 @@
+import AuthSplitLayout from '@/Components/AuthSplitLayout';
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
+import { Eye, EyeOff, Lock } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function Login({
     status,
@@ -14,6 +16,9 @@ export default function Login({
     status?: string;
     canResetPassword: boolean;
 }) {
+    const { t } = useLocale();
+    const [showPassword, setShowPassword] = useState(false);
+
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -22,114 +27,107 @@ export default function Login({
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-
         post(route('login'), {
             onFinish: () => reset('password'),
         });
     };
 
     return (
-        <GuestLayout>
-            <Head title="Connexion" />
+        <>
+            <Head title={t.auth.pages.login.title} />
 
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-white">Connexion</h1>
-                <p className="mt-1 text-sm text-slate-300">
-                    Accede a ton espace Batix pour gerer tes boutiques.
-                </p>
-                <Link
-                    href="/"
-                    className="mt-3 inline-flex text-sm text-amber-200 underline underline-offset-4 transition hover:text-amber-100"
-                >
-                    Retour a l'accueil
-                </Link>
-            </div>
+            <AuthSplitLayout
+                title={t.auth.pages.login.heading}
+                description={t.auth.pages.login.description}
+                icon={<Lock className="size-5" />}
+                topLink={{ href: '/', label: t.auth.pages.login.topLink }}
+                sideStepLabel={t.auth.pages.login.sideLabel}
+                sideTitle={t.auth.pages.login.sideTitle}
+                sideDescription={t.auth.pages.login.sideDescription}
+            >
+                {status && (
+                    <div className="mb-3 rounded-lg border border-emerald-300/60 bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800">
+                        {status}
+                    </div>
+                )}
 
-            {status && (
-                <div className="mb-4 rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-sm font-medium text-emerald-200">
-                    {status}
-                </div>
-            )}
+                <form onSubmit={submit} className="space-y-3">
+                    <div>
+                        <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel
-                        htmlFor="email"
-                        value="Email"
-                        className="text-slate-200"
-                    />
-
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full border-white/15 bg-slate-900/70 text-white placeholder:text-slate-400 focus:border-amber-300 focus:ring-amber-300"
-                        autoComplete="username"
-                        isFocused={true}
-                        onChange={(e) => setData('email', e.target.value)}
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password"
-                        value="Mot de passe"
-                        className="text-slate-200"
-                    />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full border-white/15 bg-slate-900/70 text-white placeholder:text-slate-400 focus:border-amber-300 focus:ring-amber-300"
-                        autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
-                            name="remember"
-                            checked={data.remember}
-                            className="border-white/20 bg-slate-900 text-amber-300 focus:ring-amber-300"
-                            onChange={(e) =>
-                                setData(
-                                    'remember',
-                                    (e.target.checked || false) as false,
-                                )
-                            }
+                        <TextInput
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={data.email}
+                            className="mt-1 block w-full rounded-xl border border-gray-200 bg-white text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
+                            autoComplete="username"
+                            isFocused={true}
+                            onChange={(e) => setData('email', e.target.value)}
                         />
-                        <span className="ms-2 text-sm text-slate-300">
-                            Se souvenir de moi
-                        </span>
-                    </label>
-                </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    {canResetPassword && (
+                        <InputError message={errors.email} className="mt-2" />
+                    </div>
+
+                    <div>
+                        <InputLabel htmlFor="password" value={t.auth.form.password} className="text-slate-700" />
+
+                        <div className="relative mt-1">
+                            <TextInput
+                                id="password"
+                                type={showPassword ? 'text' : 'password'}
+                                name="password"
+                                value={data.password}
+                                className="block w-full rounded-xl border border-gray-200 bg-white pr-10 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
+                                autoComplete="current-password"
+                                onChange={(e) => setData('password', e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                            >
+                                {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                            </button>
+                        </div>
+
+                        <InputError message={errors.password} className="mt-2" />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                        <label className="inline-flex items-center">
+                            <Checkbox
+                                name="remember"
+                                checked={data.remember}
+                                className="border-gray-300 bg-white text-terre-600 focus:ring-terre-300"
+                                onChange={(e) => setData('remember', e.target.checked)}
+                            />
+                            <span className="ms-2 text-sm text-slate-700">{t.auth.form.rememberMe}</span>
+                        </label>
+
+                        {canResetPassword && (
                             <Link
                                 href={route('password.request')}
-                                className="rounded-md text-sm text-slate-300 underline underline-offset-4 transition hover:text-white focus:outline-none focus:ring-2 focus:ring-amber-300 focus:ring-offset-2 focus:ring-offset-slate-950"
+                                className="text-sm text-slate-600 underline underline-offset-4 transition hover:text-terre-700"
                             >
-                                Mot de passe oublie ?
+                                {t.auth.links.forgotPassword}
                             </Link>
                         )}
+                    </div>
 
-                    <PrimaryButton
-                        className="ms-4 border-0 bg-amber-300 text-slate-950 hover:bg-amber-200 focus:bg-amber-200 focus:ring-amber-300 focus:ring-offset-slate-950 active:bg-amber-300"
-                        disabled={processing}
-                    >
-                        Se connecter
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+                    <div className="space-y-2 pt-1">
+                        <PrimaryButton className="w-full justify-center rounded-xl !bg-amber-300 py-2.5 text-sm font-bold normal-case tracking-normal !text-slate-900 shadow-md hover:!bg-amber-400 focus:!ring-amber-300" disabled={processing}>
+                            {t.auth.actions.signIn}
+                        </PrimaryButton>
+
+                        <div className="text-center">
+                            <Link href={route('register')} className="text-xs text-slate-600 underline underline-offset-4 transition hover:text-terre-700 sm:text-sm">
+                                {t.auth.links.noAccount}
+                            </Link>
+                        </div>
+                    </div>
+                </form>
+            </AuthSplitLayout>
+        </>
     );
 }

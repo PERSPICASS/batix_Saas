@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Supplier;
+use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -15,7 +18,16 @@ class SupplierController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Supplier::query();
+        $activeShopId = get_active_shop_id();
+        $userShopIds = Auth::user()->accessibleShops()->pluck('id');
+        
+        $query = Supplier::with('shops')
+            ->whereHas('shops', function ($q) use ($userShopIds, $activeShopId) {
+                $q->whereIn('shops.id', $userShopIds);
+                if ($activeShopId) {
+                    $q->where('shops.id', $activeShopId);
+                }
+            });
 
         // Search filter
         if ($request->has('search') && $request->search) {
@@ -46,7 +58,9 @@ class SupplierController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Suppliers/Create');
+        return Inertia::render('Suppliers/Create', [
+            'shops' => Auth::user()->accessibleShops(),
+        ]);
     }
 
     /**
@@ -55,6 +69,8 @@ class SupplierController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'shop_ids' => 'required|array|min:1',
+            'shop_ids.*' => 'exists:shops,id',
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -70,17 +86,51 @@ class SupplierController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        Supplier::create($validated);
+        // Vérifier que toutes les boutiques appartiennent à l'utilisateur
+        $userShopIds = Auth::user()->accessibleShops()->pluck('id')->toArray();
+        foreach ($validated['shop_ids'] as $shopId) {
+            if (!in_array($shopId, $userShopIds)) {
+                abort(403, 'Accès non autorisé à cette boutique.');
+            }
+        }
 
-        return redirect()->route('suppliers.index')->with('success', 'Fournisseur créé avec succès.');
+        $shopIds = $validated['shop_ids'];
+        unset($validated['shop_ids']);
+
+        $supplier = Supplier::create($validated);
+        $supplier->shops()->attach($shopIds);
+
+        // Log activity
+        ActivityLogger::created($supplier, $supplier->name);
+
+        return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur créé avec succès.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Supplier $supplier): Response
+    public function show(string $code_user, Supplier $supplier): Response
     {
-        $supplier->load('products');
+        $userShopIds = Auth::user()->accessibleShops()->pluck('id');
+        
+        // Vérifier que le fournisseur est associé à au moins une boutique de l'utilisateur
+        if (!$supplier->shops()->whereIn('shops.id', $userShopIds)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $supplier->load('shops');
+
+        // Products come through purchase orders, not a direct FK. Shape them
+        // to match what Suppliers/Show expects (price/stock, not the raw
+        // selling_price/stock_quantity columns).
+        $supplier->setRelation('products', $supplier->products()->get()->map(fn (Product $product) => [
+            'id' => $product->id,
+            'name' => $product->name,
+            'sku' => $product->sku,
+            'image' => $product->image,
+            'price' => (float) $product->selling_price,
+            'stock' => (int) $product->stock_quantity,
+        ]));
 
         return Inertia::render('Suppliers/Show', [
             'supplier' => $supplier,
@@ -90,19 +140,38 @@ class SupplierController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Supplier $supplier): Response
+    public function edit(string $code_user, Supplier $supplier): Response
     {
+        $userShopIds = Auth::user()->accessibleShops()->pluck('id');
+        
+        // Vérifier que le fournisseur est associé à au moins une boutique de l'utilisateur
+        if (!$supplier->shops()->whereIn('shops.id', $userShopIds)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $supplier->load('shops');
+
         return Inertia::render('Suppliers/Edit', [
             'supplier' => $supplier,
+            'shops' => Auth::user()->accessibleShops(),
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Supplier $supplier): RedirectResponse
+    public function update(Request $request, string $code_user, Supplier $supplier): RedirectResponse
     {
+        $userShopIds = Auth::user()->accessibleShops()->pluck('id');
+        
+        // Vérifier que le fournisseur est associé à au moins une boutique de l'utilisateur
+        if (!$supplier->shops()->whereIn('shops.id', $userShopIds)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
         $validated = $request->validate([
+            'shop_ids' => 'required|array|min:1',
+            'shop_ids.*' => 'exists:shops,id',
             'name' => 'required|string|max:255',
             'company_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -118,23 +187,52 @@ class SupplierController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $supplier->update($validated);
+        // Vérifier que toutes les boutiques appartiennent à l'utilisateur
+        $userShopIdsArray = $userShopIds->toArray();
+        foreach ($validated['shop_ids'] as $shopId) {
+            if (!in_array($shopId, $userShopIdsArray)) {
+                abort(403, 'Accès non autorisé à cette boutique.');
+            }
+        }
 
-        return redirect()->route('suppliers.index')->with('success', 'Fournisseur mis à jour avec succès.');
+        $shopIds = $validated['shop_ids'];
+        unset($validated['shop_ids']);
+
+        $supplier->update($validated);
+        $supplier->shops()->sync($shopIds);
+
+        // Log activity
+        ActivityLogger::updated($supplier, [], $supplier->name);
+
+        return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur mis à jour avec succès.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Supplier $supplier): RedirectResponse
+    public function destroy(string $code_user, Supplier $supplier): RedirectResponse
     {
+        $userShopIds = Auth::user()->accessibleShops()->pluck('id');
+        
+        // Vérifier que le fournisseur est associé à au moins une boutique de l'utilisateur
+        if (!$supplier->shops()->whereIn('shops.id', $userShopIds)->exists()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
         // Check if supplier has products
         if ($supplier->products()->count() > 0) {
             return back()->withErrors(['error' => 'Impossible de supprimer ce fournisseur car il a des produits associés.']);
         }
 
+        // Sauvegarder le nom avant suppression
+        $supplierName = $supplier->name;
+        
+        $supplier->shops()->detach();
         $supplier->delete();
 
-        return redirect()->route('suppliers.index')->with('success', 'Fournisseur supprimé avec succès.');
+        // Log activity
+        ActivityLogger::deleted($supplier, $supplierName);
+
+        return redirect()->route('suppliers.index', ['code_user' => request()->route('code_user')])->with('success', 'Fournisseur supprimé avec succès.');
     }
 }

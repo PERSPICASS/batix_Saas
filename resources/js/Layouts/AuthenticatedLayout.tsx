@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import {
     PropsWithChildren,
     ReactNode,
@@ -7,188 +7,460 @@ import {
     useState,
 } from 'react';
 import {
+    AlertTriangle,
     BarChart3,
+    BookOpen,
     Building2,
     Boxes,
     Box,
+    Calendar,
     ChevronDown,
     ChevronRight,
     ClipboardList,
+    CreditCard,
     Crown,
     FileText,
     Folder,
     FolderTree,
-    HardHat,
+    History,
+    Key,
     LayoutDashboard,
+    Lock,
     LogOut,
     Menu,
-    Moon,
+    Receipt,
+    ReceiptText,
+    Search,
     ShoppingCart,
     Settings,
+    Shield,
+    Star,
     Store,
     Truck,
     User,
     Users,
-    Sun,
+    TrendingDown,
+    TrendingUp,
+    Warehouse,
     X,
 } from 'lucide-react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import ToastContainer from '@/Components/ToastContainer';
+import ReadOnlyAccountGuard from '@/Components/ReadOnlyAccountGuard';
+import OfflineBanner from '@/Components/OfflineBanner';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import AiChatWidget from '@/Components/AiChatWidget';
+import { clearAiChatSession } from '@/utils/aiChatSession';
+import ReviewModal, { type MyReview } from '@/Components/ReviewModal';
+import { useLocale } from '@/contexts/LocaleContext';
+
 
 export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const page = usePage();
+    const { t } = useLocale();
     const user = page.props.auth?.user;
+    const routeParams = page.props.routeParams as { code_user: string | null; shop_slug: string | null };
     const shopsFromProps = page.props.shops as Array<{ id: number; name: string; slug: string; is_active: boolean }> || [];
+    const activeShopFromProps = page.props.activeShop as { id: number; name: string; slug: string } | null;
+    const lowStockCount = (page.props.lowStockCount as number | null) ?? 0;
+
+    const subscription = page.props.subscription as {
+        plan_name: string | null;
+        has_subscription: boolean;
+        expires_at: string | null;
+        status: string | null;
+        has_ai_assistant: boolean;
+    } | null;
+
+    const daysUntilExpiry = subscription?.expires_at
+        ? Math.ceil((new Date(subscription.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null;
+    const showExpiryBanner = daysUntilExpiry !== null && daysUntilExpiry <= 7 && user?.role === 'super_admin';
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const [menuSearch, setMenuSearch] = useState('');
+    const [reviewOpen, setReviewOpen] = useState(false);
+    const myReview = (page.props.myReview as MyReview | null) ?? null;
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
-    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+    const isPlatformAdmin = user?.role === 'admin_platforme';
+    const isSuperAdmin = user?.role === 'super_admin';
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
 
-    const shops = shopsFromProps.filter(shop => shop.is_active).map(shop => ({
-        id: shop.id.toString(),
-        name: shop.name,
-        slug: shop.slug,
-    }));
-    
-    const [currentPath, queryString = ''] = page.url.split('?');
-    const query = new URLSearchParams(queryString);
-    const activeShopId = query.get('shop') ?? (shops.length > 0 ? shops[0].id : '');
-    const activeShop = shops.find((shop) => shop.id === activeShopId) ?? shops[0];
+    const canViewModule = (module: string): boolean => {
+        if (user?.role === 'super_admin') return true;
+        const permission = user?.permissions?.find((p: any) => p.module === module);
+        return permission ? permission.can_view : false;
+    };
 
-    useEffect(() => {
-        const savedTheme = window.localStorage.getItem('theme');
-        if (savedTheme === 'light' || savedTheme === 'dark') {
-            setTheme(savedTheme);
-            return;
+    const isCashier = (): boolean => {
+        return user?.role === 'cashier' || user?.role === 'caisse';
+    };
+
+    const isAdmin = (): boolean => {
+        return user?.role === 'super_admin' || user?.role === 'manager';
+    };
+
+    const getAccountCode = (): string | null => {
+        if (!user) return null;
+        if (user.role === 'admin_platforme') return null;
+        if (user.role === 'super_admin') return user.code_user;
+        const urlParts = (typeof window !== 'undefined' ? window.location.pathname : '').split('/').filter(Boolean);
+        const codeFromUrl = urlParts[0] || null;
+        return routeParams.code_user || codeFromUrl;
+    };
+
+    const accountCode = getAccountCode();
+
+    const buildRoute = (name: string, params: Record<string, any> = {}) => {
+        if (user?.role === 'admin_platforme') return route(name, params);
+        if (!accountCode) {
+            console.warn('Account code not available for route:', name);
+            return '#';
         }
+        return route(name, { code_user: accountCode, ...params });
+    };
 
-        setTheme(
-            window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light',
+    if (!accountCode && user?.role !== 'admin_platforme') {
+        return (
+            <div className="flex h-screen items-center justify-center bg-slate-950">
+                <div className="text-center">
+                    <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-amber-300 border-r-transparent"></div>
+                    <p className="text-slate-400">{t.layout.loading}</p>
+                </div>
+            </div>
         );
-    }, []);
+    }
 
-    useEffect(() => {
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        window.localStorage.setItem('theme', theme);
-    }, [theme]);
+    const shops = Array.isArray(shopsFromProps)
+        ? shopsFromProps.filter(shop => shop.is_active).map(shop => ({
+            id: shop.id.toString(),
+            name: shop.name,
+            slug: shop.slug,
+        }))
+        : [];
+
+    const activeShop = activeShopFromProps
+        ? { id: activeShopFromProps.id.toString(), name: activeShopFromProps.name, slug: activeShopFromProps.slug }
+        : (shops.length > 0 ? shops[0] : null);
+
+    const handleShopChange = (shopId: string) => {
+        const [currentPath] = page.url.split('?');
+        router.visit(`${currentPath}?shop=${shopId}`, {
+            preserveState: false,
+            preserveScroll: true,
+        });
+        setShopMenuOpen(false);
+    };
+
+    // Le thème sombre est désormais le seul thème de l'application : il est posé sur
+    // <html> par app.blade.php, avant la première peinture. Plus rien à faire ici.
 
     useEffect(() => {
         const onClickOutside = (event: MouseEvent) => {
-            if (
-                userMenuRef.current &&
-                !userMenuRef.current.contains(event.target as Node)
-            ) {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
                 setUserMenuOpen(false);
             }
-            if (
-                shopMenuRef.current &&
-                !shopMenuRef.current.contains(event.target as Node)
-            ) {
+            if (shopMenuRef.current && !shopMenuRef.current.contains(event.target as Node)) {
                 setShopMenuOpen(false);
             }
         };
-
         window.addEventListener('mousedown', onClickOutside);
         return () => window.removeEventListener('mousedown', onClickOutside);
     }, []);
 
-    const navItems = [
-        {
-            label: 'Dashboard',
-            href: route('dashboard'),
-            active: route().current('dashboard'),
-            icon: LayoutDashboard,
-        },
-        {
-            label: 'Boutiques',
-            href: route('shops.index'),
-            active: route().current('shops.*'),
-            icon: Store,
-        },
-        {
-            label: 'Produits',
-            href: route('products.index'),
-            active: route().current('products.*'),
-            icon: Box,
-        },
-        {
-            label: 'Categories',
-            href: route('categories.index'),
-            active: route().current('categories.*'),
-            icon: Folder,
-        },
-        {
-            label: 'Sous categorie',
-            href: route('subcategories.index'),
-            active: route().current('subcategories.*'),
-            icon: FolderTree,
-        },
-        {
-            label: 'Stocks',
-            href: route('stocks.index'),
-            active: route().current('stocks.*'),
-            icon: Boxes,
-        },
-        {
-            label: 'Inventaire',
-            href: route('inventory.index'),
-            active: route().current('inventory.*'),
-            icon: ClipboardList,
-        },
-        {
-            label: 'Ventes',
-            href: route('sales.index'),
-            active: route().current('sales.*'),
-            icon: ShoppingCart,
-        },
-        {
-            label: 'Fournisseurs',
-            href: route('suppliers.index'),
-            active: route().current('suppliers.*'),
-            icon: Truck,
-        },
-        {
-            label: 'Utilisateurs',
-            href: route('users.index'),
-            active: route().current('users.*'),
-            icon: Users,
-        },
-        {
-            label: 'Client',
-            href: route('customers.index'),
-            active: route().current('customers.*'),
-            icon: User,
-        },
-        {
-            label: 'Factures',
-            href: route('invoices.index'),
-            active: route().current('invoices.*'),
-            icon: FileText,
-        },
-        {
-            label: 'Analitics',
-            href: route('analytics.index'),
-            active: route().current('analytics.*'),
-            icon: BarChart3,
-        },
-        ...(user
-            ? [{
-            label: 'Profil',
-            href: route('profile.edit'),
-            active: route().current('profile.*'),
-            icon: Settings,
-        }]
+    const allNavItems = [
+        ...(user?.role === 'admin_platforme' ? [
+            {
+                label: t.nav.platformDashboard,
+                href: route('platform.dashboard'),
+                active: route().current('platform.dashboard'),
+                icon: Crown,
+                module: null,
+            },
+            {
+                label: t.nav.accounts,
+                href: route('platform.accounts'),
+                active: route().current('platform.accounts'),
+                icon: Users,
+                module: null,
+            },
+            {
+                label: t.nav.shops,
+                href: route('platform.shops'),
+                active: route().current('platform.shops'),
+                icon: Store,
+                module: null,
+            },
+            {
+                label: t.nav.plans,
+                href: route('platform.subscriptions.index'),
+                active: route().current('platform.subscriptions.*'),
+                icon: Crown,
+                module: null,
+            },
+            {
+                label: t.nav.subscriptions,
+                href: route('platform.active-subscriptions'),
+                active: route().current('platform.active-subscriptions*'),
+                icon: Calendar,
+                module: null,
+            },
+            {
+                label: t.nav.settings,
+                href: route('platform.settings'),
+                active: route().current('platform.settings*'),
+                icon: Settings,
+                module: null,
+            },
+            {
+                label: t.nav.mrr,
+                href: route('platform.mrr'),
+                active: route().current('platform.mrr*'),
+                icon: TrendingUp,
+                module: null,
+            },
+            {
+                label: t.nav.charges,
+                href: route('platform.fixed-costs.index'),
+                active: route().current('platform.fixed-costs.*'),
+                icon: CreditCard,
+                module: null,
+            },
+            {
+                label: t.nav.blog,
+                href: route('platform.blog.index'),
+                active: route().current('platform.blog.*'),
+                icon: BookOpen,
+                module: null,
+            },
+            {
+                label: t.nav.platformReviews,
+                href: route('platform.reviews.index'),
+                active: route().current('platform.reviews.*'),
+                icon: Star,
+                module: null,
+            },
+        ] : [
+            {
+                label: t.nav.dashboard,
+                href: buildRoute('dashboard'),
+                active: route().current('dashboard'),
+                icon: LayoutDashboard,
+                module: null,
+            },
+            {
+                label: t.nav.shops,
+                href: buildRoute('shops.index'),
+                active: route().current('shops.*'),
+                icon: Store,
+                module: 'shops',
+            },
+            {
+                label: t.nav.products,
+                href: buildRoute('products.index'),
+                active: route().current('products.*'),
+                icon: Box,
+                module: 'products',
+                badge: lowStockCount > 0 ? lowStockCount : null,
+            },
+            {
+                label: t.nav.categories,
+                href: buildRoute('categories.index'),
+                active: route().current('categories.*'),
+                icon: Folder,
+                module: 'categories',
+            },
+            {
+                label: t.nav.subcategories,
+                href: buildRoute('subcategories.index'),
+                active: route().current('subcategories.*'),
+                icon: FolderTree,
+                module: 'categories',
+            },
+            {
+                label: t.nav.stocks,
+                href: buildRoute('stocks.index'),
+                active: route().current('stocks.*'),
+                icon: Boxes,
+                module: 'stocks',
+            },
+            {
+                label: t.nav.inventory,
+                href: buildRoute('inventory.index'),
+                active: route().current('inventory.*'),
+                icon: ClipboardList,
+                module: 'inventory',
+            },
+            {
+                label: t.nav.purchases,
+                href: buildRoute('purchases.index'),
+                active: route().current('purchases.*'),
+                icon: ShoppingCart,
+                module: 'purchases',
+            },
+            {
+                label: t.nav.expenses,
+                href: buildRoute('expenses.index'),
+                active: route().current('expenses.*'),
+                icon: TrendingDown,
+                module: 'expenses',
+            },
+            {
+                label: t.nav.sales,
+                href: buildRoute('sales.index'),
+                active: route().current('sales.*') && !route().current('sales.credits*'),
+                icon: ShoppingCart,
+                module: 'sales',
+            },
+            {
+                label: t.nav.credits,
+                href: buildRoute('sales.credits'),
+                active: route().current('sales.credits*'),
+                icon: CreditCard,
+                module: 'credits',
+            },
+            ...(isCashier() ? [] : [{
+                label: t.nav.returnedInventory,
+                href: buildRoute('returned-inventory.index'),
+                active: route().current('returned-inventory.*'),
+                icon: ClipboardList,
+                module: 'returned_inventory',
+            }]),
+            {
+                label: t.nav.suppliers,
+                href: buildRoute('suppliers.index'),
+                active: route().current('suppliers.*'),
+                icon: Truck,
+                module: 'suppliers',
+            },
+            {
+                label: t.nav.users,
+                href: buildRoute('users.index'),
+                active: route().current('users.*'),
+                icon: Users,
+                module: 'users',
+            },
+            ...(isAdmin() ? [{
+                label: t.nav.permissions,
+                href: buildRoute('permissions.index'),
+                active: route().current('permissions.*'),
+                icon: Shield,
+                module: null,
+            }] : []),
+            {
+                label: t.nav.customers,
+                href: buildRoute('customers.index'),
+                active: route().current('customers.*'),
+                icon: User,
+                module: 'customers',
+            },
+            {
+                label: t.nav.quotes,
+                href: buildRoute('quotes.index'),
+                active: route().current('quotes.*'),
+                icon: Receipt,
+                module: 'quotes',
+            },
+            ...(isCashier() ? [] : [{
+                label: t.nav.preorders,
+                href: buildRoute('preorders.index'),
+                active: route().current('preorders.*'),
+                icon: Calendar,
+                module: 'preorders',
+            }]),
+            ...(isCashier() ? [] : [{
+                label: t.nav.recurringInvoices,
+                href: buildRoute('recurring-invoices.index'),
+                active: route().current('recurring-invoices.*'),
+                icon: Receipt,
+                module: 'recurring_invoices',
+            }]),
+            ...(isCashier() ? [] : [{
+                label: t.nav.invoices,
+                href: buildRoute('invoices.index'),
+                active: route().current('invoices.*'),
+                icon: FileText,
+                module: 'invoices',
+            }]),
+            // Les avoirs relèvent du module `invoices` : émettre un avoir fait partie de
+            // la facturation, et aucun module de permission dédié n'a été créé.
+            ...(isCashier() ? [] : [{
+                label: t.nav.creditNotes,
+                href: buildRoute('credit-notes.index'),
+                active: route().current('credit-notes.*'),
+                icon: ReceiptText,
+                module: 'invoices',
+            }]),
+            {
+                label: t.nav.analytics,
+                href: buildRoute('analytics.index'),
+                active: route().current('analytics.*'),
+                icon: BarChart3,
+                module: 'analytics',
+            },
+            {
+                label: t.nav.history,
+                href: buildRoute('activity-logs.index'),
+                active: route().current('activity-logs.*'),
+                icon: History,
+                module: 'activity_logs',
+            },
+            {
+                label: t.nav.settings,
+                href: buildRoute('settings.index'),
+                active: route().current('settings.*'),
+                icon: Settings,
+                module: 'settings',
+            },
+            ...(isSuperAdmin ? [{
+                label: t.apiTokens.title,
+                href: buildRoute('api-tokens.index'),
+                active: route().current('api-tokens.*'),
+                icon: Key,
+                module: null,
+            }] : []),
+            ...(user && (user as any).role !== 'admin_platforme'
+                ? [{
+                label: t.nav.profile,
+                href: buildRoute('profile.edit'),
+                active: route().current('profile.*'),
+                icon: Settings,
+                module: null,
+            }]
             : []),
+            ...(isCashier() ? [] : [{
+                label: t.nav.billing,
+                href: buildRoute('billing.index'),
+                active: route().current('billing.*'),
+                icon: Receipt,
+                module: null,
+            }]),
+        ]),
     ];
 
+    const navItems = allNavItems.filter(item => {
+        if (!item.module) return true;
+        return canViewModule(item.module);
+    });
+
+    // Recherche insensible à la casse ET aux accents : « depot » doit trouver « Dépôts »,
+    // « categorie » trouver « Catégories ». C'est la première chose qu'on tape.
+    const fold = (value: string) =>
+        value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+
+    // Dans la langue courante uniquement : les libellés sont déjà ceux de l'interface, donc
+    // l'utilisateur cherche ce qu'il voit.
+    const needle = fold(menuSearch.trim());
+    const visibleNavItems = needle
+        ? navItems.filter((item) => fold(item.label).includes(needle))
+        : navItems;
+
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
             <div className="absolute inset-0 -z-10 overflow-hidden">
                 <div className="absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-amber-500/10 blur-3xl dark:bg-amber-500/15" />
                 <div className="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-cyan-500/5 blur-3xl dark:bg-cyan-500/10" />
@@ -199,29 +471,22 @@ export default function Authenticated({
                     type="button"
                     onClick={() => setMobileSidebarOpen(false)}
                     className="fixed inset-0 z-40 bg-slate-900/50 dark:bg-slate-950/70 lg:hidden"
-                    aria-label="Fermer le menu"
+                    aria-label={t.layout.closeMenu}
                 />
             )}
 
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-300 bg-slate-100/95 p-5 backdrop-blur-xl transition-transform duration-300 dark:border-white/10 dark:bg-slate-900/95 lg:translate-x-0 ${
+                className={`print:hidden fixed inset-y-0 left-0 z-50 w-72 border-r border-slate-200 bg-white/95 p-5 backdrop-blur-xl transition-transform duration-300 dark:border-white/10 dark:bg-slate-900/95 lg:translate-x-0 ${
                     mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
                 <div className="flex h-full flex-col">
                     <div className="mb-8 flex items-center justify-between">
-                        <Link href="/" className="flex items-center gap-3">
-                            <div className="rounded-lg bg-amber-300 p-2 text-slate-950">
-                                <HardHat className="size-5" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-600 dark:text-amber-200">
-                                    Batix SaaS
-                                </p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    Gestion moderne de quincaillerie
-                                </p>
-                            </div>
+                        <Link href="/" className="flex min-w-0 flex-col gap-1">
+                            <ApplicationLogo className="h-9 w-auto" />
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {t.layout.brandSubtitle}
+                            </p>
                         </Link>
                         <button
                             type="button"
@@ -233,8 +498,26 @@ export default function Authenticated({
                     </div>
 
                     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+                        {/* Le menu a suffisamment grandi pour qu'on ne le parcoure plus des
+                            yeux. */}
+                        <div className="relative">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="search"
+                                value={menuSearch}
+                                onChange={(e) => setMenuSearch(e.target.value)}
+                                placeholder={t.layout.searchMenu}
+                                className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:placeholder-slate-500"
+                            />
+                        </div>
+
                         <nav className="space-y-1">
-                            {navItems.map((item) => (
+                            {visibleNavItems.length === 0 && (
+                                <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                                    {t.layout.noMenuMatch}
+                                </p>
+                            )}
+                            {visibleNavItems.map((item) => (
                                 <Link
                                     key={item.label}
                                     href={item.href}
@@ -243,104 +526,132 @@ export default function Authenticated({
                                             ? 'bg-amber-300 text-slate-950'
                                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
                                     }`}
-                                    onClick={() => setMobileSidebarOpen(false)}
+                                    onClick={() => {
+                                        setMobileSidebarOpen(false);
+                                        setMenuSearch('');
+                                    }}
                                 >
                                     <span className="flex items-center gap-3">
                                         <item.icon className="size-4" />
                                         {item.label}
                                     </span>
-                                    <ChevronRight className="size-4 opacity-60" />
+                                    {(item as any).badge ? (
+                                        <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                            {(item as any).badge}
+                                        </span>
+                                    ) : (
+                                        <ChevronRight className="size-4 opacity-60" />
+                                    )}
                                 </Link>
                             ))}
                         </nav>
-                        
                     </div>
 
                     <div className="space-y-3 pt-4">
+                        {user?.role === 'super_admin' && (
                         <div className="rounded-xl border border-amber-300/40 bg-gradient-to-br from-amber-200/70 via-orange-200/40 to-transparent p-4 dark:border-amber-200/25 dark:from-amber-300/20 dark:via-orange-300/10">
                             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-100">
                                 <Crown className="size-4" />
                                 <p className="text-xs font-semibold uppercase tracking-wider">
-                                    Abonnement
+                                    {t.layout.subscription.title}
                                 </p>
                             </div>
                             <p className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
-                                {user ? 'Growth' : 'Starter'}
+                                {subscription?.plan_name ?? t.layout.subscription.noPlan}
                             </p>
                             <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">
-                                {user
-                                    ? '5 boutiques incluses'
-                                    : 'Connectez-vous pour voir votre plan'}
+                                {subscription?.has_subscription
+                                    ? t.layout.subscription.active
+                                    : t.layout.subscription.noActive}
                             </p>
                             <Link
-                                href={route('subscriptions.index')}
+                                href="/plans"
                                 className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-amber-300 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200"
                             >
-                                Upgrade
+                                {t.layout.subscription.upgrade}
                             </Link>
                         </div>
-
-                        
+                        )}
                     </div>
                 </div>
             </aside>
 
-            <div className="lg:pl-72">
-                <header className="sticky top-0 z-30 border-b border-slate-300 bg-slate-100/90 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => setMobileSidebarOpen(true)}
-                                className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10 lg:hidden"
-                            >
-                                <Menu className="size-5" />
-                            </button>
-                            <div>
-                                {header ?? (
-                                    <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                        Dashboard
-                                    </h1>
-                                )}
-                            </div>
+            <div className="min-w-0 lg:pl-72 print:pl-0">
+                <header className="print:hidden sticky top-0 z-30 border-b border-slate-200 bg-white/90 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6 lg:px-8">
+                    {/* Sur mobile, le titre de la page (souvent accompagné de boutons)
+                        passe sous la barre d'icônes : sur une seule ligne, l'ensemble
+                        dépassait l'écran et élargissait toute la page. */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setMobileSidebarOpen(true)}
+                            className="rounded-lg border border-slate-200 p-2 text-slate-700 transition hover:bg-slate-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10 lg:hidden"
+                        >
+                            <Menu className="size-5" />
+                        </button>
+                        <div className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
+                            {header ?? (
+                                <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                    {t.nav.dashboard}
+                                </h1>
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            {/* <button
-                                type="button"
-                                onClick={() =>
-                                    setTheme((prev) =>
-                                        prev === 'dark' ? 'light' : 'dark',
-                                    )
-                                }
-                                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                            >
-                                {theme === 'dark' ? (
-                                    <>
-                                        <Sun className="size-4" />
-                                        Light
-                                    </>
-                                ) : (
-                                    <>
-                                        <Moon className="size-4" />
-                                        Night
-                                    </>
-                                )}
-                            </button> */}
+                        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                            <LanguageSwitcher />
+
+                            {lowStockCount > 0 && user?.role !== 'admin_platforme' && (
+                                <Link
+                                    href={buildRoute('products.index') + '?status=low_stock'}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
+                                >
+                                    <AlertTriangle className="size-3.5" />
+                                    <span className="hidden sm:inline">{t.layout.lowStock(lowStockCount)}</span>
+                                    <span className="sm:hidden">{lowStockCount}</span>
+                                </Link>
+                            )}
+
+                            {user?.role === 'super_admin' && (
+                                <Link
+                                    href={buildRoute('billing.index')}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/40 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-600 transition hover:bg-amber-300/20 dark:border-amber-300/30 dark:text-amber-300"
+                                >
+                                    <Crown className="size-3.5" />
+                                    <span className="hidden sm:inline">
+                                        {subscription?.plan_name ?? t.layout.subscription.noPlan}
+                                    </span>
+                                </Link>
+                            )}
+
+                            {user?.role !== 'admin_platforme' && isSuperAdmin && (
+                                <Link
+                                    href={buildRoute('depots.index')}
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                >
+                                    <Warehouse className="size-4 text-amber-400" />
+                                    <span className="hidden sm:inline">{t.layout.depot}</span>
+                                </Link>
+                            )}
+
+                            {user?.role !== 'admin_platforme' && (
                             <div className="relative" ref={shopMenuRef}>
                                 <button
                                     type="button"
-                                    onClick={() => setShopMenuOpen((prev) => !prev)}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-left text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
-                                    disabled={shops.length === 0}
+                                    onClick={() => isSuperAdmin && setShopMenuOpen((prev) => !prev)}
+                                    className={`relative inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                                        isSuperAdmin && shops.length > 0
+                                            ? 'border-slate-300 bg-white text-slate-800 hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 cursor-pointer'
+                                            : 'border-slate-400 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500 cursor-not-allowed'
+                                    }`}
+                                    disabled={shops.length === 0 || !isSuperAdmin}
                                 >
                                     <Building2 className="size-4 text-amber-200" />
                                     <span className="hidden sm:block">
                                         <span className="block text-[11px] text-slate-500 dark:text-slate-400">
-                                            Boutique active
+                                            {t.layout.activeShop}
                                         </span>
                                         <span className="block font-semibold text-slate-900 dark:text-white">
-                                            {shops.length > 0 ? activeShop?.name : 'Aucune boutique'}
+                                            {shops.length > 0 ? activeShop?.name : t.layout.noShop}
                                         </span>
                                     </span>
                                     {shops.length > 0 && (
@@ -348,34 +659,42 @@ export default function Authenticated({
                                     )}
                                 </button>
 
-                                {shopMenuOpen && shops.length > 0 && (
-                                    <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
+                                {shopMenuOpen && shops.length > 0 && isSuperAdmin && (
+                                    <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {shops.map((shop) => (
-                                            <Link
+                                            <button
                                                 key={shop.id}
-                                                href={`${currentPath}?shop=${shop.id}`}
-                                                className={`block rounded-lg px-3 py-2 text-sm transition ${
+                                                type="button"
+                                                onClick={() => handleShopChange(shop.id)}
+                                                className={`w-full text-left block rounded-lg px-3 py-2 text-sm transition ${
                                                     shop.id === activeShop?.id
                                                         ? 'bg-amber-300 text-slate-950'
                                                         : 'text-slate-800 hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10'
                                                 }`}
-                                                onClick={() => setShopMenuOpen(false)}
                                             >
                                                 {shop.name}
-                                            </Link>
+                                            </button>
                                         ))}
                                         <hr className="my-1 border-slate-300 dark:border-white/10" />
-                                        <Link
-                                            href={route('shops.index')}
-                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
-                                            onClick={() => setShopMenuOpen(false)}
-                                        >
-                                            <Store className="size-4" />
-                                            Gérer mes boutiques
-                                        </Link>
+                                        {isSuperAdmin ? (
+                                            <Link
+                                                href={buildRoute('shops.index')}
+                                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                onClick={() => setShopMenuOpen(false)}
+                                            >
+                                                <Store className="size-4" />
+                                                {t.layout.manageShops}
+                                            </Link>
+                                        ) : (
+                                            <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 dark:text-slate-600 cursor-not-allowed">
+                                                <Store className="size-4" />
+                                                {t.layout.manageShops}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
+                            )}
 
                             <div className="relative" ref={userMenuRef}>
                                 <button
@@ -383,7 +702,8 @@ export default function Authenticated({
                                     onClick={() => setUserMenuOpen((prev) => !prev)}
                                     className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-left text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
-                                    <span>
+                                    <User className="size-4 sm:hidden" />
+                                    <span className="hidden sm:block">
                                         <span className="block font-semibold text-amber-600 dark:text-amber-200">
                                             {user?.name ?? 'Visiteur'}
                                         </span>
@@ -395,31 +715,69 @@ export default function Authenticated({
                                 </button>
 
                                 {userMenuOpen && (
-                                    <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-slate-300 bg-slate-100/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
+                                    <div className="absolute right-0 z-20 mt-2 w-48 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {user ? (
                                             <>
+                                                <div className="border-b border-slate-200 px-3 py-2 dark:border-white/10 sm:hidden">
+                                                    <p className="truncate text-sm font-semibold text-amber-600 dark:text-amber-200">{user.name}</p>
+                                                    <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{user.email}</p>
+                                                </div>
+                                                {user.role !== 'admin_platforme' && (
+                                                    <>
+                                                        <Link
+                                                            href={buildRoute('profile.edit')}
+                                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                            onClick={() => setUserMenuOpen(false)}
+                                                        >
+                                                            <User className="size-4" />
+                                                            <span>{t.layout.userMenu.profile}</span>
+                                                        </Link>
+                                                        {canViewModule('settings') && (
+                                                            <Link
+                                                                href={buildRoute('settings.index')}
+                                                                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                                onClick={() => setUserMenuOpen(false)}
+                                                            >
+                                                                <Settings className="size-4" />
+                                                                <span>{t.layout.userMenu.settings}</span>
+                                                            </Link>
+                                                        )}
+                                                        <Link
+                                                            href={buildRoute('two-factor.index')}
+                                                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                            onClick={() => setUserMenuOpen(false)}
+                                                        >
+                                                            <Shield className="size-4" />
+                                                            <span>Authentification 2FA</span>
+                                                        </Link>
+                                                        <div className="my-1 border-t border-slate-300 dark:border-white/10"></div>
+                                                    </>
+                                                )}
                                                 <Link
-                                                    href={route('profile.edit')}
-                                                    className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
+                                                    href={route('lock-screen.lock')}
+                                                    method="post"
+                                                    as="button"
+                                                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-amber-300 transition hover:bg-amber-300/10"
                                                     onClick={() => setUserMenuOpen(false)}
                                                 >
-                                                    Profil
-                                                </Link>
-                                                <Link
-                                                    href={route('settings.index')}
-                                                    className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
-                                                    onClick={() => setUserMenuOpen(false)}
-                                                >
-                                                    Parametres
+                                                    <Lock className="size-4" />
+                                                    <span>{t.layout.userMenu.lock}</span>
                                                 </Link>
                                                 <Link
                                                     href={route('logout')}
                                                     method="post"
                                                     as="button"
-                                                    className="block w-full rounded-lg px-3 py-2 text-left text-sm text-rose-200 transition hover:bg-rose-300/10"
-                                                    onClick={() => setUserMenuOpen(false)}
+                                                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-rose-200 transition hover:bg-rose-300/10"
+                                                    onClick={() => {
+                                                        setUserMenuOpen(false);
+                                                        // La conversation IA survit à la navigation
+                                                        // (sessionStorage) : elle ne doit pas survivre
+                                                        // au départ de l'utilisateur.
+                                                        clearAiChatSession();
+                                                    }}
                                                 >
-                                                    Deconnexion
+                                                    <LogOut className="size-4" />
+                                                    <span>{t.layout.userMenu.logout}</span>
                                                 </Link>
                                             </>
                                         ) : (
@@ -428,7 +786,7 @@ export default function Authenticated({
                                                 className="block rounded-lg px-3 py-2 text-sm text-slate-800 transition hover:bg-slate-200 dark:text-slate-200 dark:hover:bg-white/10"
                                                 onClick={() => setUserMenuOpen(false)}
                                             >
-                                                Connexion
+                                                {t.layout.userMenu.login}
                                             </Link>
                                         )}
                                     </div>
@@ -436,13 +794,75 @@ export default function Authenticated({
                             </div>
                         </div>
                     </div>
+
+                    {showExpiryBanner && (
+                        <div className={`flex items-center justify-between gap-3 px-4 py-2.5 text-sm sm:px-6 lg:px-8 ${
+                            daysUntilExpiry! <= 1
+                                ? 'bg-rose-500/20 border-t border-rose-500/30 text-rose-300'
+                                : 'bg-amber-400/15 border-t border-amber-400/25 text-amber-300'
+                        }`}>
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle className="size-4 shrink-0" />
+                                <span className="font-medium">
+                                    {daysUntilExpiry! <= 0
+                                        ? t.layout.expiryBanner.expired
+                                        : daysUntilExpiry === 1
+                                        ? t.layout.expiryBanner.tomorrow
+                                        : t.layout.expiryBanner.days(daysUntilExpiry!)}
+                                </span>
+                            </div>
+                            <Link
+                                href={buildRoute('billing.index')}
+                                className={`shrink-0 rounded-lg px-3 py-1 text-xs font-semibold transition ${
+                                    daysUntilExpiry! <= 1
+                                        ? 'bg-rose-500/30 hover:bg-rose-500/50 text-rose-200'
+                                        : 'bg-amber-400/20 hover:bg-amber-400/35 text-amber-200'
+                                }`}
+                            >
+                                {t.layout.expiryBanner.renew}
+                            </Link>
+                        </div>
+                    )}
                 </header>
 
-                <main className="px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+                <main className="min-w-0 px-4 py-6 print:p-0 sm:px-6 lg:px-8">
+                    <ReadOnlyAccountGuard />
+                    {children}
+                </main>
             </div>
 
-            {/* Toast Container */}
-            <ToastContainer />
+            <div className="print:hidden">
+                <ToastContainer />
+                <OfflineBanner />
+                {!isPlatformAdmin && (
+                    <AiChatWidget
+                        codeUser={routeParams.code_user ?? ''}
+                        hasAccess={subscription?.has_ai_assistant ?? false}
+                    />
+                )}
+                {!isPlatformAdmin && (
+                    <>
+                        {/*
+                          * Bouton Avis : à GAUCHE du bouton IA, pas au-dessus. Empilé en
+                          * bottom-24, il retombait dans le panneau de chat ouvert
+                          * (bottom-20, h-96) juste à hauteur du champ de saisie, qu'il
+                          * rendait inatteignable. right-24 dégage les 48px du bouton IA
+                          * (right-6) et sa marge.
+                          */}
+                        <button
+                            type="button"
+                            onClick={() => setReviewOpen(true)}
+                            title={t.nav.reviews}
+                            aria-label={t.nav.reviews}
+                            className="fixed bottom-6 right-24 z-40 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-amber-200"
+                        >
+                            <Star className="size-5" />
+                            <span className="hidden sm:inline">{t.nav.reviews}</span>
+                        </button>
+                        <ReviewModal show={reviewOpen} onClose={() => setReviewOpen(false)} review={myReview} />
+                    </>
+                )}
+            </div>
         </div>
     );
 }

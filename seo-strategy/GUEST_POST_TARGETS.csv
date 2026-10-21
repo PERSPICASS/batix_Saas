@@ -1,0 +1,78 @@
+Rank,Website,Category,URL,Contact,Email,Authority_Level,Relevance,Last_Check
+1,Ecommerce-Nation,French Business,ecommerce-nation.fr,Contact Form,contact@ecommerce-nation.fr,High,Very High,2026-06-23
+2,Blog du Modérateur,French Marketing,blogdumodérateur.com,Contact Form,romain@blogdumodérateur.com,High,High,2026-06-23
+3,Journal du Net,French Tech,journaldunet.com,Contact,contact@journaldunet.com,Very High,High,2026-06-23
+4,BDM.com,French Business,bdm.com,Editorial,editorial@bdm.com,High,High,2026-06-23
+5,Leptidigital,French Digital,leptidigital.fr,Contact Form,contact@leptidigital.fr,High,Medium,2026-06-23
+6,RueDesEntrepreneurs,French Startup,ruedesentrepreneurs.com,Contact,hello@ruedesentrepreneurs.com,High,Very High,2026-06-23
+7,The Sociable (French),Tech Culture,thesociable.co,Editorial,editorial@thesociable.co,Medium,Medium,2026-06-23
+8,Shopify Blog,E-commerce,shopify.com/blog,Editorial,blog@shopify.com,Very High,High,2026-06-23
+9,Toast Blog,Hospitality,toasttab.com/blog,Contact,press@toasttab.com,High,Medium,2026-06-23
+10,Square Blog,E-commerce,squareup.com/en-fr/blog,Editorial,editorial@squareup.com,Very High,High,2026-06-23
+11,Kinsta Blog,SaaS/Hosting,kinsta.com/blog,Guest Posts,editorial@kinsta.com,High,Medium,2026-06-23
+12,Neil Patel Blog,Marketing,neilpatel.com/blog,Guest Posts,hello@neilpatel.com,Very High,Low,2026-06-23
+13,Ahrefs Blog,SEO/Marketing,ahrefs.com/blog,Guest Posts,hello@ahrefs.com,Very High,Medium,2026-06-23
+14,SE Journal,SMB/Tech,searchenginejournal.com,Editorial,editorial@searchenginejournal.com,High,Low,2026-06-23
+15,Capterra Blog,SaaS Reviews,capterra.com/blog,Editorial,editorial@capterra.com,High,Very High,2026-06-23
+16,G2 Learn,SaaS Reviews,g2.com/learn,Guest Posts,content@g2.com,High,Very High,2026-06-23
+17,AppSumo Blog,SaaS Reviews,appsumo.com/blog,Editorial,editorial@appsumo.com,High,Medium,2026-06-23
+18,HubSpot Blog,Marketing/Sales,hubspot.com/blog,Guest Posts,blog@hubspot.com,Very High,Low,2026-06-23
+19,CMS Junkie,WordPress Tech,cmsjunkie.com,Contact,contact@cmsjunkie.com,Medium,Low,2026-06-23
+20,Envato Blog,Web Design,envato.com/blog,Editorial,editorial@envato.com,High,Low,2026-06-23
+21,SmallBiz Labs,Small Business,smallbizlabs.com,Contact,contact@smallbizlabs.com,Medium,Very High,2026-06-23
+22,Entrepreneur.com,Business,entrepreneur.com,Editorial,editorial@entrepreneur.com,Very High,Medium,2026-06-23
+23,Inc.com,Business,inc.com,Editorial,editorial@inc.com,Very High,Medium,2026-06-23
+24,Forbes SMB,Business,forbes.com/sites/forbessbm,Editorial,editorial@forbes.com,Very High,Medium,2026-06-23
+25,Huffington Post Business,Business,huffpost.com/impact,Guest Posts,business@huffpost.com,Very High,Low,2026-06-23
+26,Medium Publications,Tech/Business,medium.com,Direct Publish,N/A,Medium,Medium,2026-06-23
+27,LinkedIn Articles,Professional,linkedin.com,Direct Publish,N/A,High,Very High,2026-06-23
+28,Quora Content,Q&A,quora.com,Direct Answer,N/A,Medium,Medium,2026-06-23
+29,Dev.to,Developer,dev.to,Direct Publish,N/A,Medium,Low,2026-06-23
+30,Hashnode,Developer,hashnode.com,Direct Publish,N/A,Medium,Low,2026-06-23
+31,Techcrunch,Tech News,techcrunch.com,Pitch,tips@techcrunch.com,Very High,Low,2026-06-23
+32,VentureBeat,Tech News,venturebeat.com,Editorial,editorial@venturebeat.com,Very High,Low,2026-06-23
+33,Forbes Tech,Tech,forbes.com/technology,Editorial,editorial@forbes.com,Very High,Low,2026-06-23
+34,Wired,Tech Culture,wired.com,Editorial,editorial@wired.com,Very High,Low,2026-06-23
+35,Fast Company,Business,fastcompany.com,Editorial,editorial@fastcompany.com,Very High,Low,2026-06-23
+36,Zendesk Blog,Customer Service,zendesk.com/blog,Guest Posts,blog@zendesk.com,High,Low,2026-06-23
+37,Okta Blog,Security/Tech,okta.com/blog,Guest Posts,blog@okta.com,High,Low,2026-06-23
+38,Slack Blog,Business Tools,slack.com/blog,Editorial,editorial@slack.com,Very High,Medium,2026-06-23
+39,Asana Blog,Project Mgmt,asana.com/en/blog,Editorial,blog@asana.com,High,Low,2026-06-23
+40,Jira Blog,Project Mgmt,jira.com/blog,Editorial,blog@jira.com,High,Low,2026-06-23
+41,ContentStudio,Content Marketing,contentstudio.io/blog,Guest Posts,hello@contentstudio.io,Medium,Medium,2026-06-23
+42,Influitive Blog,B2B,influitive.com/blog,Editorial,blog@influitive.com,Medium,Low,2026-06-23
+43,Apptio Blog,Tech Leadership,apptio.com/blog,Editorial,editorial@apptio.com,Medium,Low,2026-06-23
+44,SailPoint Blog,Identity,sailpoint.com/blog,Editorial,blog@sailpoint.com,Medium,Low,2026-06-23
+45,Elastic Blog,Search/Analytics,elastic.co/blog,Editorial,blog@elastic.co,High,Low,2026-06-23
+46,MongoDB Blog,Databases,mongodb.com/blog,Editorial,blog@mongodb.com,High,Low,2026-06-23
+47,Cloudflare Blog,Infrastructure,cloudflare.com/blog,Editorial,blog@cloudflare.com,High,Low,2026-06-23
+48,AWS Blog,Cloud,aws.amazon.com/blogs,Editorial,aws-blog@amazon.com,Very High,Low,2026-06-23
+49,Google Cloud Blog,Cloud,cloud.google.com/blog,Editorial,blog@google.com,Very High,Low,2026-06-23
+50,Microsoft Dev Blog,Tech,devblogs.microsoft.com,Editorial,devblogs@microsoft.com,Very High,Low,2026-06-23
+
+# HOW TO USE THIS LIST
+
+1. Sort by "Relevance" column (descending) to prioritize outreach
+   → Start with "Very High" relevance sites
+
+2. Filter by "Authority_Level"
+   → Start with "High" (easier acceptance)
+   → Then "Very High" (better backlinks but harder)
+
+3. Create a tracking spreadsheet with columns:
+   Site | Status | Email Sent Date | Response | Accepted | Published Date
+
+4. Priority outreach order:
+   Week 1-2: Sites #1-10 (French focused, high relevance)
+   Week 3-4: Sites #11-20 (SaaS/SMB focused)
+   Week 5-6: Sites #21-35 (General business + tech)
+   Week 7+: Sites #36-50 (Direct competitors + high authority)
+
+# TIPS FOR SUCCESS
+
+- French sites (#1-7) = easiest + most relevant for starting
+- "Very High" authority = very hard to get accepted
+- "High" authority + "Very High" relevance = sweet spot to start
+- Direct publish platforms (Medium, LinkedIn, Dev.to) = easy wins
+- Always personalize emails with specific article from their blog
+- Include "France" or "Quincaillerie" angle in pitch for relevance

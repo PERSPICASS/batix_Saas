@@ -7,47 +7,186 @@ use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that is loaded on the first page visit.
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determine the current asset version.
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
-    /**
-     * Define the props that are shared by default.
-     *
-     * @return array<string, mixed>
-     */
     public function share(Request $request): array
     {
-        $shop = get_shop_settings();
-        
+        $user = $request->user();
+
+        // Pages publiques : partager le strict minimum
+        if (!$user) {
+            return [
+                ...parent::share($request),
+                'auth' => ['user' => null, 'code_user' => null],
+                'locale' => fn () => app()->getLocale(),
+                'flash' => [
+                    'success' => fn () => $request->session()->get('success'),
+                    'error'   => fn () => $request->session()->get('error'),
+                    'warning' => fn () => $request->session()->get('warning'),
+                    'info'    => fn () => $request->session()->get('info'),
+                ],
+                'csrf_token' => csrf_token(),
+                'whatsapp_number' => config('app.whatsapp_number'),
+                // Base absolue des URL du balisage SEO (données structurées, images OG) :
+                // partagée plutôt que repassée par chaque contrôleur de page publique.
+                'appUrl' => rtrim(config('app.url'), '/'),
+                'ziggy' => fn () => [...(new \Tighten\Ziggy\Ziggy)->toArray(), 'location' => $request->url()],
+            ];
+        }
+
+        // ── Calcul paresseux (lazy) du code_user propriétaire ──────────────
+        $accountCode = null;
+        if ($user->role === 'super_admin') {
+            $accountCode = $user->code_user;
+        } else {
+            $shopId = $user->shop_id;
+            if ($shopId) {
+                // Une seule requête SQL : on récupère juste user_id du shop
+                $ownerId = \App\Models\Shop::where('id', $shopId)->value('user_id');
+                if ($ownerId) {
+                    $accountCode = \App\Models\User::where('id', $ownerId)->value('code_user');
+                }
+            }
+        }
+
+        // ── Boutique active (calculée une seule fois) ──────────────────────
+        $shop = current_shop();
+        $activeShopData = $shop ? [
+            'id'   => $shop->id,
+            'name' => $shop->name,
+            'slug' => $shop->slug,
+        ] : null;
+
+        // ── Permissions : uniquement les colonnes utiles ───────────────────
+        $userForAuth = [
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'role'       => $user->role,
+            'code_user'  => $user->code_user,
+            'shop_id'    => $user->shop_id,
+            'avatar'     => $user->avatar ?? null,
+            'shop'       => $user->shop ? [
+                'id'      => $user->shop->id,
+                'name'    => $user->shop->name,
+                'slug'    => $user->shop->slug,
+                'address' => $user->shop->address ?? null,
+                'city'    => $user->shop->city ?? null,
+                'phone'   => $user->shop->phone ?? null,
+            ] : null,
+            // Permissions : tableau d'objets (format attendu par Profile/Edit et AuthenticatedLayout)
+            'permissions' => $user->role === 'admin_platforme'
+                ? []
+                : $user->permissions()
+                    ->select('id', 'module', 'can_view', 'can_create', 'can_edit', 'can_delete')
+                    ->get()
+                    ->map(fn($p) => [
+                        'id'         => $p->id,
+                        'module'     => $p->module,
+                        'can_view'   => (bool) $p->can_view,
+                        'can_create' => (bool) $p->can_create,
+                        'can_edit'   => (bool) $p->can_edit,
+                        'can_delete' => (bool) $p->can_delete,
+                    ])
+                    ->values()
+                    ->toArray(),
+        ];
+
+        // ── Boutiques accessibles : colonnes minimales ─────────────────────
+        $shops = $user->role !== 'admin_platforme'
+            ? $user->accessibleShops()
+                ->map(fn($s) => [
+                    'id'        => $s->id,
+                    'name'      => $s->name,
+                    'slug'      => $s->slug,
+                    'is_active' => $s->is_active ?? true,
+                ])
+                ->values()
+                ->toArray()
+            : [];
+
+        // ── Subscription : lazy closure (calculée seulement si la page en a besoin) ──
+        $subscription = $user->role === 'super_admin'
+            ? fn () => $user->getSubscriptionLimits()
+            : null;
+
+        // ── Lecture seule : partagé à TOUS les rôles, contrairement à `subscription` ──
+        // L'abonnement vit sur le compte du propriétaire, mais l'employé d'un compte
+        // expiré subit la même restriction et doit donc pouvoir l'afficher. Le miroir
+        // exact de EnforceSubscriptionReadOnly, pour que l'interface cesse de proposer
+        // des actions que le serveur refuse.
+        $readOnly = ($user->role !== 'admin_platforme' && !$user->activeSubscription());
+
+        // ── Stock bas : compte produits sous seuil d'alerte ───────────────
+        $lowStockCount = ($user->role !== 'admin_platforme' && $shop)
+            ? fn () => \App\Models\Product::where('shop_id', $shop->id)
+                ->where('track_stock', true)
+                ->whereNotNull('min_stock_alert')
+                ->where('min_stock_alert', '>', 0)
+                ->whereColumn('stock_quantity', '<=', 'min_stock_alert')
+                ->where('is_active', true)
+                ->count()
+            : null;
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? $request->user()->load(['shop', 'permissions']) : null,
+                'user'      => $userForAuth,
+                'code_user' => $user->code_user,
+            ],
+            'locale' => fn () => app()->getLocale(),
+            'subscription'  => $subscription,
+            'readOnlyAccount' => $readOnly,
+            'lowStockCount' => $lowStockCount,
+            'shops'         => $shops,
+            'activeShop'    => $activeShopData,
+            'currentShop'   => $activeShopData, // alias conservé pour compatibilité
+            'routeParams'   => [
+                'code_user' => $accountCode,
+                'shop_slug' => shop_slug(),
             ],
             'shopSettings' => $shop ? [
-                'currency' => $shop->currency,
-                'currency_symbol' => get_currency_symbol($shop->currency),
+                'currency'         => $shop->currency,
+                'currency_symbol'  => get_currency_symbol($shop->currency),
                 'default_tax_rate' => $shop->default_tax_rate,
-                'invoice_prefix' => $shop->invoice_prefix,
+                'invoice_prefix'   => $shop->invoice_prefix,
             ] : null,
+            // Powers the floating "leave a review" button available across the
+            // client space. null for platform admins (they moderate, not review).
+            'myReview' => function () use ($user) {
+                if ($user->role === 'admin_platforme') {
+                    return null;
+                }
+                $review = \App\Models\Review::where('user_id', $user->id)->first();
+                return $review ? [
+                    'rating' => $review->rating,
+                    'comment' => $review->comment,
+                    'would_recommend' => $review->would_recommend,
+                    'status' => $review->status,
+                ] : null;
+            },
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
+                'error'   => fn () => $request->session()->get('error'),
                 'warning' => fn () => $request->session()->get('warning'),
-                'info' => fn () => $request->session()->get('info'),
+                'info'    => fn () => $request->session()->get('info'),
+                // Uniquement présent juste après la création d'un token API — affiché une seule fois,
+                // jamais persisté en clair (Sanctum ne stocke qu'un hash).
+                'plainTextToken' => fn () => $request->session()->get('plainTextToken'),
             ],
+            // Détail ligne par ligne d'un import partiellement en échec (stock dépôt,
+            // produits). Flashé par le contrôleur à côté du message d'avertissement,
+            // il n'était lu par aucune page tant qu'il n'était pas partagé ici.
+            'import_errors' => fn () => $request->session()->get('import_errors'),
+            'csrf_token' => csrf_token(),
+            'whatsapp_number' => config('app.whatsapp_number'),
+            'appUrl' => rtrim(config('app.url'), '/'),
+            'ziggy' => fn () => [...(new \Tighten\Ziggy\Ziggy)->toArray(), 'location' => $request->url()],
         ];
     }
 }

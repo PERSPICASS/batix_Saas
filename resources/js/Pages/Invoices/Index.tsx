@@ -1,22 +1,24 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Eye, Pencil, Plus, ReceiptText, Trash2, Download, BarChart3 } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
+import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
+import Currency from '@/Components/Currency';
+import { useLocale } from '@/contexts/LocaleContext';
 
-interface Customer {
-    id: number;
-    name: string;
-}
-
+interface Customer { id: number; name: string }
 interface Invoice {
     id: number;
     invoice_number: string;
     invoice_date: string;
     due_date: string;
     status: string;
-    total_amount: string;
+    total: string | number | null;
+    total_amount?: string | number | null;
     customer: Customer;
+    credit_notes_count: number;
 }
 
 interface PaginatedInvoices {
@@ -28,153 +30,174 @@ interface PaginatedInvoices {
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }
 
-interface Props {
-    invoices: PaginatedInvoices;
-}
+interface Props { invoices: PaginatedInvoices }
 
 export default function InvoicesIndex({ invoices }: Props) {
+    const route = useRoute();
+    const { t, locale } = useLocale();
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
     const handleSearch = () => {
-        router.get(
-            route('invoices.index'),
-            { search: searchTerm, status: statusFilter },
-            { preserveState: true }
-        );
+        router.get(route('invoices.index'), { search: searchTerm, status: statusFilter }, { preserveState: true });
     };
 
-    const handleDelete = (invoice: Invoice) => {
-        if (confirm(`Êtes-vous sûr de vouloir supprimer la facture ${invoice.invoice_number} ?`)) {
-            router.delete(route('invoices.destroy', invoice.id));
-        }
+    // Le message de confirmation réutilisait le libellé du champ de recherche : il
+    // affichait « N° facture, client INV-… ? », qui ne veut rien dire. Et confirm() bloque
+    // l'onglet entier, ignore le thème et n'a jamais dit ce qui allait être supprimé.
+    const [toDelete, setToDelete] = useState<Invoice | null>(null);
+    const [deleting, setDeleting] = useState(false);
+
+    const confirmDelete = () => {
+        if (!toDelete) return;
+
+        setDeleting(true);
+        router.delete(route('invoices.destroy', { invoice: toDelete.id }), {
+            onFinish: () => { setDeleting(false); setToDelete(null); },
+        });
+    };
+
+    const statusLabels: Record<string, string> = {
+        draft: t.invoices.status.draft,
+        sent: t.invoices.status.sent,
+        paid: t.invoices.status.paid,
+        overdue: t.invoices.status.overdue,
+        cancelled: t.invoices.status.cancelled,
     };
 
     const getStatusBadge = (status: string) => {
         const badges: Record<string, { bg: string; text: string }> = {
-            draft: { bg: 'bg-slate-500/20', text: 'text-slate-300' },
+            draft: { bg: 'bg-slate-500/20', text: 'text-slate-600 dark:text-slate-300' },
             sent: { bg: 'bg-blue-500/20', text: 'text-blue-300' },
             paid: { bg: 'bg-green-500/20', text: 'text-green-300' },
             overdue: { bg: 'bg-red-500/20', text: 'text-red-300' },
             cancelled: { bg: 'bg-gray-500/20', text: 'text-gray-300' },
         };
-
-        const statusLabels: Record<string, string> = {
-            draft: 'Brouillon',
-            sent: 'Envoyée',
-            paid: 'Payée',
-            overdue: 'En retard',
-            cancelled: 'Annulée',
-        };
-
         const badge = badges[status] || badges.draft;
-
         return (
-            <span
-                className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${badge.bg} ${badge.text}`}
-            >
+            <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${badge.bg} ${badge.text}`}>
                 {statusLabels[status] || status}
             </span>
         );
     };
 
+    const getInvoiceTotal = (invoice: Invoice): number => {
+        const value = Number(invoice.total ?? invoice.total_amount ?? 0);
+        return Number.isFinite(value) ? value : 0;
+    };
+
     const columns = [
         {
             key: 'invoice_number',
-            label: 'Numéro',
+            label: t.invoices.columns.number,
             render: (invoice: Invoice) => (
                 <span className="font-medium text-amber-300">{invoice.invoice_number}</span>
             ),
         },
         {
             key: 'customer',
-            label: 'Client',
+            label: t.invoices.columns.customer,
             render: (invoice: Invoice) => invoice.customer.name,
         },
         {
             key: 'invoice_date',
-            label: 'Date',
-            render: (invoice: Invoice) => new Date(invoice.invoice_date).toLocaleDateString('fr-FR'),
+            label: t.invoices.columns.date,
+            render: (invoice: Invoice) => new Date(invoice.invoice_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB'),
         },
         {
             key: 'due_date',
-            label: 'Échéance',
-            render: (invoice: Invoice) => new Date(invoice.due_date).toLocaleDateString('fr-FR'),
+            label: t.invoices.columns.dueDate,
+            render: (invoice: Invoice) => new Date(invoice.due_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB'),
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.invoices.columns.status,
             render: (invoice: Invoice) => getStatusBadge(invoice.status),
         },
         {
-            key: 'total_amount',
-            label: 'Montant TTC',
+            key: 'total',
+            label: t.invoices.columns.total,
             render: (invoice: Invoice) => (
-                <span className="font-semibold">
-                    {parseFloat(invoice.total_amount).toLocaleString('fr-FR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    })}{' '}
-                    DH
-                </span>
+                <span className="font-semibold"><Currency amount={getInvoiceTotal(invoice)} /></span>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t.invoices.columns.actions,
             align: 'right' as const,
             render: (invoice: Invoice) => (
                 <TableActions>
                     <Link
-                        href={route('invoices.edit', invoice.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        href={route('invoices.show', { invoice: invoice.id })}
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
-                        <Pencil className="size-3.5" /> Modifier
+                        <Eye className="size-3.5" /> {t.invoices.actions.view}
                     </Link>
-                    <TableActionButton variant="danger" onClick={() => handleDelete(invoice)}>
-                        <Trash2 className="size-3.5" /> Supprimer
-                    </TableActionButton>
+                    {/* Uniquement là où il mène quelque part : une facture sans avoir
+                        n'affiche pas le bouton. */}
+                    {invoice.credit_notes_count > 0 && (
+                        <Link
+                            href={route('credit-notes.index', { invoice_id: invoice.id })}
+                            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <ReceiptText className="size-3.5" /> {t.creditNotes.invoice.creditNotes} ({invoice.credit_notes_count})
+                        </Link>
+                    )}
+                    {/* Une facture émise est figée : ni modification ni suppression. Son
+                        statut évolue depuis sa page (« Marquer payée » / « Annuler »). */}
+                    {invoice.status === 'draft' && (
+                        <>
+                            <Link
+                                href={route('invoices.edit', { invoice: invoice.id })}
+                                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                            >
+                                <Pencil className="size-3.5" /> {t.invoices.actions.edit}
+                            </Link>
+                            <TableActionButton variant="danger" onClick={() => setToDelete(invoice)}>
+                                <Trash2 className="size-3.5" /> {t.invoices.actions.delete}
+                            </TableActionButton>
+                        </>
+                    )}
                 </TableActions>
             ),
         },
     ];
 
+    const statCounts = {
+        total: invoices.total,
+        paid: invoices.data.filter(inv => inv.status === 'paid').length,
+        sent: invoices.data.filter(inv => inv.status === 'sent').length,
+        overdue: invoices.data.filter(inv => inv.status === 'overdue').length,
+    };
+
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Factures</h1>}>
-            <Head title="Factures" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.invoices.title}</h1>}>
+            <Head title={t.invoices.title} />
 
             <section className="space-y-6">
-                {/* Stats Cards */}
                 <div className="grid gap-4 md:grid-cols-4">
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Total factures</p>
-                        <p className="mt-1 text-2xl font-bold text-white">{invoices.total}</p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.title}</p>
+                        <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{statCounts.total}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">Payées</p>
-                        <p className="mt-1 text-2xl font-bold text-green-400">
-                            {invoices.data.filter((inv) => inv.status === 'paid').length}
-                        </p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.status.paid}</p>
+                        <p className="mt-1 text-2xl font-bold text-green-400">{statCounts.paid}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">En attente</p>
-                        <p className="mt-1 text-2xl font-bold text-blue-400">
-                            {invoices.data.filter((inv) => inv.status === 'sent').length}
-                        </p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.status.sent}</p>
+                        <p className="mt-1 text-2xl font-bold text-blue-400">{statCounts.sent}</p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-slate-400">En retard</p>
-                        <p className="mt-1 text-2xl font-bold text-red-400">
-                            {invoices.data.filter((inv) => inv.status === 'overdue').length}
-                        </p>
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.invoices.status.overdue}</p>
+                        <p className="mt-1 text-2xl font-bold text-red-400">{statCounts.overdue}</p>
                     </div>
                 </div>
 
-                {/* Filters */}
                 <div className="flex flex-wrap items-center gap-4">
                     <input
                         type="text"
-                        placeholder="Rechercher par numéro ou client..."
+                        placeholder={t.invoices.filters.searchPlaceholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -183,36 +206,45 @@ export default function InvoicesIndex({ invoices }: Props) {
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
+                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                     >
-                        <option value="">Tous les statuts</option>
-                        <option value="draft">Brouillon</option>
-                        <option value="sent">Envoyée</option>
-                        <option value="paid">Payée</option>
-                        <option value="overdue">En retard</option>
-                        <option value="cancelled">Annulée</option>
+                        <option value="">{t.invoices.filters.allStatuses}</option>
+                        <option value="draft">{t.invoices.status.draft}</option>
+                        <option value="sent">{t.invoices.status.sent}</option>
+                        <option value="paid">{t.invoices.status.paid}</option>
+                        <option value="overdue">{t.invoices.status.overdue}</option>
+                        <option value="cancelled">{t.invoices.status.cancelled}</option>
                     </select>
                     <button
                         onClick={handleSearch}
-                        className="rounded-lg border border-white/15 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+                        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
                     >
-                        Rechercher
+                        {t.common.actions.search}
                     </button>
-                    <Link
-                        href={route('invoices.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
-                    >
-                        <Plus className="size-4" /> Nouvelle facture
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={route('invoices.create')}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
+                        >
+                            <Plus className="size-4" /> {t.invoices.actions.new}
+                        </Link>
+                        <a
+                            href={route('invoices.export', {})}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <Download className="size-4" /> {t.common.actions.export}
+                        </a>
+                        <Link
+                            href={route('reports.analytics', {})}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <BarChart3 className="size-4" /> {t.invoices.actions.reports}
+                        </Link>
+                    </div>
                 </div>
 
-                {/* Table */}
-                <Table
-                    columns={columns}
-                    data={invoices.data}
-                />
+                <Table columns={columns} data={invoices.data} />
 
-                {/* Pagination */}
                 {invoices.links && (
                     <div className="flex items-center justify-center gap-1">
                         {invoices.links.map((link, index) => (
@@ -230,6 +262,18 @@ export default function InvoicesIndex({ invoices }: Props) {
                     </div>
                 )}
             </section>
+
+            {toDelete && (
+                <ConfirmDeleteModal
+                    show
+                    onClose={() => setToDelete(null)}
+                    onConfirm={confirmDelete}
+                    processing={deleting}
+                    title={t.invoices.confirm.deleteTitle}
+                    message={t.invoices.confirm.delete.replace(':number', toDelete.invoice_number)}
+                    confirmText={t.invoices.actions.delete}
+                />
+            )}
         </AuthenticatedLayout>
     );
 }

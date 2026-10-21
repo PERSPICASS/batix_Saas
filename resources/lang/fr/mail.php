@@ -1,0 +1,163 @@
+<?php
+
+return [
+    // Common mail elements
+    'common' => [
+        'salutation' => 'Bonjour',
+        'regards' => 'Cordialement',
+        'signature' => 'Cet email a été envoyé automatiquement, merci de ne pas y répondre.',
+        'copyright' => '© :year :appName. Tous droits réservés.',
+        'questions_contact' => 'Si vous avez des questions, n\'hésitez pas à nous contacter.',
+        'support_contact' => 'Pour toute question, contactez notre support',
+    ],
+
+    // Invoice email
+    'invoice' => [
+        'subject' => 'Facture :number',
+        'title' => 'Facture :number',
+        'greeting' => ':salutation :name,',
+        'intro' => 'Merci pour votre confiance. Veuillez trouver ci-joint votre facture n° **:invoiceNumber** datée du :invoiceDate.',
+        'details_title' => 'Détails de la facture',
+        'description' => 'Description',
+        'amount' => 'Montant',
+        'subtotal' => 'Sous-total',
+        'tax' => 'TVA',
+        'total' => 'Total',
+        'notes_title' => 'Notes',
+        'payment_info_title' => 'Informations de paiement',
+        'payment_terms' => 'Modalités de paiement: À réception de la facture',
+        'payment_due_days' => 'Délai de paiement: :days jours',
+        'questions' => 'Si vous avez des questions, n\'hésitez pas à nous contacter.',
+        'signature' => 'Cordialement,',
+    ],
+
+    // Quote email
+    'quote' => [
+        'subject' => 'Devis :number',
+        'title' => 'Devis :number',
+        'greeting' => ':salutation :name,',
+        'intro' => 'Veuillez trouver ci-joint notre devis n° **:quoteNumber** datée du :quoteDate.',
+        'details_title' => 'Détails du devis',
+        'description' => 'Description',
+        'amount' => 'Montant',
+        'subtotal' => 'Sous-total',
+        'tax' => 'TVA',
+        'total' => 'Total',
+        'validity_title' => 'Validité du devis',
+        'validity_message' => 'Ce devis est valable jusqu\'au **:expiryDate**.',
+        'notes_title' => 'Notes',
+        'terms_title' => 'Conditions commerciales',
+        'confirm_message' => 'Pour confirmer votre accord et passer commande, veuillez nous faire parvenir ce devis signé ou simplement nous le confirmer par email.',
+        'questions' => 'Si vous avez des questions, n\'hésitez pas à nous contacter.',
+        'signature' => 'Cordialement,',
+    ],
+
+    // Subscription invoice
+    'subscription_invoice' => [
+        'subject' => 'Votre facture :appName — :invoiceNumber',
+        'header_subtitle' => 'Reçu de paiement',
+        'greeting' => ':salutation :name,',
+        'intro' => 'Merci pour votre abonnement. Votre paiement a été reçu avec succès. Voici votre facture récapitulative.',
+        'payment_confirmed' => '✓ Paiement confirmé',
+        'invoice_details_title' => 'Détails de la facture',
+        'plan_label' => 'Plan',
+        'billing_cycle_label' => 'Cycle de facturation',
+        'payment_method_label' => 'Méthode de paiement',
+        'phone_number_label' => 'Numéro utilisé',
+        'payment_date_label' => 'Date de paiement',
+        'billing_yearly' => 'Annuel',
+        'billing_monthly' => 'Mensuel',
+        'total_paid_label' => 'Total payé',
+        'subscription_active' => 'Votre abonnement :planName est actif du :startDate:endDate.',
+        'subscription_active_end_date' => ' au :endDate',
+        'subscription_active_no_expiry' => ' (sans date d\'expiration)',
+        'keep_email' => 'Conservez cet email comme justificatif de paiement.',
+        'footer' => 'Cet email a été envoyé automatiquement, merci de ne pas y répondre.',
+        'questions' => 'Pour toute question, contactez notre support',
+    ],
+
+    // Subscription expiry reminder
+    'subscription_expiry' => [
+        'subject_expires_today' => 'Votre abonnement :appName expire demain !',
+        'subject_expires_soon' => 'Votre abonnement :appName expire dans :days jours',
+        'header_subtitle' => 'Gestion moderne des quincailleries',
+        'expired' => 'Votre abonnement a expiré',
+        'days_left_singular' => 'jour restant',
+        'days_left_plural' => 'jours restants',
+        'plan_label' => 'Plan',
+        'expiration_label' => 'Expiration',
+        'greeting' => ':salutation :name,',
+        'expiry_today' => 'Votre abonnement **:planName** expire demain. Pour continuer à utiliser :appName sans interruption, renouvelez dès maintenant.',
+        'expiry_soon' => 'Votre abonnement **:planName** expire dans **:days jours**. Pensez à renouveler pour ne pas interrompre votre activité.',
+        'renew_button' => 'Renouveler mon abonnement',
+        'footer_header' => ':appName — support@batixpro.com',
+        'footer_message' => 'Vous recevez cet email car votre abonnement arrive à échéance.',
+    ],
+
+    // Verification code email
+    'verification_code' => [
+        'subject' => 'Code de vérification - :appName',
+        'header_title' => '🔐 Code de Vérification',
+        'greeting' => ':salutation :name,',
+        'intro' => 'Bienvenue sur :appName ! Pour finaliser la création de votre compte, veuillez utiliser le code de vérification ci-dessous :',
+        'code_label' => 'Votre code de vérification',
+        'code_expiry' => '⏱️ Ce code expire dans 15 minutes',
+        'instruction' => 'Saisissez ce code sur la page de vérification pour activer votre compte et commencer à utiliser toutes les fonctionnalités de notre plateforme.',
+        'warning_title' => '⚠️ Important :',
+        'warning_message' => 'Si vous n\'avez pas créé de compte sur :appName, veuillez ignorer cet email. Votre adresse email pourrait avoir été saisie par erreur.',
+        'security_note' => 'Pour des raisons de sécurité, ne partagez jamais ce code avec qui que ce soit. Notre équipe ne vous demandera jamais votre code de vérification.',
+        'footer_automatic' => 'Cet email a été envoyé automatiquement, veuillez ne pas y répondre.',
+        'footer_support' => 'Pour toute question, contactez notre support',
+    ],
+
+    // Contact form email
+    'contact_form' => [
+        'subject' => '[BATIX PRO] :subject — :senderName',
+        'header_title' => '✉️ Nouveau message de contact',
+        'header_subtitle' => 'Reçu via le formulaire de la landing page BATIX PRO',
+        'name_label' => 'Nom',
+        'email_label' => 'Email',
+        'subject_label' => 'Sujet',
+        'message_label' => 'Message',
+        'footer' => 'Cet email a été envoyé automatiquement depuis la landing page de :appName.',
+    ],
+
+    // Relances après la fin de l'essai gratuit (trials:send-followups)
+    'trial_followup' => [
+        'greeting' => 'Bonjour :name,',
+        'cta' => 'Choisir mon offre',
+        'help_cta' => 'Écrire au support sur WhatsApp',
+        'your_activity' => 'Pendant votre essai, vous avez créé **:products produit(s)** et enregistré **:sales vente(s)**. Tout est conservé.',
+        'footer' => ':appName — gestion moderne des quincailleries',
+        'unsubscribe' => 'Ne plus recevoir ces rappels',
+        'steps' => [
+            1 => [
+                'subject' => 'Votre essai :appName est terminé — vos données sont conservées',
+                'title' => 'Votre essai est terminé',
+                'body' => 'Votre essai gratuit de 14 jours est arrivé à son terme. Votre compte passe en lecture seule : vous pouvez toujours consulter vos données, mais plus enregistrer de ventes ni modifier votre stock. Choisissez une offre pour reprendre là où vous en étiez, en deux minutes.',
+            ],
+            3 => [
+                'subject' => 'Ce que :appName change au quotidien dans une quincaillerie',
+                'title' => 'Gagnez du temps chaque jour',
+                'body' => 'Stock à jour à chaque vente, caisse rapide même sans connexion, factures et devis en un clic, créances clients suivies, plusieurs boutiques et dépôts au même endroit : c\'est ce que nos clients retrouvent dès qu\'ils activent leur offre.',
+            ],
+            7 => [
+                'subject' => 'Besoin d\'aide pour démarrer avec :appName ?',
+                'title' => 'On vous aide à démarrer',
+                'body' => 'Importer votre catalogue, paramétrer votre boutique, former votre caissier : si quelque chose vous a freiné pendant l\'essai, notre équipe peut vous accompagner. Écrivez-nous sur WhatsApp, on vous répond rapidement.',
+            ],
+            14 => [
+                'subject' => 'Votre boutique vous attend sur :appName',
+                'title' => 'Vos données vous attendent',
+                'body' => 'Vos produits, vos clients et votre historique sont toujours là. Il suffit d\'activer une offre pour retrouver votre compte exactement comme vous l\'avez laissé.',
+            ],
+            30 => [
+                'subject' => 'Dernier message de :appName',
+                'title' => 'Nous restons à votre disposition',
+                'body' => 'C\'est notre dernier rappel : nous ne vous écrirons plus à ce sujet. Votre compte reste disponible ; le jour où vous souhaitez reprendre, il vous suffit de choisir une offre.',
+            ],
+        ],
+        'unsubscribed_title' => 'Désinscription confirmée',
+        'unsubscribed_body' => 'Vous ne recevrez plus de rappels concernant votre essai. Votre compte reste disponible à tout moment.',
+    ],
+];

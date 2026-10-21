@@ -21,5 +21,9 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Seed predefined categories for all shops
+        // Uncomment the line below to automatically create categories for all shops
+        // $this->call(PredefinedCategoriesSeeder::class);
     }
 }

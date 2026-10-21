@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,7 @@ use Illuminate\Support\Str;
 
 class Shop extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'user_id',
         'name',
@@ -21,16 +23,37 @@ class Shop extends Model
         'phone',
         'email',
         'website',
+        'logo',
         'tax_id',
         'currency',
+        'locale',
         'default_tax_rate',
         'invoice_prefix',
         'invoice_footer',
         'is_active',
+        'fne_enabled',
+        'fne_environment',
+        'fne_api_key',
+        'fne_base_url',
+        'fne_establishment',
+        'fne_point_of_sale',
+        'fne_zero_rate_code',
+    ];
+
+    /**
+     * La clé FNE est celle de l'entreprise auprès de la DGI : elle signe des factures
+     * fiscales en son nom. La boutique est sérialisée partout (factures, pages Inertia) —
+     * sans ce masque, la clé déchiffrée partirait dans le HTML.
+     */
+    protected $hidden = [
+        'fne_api_key',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'fne_enabled' => 'boolean',
+        'fne_api_key' => 'encrypted',
+        'fne_sticker_warning' => 'boolean',
     ];
 
     protected static function boot()
@@ -42,6 +65,116 @@ class Shop extends Model
                 $shop->slug = Str::slug($shop->name);
             }
         });
+    }
+
+    /**
+     * La boutique dont les réglages font référence pour ce compte.
+     *
+     * Celle de rattachement de l'utilisateur d'abord : plusieurs boutiques peuvent
+     * diverger, et celle où il travaille est la réponse qui a du sens. Sinon la dernière
+     * créée. Null pour un compte tout neuf, qui n'a rien à hériter.
+     */
+    public static function settingsSourceFor(User $user): ?self
+    {
+        if ($user->shop_id && $source = static::find($user->shop_id)) {
+            return $source;
+        }
+
+        return $user->accessibleShopsQuery()->orderByDesc('id')->first();
+    }
+
+    /**
+     * La devise qu'une nouvelle boutique doit adopter.
+     *
+     * `shops.currency` vaut `MAD` par défaut en base : une boutique créée sans devise
+     * explicite repartait sur le Maroc, quel que soit le pays du compte et quoi qu'ait
+     * réglé son propriétaire. USD n'est le dernier recours que pour un compte tout neuf.
+     */
+    public static function defaultCurrencyFor(User $user): string
+    {
+        return static::settingsSourceFor($user)?->currency ?: 'USD';
+    }
+
+    /**
+     * Les réglages d'entreprise qu'une nouvelle boutique reprend du compte.
+     *
+     * Ce sont ceux qui relèvent de la société, pas de l'établissement : la devise, le
+     * régime de taxe, l'identifiant fiscal, les conventions de facturation. Le formulaire
+     * de création n'en demande aucun — ils retombaient donc sur les défauts de la base, ou
+     * restaient vides.
+     *
+     * Ce qui identifie l'établissement — nom, adresse, ville, téléphone — n'est
+     * délibérément PAS repris : une succursale a les siens.
+     *
+     * Le logo non plus, et c'est un choix : les boutiques partageraient alors le même
+     * fichier, or SettingsController supprime l'ancien fichier quand on en téléverse un
+     * nouveau. La première boutique à changer de logo effacerait celui des autres.
+     *
+     * @return array<string, mixed> Réglages du compte, à compléter par ce que le
+     *                              formulaire a réellement renseigné.
+     */
+    public static function inheritedSettingsFor(User $user): array
+    {
+        $source = static::settingsSourceFor($user);
+
+        return [
+            'currency' => $source?->currency ?: 'USD',
+            'locale' => $source?->locale ?: 'fr',
+            'default_tax_rate' => $source?->default_tax_rate,
+            'tax_id' => $source?->tax_id,
+            'invoice_prefix' => $source?->invoice_prefix,
+            'invoice_footer' => $source?->invoice_footer,
+            'website' => $source?->website,
+        ];
+    }
+
+    /**
+     * La langue des documents que cette boutique émet — mails et PDF.
+     *
+     * Distincte de `users.locale`, qui ne gouverne que l'interface : ce qu'un client reçoit
+     * ne doit pas dépendre de la langue dans laquelle son fournisseur navigue.
+     */
+    public function documentLocale(): string
+    {
+        return $this->locale ?: 'fr';
+    }
+
+    /**
+     * `country` est un nom localisé saisi à l'inscription, pas un code ISO : « Côte
+     * d'Ivoire », « Côte-d'Ivoire » (i18n-iso-countries en français), « Ivory Coast »…
+     * On compare donc des lettres nues.
+     */
+    public function isInCoteDIvoire(): bool
+    {
+        $letters = preg_replace('/[^a-z]/', '', strtolower(Str::ascii((string) $this->country)));
+
+        return in_array($letters, ['cotedivoire', 'ivorycoast', 'ci', 'civ'], true);
+    }
+
+    /**
+     * La boutique fait certifier ses factures par la FNE.
+     *
+     * Le pays fait partie de la condition : une clé restée enregistrée après un changement
+     * de pays ne doit pas continuer de consommer des stickers à la DGI.
+     */
+    public function fneActive(): bool
+    {
+        return $this->fne_enabled
+            && filled($this->fne_api_key)
+            && $this->isInCoteDIvoire();
+    }
+
+    /**
+     * L'URL de test est publique et commune ; celle de production est transmise par la
+     * DGI à chaque entreprise après validation de ses spécimens.
+     */
+    public function fneBaseUrl(): ?string
+    {
+        $url = $this->fne_environment === 'prod'
+            ? $this->fne_base_url
+            : config('services.fne.test_url');
+
+        return $url ? rtrim($url, '/') : null;
     }
 
     public function user(): BelongsTo

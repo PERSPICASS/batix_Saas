@@ -1,6 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { FormEventHandler, useState, useMemo } from 'react';
+import { RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useRoute } from '@/utils/route';
+import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -10,15 +15,14 @@ interface Shop {
 interface Category {
     id: number;
     name: string;
-    shop_id: number;
-    shop: Shop;
+    color?: string;
+    icon?: string;
 }
 
 interface Subcategory {
     id: number;
     name: string;
     category_id: number;
-    category: Category;
 }
 
 interface Props {
@@ -28,13 +32,23 @@ interface Props {
 }
 
 export default function ProductsCreate({ shops, categories, subcategories }: Props) {
+    const { t } = useLocale();
+    const route = useRoute();
+    const { formatCurrency } = useShopSettings();
+
+    const { props } = usePage();
+    const activeShop = props.activeShop as { id: number; name: string } | null;
+    
+    const scannedBarcode = new URLSearchParams(window.location.search).get('barcode') ?? '';
+
     const { data, setData, post, processing, errors } = useForm({
-        shop_id: '',
+        shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         category_id: '',
         subcategory_id: '',
         name: '',
         sku: '',
-        barcode: '',
+        barcode: scannedBarcode,
+        brand: '',
         description: '',
         purchase_price: '',
         selling_price: '',
@@ -51,116 +65,192 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
         post(route('products.store'));
     };
 
-    // Filtrer les catégories par boutique sélectionnée
-    const filteredCategories = data.shop_id
-        ? categories.filter((cat) => cat.shop_id === Number(data.shop_id))
-        : categories;
+    // "Générer un code-barres" temporaire (sera régénéré côté serveur)
+    const generateTempBarcode = () => {
+        const prefix = '2';
+        const company = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+        const product = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const barcode12 = prefix + company + product;
+        
+        // Calculer le checksum EAN-13
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            const digit = parseInt(barcode12[i]);
+            sum += (i % 2 === 0) ? digit : digit * 3;
+        }
+        const checksum = (10 - (sum % 10)) % 10;
+        
+        setData('barcode', barcode12 + checksum);
+    };
 
-    // Filtrer les sous-catégories par catégorie sélectionnée
-    const filteredSubcategories = data.category_id
-        ? subcategories.filter((sub) => sub.category_id === Number(data.category_id))
-        : [];
+    // Les catégories sont globales (prédéfinies par la plateforme)
+    const filteredCategories = categories;
+
+    // Filtrer les sous-catégories par catégorie sélectionnée (mémorisé)
+    const filteredSubcategories = useMemo(() => {
+        return data.category_id
+            ? subcategories.filter((sub) => sub.category_id === Number(data.category_id))
+            : [];
+    }, [data.category_id, subcategories]);
+
+    // Calcul de la marge bénéficiaire
+    const profitMargin = useMemo(() => {
+        const purchase = parseFloat(data.purchase_price) || 0;
+        const selling = parseFloat(data.selling_price) || 0;
+        if (purchase === 0) return { amount: selling, percentage: 100 };
+        const amount = selling - purchase;
+        const percentage = ((amount / purchase) * 100);
+        return { amount, percentage };
+    }, [data.purchase_price, data.selling_price]);
+
+    // Preview de l'image
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setData('image', file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     return (
         <AuthenticatedLayout
-            header={<h1 className="text-xl font-semibold text-white">Nouveau produit</h1>}
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.products.actions.new}</h1>}
         >
-            <Head title="Nouveau produit" />
+            <Head title={t.products.actions.new} />
 
             <form
                 onSubmit={onSubmit}
-                className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6"
+                className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5"
             >
                 <div className="grid gap-4 md:grid-cols-2">
-                    <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Boutique *</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+                        <span>{t.common.form.shopField} *</span>
                         <select
                             value={data.shop_id}
-                            onChange={(e) => setData('shop_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            disabled
+                            className="w-full rounded-lg border border-white/10 bg-slate-800/50 px-3 py-2 text-slate-400 cursor-not-allowed"
                         >
-                            <option value="">Sélectionner une boutique</option>
                             {shops.map((shop) => (
                                 <option key={shop.id} value={shop.id}>
                                     {shop.name}
                                 </option>
                             ))}
                         </select>
-                        {errors.shop_id && <span className="text-xs text-red-400">{errors.shop_id}</span>}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {t.common.form.shopHint}
+                        </p>
+                        <InputError message={errors.shop_id} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Nom *</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.name} *</span>
                         <input
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.name && <span className="text-xs text-red-400">{errors.name}</span>}
+                        <InputError message={errors.name} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>SKU</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.sku}</span>
                         <input
                             value={data.sku}
                             onChange={(e) => setData('sku', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            placeholder={t.products.form.skuPlaceholder}
+                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-400"
                         />
-                        {errors.sku && <span className="text-xs text-red-400">{errors.sku}</span>}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {t.products.form.skuHint}
+                        </p>
+                        <InputError message={errors.sku} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Code-barres</span>
-                        <input
-                            value={data.barcode}
-                            onChange={(e) => setData('barcode', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                        />
-                        {errors.barcode && <span className="text-xs text-red-400">{errors.barcode}</span>}
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.barcode}</span>
+                        <div className="flex gap-2">
+                            <input
+                                value={data.barcode}
+                                onChange={(e) => setData('barcode', e.target.value)}
+                                placeholder={t.products.form.barcodePlaceholder}
+                                className="flex-1 rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2 text-slate-400"
+                            />
+                            <button
+                                type="button"
+                                onClick={generateTempBarcode}
+                                className="flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-4 py-2 text-amber-300 hover:bg-amber-300/20"
+                                title={t.products.form.generateBarcode}
+                            >
+                                <RefreshCw className="size-4" />
+                                {t.products.form.preview}
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {scannedBarcode
+                                ? t.products.form.barcodeScanned
+                                : t.products.form.barcodeHint}
+                        </p>
+                        <InputError message={errors.barcode} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Catégorie</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.category}</span>
                         <select
                             value={data.category_id}
                             onChange={(e) => setData('category_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
-                            disabled={!data.shop_id}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         >
-                            <option value="">Sélectionner une catégorie</option>
+                            <option value="">{t.products.form.selectCategory}</option>
                             {filteredCategories.map((category) => (
                                 <option key={category.id} value={category.id}>
                                     {category.name}
                                 </option>
                             ))}
                         </select>
-                        {errors.category_id && <span className="text-xs text-red-400">{errors.category_id}</span>}
+                        <InputError message={errors.category_id} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Sous-catégorie</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.subcategory}</span>
                         <select
                             value={data.subcategory_id}
                             onChange={(e) => setData('subcategory_id', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                             disabled={!data.category_id}
                         >
-                            <option value="">Sélectionner une sous-catégorie</option>
+                            <option value="">{t.products.form.selectSubcategory}</option>
                             {filteredSubcategories.map((subcategory) => (
                                 <option key={subcategory.id} value={subcategory.id}>
                                     {subcategory.name}
                                 </option>
                             ))}
                         </select>
-                        {errors.subcategory_id && <span className="text-xs text-red-400">{errors.subcategory_id}</span>}
+                        <InputError message={errors.subcategory_id} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Unité</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.brand}</span>
+                        <input
+                            value={data.brand}
+                            onChange={(e) => setData('brand', e.target.value)}
+                            placeholder="Ex: Bosch, Stanley, Makita..."
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
+                        />
+                        <InputError message={errors.brand} />
+                    </label>
+
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.unit}</span>
                         <select
                             value={data.unit}
                             onChange={(e) => setData('unit', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         >
                             <option value="piece">Pièce</option>
                             <option value="kg">Kilogramme</option>
@@ -171,87 +261,135 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             <option value="m2">Mètre carré</option>
                             <option value="pack">Pack</option>
                         </select>
-                        {errors.unit && <span className="text-xs text-red-400">{errors.unit}</span>}
+                        <InputError message={errors.unit} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Prix d'achat *</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.costPrice} *</span>
                         <input
                             type="number"
                             step="0.01"
+                            min="0"
                             value={data.purchase_price}
                             onChange={(e) => setData('purchase_price', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.purchase_price && <span className="text-xs text-red-400">{errors.purchase_price}</span>}
+                        <InputError message={errors.purchase_price} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Prix de vente *</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.sellingPrice} *</span>
                         <input
                             type="number"
                             step="0.01"
+                            min="0"
                             value={data.selling_price}
                             onChange={(e) => setData('selling_price', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.selling_price && <span className="text-xs text-red-400">{errors.selling_price}</span>}
+                        <InputError message={errors.selling_price} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
+                    {/* Indicateur de marge bénéficiaire */}
+                    <div className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+                        <span>{t.products.form.profitMargin}</span>
+                        <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                            profitMargin.percentage >= 20 
+                                ? 'border-green-500/30 bg-green-500/10' 
+                                : profitMargin.percentage >= 10 
+                                    ? 'border-amber-500/30 bg-amber-500/10'
+                                    : 'border-red-500/30 bg-red-500/10'
+                        }`}>
+                            {profitMargin.percentage >= 20 ? (
+                                <TrendingUp className="size-5 text-green-400" />
+                            ) : (
+                                <AlertTriangle className={`size-5 ${profitMargin.percentage >= 10 ? 'text-amber-400' : 'text-red-400'}`} />
+                            )}
+                            <div className="flex-1">
+                                <p className={`font-medium ${
+                                    profitMargin.percentage >= 20 ? 'text-green-400' : profitMargin.percentage >= 10 ? 'text-amber-400' : 'text-red-400'
+                                }`}>
+                                    {formatCurrency(profitMargin.amount)} ({profitMargin.percentage.toFixed(1)}%)
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {profitMargin.percentage >= 20
+                                        ? t.products.form.goodMargin
+                                        : profitMargin.percentage >= 10
+                                            ? t.products.form.averageMargin
+                                            : t.products.form.lowMargin}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>Taux de TVA (%)</span>
                         <input
                             type="number"
                             step="0.01"
+                            min="0"
+                            max="100"
                             value={data.tax_rate}
                             onChange={(e) => setData('tax_rate', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.tax_rate && <span className="text-xs text-red-400">{errors.tax_rate}</span>}
+                        <InputError message={errors.tax_rate} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Stock initial</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.stock}</span>
                         <input
                             type="number"
                             value={data.stock_quantity}
                             onChange={(e) => setData('stock_quantity', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.stock_quantity && <span className="text-xs text-red-400">{errors.stock_quantity}</span>}
+                        <InputError message={errors.stock_quantity} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200">
-                        <span>Alerte stock minimum</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                        <span>{t.products.form.minStockAlert}</span>
                         <input
                             type="number"
                             value={data.min_stock_alert}
                             onChange={(e) => setData('min_stock_alert', e.target.value)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.min_stock_alert && <span className="text-xs text-red-400">{errors.min_stock_alert}</span>}
+                        <InputError message={errors.min_stock_alert} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Description</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+                        <span>{t.products.form.description}</span>
                         <textarea
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
                             rows={3}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.description && <span className="text-xs text-red-400">{errors.description}</span>}
+                        <InputError message={errors.description} />
                     </label>
 
-                    <label className="space-y-1 text-sm text-slate-200 md:col-span-2">
-                        <span>Image</span>
+                    <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200 md:col-span-2">
+                        <span>{t.products.form.image}</span>
                         <input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => setData('image', e.target.files?.[0] || null)}
-                            className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-3 py-2"
+                            onChange={handleImageChange}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
-                        {errors.image && <span className="text-xs text-red-400">{errors.image}</span>}
+                        {imagePreview && (
+                            <div className="mt-2">
+                                <img
+                                    src={imagePreview}
+                                    alt={t.products.form.preview}
+                                    className="h-32 w-32 rounded-lg object-cover border border-white/15"
+                                />
+                            </div>
+                        )}
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {t.products.form.imageFormats}
+                        </p>
+                        <InputError message={errors.image} />
                     </label>
 
                     <label className="flex items-center gap-2 text-sm text-slate-200 md:col-span-2">
@@ -261,7 +399,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('track_stock', e.target.checked)}
                             className="rounded border-white/15 bg-slate-900/70"
                         />
-                        <span>Suivre le stock</span>
+                        <span>{t.products.form.trackStock}</span>
                     </label>
                 </div>
 
@@ -270,14 +408,14 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                         href={route('products.index')}
                         className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
                     >
-                        Annuler
+                        {t.common.actions.cancel}
                     </Link>
                     <button
                         type="submit"
                         disabled={processing}
                         className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
                     >
-                        {processing ? 'Enregistrement...' : 'Enregistrer'}
+                        {processing ? t.common.actions.saving : t.common.actions.save}
                     </button>
                 </div>
             </form>

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoices', function (Blueprint $table) {
+        $driver = DB::getDriverName();
+
+        Schema::create('invoices', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('shop_id')->constrained()->onDelete('cascade');
             $table->foreignId('customer_id')->constrained()->onDelete('cascade');
@@ -19,15 +22,22 @@ return new class extends Migration
             $table->string('invoice_number')->unique();
             $table->date('invoice_date');
             $table->date('due_date')->nullable();
-            $table->enum('status', ['draft', 'sent', 'paid', 'cancelled'])->default('draft');
-            $table->enum('payment_method', ['cash', 'card', 'transfer', 'check', 'mobile'])->nullable();
+
+            if ($driver === 'sqlite') {
+                $table->text('status')->default('draft');
+                $table->text('payment_method')->nullable();
+            } else {
+                $table->enum('status', ['draft', 'sent', 'paid', 'cancelled'])->default('draft');
+                $table->enum('payment_method', ['cash', 'card', 'transfer', 'check', 'mobile'])->nullable();
+            }
+
             $table->decimal('subtotal', 15, 2)->default(0);
             $table->decimal('tax_amount', 15, 2)->default(0);
             $table->decimal('discount_amount', 15, 2)->default(0);
             $table->decimal('total', 15, 2)->default(0);
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->index('shop_id');
             $table->index('customer_id');
             $table->index('invoice_number');

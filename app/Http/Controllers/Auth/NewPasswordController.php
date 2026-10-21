@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -51,6 +52,11 @@ class NewPasswordController extends Controller
                     'remember_token' => Str::random(60),
                 ])->save();
 
+                // Un mot de passe réinitialisé signifie potentiellement un compte compromis :
+                // on coupe toutes les sessions et tokens API existants plutôt que de les laisser valides.
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+                $user->tokens()->delete();
+
                 event(new PasswordReset($user));
             }
         );
@@ -59,7 +65,7 @@ class NewPasswordController extends Controller
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
         if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+            return redirect()->route('login', ['code_user' => request()->route('code_user')])->with('status', __($status));
         }
 
         throw ValidationException::withMessages([

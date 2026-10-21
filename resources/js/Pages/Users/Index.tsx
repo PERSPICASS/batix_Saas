@@ -4,6 +4,9 @@ import { Plus, Pencil, Trash2, Mail, Shield, Store } from 'lucide-react';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import ConfirmDialog from '@/Components/ConfirmDialog';
 import { useState } from 'react';
+import { useRoute } from '@/utils/route';
+import SubscriptionBanner, { useSubscriptionLimits } from '@/Components/SubscriptionBanner';
+import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
     id: number;
@@ -32,25 +35,24 @@ interface PaginatedUsers {
 
 interface Props {
     users: PaginatedUsers;
+    canCreateUser: boolean;
+    remainingUsers: number;
 }
-
-const roleLabels: Record<string, string> = {
-    super_admin: 'Super Admin',
-    admin: 'Administrateur',
-    manager: 'Gestionnaire',
-    cashier: 'Caissier',
-    staff: 'Personnel',
-};
 
 const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'danger'> = {
     super_admin: 'danger',
+    admin_platforme: 'danger',
     admin: 'info',
     manager: 'info',
     cashier: 'warning',
     staff: 'success',
 };
 
-export default function UsersIndex({ users }: Props) {
+export default function UsersIndex({ users, canCreateUser, remainingUsers }: Props) {
+    const route = useRoute();
+    const { t } = useLocale();
+    const subscription = useSubscriptionLimits();
+
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -63,7 +65,7 @@ export default function UsersIndex({ users }: Props) {
     const handleConfirmDelete = () => {
         if (userToDelete) {
             setIsDeleting(true);
-            router.delete(route('users.destroy', userToDelete.id), {
+            router.delete(route('users.destroy', { user: userToDelete.id }), {
                 onFinish: () => {
                     setIsDeleting(false);
                     setShowDeleteDialog(false);
@@ -76,7 +78,7 @@ export default function UsersIndex({ users }: Props) {
     const columns = [
         {
             key: 'name',
-            label: 'Nom',
+            label: t.users.columns.name,
             render: (user: User) => (
                 <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-300/20 text-sm font-semibold text-amber-300">
@@ -88,9 +90,9 @@ export default function UsersIndex({ users }: Props) {
         },
         {
             key: 'email',
-            label: 'Email',
+            label: t.users.columns.email,
             render: (user: User) => (
-                <div className="flex items-center gap-2 text-slate-300">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     <Mail className="size-4" />
                     {user.email}
                 </div>
@@ -98,9 +100,9 @@ export default function UsersIndex({ users }: Props) {
         },
         {
             key: 'shop',
-            label: 'Boutique',
+            label: t.users.columns.shop,
             render: (user: User) => (
-                <div className="flex items-center gap-2 text-slate-300">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                     {user.shop ? (
                         <>
                             <Store className="size-4" />
@@ -114,39 +116,39 @@ export default function UsersIndex({ users }: Props) {
         },
         {
             key: 'role',
-            label: 'Rôle',
+            label: t.users.columns.role,
             align: 'center' as const,
             render: (user: User) => (
                 <TableBadge variant={roleColors[user.role] || 'info'}>
                     <Shield className="size-3" />
-                    {roleLabels[user.role] || user.role}
+                    {(t.users.roles as Record<string, string>)[user.role] || user.role}
                 </TableBadge>
             ),
         },
         {
             key: 'status',
-            label: 'Statut',
+            label: t.users.columns.status,
             align: 'center' as const,
             render: (user: User) => (
                 <TableBadge variant={user.is_active ? 'success' : 'danger'}>
-                    {user.is_active ? 'Actif' : 'Inactif'}
+                    {user.is_active ? t.common.status.active : t.common.status.inactive}
                 </TableBadge>
             ),
         },
         {
             key: 'actions',
-            label: 'Actions',
+            label: t.users.columns.actions,
             align: 'right' as const,
             render: (user: User) => (
                 <TableActions>
                     <Link
-                        href={route('users.edit', user.id)}
-                        className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/10"
+                        href={route('users.edit', { user: user.id })}
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                     >
-                        <Pencil className="size-3.5" /> Modifier
+                        <Pencil className="size-3.5" /> {t.users.actions.edit}
                     </Link>
                     <TableActionButton variant="danger" onClick={() => handleDeleteClick(user)}>
-                        <Trash2 className="size-3.5" /> Supprimer
+                        <Trash2 className="size-3.5" /> {t.users.actions.delete}
                     </TableActionButton>
                 </TableActions>
             ),
@@ -154,23 +156,36 @@ export default function UsersIndex({ users }: Props) {
     ];
 
     return (
-        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-white">Utilisateurs</h1>}>
-            <Head title="Utilisateurs" />
+        <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.users.title}</h1>}>
+            <Head title={t.users.title} />
 
             <section className="space-y-6">
+                {subscription && <SubscriptionBanner type="users" />}
+
                 <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">
-                        Gérez les comptes utilisateurs et leurs permissions
-                    </p>
+                    <div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">{t.users.subtitle}</p>
+                        {!canCreateUser && remainingUsers === 0 && (
+                            <p className="mt-1 text-xs text-amber-400">{t.users.limitReached}</p>
+                        )}
+                        {remainingUsers > 0 && (
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.users.remaining(remainingUsers)}</p>
+                        )}
+                    </div>
                     <Link
-                        href={route('users.create')}
-                        className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
+                        href={canCreateUser ? route('users.create') : '#'}
+                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold ${
+                            canCreateUser
+                                ? 'bg-amber-300 text-slate-950 hover:bg-amber-200'
+                                : 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60'
+                        }`}
+                        onClick={(e) => { if (!canCreateUser) e.preventDefault(); }}
                     >
-                        <Plus className="size-4" /> Nouvel utilisateur
+                        <Plus className="size-4" /> {t.users.actions.new}
                     </Link>
                 </div>
 
-                <Table columns={columns} data={users.data} emptyMessage="Aucun utilisateur trouvé" />
+                <Table columns={columns} data={users.data} emptyMessage={t.users.emptyMessage} />
 
                 {users.links && (
                     <div className="flex items-center justify-center gap-1">
@@ -195,10 +210,8 @@ export default function UsersIndex({ users }: Props) {
                 show={showDeleteDialog}
                 onClose={() => setShowDeleteDialog(false)}
                 onConfirm={handleConfirmDelete}
-                title="Supprimer l'utilisateur"
-                message={`Êtes-vous sûr de vouloir supprimer l'utilisateur "${userToDelete?.name}" ? Cette action est irréversible.`}
-                confirmText="Supprimer"
-                cancelText="Annuler"
+                title={t.users.deleteTitle}
+                message={t.users.deleteMessage(userToDelete?.name ?? '')}
                 type="danger"
                 isProcessing={isDeleting}
             />

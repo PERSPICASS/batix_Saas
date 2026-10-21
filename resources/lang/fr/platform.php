@@ -1,0 +1,38 @@
+<?php
+
+return [
+    'account_suspended' => 'Ce compte a été suspendu. Contactez le support BATIX PRO.',
+
+    'flash' => [
+        'only_owner_accounts' => 'Seuls les comptes propriétaires peuvent être suspendus.',
+        'account_marked_demo' => 'Compte marqué démo : il est exclu des chiffres de la plateforme.',
+        'account_unmarked_demo' => 'Compte réintégré dans les chiffres de la plateforme.',
+        'account_suspended' => 'Compte suspendu : le propriétaire et son personnel ne peuvent plus se connecter.',
+        'account_reactivated' => 'Compte réactivé.',
+        'shop_suspended' => 'Boutique suspendue : elle n\'est plus accessible à son compte.',
+        'shop_reactivated' => 'Boutique réactivée.',
+        'subscription_cancelled' => 'Abonnement annulé.',
+        'subscription_renewed' => 'Abonnement prolongé de :months mois.',
+        'subscription_activated' => 'Abonnement activé.',
+        'subscription_dates_updated' => 'Dates de l\'abonnement mises à jour.',
+        'subscription_amount_updated' => 'Montant de l\'abonnement mis à jour.',
+        'plan_created' => 'Plan d\'abonnement créé.',
+        'plan_updated' => 'Plan d\'abonnement mis à jour.',
+        'plan_deleted' => 'Plan d\'abonnement supprimé.',
+        'plan_enabled' => 'Plan activé.',
+        'plan_disabled' => 'Plan désactivé.',
+        'plan_has_subscriptions' => 'Ce plan a déjà des abonnements (même expirés) : désactivez-le plutôt que de le supprimer.',
+        'settings_updated' => 'Paramètres mis à jour.',
+        'post_created' => 'Article créé.',
+        'post_updated' => 'Article mis à jour.',
+        'post_deleted' => 'Article supprimé.',
+        'post_published' => 'Article publié.',
+        'post_unpublished' => 'Article dépublié.',
+        'cost_created' => 'Charge ajoutée.',
+        'cost_updated' => 'Charge mise à jour.',
+        'cost_deleted' => 'Charge supprimée.',
+        'review_approved' => 'Avis approuvé et publié.',
+        'review_rejected' => 'Avis rejeté.',
+        'review_deleted' => 'Avis supprimé.',
+    ],
+];

@@ -1,0 +1,432 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ChariowCheckout;
+use App\Models\SubscriptionPlan;
+use App\Services\ChariowService;
+use App\Services\SubscriptionActivator;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+class ChariowController extends Controller
+{
+    public function __construct(
+        private ChariowService $chariow,
+        private SubscriptionActivator $activator,
+    ) {}
+
+    /**
+     * Ouvre une session de paiement Chariow pour un plan.
+     */
+    public function initiate(Request $request, SubscriptionPlan $plan): JsonResponse
+    {
+        abort_if(!$plan->is_active, 404);
+
+        $validated = $request->validate([
+            'billing_cycle'      => 'required|in:monthly,yearly',
+            'first_name'         => 'required|string|max:50',
+            'last_name'          => 'required|string|max:50',
+            'phone_number'       => 'required|string|max:20|regex:/^[0-9]+$/',
+            'phone_country_code' => 'required|string|size:2|alpha',
+        ]);
+
+        $user = Auth::user();
+        abort_if($user->role !== 'super_admin', 403, "Seul le propriétaire du compte peut gérer l'abonnement.");
+
+        if (!$this->chariow->isConfigured()) {
+            return response()->json([
+                'success' => false,
+                'message' => "Le paiement Chariow n'est pas encore configuré.",
+            ], 422);
+        }
+
+        $productId = $validated['billing_cycle'] === 'yearly'
+            ? $plan->chariow_product_id_yearly
+            : $plan->chariow_product_id;
+
+        if (!$productId) {
+            Log::warning('Chariow: produit non mappé', [
+                'plan'  => $plan->slug,
+                'cycle' => $validated['billing_cycle'],
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => "Ce plan n'est pas encore disponible via Chariow.",
+            ], 422);
+        }
+
+        // Annuel = 10 mois payés (2 offerts), même règle que le paiement manuel et Jèko.
+        $amount = $validated['billing_cycle'] === 'yearly'
+            ? round((float) $plan->price * 10, 2)
+            : round((float) $plan->price, 2);
+
+        $reference = 'BTX-' . $user->id . '-' . $plan->id . '-' . Str::random(8);
+
+        // La ligne est créée AVANT l'appel réseau : c'est elle qui fait autorité au
+        // retour du webhook (utilisateur, plan, cycle, montant attendu). Le payload
+        // Chariow ne sert qu'à la retrouver, jamais à décider ce qu'on active.
+        $checkout = ChariowCheckout::create([
+            'reference'            => $reference,
+            'user_id'              => $user->id,
+            'subscription_plan_id' => $plan->id,
+            'billing_cycle'        => $validated['billing_cycle'],
+            'status'               => 'pending',
+            'chariow_product_id'   => $productId,
+            'amount'               => $amount,
+            'currency'             => 'XOF',
+        ]);
+
+        $payload = [
+            'product_id'  => $productId,
+            'email'       => $user->email,
+            'first_name'  => $validated['first_name'],
+            'last_name'   => $validated['last_name'],
+            'phone'       => [
+                'number'       => $validated['phone_number'],
+                'country_code' => strtoupper($validated['phone_country_code']),
+            ],
+            'customer_ip'     => $request->ip(),
+            'custom_metadata' => [
+                'ref'     => $reference,
+                'user_id' => (string) $user->id,
+                'plan_id' => (string) $plan->id,
+                'cycle'   => $validated['billing_cycle'],
+            ],
+        ];
+
+        if ($returnUrl = $this->publicReturnUrl($reference)) {
+            $payload['redirect_url'] = $returnUrl;
+        }
+
+        $result = $this->chariow->createCheckout($payload);
+
+        // Vente finalisée sans page de paiement : panier à zéro après remise. Il n'y a
+        // alors pas d'URL Chariow, et en exiger une ferait passer un succès pour un échec.
+        $isCompleted = ($result['step'] ?? null) === 'completed';
+
+        if (!$result['ok'] || (!$isCompleted && empty($result['checkout_url']))) {
+            $checkout->update([
+                'status'   => 'failed',
+                'metadata' => $result['raw'] ?? null,
+            ]);
+
+            // `already_purchased` signale presque toujours une erreur de configuration,
+            // pas une erreur de l'utilisateur : Chariow ne bloque le rachat que pour les
+            // types Downloadable / Course / Bundle. Un plan d'abonnement doit être créé
+            // en type « License », le seul qui autorise les achats répétés — sinon tout
+            // renouvellement est refusé, un mois après la mise en service.
+            if (($result['step'] ?? null) === 'already_purchased') {
+                Log::error('Chariow: rachat refusé — le produit n\'est probablement pas de type License', [
+                    'plan'       => $plan->slug,
+                    'product_id' => $productId,
+                    'user_id'    => $user->id,
+                ]);
+            }
+
+            $message = ($result['step'] ?? null) === 'already_purchased'
+                ? "Ce plan ne peut pas être racheté avec cet email. Notre équipe a été prévenue — contactez le support."
+                : ($result['message'] ?? "Échec de l'ouverture du paiement. Veuillez réessayer.");
+
+            return response()->json(['success' => false, 'message' => $message], 422);
+        }
+
+        $checkout->update([
+            'sale_id'        => $result['sale_id'] ?? null,
+            'transaction_id' => $result['transaction_id'] ?? null,
+            'checkout_url'   => $result['checkout_url'],
+            'metadata'       => $result['raw'] ?? null,
+        ]);
+
+        // Sans page de paiement, on renvoie le client sur notre propre page de retour :
+        // elle relit la vente et active l'abonnement, exactement comme le fera le Pulse.
+        return response()->json([
+            'success'     => true,
+            'redirectUrl' => $isCompleted
+                ? route('chariow.return', ['ref' => $reference])
+                : $result['checkout_url'],
+        ]);
+    }
+
+    /**
+     * URL de retour, seulement si elle est joignable depuis l'extérieur.
+     *
+     * Chariow valide le champ et rejette la demande entière avec « The redirect url
+     * field must be a valid URL » dès que l'hôte n'est pas public — c'est le cas en
+     * local (127.0.0.1, localhost, *.test). Le champ étant optionnel, on l'omet
+     * plutôt que d'envoyer une valeur qu'on sait refusée : Chariow affiche alors sa
+     * propre page de confirmation. Rien n'est perdu, l'activation vient du webhook,
+     * ce retour n'étant qu'un raccourci quand le client revient avant le Pulse.
+     */
+    private function publicReturnUrl(string $reference): ?string
+    {
+        $url  = route('chariow.return', ['ref' => $reference]);
+        $host = parse_url($url, PHP_URL_HOST) ?: '';
+
+        $isLocal = $host === ''
+            || $host === 'localhost'
+            || filter_var($host, FILTER_VALIDATE_IP) !== false
+            || preg_match('/\.(test|local|localhost|internal)$/i', $host) === 1;
+
+        if ($isLocal) {
+            Log::info('Chariow: redirect_url omise, hôte non public', ['host' => $host]);
+
+            return null;
+        }
+
+        return $url;
+    }
+
+    /**
+     * Retour du client après paiement (redirect_url).
+     *
+     * Le webhook reste la source de vérité ; cette page ne fait que rattraper le
+     * cas où le client revient avant que le Pulse ne soit arrivé.
+     */
+    public function return(Request $request): RedirectResponse
+    {
+        $reference = $request->query('ref');
+
+        // La référence circule dans une URL de redirection publique : on la borne au
+        // compte connecté pour qu'elle ne serve pas de sonde sur les paiements d'autrui.
+        $checkout = $reference
+            ? ChariowCheckout::where('reference', $reference)
+                ->where('user_id', Auth::id())
+                ->first()
+            : null;
+
+        if (!$checkout) {
+            return redirect('/plans')->with('error', 'Paiement introuvable.');
+        }
+
+        if (!$checkout->subscription_activated && $checkout->sale_id) {
+            $sale = $this->chariow->getSale($checkout->sale_id);
+
+            if (($sale['status'] ?? null) === 'completed') {
+                $this->markCompleted($checkout, $sale);
+                $checkout->refresh();
+            }
+        }
+
+        if ($checkout->subscription_activated) {
+            return redirect('/' . $checkout->user->accountCode() . '/dashboard')
+                ->with('success', 'Paiement confirmé et abonnement activé !');
+        }
+
+        // Paiement mobile money : la confirmation opérateur peut prendre quelques
+        // instants, on ne présente donc pas ça comme un échec.
+        return redirect('/plans')->with('info', "Paiement en cours de confirmation. Votre abonnement sera activé dès réception.");
+    }
+
+    /**
+     * Webhook Chariow (« Pulse »).
+     */
+    public function webhook(Request $request): JsonResponse
+    {
+        // Le corps brut, avant tout parsing : seul lui est signé.
+        $rawBody   = $request->getContent();
+        $signature = $request->header('x-chariow-signature');
+
+        if (!$this->chariow->verifyPulseSignature($rawBody, $signature)) {
+            Log::warning('Chariow: signature de Pulse invalide');
+
+            return response()->json(['ok' => false], 401);
+        }
+
+        $deliveryId = $request->header('x-pulse-delivery-id');
+        $event      = $request->header('x-pulse-event') ?? $request->input('event');
+
+        // Déduplication sur l'id de livraison, stable à travers les retries. L'insert
+        // est la garde elle-même : deux livraisons simultanées ne peuvent pas passer
+        // toutes les deux la contrainte d'unicité. `insertOrIgnore` (ON CONFLICT DO
+        // NOTHING) plutôt qu'un catch : sous Postgres, une violation attrapée dans une
+        // transaction englobante empoisonne tout ce qui suit.
+        if ($deliveryId) {
+            $inserted = DB::table('chariow_pulse_deliveries')->insertOrIgnore([
+                'delivery_id'  => $deliveryId,
+                'event'        => $event,
+                'processed_at' => now(),
+            ]);
+
+            if ($inserted === 0) {
+                return response()->json(['ok' => true, 'duplicate' => true]);
+            }
+        }
+
+        $payload   = $request->json()->all();
+        $reference = $payload['sale']['custom_metadata']['ref'] ?? null;
+        $saleId    = $payload['sale']['id'] ?? null;
+
+        Log::info('Chariow Pulse reçu', [
+            'event'     => $event,
+            'sale_id'   => $saleId,
+            'reference' => $reference,
+        ]);
+
+        // Deux points d'ancrage, et le second n'est pas du luxe : l'API `sales` ne
+        // renvoie pas `custom_metadata` (vérifié sur une vraie vente), donc rien ne
+        // garantit que le Pulse la porte. L'identifiant de vente, lui, est mémorisé
+        // dès l'ouverture de la session de paiement. Sans ce repli, une métadonnée
+        // absente ferait passer toutes les ventes pour des ventes hors application
+        // et aucun abonnement ne s'activerait jamais.
+        $checkout = $reference
+            ? ChariowCheckout::where('reference', $reference)->first()
+            : null;
+
+        if (!$checkout && $saleId) {
+            $checkout = ChariowCheckout::where('sale_id', $saleId)->first();
+        }
+
+        if (!$checkout) {
+            // Vente faite hors de l'app (boutique Chariow directe) : rien à activer.
+            return response()->json(['ok' => true]);
+        }
+
+        // Chariow nomme le déclencheur `successful_sale` dans la configuration du Pulse
+        // et `successful.sale` dans la documentation du payload. On accepte les deux
+        // plutôt que de parier sur l'un : se tromper de séparateur ferait répondre 200
+        // en n'activant rien, soit exactement le silence qu'on cherche à éviter.
+        $normalizedEvent = str_replace('_', '.', (string) $event);
+
+        match ($normalizedEvent) {
+            'successful.sale' => $this->markCompleted($checkout, $payload['sale'] ?? []),
+            'failed.sale'     => $checkout->update(['status' => 'failed', 'metadata' => $payload, 'completed_at' => now()]),
+            'abandoned.sale'  => $checkout->update(['status' => 'abandoned', 'metadata' => $payload]),
+            default           => Log::warning('Chariow: événement de Pulse non traité', ['event' => $event]),
+        };
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Enregistre la vente et active l'abonnement.
+     */
+    private function markCompleted(ChariowCheckout $checkout, array $sale): void
+    {
+        $paid     = isset($sale['amount']['value']) ? (float) $sale['amount']['value'] : null;
+        $currency = $sale['amount']['currency'] ?? null;
+        $expected = (float) $checkout->amount;
+
+        // On compare le prix CATALOGUE, pas le montant encaissé : une remise
+        // légitime (code promo, offre de lancement) fait tomber `amount` sous le prix
+        // du plan sans que le produit soit mal configuré. Comparer l'encaissé ferait
+        // refuser l'activation de tout client ayant utilisé un code promo — et un
+        // code à 100 % est justement le seul moyen de tester la chaîne complète,
+        // Chariow n'ayant pas de sandbox.
+        $listed = isset($sale['original_amount']['value'])
+            ? (float) $sale['original_amount']['value']
+            : $paid;
+
+        // Garde-fou sur un produit Chariow mal tarifé côté tableau de bord : on ne
+        // débloque pas un plan à 15 000 XOF pour un produit affiché à 500. La
+        // comparaison n'a de sens qu'à devise égale — si Chariow a converti, c'est
+        // son taux qui fait foi et on laisse passer en le signalant.
+        $underpriced = $listed !== null
+            && $currency === $checkout->currency
+            && $listed + 0.01 < $expected;
+
+        // Soupape pour un test à prix réduit sur un vrai paiement. On active quand
+        // même, mais en log d'erreur : l'oubli de remettre le garde-fou remonte alors
+        // dans Sentry à chaque vente, au lieu de passer inaperçu.
+        if ($underpriced && !config('services.chariow.price_guard', true)) {
+            Log::error('Chariow: GARDE-FOU DE PRIX DÉSACTIVÉ — activation forcée sous le prix du plan', [
+                'reference' => $checkout->reference,
+                'listed'    => $listed,
+                'expected'  => $expected,
+                'currency'  => $currency,
+                'action'    => 'remettre CHARIOW_PRICE_GUARD=true',
+            ]);
+
+            $underpriced = false;
+        }
+
+        if ($underpriced) {
+            Log::error('Chariow: prix du produit inférieur au prix du plan, activation refusée', [
+                'reference' => $checkout->reference,
+                'listed'    => $listed,
+                'paid'      => $paid,
+                'expected'  => $expected,
+                'currency'  => $currency,
+            ]);
+
+            $checkout->update([
+                'status'       => 'completed',
+                'sale_id'      => $sale['id'] ?? $checkout->sale_id,
+                'metadata'     => $sale,
+                'completed_at' => now(),
+            ]);
+
+            return;
+        }
+
+        if ($paid !== null && $currency !== null && $currency !== $checkout->currency) {
+            Log::warning('Chariow: vente encaissée dans une autre devise', [
+                'reference' => $checkout->reference,
+                'paid'      => $paid,
+                'currency'  => $currency,
+                'expected'  => $expected . ' ' . $checkout->currency,
+            ]);
+        }
+
+        $checkout->update([
+            'status'       => 'completed',
+            'sale_id'      => $sale['id'] ?? $checkout->sale_id,
+            'metadata'     => $sale,
+            'completed_at' => now(),
+        ]);
+
+        $this->activateSubscription($checkout);
+    }
+
+    /**
+     * Crée l'abonnement et sa facture après paiement confirmé.
+     */
+    private function activateSubscription(ChariowCheckout $checkout): void
+    {
+        // Le montant facturé est celui réellement encaissé, pas le prix du plan :
+        // une remise ou un produit de test le fait diverger, et une facture qui
+        // annonce 15 000 pour 1 000 reçus est fausse. Repli sur le prix attendu
+        // si la vente ne porte pas de montant.
+        $amount = isset($checkout->metadata['amount']['value'])
+            ? (float) $checkout->metadata['amount']['value']
+            : (float) $checkout->amount;
+
+        $this->activator->activatePaid(
+            $checkout->user,
+            $checkout->plan,
+            $checkout->billing_cycle,
+            $amount,
+            'chariow',
+            [
+                'payment_method_display' => 'Chariow',
+                'chariow_sale_id'        => $checkout->sale_id,
+                'chariow_reference'      => $checkout->reference,
+            ],
+            [
+                'chariow_sale_id'        => $checkout->sale_id,
+                'payment_method_display' => 'Chariow',
+            ],
+            // Verrou + re-vérification du drapeau dans la transaction : le webhook et
+            // le retour navigateur peuvent arriver en même temps, et sans ce verrou les
+            // deux passeraient le test — deux abonnements et deux factures pour un
+            // seul paiement. Le drapeau est posé dans la même transaction.
+            claim: function () use ($checkout) {
+                $locked = ChariowCheckout::whereKey($checkout->id)->lockForUpdate()->first();
+
+                if (!$locked || $locked->subscription_activated) {
+                    return false;
+                }
+
+                $locked->update(['subscription_activated' => true]);
+
+                return true;
+            },
+        );
+    }
+}

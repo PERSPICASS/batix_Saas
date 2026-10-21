@@ -1,6 +1,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Package, Calendar, User, MapPin, FileText } from 'lucide-react';
+import { useRoute } from '@/utils/route';
+import ProductImage from '@/Components/ProductImage';
+import { useLocale } from '@/contexts/LocaleContext';
+import { useShopSettings } from '@/Components/Currency';
 
 interface Shop {
     id: number;
@@ -11,6 +15,7 @@ interface Product {
     id: number;
     name: string;
     sku: string | null;
+    image: string | null;
 }
 
 interface User {
@@ -26,9 +31,10 @@ interface StockMovement {
     movement_date: string;
     notes: string | null;
     created_at: string;
-    shop: Shop;
-    product: Product;
-    user: User;
+    // `user_id` est nullable (employé supprimé, écriture système) : voir Stocks/Index.tsx.
+    shop: Shop | null;
+    product: Product | null;
+    user: User | null;
 }
 
 interface Props {
@@ -36,6 +42,10 @@ interface Props {
 }
 
 export default function StocksShow({ movement }: Props) {
+    const { t } = useLocale();
+    const route = useRoute();
+    const { formatCurrency } = useShopSettings();
+
     const getTypeBadge = (type: string) => {
         const types: Record<string, { label: string; bg: string; text: string }> = {
             in: { label: 'Entrée', bg: 'bg-green-500/20', text: 'text-green-300' },
@@ -65,7 +75,7 @@ export default function StocksShow({ movement }: Props) {
                     >
                         <ArrowLeft className="size-5" />
                     </Link>
-                    <h1 className="text-xl font-semibold text-white">Détails du mouvement</h1>
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Détails du mouvement</h1>
                 </div>
             }
         >
@@ -76,8 +86,8 @@ export default function StocksShow({ movement }: Props) {
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-amber-300/10 via-orange-300/5 to-transparent p-6">
                     <div className="flex items-start justify-between">
                         <div>
-                            <p className="text-sm text-slate-400">Mouvement de stock</p>
-                            <h2 className="mt-1 text-2xl font-bold text-white">#{movement.id}</h2>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Mouvement de stock</p>
+                            <h2 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">#{movement.id}</h2>
                         </div>
                         <div>{getTypeBadge(movement.type)}</div>
                     </div>
@@ -88,8 +98,8 @@ export default function StocksShow({ movement }: Props) {
                                 <Calendar className="size-5 text-amber-300" />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Date du mouvement</p>
-                                <p className="font-medium text-slate-200">
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Date du mouvement</p>
+                                <p className="font-medium text-slate-700 dark:text-slate-200">
                                     {new Date(movement.movement_date).toLocaleDateString('fr-FR', {
                                         day: 'numeric',
                                         month: 'long',
@@ -104,50 +114,61 @@ export default function StocksShow({ movement }: Props) {
                                 <User className="size-5 text-amber-300" />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Créé par</p>
-                                <p className="font-medium text-slate-200">{movement.user.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">Créé par</p>
+                                {movement.user ? (
+                                    <p className="font-medium text-slate-700 dark:text-slate-200">{movement.user.name}</p>
+                                ) : (
+                                    <p className="font-medium italic text-slate-500 dark:text-slate-400" title={t.stocks.unknownAuthorHint}>
+                                        {t.stocks.unknownAuthor}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Product info */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                         <Package className="size-5 text-amber-300" />
                         Produit
                     </h3>
-                    <div className="space-y-3">
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Nom</span>
-                            <span className="font-medium text-slate-200">{movement.product.name}</span>
-                        </div>
-                        {movement.product.sku && (
-                            <div className="flex justify-between">
-                                <span className="text-slate-400">SKU</span>
-                                <span className="font-mono text-sm text-slate-300">{movement.product.sku}</span>
-                            </div>
+                    <div className="flex items-center gap-4 mb-4">
+                        {movement.product ? (
+                            <>
+                                <ProductImage src={movement.product.image} name={movement.product.name} thumbnailClass="size-16" />
+                                <div>
+                                    <p className="font-semibold text-white text-lg">{movement.product.name}</p>
+                                    {movement.product.sku && (
+                                        <p className="text-sm font-mono text-slate-400">SKU : {movement.product.sku}</p>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-slate-500 dark:text-slate-400">{t.stocks.unknownValue}</p>
                         )}
                     </div>
                 </div>
 
                 {/* Movement details */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-white">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
                         <FileText className="size-5 text-amber-300" />
                         Détails du mouvement
                     </h3>
                     <div className="space-y-4">
                         <div className="flex justify-between">
-                            <span className="text-slate-400">Boutique</span>
+                            <span className="text-slate-500 dark:text-slate-400">Boutique</span>
                             <div className="flex items-center gap-2">
-                                <MapPin className="size-4 text-slate-400" />
-                                <span className="font-medium text-slate-200">{movement.shop.name}</span>
+                                <MapPin className="size-4 text-slate-500 dark:text-slate-400" />
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                    {movement.shop?.name ?? t.stocks.unknownValue}
+                                </span>
                             </div>
                         </div>
 
                         <div className="flex justify-between border-t border-white/10 pt-4">
-                            <span className="text-slate-400">Quantité</span>
+                            <span className="text-slate-500 dark:text-slate-400">Quantité</span>
                             <span
                                 className={`text-xl font-bold ${
                                     movement.quantity > 0 ? 'text-green-400' : 'text-red-400'
@@ -160,29 +181,18 @@ export default function StocksShow({ movement }: Props) {
 
                         {movement.unit_cost && (
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Coût unitaire</span>
-                                <span className="font-medium text-slate-200">
-                                    {parseFloat(movement.unit_cost).toLocaleString('fr-FR', {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}{' '}
-                                    DH
+                                <span className="text-slate-500 dark:text-slate-400">Coût unitaire</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                    {formatCurrency(parseFloat(movement.unit_cost))}
                                 </span>
                             </div>
                         )}
 
                         {movement.unit_cost && (
                             <div className="flex justify-between border-t border-white/10 pt-4">
-                                <span className="text-slate-400">Valeur totale</span>
+                                <span className="text-slate-500 dark:text-slate-400">Valeur totale</span>
                                 <span className="text-lg font-bold text-amber-300">
-                                    {(Math.abs(movement.quantity) * parseFloat(movement.unit_cost)).toLocaleString(
-                                        'fr-FR',
-                                        {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        }
-                                    )}{' '}
-                                    DH
+                                    {formatCurrency(Math.abs(movement.quantity) * parseFloat(movement.unit_cost))}
                                 </span>
                             </div>
                         )}

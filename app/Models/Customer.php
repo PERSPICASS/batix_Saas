@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\BelongsToShop;
 
 class Customer extends Model
 {
-    use HasFactory;
+    use BelongsToShop, HasFactory;
 
     protected $fillable = [
         'shop_id',
@@ -17,13 +18,11 @@ class Customer extends Model
         'email',
         'phone',
         'address',
-        'city',
-        'postal_code',
-        'country',
-        'tax_number',
         'notes',
         'is_active',
         'total_purchases',
+        'ncc',
+        'fne_template',
     ];
 
     protected $casts = [
@@ -41,11 +40,26 @@ class Customer extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class);
+    }
+
+    /**
+     * Net des avoirs : sans cette soustraction, créditer une facture payée laisserait le
+     * client crédité de la totalité de son achat, alors qu'on vient de lui en rendre une
+     * partie. Les avoirs des factures non payées ne sont pas déduits, puisque ces
+     * factures ne sont pas comptées non plus.
+     */
     public function updateTotalPurchases(): void
     {
-        $this->total_purchases = $this->invoices()
-            ->where('status', 'paid')
-            ->sum('total');
+        $paidInvoiceIds = $this->invoices()->where('status', 'paid')->pluck('id');
+
+        $invoiced = (float) $this->invoices()->whereIn('id', $paidInvoiceIds)->sum('total');
+        $credited = (float) CreditNote::whereIn('invoice_id', $paidInvoiceIds)->sum('total');
+
+        $this->total_purchases = $invoiced - $credited;
+
         $this->save();
     }
 }

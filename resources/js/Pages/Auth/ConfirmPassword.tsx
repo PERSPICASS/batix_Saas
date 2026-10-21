@@ -1,12 +1,15 @@
+import AuthSplitLayout from '@/Components/AuthSplitLayout';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
+import { ShieldCheck } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
 
 export default function ConfirmPassword() {
+    const { t } = useLocale();
     const { data, setData, post, processing, errors, reset } = useForm({
         password: '',
     });
@@ -20,37 +23,37 @@ export default function ConfirmPassword() {
     };
 
     return (
-        <GuestLayout>
-            <Head title="Confirm Password" />
+        <>
+            <Head title={t.auth.pages.confirmPassword.title} />
 
-            <div className="mb-4 text-sm text-gray-600">
-                This is a secure area of the application. Please confirm your
-                password before continuing.
-            </div>
+            <AuthSplitLayout
+                title={t.auth.pages.confirmPassword.heading}
+                description={t.auth.pages.confirmPassword.description}
+                icon={<ShieldCheck className="size-5" />}
+                sideStepLabel={t.auth.pages.confirmPassword.sideLabel}
+                sideTitle={t.auth.pages.confirmPassword.sideTitle}
+                sideDescription={t.auth.pages.confirmPassword.sideDescription}
+            >
+                <form onSubmit={submit} className="space-y-3">
+                    <div>
+                        <InputLabel htmlFor="password" value={t.auth.form.password} className="text-slate-700" />
+                        <TextInput
+                            id="password"
+                            type="password"
+                            name="password"
+                            value={data.password}
+                            className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20"
+                            isFocused={true}
+                            onChange={(e) => setData('password', e.target.value)}
+                        />
+                        <InputError message={errors.password} className="mt-2" />
+                    </div>
 
-            <form onSubmit={submit}>
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        isFocused={true}
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Confirm
+                    <PrimaryButton className="w-full justify-center bg-slate-900 py-2.5 text-sm normal-case tracking-normal hover:bg-slate-800" disabled={processing}>
+                        {t.auth.actions.confirm}
                     </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+                </form>
+            </AuthSplitLayout>
+        </>
     );
 }

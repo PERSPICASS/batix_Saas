@@ -1,0 +1,112 @@
+export interface Subprocessor {
+    name: string;
+    role: string;
+    data: string;
+}
+
+export const subprocessors: Record<'fr' | 'en', Subprocessor[]> = {
+    fr: [
+        {
+            name: 'Google Analytics (Google LLC)',
+            role: "Mesure d'audience",
+            data: "Données de navigation et cookies, uniquement si vous acceptez les cookies analytiques via notre bandeau de consentement.",
+        },
+        {
+            name: 'Paddle (Paddle.com Market Ltd)',
+            role: 'Facturation & paiement par carte',
+            data: "Nom, email et données de paiement de l'abonnement. Paddle agit comme revendeur officiel (merchant of record) : nous ne recevons jamais votre numéro de carte complet.",
+        },
+        {
+            name: 'LemonSqueezy',
+            role: 'Facturation & paiement par carte',
+            data: "Nom, email et données de paiement de l'abonnement, dans les mêmes conditions que Paddle.",
+        },
+        {
+            name: 'Chariow',
+            role: 'Paiement mobile money et carte (Wave, Orange Money, MTN Money, Moov Money)',
+            data: "Prénom, nom, email, numéro de téléphone et montant de la transaction. Le paiement est encaissé sur la plateforme Chariow : nous ne recevons jamais vos identifiants de paiement.",
+        },
+        {
+            name: 'PawaPay',
+            role: 'Paiement mobile money',
+            data: 'Numéro de téléphone et montant de la transaction.',
+        },
+        {
+            name: 'Jèko',
+            role: 'Agrégateur de paiement mobile money (Wave, Orange Money, MTN Money, Moov Money)',
+            data: 'Numéro de téléphone et montant de la transaction.',
+        },
+        {
+            name: 'Brevo (Sendinblue)',
+            role: "Envoi d'emails transactionnels",
+            data: 'Adresse email et contenu des notifications : confirmation de compte, factures, réinitialisation de mot de passe.',
+        },
+        {
+            name: 'Sentry (Functional Software, Inc.)',
+            role: 'Surveillance des erreurs et des performances',
+            data: "Rapports d'erreur techniques : message et trace d'exécution, adresse de la page, requêtes SQL (sans leurs paramètres) et un identifiant de compte. Ni votre nom ni votre email n'y sont joints.",
+        },
+        {
+            name: 'Anthropic (Anthropic, PBC)',
+            role: "Assistant IA intégré (modèle de langage Claude)",
+            data: "Uniquement si vous utilisez l'assistant : vos messages, l'historique de la conversation et les données de boutique que l'assistant consulte pour vous répondre (produits, stocks, ventes, clients, factures, devis).",
+        },
+        {
+            name: 'Hostinger',
+            role: "Hébergement de l'infrastructure (serveur applicatif et base de données)",
+            data: 'Toutes les données de votre compte et de votre boutique, stockées sur les serveurs de production.',
+        },
+    ],
+    en: [
+        {
+            name: 'Google Analytics (Google LLC)',
+            role: 'Audience measurement',
+            data: 'Browsing data and cookies, only if you accept analytics cookies via our consent banner.',
+        },
+        {
+            name: 'Paddle (Paddle.com Market Ltd)',
+            role: 'Billing & card payments',
+            data: "Name, email and subscription payment data. Paddle acts as the merchant of record: we never receive your full card number.",
+        },
+        {
+            name: 'LemonSqueezy',
+            role: 'Billing & card payments',
+            data: 'Name, email and subscription payment data, under the same conditions as Paddle.',
+        },
+        {
+            name: 'Chariow',
+            role: 'Mobile money and card payments (Wave, Orange Money, MTN Money, Moov Money)',
+            data: 'First name, last name, email, phone number and transaction amount. Payment is collected on the Chariow platform: we never receive your payment credentials.',
+        },
+        {
+            name: 'PawaPay',
+            role: 'Mobile money payments',
+            data: 'Phone number and transaction amount.',
+        },
+        {
+            name: 'Jèko',
+            role: 'Mobile money aggregator (Wave, Orange Money, MTN Money, Moov Money)',
+            data: 'Phone number and transaction amount.',
+        },
+        {
+            name: 'Brevo (Sendinblue)',
+            role: 'Transactional email delivery',
+            data: 'Email address and notification content: account confirmation, invoices, password reset.',
+        },
+        {
+            name: 'Sentry (Functional Software, Inc.)',
+            role: 'Error and performance monitoring',
+            data: 'Technical error reports: exception message and stack trace, page address, SQL queries (without their parameters) and an account identifier. Neither your name nor your email is attached.',
+        },
+        {
+            name: 'Anthropic (Anthropic, PBC)',
+            role: 'Built-in AI assistant (Claude language model)',
+            data: 'Only if you use the assistant: your messages, the conversation history and the shop data the assistant looks up to answer you (products, stock, sales, customers, invoices, quotes).',
+        },
+        {
+            name: 'Hostinger',
+            role: 'Infrastructure hosting (application server and database)',
+            data: 'All your account and shop data, stored on production servers.',
+        },
+    ],
+};

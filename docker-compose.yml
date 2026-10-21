@@ -1,0 +1,8 @@
+name: batix_prod
+
+networks:
+  web:
+    external: true
+    name: web
+  prod_internal:
+    driver: bridge

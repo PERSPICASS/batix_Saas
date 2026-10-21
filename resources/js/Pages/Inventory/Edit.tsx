@@ -1,0 +1,504 @@
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { FormEventHandler, useState, useRef, useCallback } from 'react';
+import { ArrowLeft, Plus, Trash2, Search, ScanLine, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { useRoute } from '@/utils/route';
+import Currency from '@/Components/Currency';
+import BarcodeScanner from '@/Components/BarcodeScanner';
+import { useLocale } from '@/contexts/LocaleContext';
+import InputError from '@/Components/InputError';
+
+interface Shop {
+    id: number;
+    name: string;
+}
+
+interface Product {
+    id: number;
+    name: string;
+    sku: string;
+    barcode: string | null;
+    stock_quantity: number;
+    defective_stock_quantity: number;
+    purchase_price: number;
+    sold_since_last_inventory: number;
+    purchased_since_last_inventory: number;
+    last_counted_quantity: number | null;
+    last_counted_at: string | null;
+    theoretical_stock: number;
+    ledger_drift: number;
+    shop: Shop;
+}
+
+interface InventoryItem {
+    id: number;
+    product_id: number;
+    product: Product;
+    expected_quantity: number;
+    expected_defective_quantity: number;
+    counted_quantity: number | null;
+    defective_quantity: number | null;
+}
+
+interface Inventory {
+    id: number;
+    shop_id: number;
+    inventory_number: string;
+    inventory_date: string;
+    status: string;
+    notes: string | null;
+    items: InventoryItem[];
+}
+
+interface Props {
+    inventory: Inventory;
+    shops: Shop[];
+    products: Product[];
+}
+
+interface FormItem {
+    product_id: number;
+    counted_quantity: number | null;
+    // Nullable comme le comptage : un défectueux non renseigné laisse l'existant en place,
+    // il ne déclare pas « zéro pièce défectueuse ».
+    defective_quantity: number | null;
+    product_name: string;
+    product_sku: string;
+    expected_quantity: number;
+    expected_defective_quantity: number;
+}
+
+type ScanFeedback = { type: 'success' | 'added' | 'error'; message: string } | null;
+
+export default function InventoryEdit({ inventory, shops, products }: Props) {
+    const { t } = useLocale();
+    const route = useRoute();
+    const [searchProduct, setSearchProduct] = useState('');
+    const [showScanner, setShowScanner] = useState(false);
+    const [highlightedId, setHighlightedId] = useState<number | null>(null);
+    const [scanFeedback, setScanFeedback] = useState<ScanFeedback>(null);
+    const rowRefs = useRef<Record<number, HTMLTableRowElement | null>>({});
+
+    const { data, setData, put, processing, errors } = useForm({
+        shop_id: inventory.shop_id.toString(),
+        inventory_date: inventory.inventory_date.split('T')[0],
+        status: inventory.status,
+        notes: inventory.notes || '',
+        items: inventory.items.map(item => ({
+            product_id: item.product_id,
+            counted_quantity: item.counted_quantity,
+            defective_quantity: item.defective_quantity,
+            product_name: item.product.name,
+            product_sku: item.product.sku,
+            expected_quantity: item.expected_quantity,
+            expected_defective_quantity: item.expected_defective_quantity,
+        })) as FormItem[],
+    });
+
+    const filteredProducts = products.filter(
+        (product) =>
+            product.shop.id.toString() === data.shop_id &&
+            !data.items.some((item) => item.product_id === product.id) &&
+            (product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                product.sku.toLowerCase().includes(searchProduct.toLowerCase()))
+    );
+
+    const addProduct = (product: Product) => {
+        setData('items', [
+            {
+                product_id: product.id,
+                counted_quantity: null,
+                defective_quantity: null,
+                product_name: product.name,
+                product_sku: product.sku,
+                expected_quantity: product.stock_quantity,
+                expected_defective_quantity: product.defective_stock_quantity,
+            },
+            ...data.items,
+        ]);
+        setSearchProduct('');
+    };
+
+    const removeProduct = (productId: number) => {
+        setData('items', data.items.filter((item) => item.product_id !== productId));
+    };
+
+    const updateCountedQuantity = (productId: number, quantity: number | null) => {
+        setData(
+            'items',
+            data.items.map((item) =>
+                item.product_id === productId ? { ...item, counted_quantity: quantity } : item
+            )
+        );
+    };
+
+    const updateDefectiveQuantity = (productId: number, quantity: number | null) => {
+        setData(
+            'items',
+            data.items.map((item) =>
+                item.product_id === productId ? { ...item, defective_quantity: quantity } : item
+            )
+        );
+    };
+
+    const showFeedback = (feedback: ScanFeedback) => {
+        setScanFeedback(feedback);
+        setTimeout(() => setScanFeedback(null), 3000);
+    };
+
+    const highlightRow = (productId: number) => {
+        setHighlightedId(productId);
+        setTimeout(() => setHighlightedId(null), 2500);
+        rowRefs.current[productId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Focus the quantity input inside the row
+        const input = rowRefs.current[productId]?.querySelector('input[type="number"]') as HTMLInputElement | null;
+        setTimeout(() => input?.focus(), 300);
+    };
+
+    const handleScan = useCallback((code: string) => {
+        setShowScanner(false);
+
+        // 1. Already in items?
+        const existingItem = data.items.find((item) => {
+            const product = products.find((p) => p.id === item.product_id);
+            return product?.barcode === code || product?.sku === code;
+        });
+
+        if (existingItem) {
+            highlightRow(existingItem.product_id);
+            showFeedback({ type: 'success', message: t.inventory.form.productFound(existingItem.product_name) });
+            return;
+        }
+
+        // 2. Not yet in items — try to add from products list
+        const product = products.find(
+            (p) => (p.barcode === code || p.sku === code) && p.shop.id.toString() === data.shop_id
+        );
+
+        if (product) {
+            addProduct(product);
+            setTimeout(() => highlightRow(product.id), 100);
+            showFeedback({ type: 'added', message: t.inventory.form.productAdded(product.name) });
+            return;
+        }
+
+        showFeedback({ type: 'error', message: t.inventory.form.noProductForCode(code) });
+    }, [data.items, data.shop_id, products, t]);
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        put(route('inventory.update', { inventory: inventory.id }));
+    };
+
+    return (
+        <AuthenticatedLayout
+            header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.inventory.form.editTitle} {inventory.inventory_number}</h1>}
+        >
+            <Head title={`${t.inventory.form.editTitle} ${inventory.inventory_number}`} />
+
+            <form onSubmit={submit} className="space-y-6">
+                {/* Informations générales */}
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.generalInfo}</h2>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.shopField}</label>
+                            {/*
+                              Toujours désactivé : un inventaire ne change pas de boutique. Ses
+                              lignes portent les quantités attendues des produits d'une boutique
+                              précise, et le serveur refuse désormais ce changement. Le champ
+                              reste affiché pour dire de quelle boutique il s'agit.
+                            */}
+                            <select
+                                value={data.shop_id}
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 disabled:opacity-70 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                disabled
+                            >
+                                {shops.map((shop) => (
+                                    <option key={shop.id} value={shop.id}>
+                                        {shop.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors.shop_id} />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.inventory.form.date}</label>
+                            <input
+                                type="date"
+                                value={data.inventory_date}
+                                onChange={(e) => setData('inventory_date', e.target.value)}
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                disabled={inventory.status === 'completed'}
+                            />
+                            <InputError message={errors.inventory_date} />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.misc.status}</label>
+                            <select
+                                value={data.status}
+                                onChange={(e) => setData('status', e.target.value)}
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                disabled={inventory.status === 'completed'}
+                            >
+                                <option value="draft">{t.inventory.status.draft}</option>
+                                <option value="in_progress">{t.inventory.status.in_progress}</option>
+                                <option value="cancelled">{t.inventory.status.cancelled}</option>
+                            </select>
+                            <InputError message={errors.status} />
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.notes}</label>
+                        <textarea
+                            value={data.notes}
+                            onChange={(e) => setData('notes', e.target.value)}
+                            rows={3}
+                            className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                            placeholder={t.inventory.form.notesOptionalPlaceholder}
+                        />
+                    </div>
+                </div>
+
+                {/* Ajout de produits */}
+                {inventory.status !== 'completed' && (
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.inventory.form.addProducts}</h2>
+                            <button
+                                type="button"
+                                onClick={() => setShowScanner(true)}
+                                className="flex items-center gap-2 rounded-lg border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-sm text-amber-300 transition hover:bg-amber-300/20"
+                            >
+                                <ScanLine className="size-4" />
+                                {t.inventory.form.scanCode}
+                            </button>
+                        </div>
+
+                        {/* Feedback scan */}
+                        {scanFeedback && (
+                            <div className={`mb-4 flex items-center gap-2 rounded-lg px-4 py-2 text-sm ${
+                                scanFeedback.type === 'error'
+                                    ? 'border border-red-500/30 bg-red-500/10 text-red-300'
+                                    : 'border border-green-500/30 bg-green-500/10 text-green-300'
+                            }`}>
+                                {scanFeedback.type === 'error'
+                                    ? <AlertCircle className="size-4 shrink-0" />
+                                    : <CheckCircle className="size-4 shrink-0" />
+                                }
+                                {scanFeedback.message}
+                            </div>
+                        )}
+
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+                            <input
+                                type="text"
+                                value={searchProduct}
+                                onChange={(e) => setSearchProduct(e.target.value)}
+                                placeholder={t.inventory.form.searchProductPlaceholder}
+                                className="w-full rounded-lg border border-white/15 bg-slate-900/70 py-2 pl-10 pr-4 text-slate-200"
+                            />
+                        </div>
+
+                        {searchProduct && filteredProducts.length > 0 && (
+                            <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-slate-900">
+                                {filteredProducts.slice(0, 10).map((product) => (
+                                    <button
+                                        key={product.id}
+                                        type="button"
+                                        onClick={() => addProduct(product)}
+                                        className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-white/10"
+                                    >
+                                        <div>
+                                            <p className="text-slate-900 dark:text-white">{product.name}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {product.sku} • Stock: {product.stock_quantity}</p>
+                                        </div>
+                                        <Plus className="size-4 text-amber-300" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {showScanner && (
+                    <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+                )}
+
+                {/* Liste des produits à inventorier */}
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <h2 className="mb-4 flex items-center gap-1.5 text-lg font-semibold text-slate-900 dark:text-white">
+                        {t.inventory.form.productsToInventory(data.items.length)}
+                        <span title={t.inventory.show.helpText}>
+                            <Info className="size-4 text-slate-500 dark:text-slate-400" />
+                        </span>
+                    </h2>
+
+                    {data.items.length === 0 ? (
+                        <p className="text-center text-slate-400">{t.inventory.form.noProductAdded}</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-white/10 text-left text-sm text-slate-400">
+                                        <th className="pb-3 pr-4">{t.inventory.form.product}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.expectedStock}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.goodQuantity}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.defective}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.difference}</th>
+                                        <th className="pb-3 pr-4 text-right">{t.inventory.show.defectiveDifference}</th>
+                                        <th className="pb-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {data.items.map((item) => {
+                                        // Une ligne non comptée ne constate aucun écart — 0, et non
+                                        // « il manque tout le stock ». Même règle que côté serveur
+                                        // (InventoryItem::saving).
+                                        const difference = item.counted_quantity === null
+                                            ? 0
+                                            : item.counted_quantity - item.expected_quantity;
+                                        const defectiveDifference = item.defective_quantity === null
+                                            ? 0
+                                            : item.defective_quantity - item.expected_defective_quantity;
+                                        const isHighlighted = highlightedId === item.product_id;
+                                        return (
+                                            <tr
+                                                key={item.product_id}
+                                                ref={(el) => { rowRefs.current[item.product_id] = el; }}
+                                                className={`transition-colors duration-500 ${isHighlighted ? 'bg-amber-300/10 ring-1 ring-inset ring-amber-300/30' : ''}`}
+                                            >
+                                                <td className="py-3 pr-4">
+                                                    <div>
+                                                        <p className="font-medium text-slate-900 dark:text-white">{item.product_name}</p>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400">SKU: {item.product_sku}</p>
+                                                        {(() => {
+                                                            const product = products.find((p) => p.id === item.product_id);
+                                                            if (product?.sold_since_last_inventory || product?.purchased_since_last_inventory) {
+                                                                return (
+                                                                    <p className="text-xs text-amber-300 mt-1">
+                                                                        {product?.sold_since_last_inventory > 0 && t.inventory.form.soldCount(product.sold_since_last_inventory)}
+                                                                        {product?.sold_since_last_inventory > 0 && product?.purchased_since_last_inventory > 0 && ' • '}
+                                                                        {product?.purchased_since_last_inventory > 0 && t.inventory.form.purchasedCount(product.purchased_since_last_inventory)}
+                                                                    </p>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 pr-4 text-right text-slate-300">
+                                                    {item.expected_quantity}
+                                                </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={item.counted_quantity ?? ''}
+                                                        onChange={(e) =>
+                                                            updateCountedQuantity(
+                                                                item.product_id,
+                                                                e.target.value ? parseInt(e.target.value) : null
+                                                            )
+                                                        }
+                                                        className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
+                                                        placeholder="-"
+                                                        disabled={inventory.status === 'completed'}
+                                                    />
+                                                </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={item.defective_quantity ?? ''}
+                                                        onChange={(e) =>
+                                                            updateDefectiveQuantity(
+                                                                item.product_id,
+                                                                e.target.value ? parseInt(e.target.value) : null
+                                                            )
+                                                        }
+                                                        className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
+                                                        placeholder="0"
+                                                        disabled={inventory.status === 'completed'}
+                                                    />
+                                                </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    {item.counted_quantity !== null && (
+                                                        <span
+                                                            className={`font-medium ${
+                                                                difference === 0
+                                                                    ? 'text-slate-500 dark:text-slate-400'
+                                                                    : difference > 0
+                                                                    ? 'text-green-300'
+                                                                    : 'text-red-300'
+                                                            }`}
+                                                        >
+                                                            {difference > 0 ? '+' : ''}
+                                                            {difference}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 pr-4 text-right">
+                                                    <span
+                                                        className={`font-medium ${
+                                                            defectiveDifference === 0
+                                                                ? 'text-slate-500 dark:text-slate-400'
+                                                                : defectiveDifference > 0
+                                                                ? 'text-green-300'
+                                                                : 'text-red-300'
+                                                        }`}
+                                                    >
+                                                        {defectiveDifference > 0 ? '+' : ''}
+                                                        {defectiveDifference}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 text-right">
+                                                    {inventory.status !== 'completed' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeProduct(item.product_id)}
+                                                            className="rounded-lg p-1 text-red-400 hover:bg-red-500/20"
+                                                        >
+                                                            <Trash2 className="size-4" />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                    <InputError message={errors.items} />
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-between">
+                    <Link
+                        href={route('inventory.index')}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    >
+                        <ArrowLeft className="size-4" />
+                        {t.common.actions.cancel}
+                    </Link>
+
+                    {inventory.status !== 'completed' && (
+                        <button
+                            type="submit"
+                            disabled={processing || data.items.length === 0}
+                            className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-6 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-200 disabled:opacity-50"
+                        >
+                            {processing ? t.inventory.form.saving : t.inventory.form.saveChanges}
+                        </button>
+                    )}
+                </div>
+            </form>
+        </AuthenticatedLayout>
+    );
+}

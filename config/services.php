@@ -35,4 +35,129 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | PawaPay Mobile Money Hub
+    |--------------------------------------------------------------------------
+    */
+    'pawapay' => [
+        'api_token' => env('PAWAPAY_API_TOKEN', ''),
+        'sandbox'   => env('PAWAPAY_SANDBOX', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Jèko Payment Platform
+    |--------------------------------------------------------------------------
+    */
+    'jeko' => [
+        'api_key'        => env('JEKO_API_KEY', ''),
+        'api_key_id'     => env('JEKO_API_KEY_ID', ''),
+        'store_id'       => env('JEKO_STORE_ID', ''),
+        'webhook_secret' => env('JEKO_WEBHOOK_SECRET', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Numéros de paiement Batix
+    |--------------------------------------------------------------------------
+    */
+    'payment' => [
+        // Paiement manuel (vérifié à la main par l'admin plateforme), indépendant de Chariow.
+        'manual_enabled' => (bool) env('PAYMENT_MANUAL_ENABLED', true),
+        'wave'         => env('PAYMENT_WAVE_NUMBER',         ''),
+        'orange_money' => env('PAYMENT_ORANGE_NUMBER',       ''),
+        'mtn_money'    => env('PAYMENT_MTN_NUMBER',          ''),
+        'moov_money'   => env('PAYMENT_MOOV_NUMBER',         ''),
+        'virement'     => env('PAYMENT_VIREMENT_RIB',        ''),
+        'carte'        => env('PAYMENT_CARTE_INFO',          ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Anthropic AI Agent
+    |--------------------------------------------------------------------------
+    */
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Passerelle MCP BATIXPRO
+    |--------------------------------------------------------------------------
+    | Endpoint Streamable HTTP du serveur MCP par lequel l'assistant IA interne
+    | exécute ses tools (voir App\Services\Mcp\McpClient). En prod (Docker),
+    | pointer sur le réseau interne : http://batixpro-mcp:3000/mcp.
+    */
+    'batixpro_mcp' => [
+        'url' => env('BATIXPRO_MCP_URL', 'http://localhost:3111/mcp'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | LemonSqueezy Payment Platform
+    |--------------------------------------------------------------------------
+    */
+    'lemonsqueezy' => [
+        'api_key'   => env('LEMONSQUEEZY_API_KEY', ''),
+        'store_id'  => env('LEMONSQUEEZY_STORE_ID', ''),
+        'webhook_secret' => env('LEMONSQUEEZY_WEBHOOK_SECRET', ''),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chariow — produits digitaux & mobile money (Wave, OM, MTN, Moov)
+    |--------------------------------------------------------------------------
+    | `webhook_secret` est le secret whsec_ du Pulse (Automations → Pulses →
+    | Overview), et non la clé API : les deux sont distincts et se régénèrent
+    | séparément.
+    */
+    'chariow' => [
+        'api_key'        => env('CHARIOW_API_KEY', ''),
+        'webhook_secret' => env('CHARIOW_WEBHOOK_SECRET', ''),
+        'base_url'       => env('CHARIOW_BASE_URL', 'https://api.chariow.com/v1'),
+
+        // Garde-fou : refuse d'activer un abonnement quand le produit Chariow est
+        // affiché sous le prix du plan. À ne désactiver que le temps d'un test à
+        // prix réduit — chaque activation passée en force part alors en log d'erreur,
+        // donc dans Sentry, pour qu'un oubli finisse par se voir.
+        'price_guard'    => env('CHARIOW_PRICE_GUARD', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Moneroo — orchestration Mobile Money et carte
+    |--------------------------------------------------------------------------
+    | La clé API ne doit jamais être envoyée au navigateur. Le secret webhook est
+    | distinct : il signe le corps brut reçu dans X-Moneroo-Signature.
+    */
+    'moneroo' => [
+        'enabled'        => env('MONEROO_ENABLED', false),
+        'api_key'        => env('MONEROO_API_KEY', ''),
+        'webhook_secret' => env('MONEROO_WEBHOOK_SECRET', ''),
+        'base_url'       => env('MONEROO_BASE_URL', 'https://api.moneroo.io'),
+    ],
+
+    /*
+    | FNE — Facture Normalisée Électronique (DGI Côte d'Ivoire). Seule l'URL de test est
+    | commune : la clé API et l'URL de production sont propres à chaque entreprise et
+    | vivent sur la boutique (shops.fne_*).
+    */
+    'fne' => [
+        'test_url' => env('FNE_TEST_URL', 'http://54.247.95.108/ws'),
+        'timeout'  => (int) env('FNE_TIMEOUT', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Paddle Payment Platform
+    |--------------------------------------------------------------------------
+    */
+    'paddle' => [
+        'env' => env('PADDLE_ENV', 'sandbox'),
+        'secret' => env('PADDLE_API_KEY'),
+        'webhook_secret' => env('PADDLE_WEBHOOK_SECRET'),
+    ],
+
 ];
