@@ -41,6 +41,27 @@ class ServerTranslationsTest extends TestCase
             ]);
     }
 
+    public function test_english_guest_gets_english_messages_from_the_locale_cookie(): void
+    {
+        $user = User::factory()->create(['password' => Hash::make('correct-password')]);
+
+        $this->withUnencryptedCookie('locale', 'en')
+            ->post('/login', ['email' => $user->email, 'password' => 'wrong-password'])
+            ->assertSessionHasErrors(['email' => 'These credentials do not match our records.']);
+
+        // Les messages viennent de Laravel, les noms de champs de resources/lang/en.
+        $this->withUnencryptedCookie('locale', 'en')
+            ->post('/login', ['email' => '', 'password' => ''])
+            ->assertSessionHasErrors(['email' => 'The email address field is required.']);
+    }
+
+    public function test_unknown_locale_cookie_is_ignored(): void
+    {
+        $this->withUnencryptedCookie('locale', 'de')
+            ->post('/login', ['email' => '', 'password' => ''])
+            ->assertSessionHasErrors(['email' => 'Le champ adresse e-mail est obligatoire.']);
+    }
+
     public function test_every_framework_validation_rule_has_a_french_message(): void
     {
         $english = require base_path('vendor/laravel/framework/src/Illuminate/Translation/lang/en/validation.php');

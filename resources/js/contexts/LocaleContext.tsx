@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Locale } from '@/types/types';
 import { translations } from '@/i18n';
@@ -6,6 +6,9 @@ import axios from 'axios';
 
 const STORAGE_KEY = 'dashboard_locale';
 const DEFAULT_LOCALE: Locale = 'fr';
+// Lu par SetGuestLocale : sans lui, un visiteur non connecté (connexion, inscription,
+// mot de passe oublié) voyait l'interface en anglais et les erreurs du serveur en français.
+const COOKIE_NAME = 'locale';
 
 type Translations = typeof translations['fr'] | typeof translations['en'];
 
@@ -23,6 +26,10 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
         const stored = window.localStorage.getItem(STORAGE_KEY);
         return stored === 'fr' || stored === 'en' ? stored : DEFAULT_LOCALE;
     });
+
+    useEffect(() => {
+        document.cookie = `${COOKIE_NAME}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+    }, [locale]);
 
     const setLocale = useCallback((next: Locale) => {
         setLocaleState(next);

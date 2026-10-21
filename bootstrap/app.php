@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Écrit en clair par le front (LocaleContext), lu par SetGuestLocale.
+        $middleware->encryptCookies(except: ['locale']);
+
         $middleware->web(append: [
+            \App\Http\Middleware\SetGuestLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\ForceHttpsInSession::class,
