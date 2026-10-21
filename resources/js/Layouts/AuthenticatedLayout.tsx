@@ -598,12 +598,15 @@ export default function Authenticated({
                         </div>
 
                         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                            <LanguageSwitcher />
+                            {/* Sur mobile, il passe dans le menu utilisateur : la barre dépassait l'écran. */}
+                            <div className="hidden sm:block">
+                                <LanguageSwitcher />
+                            </div>
 
                             {lowStockCount > 0 && user?.role !== 'admin_platforme' && (
                                 <Link
                                     href={buildRoute('products.index') + '?status=low_stock'}
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/10 px-2 py-2 sm:px-3 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
                                 >
                                     <AlertTriangle className="size-3.5" />
                                     <span className="hidden sm:inline">{t.layout.lowStock(lowStockCount)}</span>
@@ -614,7 +617,7 @@ export default function Authenticated({
                             {user?.role === 'super_admin' && (
                                 <Link
                                     href={buildRoute('billing.index')}
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/40 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-600 transition hover:bg-amber-300/20 dark:border-amber-300/30 dark:text-amber-300"
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/40 bg-amber-300/10 px-2 py-2 sm:px-3 text-xs font-semibold text-amber-600 transition hover:bg-amber-300/20 dark:border-amber-300/30 dark:text-amber-300"
                                 >
                                     <Crown className="size-3.5" />
                                     <span className="hidden sm:inline">
@@ -626,7 +629,7 @@ export default function Authenticated({
                             {user?.role !== 'admin_platforme' && isSuperAdmin && (
                                 <Link
                                     href={buildRoute('depots.index')}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-2 py-2 sm:px-3 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
                                     <Warehouse className="size-4 text-amber-400" />
                                     <span className="hidden sm:inline">{t.layout.depot}</span>
@@ -638,7 +641,7 @@ export default function Authenticated({
                                 <button
                                     type="button"
                                     onClick={() => isSuperAdmin && setShopMenuOpen((prev) => !prev)}
-                                    className={`relative inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs transition ${
+                                    className={`relative inline-flex items-center gap-2 rounded-lg border px-2 py-2 sm:px-3 text-left text-xs transition ${
                                         isSuperAdmin && shops.length > 0
                                             ? 'border-slate-300 bg-white text-slate-800 hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 cursor-pointer'
                                             : 'border-slate-400 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500 cursor-not-allowed'
@@ -700,7 +703,7 @@ export default function Authenticated({
                                 <button
                                     type="button"
                                     onClick={() => setUserMenuOpen((prev) => !prev)}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-3 py-2 text-left text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-200 px-2 py-2 sm:px-3 text-left text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
                                 >
                                     <User className="size-4 sm:hidden" />
                                     <span className="hidden sm:block">
@@ -721,6 +724,9 @@ export default function Authenticated({
                                                 <div className="border-b border-slate-200 px-3 py-2 dark:border-white/10 sm:hidden">
                                                     <p className="truncate text-sm font-semibold text-amber-600 dark:text-amber-200">{user.name}</p>
                                                     <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{user.email}</p>
+                                                    <div className="mt-2">
+                                                        <LanguageSwitcher />
+                                                    </div>
                                                 </div>
                                                 {user.role !== 'admin_platforme' && (
                                                     <>

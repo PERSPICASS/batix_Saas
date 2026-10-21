@@ -169,7 +169,7 @@ export default function Dashboard({ stats, performanceData, currentPeriod, recen
                     ))}
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                     <article className="rounded-2xl border border-gray-200 bg-white p-6 backdrop-blur-xl dark:border-white/10 dark:bg-white/5 xl:col-span-2">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>

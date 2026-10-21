@@ -207,7 +207,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.recurringInvoices.form.createTitle}</h1>}>
             <Head title={t.recurringInvoices.form.createTitle} />
 
-            <form onSubmit={handleSubmit} className="grid gap-4 xl:grid-cols-3">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
                     {/* Informations */}
                     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
@@ -300,14 +300,14 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
 
                         <div className="space-y-3">
                             {items.map((item, index) => (
-                                <div key={index} className="flex gap-2 items-end">
+                                <div key={index} className="flex flex-wrap gap-2 items-end sm:flex-nowrap">
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setProductTargetLine(index);
                                             setShowProductModal(true);
                                         }}
-                                        className="flex-1 rounded-lg border border-white/15 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-900 dark:to-slate-800 px-3 py-2 text-left text-slate-200 text-sm transition hover:border-amber-300/40"
+                                        className="w-full sm:w-auto sm:flex-1 rounded-lg border border-white/15 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-slate-900 dark:to-slate-800 px-3 py-2 text-left text-slate-200 text-sm transition hover:border-amber-300/40"
                                     >
                                         {item.product_name || t.invoices.form.selectProduct}
                                     </button>
@@ -328,7 +328,7 @@ export default function CreateRecurringInvoice({ customers, products }: { custom
                                         className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     />
 
-                                    <div className="text-right w-28">
+                                    <div className="ml-auto text-right w-28 sm:ml-0">
                                         <p className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
                                             <Currency amount={item.quantity * item.unit_price} />
                                         </p>

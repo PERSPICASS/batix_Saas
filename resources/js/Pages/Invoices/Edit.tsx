@@ -165,7 +165,7 @@ export default function InvoicesEdit({ invoice, customers, shops, products }: Pr
         >
             <Head title="Modifier facture" />
 
-            <form onSubmit={submit} className="grid gap-4 xl:grid-cols-3">
+            <form onSubmit={submit} className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
                     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
                         <div className="mb-4 flex items-center justify-between">

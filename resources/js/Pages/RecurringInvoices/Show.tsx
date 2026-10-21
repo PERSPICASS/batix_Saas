@@ -28,7 +28,7 @@ export default function ShowRecurringInvoice({ recurringInvoice }: { recurringIn
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.recurringInvoices.columns.cycle}: {recurringInvoice.invoice_prefix}</h1>}>
             <Head title={`${t.recurringInvoices.columns.cycle} ${recurringInvoice.invoice_prefix}`} />
 
-            <div className="grid gap-4 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
                 <section className="space-y-4 xl:col-span-2">
                     {/* En-tête */}
                     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
