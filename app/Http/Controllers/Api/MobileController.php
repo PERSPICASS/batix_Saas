@@ -27,6 +27,39 @@ class MobileController extends Controller
         return $shopId && $user->accessibleShopsQuery()->where('id', $shopId)->exists();
     }
 
+    /**
+     * Une page de synchronisation, parcourue par curseur.
+     *
+     * L'ancien `limit()` sans ordre ni curseur renvoyait un sous-ensemble arbitraire,
+     * puis un `timestamp` à now() : tout ce qui dépassait la limite n'était jamais
+     * synchronisé. Désormais :
+     * - ordre stable (updated_at, id) et `next_cursor` tant que `has_more` ;
+     * - `timestamp` n'avance qu'à la dernière page, et vaut l'heure d'AVANT la lecture :
+     *   une ligne modifiée pendant le parcours sera relue au prochain passage. Un ancien
+     *   client qui ignore le curseur relit la même page, il ne saute rien ;
+     * - `>=` sur last_sync : un doublon se résout par id côté client, une perte non.
+     */
+    private function syncPage(Request $request, $query, int $perPage, callable $map)
+    {
+        $startedAt = now();
+        $lastSync = $request->input('last_sync');
+
+        if ($lastSync) {
+            $query->where('updated_at', '>=', $lastSync);
+        }
+
+        $page = $query->orderBy('updated_at')->orderBy('id')
+            ->cursorPaginate($perPage, ['*'], 'cursor', $request->input('cursor'));
+
+        return response()->json([
+            'status' => 'success',
+            'data' => collect($page->items())->map($map)->values(),
+            'has_more' => $page->hasMorePages(),
+            'next_cursor' => $page->nextCursor()?->encode(),
+            'timestamp' => $page->hasMorePages() ? $lastSync : $startedAt->toIso8601String(),
+        ]);
+    }
+
     public function syncSales(Request $request)
     {
         $user = Auth::guard('sanctum')->user();
@@ -34,38 +67,27 @@ class MobileController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $lastSync = $request->input('last_sync');
         $shopId = $request->input('shop_id');
 
         if (!$this->authorizeShop($user, $shopId)) {
             return response()->json(['error' => 'Unauthorized shop'], 403);
         }
 
-        $query = Sale::with(['customer', 'items'])
-            ->where('shop_id', $shopId)
-            ->where('user_id', $user->id);
+        // Toute la boutique, comme products et customers : filtrer sur l'auteur du
+        // token (le propriétaire) laissait de côté les ventes des caissiers.
+        $query = Sale::with(['customer', 'items'])->where('shop_id', $shopId);
 
-        if ($lastSync) {
-            $query->where('updated_at', '>', $lastSync);
-        }
-
-        $sales = $query->limit(100)->get();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $sales->map(function ($sale) {
-                return [
-                    'id' => $sale->id,
-                    'ticket_number' => $sale->ticket_number,
-                    'total' => $sale->total,
-                    'status' => $sale->status,
-                    'payment_method' => $sale->payment_method,
-                    'customer_name' => $sale->customer?->name,
-                    'date' => $sale->sale_date,
-                ];
-            }),
-            'timestamp' => now()->toIso8601String(),
-        ]);
+        return $this->syncPage($request, $query, 100, function ($sale) {
+            return [
+                'id' => $sale->id,
+                'ticket_number' => $sale->ticket_number,
+                'total' => $sale->total,
+                'status' => $sale->status,
+                'payment_method' => $sale->payment_method,
+                'customer_name' => $sale->customer?->name,
+                'date' => $sale->sale_date,
+            ];
+        });
     }
 
     public function syncProducts(Request $request)
@@ -75,7 +97,6 @@ class MobileController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $lastSync = $request->input('last_sync');
         $shopId = $request->input('shop_id');
 
         if (!$this->authorizeShop($user, $shopId)) {
@@ -85,26 +106,16 @@ class MobileController extends Controller
         $query = Product::where('shop_id', $shopId)
             ->where('is_active', true);
 
-        if ($lastSync) {
-            $query->where('updated_at', '>', $lastSync);
-        }
-
-        $products = $query->limit(500)->get();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $products->map(function ($product) {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->name,
-                    'sku' => $product->sku,
-                    'stock' => $product->stock_quantity,
-                    'price' => $product->selling_price,
-                    'track_stock' => $product->track_stock,
-                ];
-            }),
-            'timestamp' => now()->toIso8601String(),
-        ]);
+        return $this->syncPage($request, $query, 500, function ($product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'stock' => $product->stock_quantity,
+                'price' => $product->selling_price,
+                'track_stock' => $product->track_stock,
+            ];
+        });
     }
 
     public function syncCustomers(Request $request)
@@ -114,7 +125,6 @@ class MobileController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $lastSync = $request->input('last_sync');
         $shopId = $request->input('shop_id');
 
         if (!$this->authorizeShop($user, $shopId)) {
@@ -123,24 +133,14 @@ class MobileController extends Controller
 
         $query = Customer::where('shop_id', $shopId);
 
-        if ($lastSync) {
-            $query->where('updated_at', '>', $lastSync);
-        }
-
-        $customers = $query->limit(500)->get();
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $customers->map(function ($customer) {
-                return [
-                    'id' => $customer->id,
-                    'name' => $customer->name,
-                    'phone' => $customer->phone,
-                    'email' => $customer->email,
-                ];
-            }),
-            'timestamp' => now()->toIso8601String(),
-        ]);
+        return $this->syncPage($request, $query, 500, function ($customer) {
+            return [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'phone' => $customer->phone,
+                'email' => $customer->email,
+            ];
+        });
     }
 
     /**
