@@ -39,7 +39,7 @@ interface Product {
     purchase_price: string;
     selling_price: string;
     tax_rate: string;
-    stock_quantity: number;
+    stock_quantity: number | string;
     min_stock_alert: number | null;
     image: string | null;
     is_active: boolean;
@@ -362,7 +362,11 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 type="number"
                                 id="stock_quantity"
                                 value={data.stock_quantity}
-                                onChange={(e) => setData('stock_quantity', Number(e.target.value))}
+                                // La saisie brute : Number('') vaut 0, et effacer le champ y
+                                // remettait aussitôt un 0 impossible à supprimer. Vide, le
+                                // serveur garde le stock actuel.
+                                onChange={(e) => setData('stock_quantity', e.target.value)}
+                                onFocus={(e) => e.target.select()}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="0"
                             />
@@ -378,6 +382,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 id="min_stock_alert"
                                 value={data.min_stock_alert}
                                 onChange={(e) => setData('min_stock_alert', e.target.value ? Number(e.target.value) : '')}
+                                onFocus={(e) => e.target.select()}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="10"
                             />

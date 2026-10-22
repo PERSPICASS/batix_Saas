@@ -53,7 +53,9 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
         purchase_price: '',
         selling_price: '',
         tax_rate: '',
-        stock_quantity: '0',
+        // Vide plutôt que '0' : sur mobile, il fallait effacer ce 0 avant de taper. Le
+        // serveur enregistre 0 quand rien n'est saisi (ProductCreationService).
+        stock_quantity: '',
         min_stock_alert: '',
         unit: 'piece',
         image: null as File | null,
@@ -342,6 +344,8 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             type="number"
                             value={data.stock_quantity}
                             onChange={(e) => setData('stock_quantity', e.target.value)}
+                            onFocus={(e) => e.target.select()}
+                            placeholder="0"
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.stock_quantity} />
@@ -353,6 +357,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             type="number"
                             value={data.min_stock_alert}
                             onChange={(e) => setData('min_stock_alert', e.target.value)}
+                            onFocus={(e) => e.target.select()}
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.min_stock_alert} />

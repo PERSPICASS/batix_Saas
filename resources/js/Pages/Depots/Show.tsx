@@ -179,10 +179,12 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
         items: [{ product_id: '', quantity: '1', selling_price: '' }] as TransferItem[],
     });
 
+    // Saisie brute (nombre ou chaîne vide) : `parseInt(...) || 0` remettait un 0 dès que
+    // le champ était effacé, impossible à supprimer pour retaper la valeur.
     const editForm = useForm({
-        quantity: 0,
-        min_stock_alert: 0,
-        purchase_price: 0,
+        quantity: 0 as number | string,
+        min_stock_alert: 0 as number | string,
+        purchase_price: 0 as number | string,
         name: '',
         sku: '',
         image: null as File | null,
@@ -988,7 +990,8 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         type="number"
                                         min="0"
                                         value={editForm.data.quantity}
-                                        onChange={e => editForm.setData('quantity', parseInt(e.target.value) || 0)}
+                                        onChange={e => editForm.setData('quantity', e.target.value)}
+                                        onFocus={e => e.target.select()}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
                                     <InputError message={editForm.errors.quantity} />
@@ -999,7 +1002,8 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         type="number"
                                         min="0"
                                         value={editForm.data.min_stock_alert}
-                                        onChange={e => editForm.setData('min_stock_alert', parseInt(e.target.value) || 0)}
+                                        onChange={e => editForm.setData('min_stock_alert', e.target.value)}
+                                        onFocus={e => e.target.select()}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
                                 </div>
@@ -1011,7 +1015,8 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                     min="0"
                                     step="1"
                                     value={editForm.data.purchase_price}
-                                    onChange={e => editForm.setData('purchase_price', parseFloat(e.target.value) || 0)}
+                                    onChange={e => editForm.setData('purchase_price', e.target.value)}
+                                    onFocus={e => e.target.select()}
                                     className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     placeholder="0"
                                 />
