@@ -83,7 +83,9 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     const [search, setSearch] = useState(filters.search || '');
     const [categoryId, setCategoryId] = useState(filters.category_id || '');
     const [status, setStatus] = useState(filters.status || '');
-    const [sort, setSort] = useState(filters.sort || '');
+    // Sans paramètre, PHP sérialise `filters` en tableau vide `[]` : `filters.sort` y est
+    // Array.prototype.sort, que useState appelait comme initialiseur — page blanche.
+    const [sort, setSort] = useState(typeof filters.sort === 'string' ? filters.sort : '');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
     const [removeModal, setRemoveModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });

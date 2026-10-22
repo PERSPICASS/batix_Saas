@@ -85,4 +85,25 @@ class ProductIndexSortTest extends TestCase
     {
         $this->assertSame(['ciment 50kg', 'agrafes', 'Vis 6mm', 'Brouette'], $this->names('id;drop_asc'));
     }
+
+    /**
+     * Sans paramètre, `filters` partait en `[]` : côté JS, `filters.sort` y vaut la méthode
+     * Array.prototype.sort, que useState appelait — la page restait blanche.
+     */
+    public function test_empty_filters_reach_the_page_as_an_object(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = User::factory()->create(['role' => 'super_admin', 'shop_id' => $shop->id]);
+        $shop->update(['user_id' => $owner->id]);
+        $this->subscribeOwnerOf($shop);
+
+        $version = app(\App\Http\Middleware\HandleInertiaRequests::class)->version(request());
+        $json = $this->actingAs($owner)
+            ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => (string) $version])
+            ->get("/{$owner->code_user}/produits")
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('"filters":{}', $json);
+    }
 }

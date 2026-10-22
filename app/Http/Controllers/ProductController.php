@@ -120,7 +120,9 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => $categories,
             'shops' => $shops,
-            'filters' => $request->only(['shop_id', 'category_id', 'search', 'status', 'sort']),
+            // (object) : vide, un tableau PHP part en `[]` côté JS, où `filters.sort` est
+            // la méthode Array.prototype.sort (page blanche).
+            'filters' => (object) $request->only(['shop_id', 'category_id', 'search', 'status', 'sort']),
             'canCreateProduct' => Auth::user()->canCreateProduct($activeShopId),
             'remainingProducts' => Auth::user()->remainingProductSlots($activeShopId),
         ]);
