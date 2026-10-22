@@ -29,14 +29,6 @@ use Illuminate\Database\Eloquent\Builder;
 trait SearchesText
 {
     /**
-     * Caractères accentués et leur équivalent nu, position par position — les deux
-     * chaînes doivent garder exactement le même nombre de caractères.
-     */
-    private const ACCENTED = 'áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ';
-
-    private const PLAIN = 'aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN';
-
-    /**
      * Driver lu sur la connexion de LA REQUÊTE, pas sur la connexion par défaut : un
      * modèle branché sur une autre connexion se verrait sinon appliquer la grammaire
      * d'une base qui n'est pas la sienne.
@@ -78,18 +70,8 @@ trait SearchesText
             foreach ($tokens as $token) {
                 $outer->where(function (Builder $q) use ($columns, $token) {
                     foreach ($columns as $column) {
-                        if (! $this->isPostgres($q)) {
-                            // SQLite / MySQL : `LIKE` y est déjà insensible à la casse,
-                            // et `translate()` n'existe pas sur SQLite.
-                            $q->orWhere($column, 'like', '%' . $token . '%');
-
-                            continue;
-                        }
-
-                        $q->orWhereRaw(
-                            'translate(' . $this->wrapColumn($q, $column) . ', ?, ?) ILIKE translate(?, ?, ?)',
-                            [self::ACCENTED, self::PLAIN, '%' . $token . '%', self::ACCENTED, self::PLAIN],
-                        );
+                        // Casse et accents : voir TextSearch, partagé avec les listes web.
+                        $q->orWhereContains($column, $token);
                     }
                 });
             }

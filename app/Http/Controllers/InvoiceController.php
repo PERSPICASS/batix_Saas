@@ -55,9 +55,9 @@ class InvoiceController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('invoice_number', 'like', "%{$search}%")
+                $q->whereContains('invoice_number', $search)
                   ->orWhereHas('customer', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
+                      $q->whereContains('name', $search);
                   });
             });
         }

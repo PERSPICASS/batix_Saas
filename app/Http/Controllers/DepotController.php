@@ -34,7 +34,7 @@ class DepotController extends Controller
             ->latest();
 
         if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+            $query->whereContains('name', $search);
         }
 
         $depots = $query->get()->map(fn($depot) => [
@@ -113,8 +113,8 @@ class DepotController extends Controller
         $products = DepotProduct::where('depot_id', $depot->id)
             ->with(['product.category'])
             ->when($search, fn($q) => $q->whereHas('product', fn($pq) => $pq
-                ->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%")
+                ->whereContains('name', $search)
+                ->orWhereContains('sku', $search)
             ))
             ->paginate(25)
             ->withQueryString()

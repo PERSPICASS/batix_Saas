@@ -26,9 +26,9 @@ class ExpenseController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('reference', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
+                $q->whereContains('title', $search)
+                  ->orWhereContains('reference', $search)
+                  ->orWhereContains('notes', $search);
             });
         }
 
@@ -61,9 +61,9 @@ class ExpenseController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $totalQuery->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('reference', 'like', "%{$search}%")
-                  ->orWhere('notes', 'like', "%{$search}%");
+                $q->whereContains('title', $search)
+                  ->orWhereContains('reference', $search)
+                  ->orWhereContains('notes', $search);
             });
         }
         if ($request->filled('category') && $request->category !== 'all') {

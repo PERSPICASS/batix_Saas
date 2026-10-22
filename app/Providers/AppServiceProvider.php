@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Support\TextSearch;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -29,6 +31,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Recherche « contient » insensible à la casse et aux accents, sur PostgreSQL comme
+        // ailleurs (voir TextSearch). Disponible aussi sur les requêtes Eloquent.
+        QueryBuilder::macro('whereContains', function (string $column, string $term) {
+            /** @var QueryBuilder $this */
+            return TextSearch::contains($this, $column, $term);
+        });
+        QueryBuilder::macro('orWhereContains', function (string $column, string $term) {
+            /** @var QueryBuilder $this */
+            return TextSearch::contains($this, $column, $term, 'or');
+        });
+
         // Forcer HTTPS en production
         if ($this->app->environment('production') || request()->server('HTTP_X_FORWARDED_PROTO') === 'https') {
             URL::forceScheme('https');

@@ -45,9 +45,9 @@ class RecurringInvoiceController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('invoice_prefix', 'like', "%{$search}%")
+                $q->whereContains('invoice_prefix', $search)
                   ->orWhereHas('customer', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
+                      $q->whereContains('name', $search);
                   });
             });
         }

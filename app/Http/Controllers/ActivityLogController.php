@@ -56,9 +56,9 @@ class ActivityLogController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('user_name', 'like', "%{$search}%")
-                  ->orWhere('user_email', 'like', "%{$search}%");
+                $q->whereContains('description', $search)
+                  ->orWhereContains('user_name', $search)
+                  ->orWhereContains('user_email', $search);
             });
         }
 

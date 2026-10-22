@@ -215,7 +215,7 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $category = Category::where('shop_id', $this->shopId)
             ->where(function ($q) use ($categoryName) {
                 $q->where('name', $categoryName)
-                  ->orWhere('name', 'like', "%{$categoryName}%");
+                  ->orWhereContains('name', $categoryName);
             })
             ->first();
 
@@ -233,7 +233,7 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $subcategory = Subcategory::where('category_id', $categoryId)
             ->where(function ($q) use ($subcategoryName) {
                 $q->where('name', $subcategoryName)
-                  ->orWhere('name', 'like', "%{$subcategoryName}%");
+                  ->orWhereContains('name', $subcategoryName);
             })
             ->first();
 

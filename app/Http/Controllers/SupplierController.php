@@ -33,10 +33,10 @@ class SupplierController extends Controller
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('company_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
+                $q->whereContains('name', $search)
+                    ->orWhereContains('company_name', $search)
+                    ->orWhereContains('email', $search)
+                    ->orWhereContains('phone', $search);
             });
         }
 

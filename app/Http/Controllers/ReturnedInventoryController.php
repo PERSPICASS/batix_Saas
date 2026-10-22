@@ -34,7 +34,7 @@ class ReturnedInventoryController extends Controller
         // Filtrer par produit (recherche)
         if ($request->filled('product')) {
             $query->whereHas('product', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->product . '%');
+                $q->whereContains('name', $request->product);
             });
         }
 

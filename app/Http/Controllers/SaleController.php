@@ -65,8 +65,8 @@ class SaleController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('ticket_number', 'like', "%{$search}%")
-                  ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$search}%"));
+                $q->whereContains('ticket_number', $search)
+                  ->orWhereHas('customer', fn($c) => $c->whereContains('name', $search));
             });
         }
 

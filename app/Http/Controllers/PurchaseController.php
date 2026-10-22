@@ -47,10 +47,10 @@ class PurchaseController extends Controller
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('reference', 'like', "%{$search}%")
+                $q->whereContains('reference', $search)
                   ->orWhereHas('supplier', function ($sq) use ($search) {
-                      $sq->where('name', 'like', "%{$search}%")
-                        ->orWhere('company_name', 'like', "%{$search}%");
+                      $sq->whereContains('name', $search)
+                        ->orWhereContains('company_name', $search);
                   });
             });
         }

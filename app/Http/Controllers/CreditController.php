@@ -50,9 +50,9 @@ class CreditController extends Controller
         // Recherche client / ticket
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('ticket_number', 'like', "%{$search}%")
-                  ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$search}%")
-                      ->orWhere('phone', 'like', "%{$search}%"));
+                $q->whereContains('ticket_number', $search)
+                  ->orWhereHas('customer', fn($c) => $c->whereContains('name', $search)
+                      ->orWhereContains('phone', $search));
             });
         }
 

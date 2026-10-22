@@ -46,9 +46,9 @@ class QuoteController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
-                $q->where('quote_number', 'like', "%{$search}%")
+                $q->whereContains('quote_number', $search)
                   ->orWhereHas('customer', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
+                      $q->whereContains('name', $search);
                   });
             });
         }

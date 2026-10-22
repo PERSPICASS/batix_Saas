@@ -41,9 +41,9 @@ class CreditNoteController extends Controller
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('credit_note_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('invoice', fn ($i) => $i->where('invoice_number', 'like', "%{$search}%"));
+                $q->whereContains('credit_note_number', $search)
+                    ->orWhereHas('customer', fn ($c) => $c->whereContains('name', $search))
+                    ->orWhereHas('invoice', fn ($i) => $i->whereContains('invoice_number', $search));
             });
         }
 

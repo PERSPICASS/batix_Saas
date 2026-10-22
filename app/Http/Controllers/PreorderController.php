@@ -46,8 +46,8 @@ class PreorderController extends Controller
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->whereHas('product', fn($p) => $p->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('customer', fn($c) => $c->where('name', 'like', "%{$search}%"));
+                $q->whereHas('product', fn($p) => $p->whereContains('name', $search))
+                  ->orWhereHas('customer', fn($c) => $c->whereContains('name', $search));
             });
         }
 
