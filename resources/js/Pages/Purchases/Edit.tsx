@@ -227,9 +227,11 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
         supplier_id: purchase.supplier_id.toString(),
         order_date: purchase.order_date,
         expected_date: purchase.expected_date || '',
-        shipping_cost: parseFloat(purchase.shipping_cost),
-        tax_rate: parseFloat(purchase.items[0]?.tax_rate || '0'),
-        discount_rate: parseFloat(purchase.items[0]?.discount_rate || '0'),
+        // Nombre ou chaîne vide : `parseFloat(...) || 0` remettait un 0 dès que le champ
+        // était effacé, impossible à supprimer. Le vide redevient 0 à l'envoi.
+        shipping_cost: parseFloat(purchase.shipping_cost) as number | string,
+        tax_rate: parseFloat(purchase.items[0]?.tax_rate || '0') as number | string,
+        discount_rate: parseFloat(purchase.items[0]?.discount_rate || '0') as number | string,
         notes: purchase.notes || '',
         internal_notes: purchase.internal_notes || '',
         items: items,
@@ -320,7 +322,11 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
         
         // Mettre à jour les items dans data avant de soumettre
         data.items = items;
-        
+        // Vide = 0, comme avant : envoyé vide, le taux de TVA prendrait celui de la boutique.
+        data.shipping_cost = Number(data.shipping_cost) || 0;
+        data.tax_rate = Number(data.tax_rate) || 0;
+        data.discount_rate = Number(data.discount_rate) || 0;
+
         put(route('purchases.update', { code_user, purchase: purchase.id }));
     };
 
@@ -411,9 +417,8 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                                     step="0.01"
                                     min="0"
                                     value={data.shipping_cost}
-                                    onChange={(e) =>
-                                        setData('shipping_cost', parseFloat(e.target.value) || 0)
-                                    }
+                                    onChange={(e) => setData('shipping_cost', e.target.value)}
+                                    onFocus={(e) => e.target.select()}
                                     className="mt-1 block w-full"
                                 />
                                 <InputError message={errors.shipping_cost} className="mt-2" />
@@ -563,7 +568,8 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                                         min="0"
                                         max="100"
                                         value={data.discount_rate}
-                                        onChange={(e) => setData('discount_rate', parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setData('discount_rate', e.target.value)}
+                                        onFocus={(e) => e.target.select()}
                                         className="mt-1 block w-full"
                                     />
                                 </div>
@@ -587,7 +593,8 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                                         min="0"
                                         max="100"
                                         value={data.tax_rate}
-                                        onChange={(e) => setData('tax_rate', parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setData('tax_rate', e.target.value)}
+                                        onFocus={(e) => e.target.select()}
                                         className="mt-1 block w-full"
                                     />
                                 </div>

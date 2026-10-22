@@ -46,10 +46,12 @@ interface Props {
 interface PreorderItem {
     product_id: number | string;
     product_name: string;
-    quantity_ordered: number;
-    unit_price: number;
+    // Nombre ou chaîne vide : `parseFloat(...) || 0` (ou `|| 1`) remettait une valeur dès
+    // que le champ était effacé, impossible à supprimer pour retaper.
+    quantity_ordered: number | string;
+    unit_price: number | string;
     expected_delivery_date: string;
-    deposit_amount: number;
+    deposit_amount: number | string;
 }
 
 const emptyItem = (): PreorderItem => ({
@@ -160,8 +162,8 @@ export default function Create({ shops, customers, products }: Props) {
         }
     };
 
-    const totalAmount = items.reduce((sum, item) => sum + item.quantity_ordered * item.unit_price, 0);
-    const totalDeposit = items.reduce((sum, item) => sum + (item.deposit_amount || 0), 0);
+    const totalAmount = items.reduce((sum, item) => sum + Number(item.quantity_ordered) * Number(item.unit_price), 0);
+    const totalDeposit = items.reduce((sum, item) => sum + (Number(item.deposit_amount) || 0), 0);
 
     const handleSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -245,8 +247,8 @@ export default function Create({ shops, customers, products }: Props) {
 
                         <div className="space-y-3">
                             {items.map((item, index) => {
-                                const lineTotal = item.quantity_ordered * item.unit_price;
-                                const lineRemaining = lineTotal - (item.deposit_amount || 0);
+                                const lineTotal = Number(item.quantity_ordered) * Number(item.unit_price);
+                                const lineRemaining = lineTotal - (Number(item.deposit_amount) || 0);
 
                                 return (
                                     <div key={index} className="rounded-xl border border-white/10 bg-slate-950/40 p-4 space-y-3">
@@ -279,7 +281,8 @@ export default function Create({ shops, customers, products }: Props) {
                                                     type="number"
                                                     min="1"
                                                     value={item.quantity_ordered}
-                                                    onChange={(e) => updateItem(index, 'quantity_ordered', parseInt(e.target.value) || 1)}
+                                                    onChange={(e) => updateItem(index, 'quantity_ordered', e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
                                                     className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                     required
                                                 />
@@ -291,7 +294,8 @@ export default function Create({ shops, customers, products }: Props) {
                                                     step="0.01"
                                                     min="0"
                                                     value={item.unit_price}
-                                                    onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                                                    onChange={(e) => updateItem(index, 'unit_price', e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
                                                     className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                     required
                                                 />
@@ -313,7 +317,8 @@ export default function Create({ shops, customers, products }: Props) {
                                                     step="0.01"
                                                     min="0"
                                                     value={item.deposit_amount}
-                                                    onChange={(e) => updateItem(index, 'deposit_amount', parseFloat(e.target.value) || 0)}
+                                                    onChange={(e) => updateItem(index, 'deposit_amount', e.target.value)}
+                                                    onFocus={(e) => e.target.select()}
                                                     className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                 />
                                             </div>

@@ -204,9 +204,11 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
         supplier_id: '',
         order_date: new Date().toISOString().split('T')[0],
         expected_date: '',
-        shipping_cost: 0,
-        tax_rate: 0,
-        discount_rate: 0,
+        // Nombre ou chaîne vide : `parseFloat(...) || 0` remettait un 0 dès que le champ
+        // était effacé, impossible à supprimer. Le vide redevient 0 à l'envoi.
+        shipping_cost: 0 as number | string,
+        tax_rate: 0 as number | string,
+        discount_rate: 0 as number | string,
         notes: '',
         internal_notes: '',
         items: items,
@@ -296,6 +298,10 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
         e.preventDefault();
         // Mettre à jour les items dans le formulaire avant de soumettre
         data.items = items;
+        // Vide = 0, comme avant : envoyé vide, le taux de TVA prendrait celui de la boutique.
+        data.shipping_cost = Number(data.shipping_cost) || 0;
+        data.tax_rate = Number(data.tax_rate) || 0;
+        data.discount_rate = Number(data.discount_rate) || 0;
         post(route('purchases.store', { code_user }));
     };
 
@@ -386,7 +392,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     step="0.01"
                                     min="0"
                                     value={data.shipping_cost}
-                                    onChange={(e) => setData('shipping_cost', parseFloat(e.target.value) || 0)}
+                                    onChange={(e) => setData('shipping_cost', e.target.value)}
+                                    onFocus={(e) => e.target.select()}
                                     className="mt-1 block w-full"
                                 />
                                 <InputError message={errors.shipping_cost} className="mt-2" />
@@ -518,7 +525,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                         min="0"
                                         max="100"
                                         value={data.discount_rate}
-                                        onChange={(e) => setData('discount_rate', parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setData('discount_rate', e.target.value)}
+                                        onFocus={(e) => e.target.select()}
                                         className="mt-1 block w-full"
                                     />
                                 </div>
@@ -542,7 +550,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                         min="0"
                                         max="100"
                                         value={data.tax_rate}
-                                        onChange={(e) => setData('tax_rate', parseFloat(e.target.value) || 0)}
+                                        onChange={(e) => setData('tax_rate', e.target.value)}
+                                        onFocus={(e) => e.target.select()}
                                         className="mt-1 block w-full"
                                     />
                                 </div>
