@@ -7,6 +7,7 @@ import { useRoute } from '@/utils/route';
 import Modal from '@/Components/Modal';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import { useLocale } from '@/contexts/LocaleContext';
+import { matchesSearch } from '@/utils/search';
 
 interface Customer {
     id: number;
@@ -71,7 +72,7 @@ export default function EditRecurringInvoice({ recurringInvoice, customers, prod
     const filteredProducts = useMemo(() => {
         const term = productSearch.trim().toLowerCase();
         if (!term) return products;
-        return products.filter((p) => p.name.toLowerCase().includes(term));
+        return products.filter((p) => matchesSearch(term, [p.name]));
     }, [products, productSearch]);
 
     useEffect(() => {

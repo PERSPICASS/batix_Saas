@@ -13,8 +13,8 @@ use Illuminate\Database\Query\Builder;
  * `unaccent` ni migration. SQLite (la suite de tests) et MySQL ignorent déjà la casse avec
  * `LIKE`, et n'ont pas `translate()`.
  *
- * Exposée sur toute requête par les macros `whereContains` / `orWhereContains`
- * (AppServiceProvider), et utilisée par l'API v1 (SearchesText).
+ * Exposée sur toute requête par les macros `whereContains` / `orWhereContains` et
+ * `whereMatchesWords` (AppServiceProvider), et utilisée par l'API v1 (SearchesText).
  */
 class TextSearch
 {
@@ -42,5 +42,34 @@ class TextSearch
             [self::ACCENTED, self::PLAIN, '%' . $term . '%', self::ACCENTED, self::PLAIN],
             $boolean,
         );
+    }
+
+    /**
+     * Chaque mot du terme doit se retrouver dans au moins une des colonnes, dans
+     * n'importe quel ordre : « ciment 45 » trouve « Ciment CPJ 45 », et « pistolet
+     * tolsen » trouve un produit dont la marque est Tolsen.
+     *
+     * @param  array<int, string>  $columns  Noms de colonnes internes, jamais saisis par l'utilisateur.
+     */
+    public static function matchesWords(Builder $query, array $columns, string $term): Builder
+    {
+        // Plafond : au-delà, l'utilisateur a saisi une phrase, pas une recherche, et
+        // chaque mot ajoute un groupe de conditions pour rien.
+        $words = array_slice(preg_split('/\s+/', trim($term), -1, PREG_SPLIT_NO_EMPTY) ?: [], 0, 6);
+
+        if ($words === []) {
+            return $query;
+        }
+
+        // Un seul groupe externe : un orWhere de l'appelant ne peut pas s'y mélanger.
+        return $query->where(function (Builder $outer) use ($columns, $words) {
+            foreach ($words as $word) {
+                $outer->where(function (Builder $q) use ($columns, $word) {
+                    foreach ($columns as $column) {
+                        self::contains($q, $column, $word, 'or');
+                    }
+                });
+            }
+        });
     }
 }

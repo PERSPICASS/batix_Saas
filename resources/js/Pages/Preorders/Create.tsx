@@ -7,6 +7,7 @@ import Modal from '@/Components/Modal';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
+import { matchesSearch } from '@/utils/search';
 
 interface Shop {
     id: number;
@@ -117,11 +118,8 @@ export default function Create({ shops, customers, products }: Props) {
         if (!term) return products;
         return products.filter(
             (product) =>
-                product.name.toLowerCase().includes(term) ||
-                product.sku?.toLowerCase().includes(term) ||
-                product.variations?.some(
-                    (v) => v.name.toLowerCase().includes(term) || v.sku?.toLowerCase().includes(term),
-                ),
+                matchesSearch(term, [product.name, product.sku]) ||
+                product.variations?.some((v) => matchesSearch(term, [product.name, v.name, v.sku])),
         );
     }, [products, productSearch]);
 

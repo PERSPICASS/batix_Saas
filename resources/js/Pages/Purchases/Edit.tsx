@@ -9,6 +9,7 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { useLocale } from '@/contexts/LocaleContext';
+import { matchesSearch } from '@/utils/search';
 
 interface Supplier {
     id: number;
@@ -84,14 +85,7 @@ function PurchaseProductCombobox({
 
     const selected = products.find((p) => p.id === Number(value));
 
-    const filtered = products.filter((p) => {
-        const q = search.toLowerCase();
-        return (
-            p.name.toLowerCase().includes(q) ||
-            (p.sku ?? '').toLowerCase().includes(q) ||
-            (p.category?.name ?? '').toLowerCase().includes(q)
-        );
-    });
+    const filtered = products.filter((p) => matchesSearch(search, [p.name, p.sku, p.category?.name]));
 
     useEffect(() => {
         const handler = (e: MouseEvent) => {

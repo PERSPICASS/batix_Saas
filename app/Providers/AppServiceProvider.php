@@ -41,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
             /** @var QueryBuilder $this */
             return TextSearch::contains($this, $column, $term, 'or');
         });
+        QueryBuilder::macro('whereMatchesWords', function (array $columns, string $term) {
+            /** @var QueryBuilder $this */
+            return TextSearch::matchesWords($this, $columns, $term);
+        });
 
         // Forcer HTTPS en production
         if ($this->app->environment('production') || request()->server('HTTP_X_FORWARDED_PROTO') === 'https') {

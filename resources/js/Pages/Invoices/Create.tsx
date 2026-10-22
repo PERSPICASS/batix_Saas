@@ -9,6 +9,7 @@ import { documentTotals } from '@/utils/totals';
 import Modal from '@/Components/Modal';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import { matchesSearch } from '@/utils/search';
 
 interface Customer {
     id: number;
@@ -237,7 +238,7 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
     const filteredProductsBySearch = useMemo(() => {
         const term = productSearch.trim().toLowerCase();
         if (!term) return filteredProducts;
-        return filteredProducts.filter((product) => product.name.toLowerCase().includes(term));
+        return filteredProducts.filter((product) => matchesSearch(term, [product.name]));
     }, [filteredProducts, productSearch]);
 
     useEffect(() => {

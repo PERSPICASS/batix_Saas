@@ -10,6 +10,7 @@ import { useLocale } from '@/contexts/LocaleContext';
 import { enqueue, newClientUuid } from '@/offline/outbox';
 import { useOfflineSales } from '@/offline/useOfflineSales';
 import { cacheCatalog, readCatalog } from '@/offline/catalog';
+import { matchesSearch } from '@/utils/search';
 
 /**
  * Format attendu par la validation `date` de Laravel côté synchronisation.
@@ -318,13 +319,8 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
 
     const filteredProducts = availableProducts.filter(
         (product) =>
-            product.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-            product.sku?.toLowerCase().includes(searchProduct.toLowerCase()) ||
-            product.variations?.some(
-                (v) =>
-                    v.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-                    v.sku?.toLowerCase().includes(searchProduct.toLowerCase())
-            )
+            matchesSearch(searchProduct, [product.name, product.sku]) ||
+            product.variations?.some((v) => matchesSearch(searchProduct, [product.name, v.name, v.sku]))
     );
 
     return (

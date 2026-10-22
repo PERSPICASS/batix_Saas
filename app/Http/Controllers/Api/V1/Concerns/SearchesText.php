@@ -55,27 +55,9 @@ trait SearchesText
         // recherche « contient » sur la chaîne entière échoue dès que l'information est
         // répartie sur plusieurs colonnes : « pistolet 600W Tolsen » ne figure ni dans
         // `name` (« Pistolet à peinture électrique 600W ») ni dans `brand` (« Tolsen »),
-        // alors que le produit correspond parfaitement.
-        $tokens = preg_split('/\s+/', trim($term), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-
-        // Plafond : au-delà, l'utilisateur a saisi une phrase, pas une recherche, et
-        // chaque mot supplémentaire ajoute une jointure de conditions pour rien.
-        $tokens = array_slice($tokens, 0, 6);
-
-        if ($tokens === []) {
-            return $query;
-        }
-
-        return $query->where(function (Builder $outer) use ($columns, $tokens) {
-            foreach ($tokens as $token) {
-                $outer->where(function (Builder $q) use ($columns, $token) {
-                    foreach ($columns as $column) {
-                        // Casse et accents : voir TextSearch, partagé avec les listes web.
-                        $q->orWhereContains($column, $token);
-                    }
-                });
-            }
-        });
+        // alors que le produit correspond parfaitement. Voir TextSearch, partagé avec les
+        // listes web.
+        return $query->whereMatchesWords($columns, $term);
     }
 
     /**

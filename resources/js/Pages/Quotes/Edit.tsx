@@ -7,6 +7,7 @@ import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import Modal from '@/Components/Modal';
 import Currency, { useShopSettings } from '@/Components/Currency';
+import { matchesSearch } from '@/utils/search';
 
 interface Customer {
     id: number;
@@ -75,7 +76,7 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
     const filteredProducts = useMemo(() => {
         const term = productSearch.trim().toLowerCase();
         if (!term) return products;
-        return products.filter((p) => p.name.toLowerCase().includes(term));
+        return products.filter((p) => matchesSearch(term, [p.name]));
     }, [products, productSearch]);
 
     // Modal navigation

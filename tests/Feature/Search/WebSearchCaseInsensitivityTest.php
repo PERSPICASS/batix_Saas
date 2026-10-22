@@ -74,4 +74,34 @@ class WebSearchCaseInsensitivityTest extends TestCase
         $as->get("/{$owner->code_user}/clients?search=kouassi")->assertOk()
             ->assertInertia(fn ($page) => $page->has('customers.data', 1));
     }
+
+    /** Mot par mot, dans n'importe quel ordre, nom et marque confondus. */
+    public function test_the_product_list_matches_each_word_separately(): void
+    {
+        $shop = Shop::factory()->create();
+        $owner = User::factory()->create(['role' => 'super_admin', 'shop_id' => $shop->id]);
+        $shop->update(['user_id' => $owner->id]);
+        $this->subscribeOwnerOf($shop);
+
+        Product::factory()->create(['shop_id' => $shop->id, 'name' => 'Ciment CPJ 45', 'brand' => 'Dangote', 'sku' => 'CIM-A', 'barcode' => null, 'is_active' => true]);
+        Product::factory()->create(['shop_id' => $shop->id, 'name' => 'Ciment CPJ 35', 'brand' => 'Lafarge', 'sku' => 'CIM-B', 'barcode' => null, 'is_active' => true]);
+
+        $as = $this->actingAs($owner)->withSession(['active_shop_id' => $shop->id]);
+        $found = fn (string $q) => $as->get("/{$owner->code_user}/produits?search=" . urlencode($q))->assertOk()
+            ->viewData('page')['props']['products']['data'];
+
+        $this->assertSame(['Ciment CPJ 45'], array_column($found('ciment 45'), 'name'));
+        $this->assertSame(['Ciment CPJ 45'], array_column($found('45 ciment'), 'name'));
+        $this->assertSame(['Ciment CPJ 35'], array_column($found('ciment lafarge'), 'name'));
+        $this->assertSame([], $found('ciment 50'));
+    }
+
+    public function test_postgres_word_search_requires_every_word(): void
+    {
+        $sql = $this->postgresSql(fn ($q) => $q->where('shop_id', 1)->whereMatchesWords(['name', 'brand'], 'ciment 45'));
+
+        // Deux mots × deux colonnes, chaque mot dans son groupe, les groupes en ET.
+        $this->assertSame(4, substr_count($sql, 'ilike'));
+        $this->assertMatchesRegularExpression('/"shop_id" = \\? and \(\(.+\) and \(.+\)\)$/', $sql);
+    }
 }

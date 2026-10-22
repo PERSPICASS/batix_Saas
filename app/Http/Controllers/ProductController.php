@@ -75,11 +75,8 @@ class ProductController extends Controller
         }
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereContains('name', $search)
-                  ->orWhereContains('sku', $search)
-                  ->orWhereContains('barcode', $search);
-            });
+            // Mot par mot, sur le nom, la référence, le code-barres et la marque.
+            $query->whereMatchesWords(['name', 'sku', 'barcode', 'brand'], $search);
         }
 
         // Filtre par statut
