@@ -419,6 +419,10 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             <option value="">{t.products.filters.sortNewest}</option>
                             <option value="name_asc">{t.products.filters.sortNameAsc}</option>
                             <option value="name_desc">{t.products.filters.sortNameDesc}</option>
+                            <option value="price_asc">{t.products.filters.sortPriceAsc}</option>
+                            <option value="price_desc">{t.products.filters.sortPriceDesc}</option>
+                            <option value="stock_asc">{t.products.filters.sortStockAsc}</option>
+                            <option value="stock_desc">{t.products.filters.sortStockDesc}</option>
                         </select>
 
                         {hasActiveFilters && (

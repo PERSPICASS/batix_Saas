@@ -42,14 +42,21 @@ class ProductController extends Controller
             ->whereNull('parent_id'); // Exclure les déclinaisons
 
         // Par défaut du plus récent au plus ancien. LOWER() : selon la collation Postgres,
-        // « ciment » passerait après « Vis ». L'id départage les ex aequo, sans quoi un
-        // même produit peut apparaître sur deux pages.
-        match ($sort) {
-            'name_asc' => $query->orderByRaw('LOWER(name) asc'),
-            'name_desc' => $query->orderByRaw('LOWER(name) desc'),
-            default => $query->orderBy('created_at', 'desc'),
-        };
-        $query->orderBy('id', $sort === 'name_asc' ? 'asc' : 'desc');
+        // « ciment » passerait après « Vis ». Le stock est celui du comptoir, la colonne
+        // affichée. L'id départage les ex aequo, sans quoi un même produit peut
+        // apparaître sur deux pages.
+        $sortColumns = [
+            'name' => 'LOWER(name)',
+            'price' => 'selling_price',
+            'stock' => 'stock_quantity',
+        ];
+        [$sortField, $direction] = array_pad(explode('_', (string) $sort, 2), 2, null);
+
+        if (isset($sortColumns[$sortField]) && in_array($direction, ['asc', 'desc'], true)) {
+            $query->orderByRaw("{$sortColumns[$sortField]} {$direction}")->orderBy('id', $direction);
+        } else {
+            $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+        }
 
         // Filtrer par boutique active si sélectionnée
         if ($activeShopId) {

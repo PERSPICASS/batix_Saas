@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** La liste des produits se trie par nom, sans tenir compte des majuscules. */
+/** La liste des produits se trie par nom (sans tenir compte des majuscules), prix ou stock. */
 class ProductIndexSortTest extends TestCase
 {
     use RefreshDatabase;
@@ -20,9 +20,18 @@ class ProductIndexSortTest extends TestCase
         $shop->update(['user_id' => $owner->id]);
         $this->subscribeOwnerOf($shop);
 
-        foreach (['Brouette', 'Vis 6mm', 'agrafes', 'ciment 50kg'] as $i => $name) {
+        // Chaque tri donne un ordre différent des autres : un tri ignoré ne passerait pas.
+        $products = [
+            ['Brouette', 25000, 4],
+            ['Vis 6mm', 50, 900],
+            ['agrafes', 1500, 0],
+            ['ciment 50kg', 6000, 120],
+        ];
+
+        foreach ($products as $i => [$name, $price, $stock]) {
             Product::factory()->create([
                 'shop_id' => $shop->id, 'name' => $name, 'is_active' => true, 'created_at' => now()->addMinutes($i),
+                'selling_price' => $price, 'stock_quantity' => $stock,
             ]);
         }
 
@@ -50,5 +59,30 @@ class ProductIndexSortTest extends TestCase
     public function test_by_name_descending(): void
     {
         $this->assertSame(['Vis 6mm', 'ciment 50kg', 'Brouette', 'agrafes'], $this->names('name_desc'));
+    }
+
+    public function test_by_price(): void
+    {
+        $this->assertSame(['Vis 6mm', 'agrafes', 'ciment 50kg', 'Brouette'], $this->names('price_asc'));
+    }
+
+    public function test_by_price_descending(): void
+    {
+        $this->assertSame(['Brouette', 'ciment 50kg', 'agrafes', 'Vis 6mm'], $this->names('price_desc'));
+    }
+
+    public function test_by_stock(): void
+    {
+        $this->assertSame(['agrafes', 'Brouette', 'ciment 50kg', 'Vis 6mm'], $this->names('stock_asc'));
+    }
+
+    public function test_by_stock_descending(): void
+    {
+        $this->assertSame(['Vis 6mm', 'ciment 50kg', 'Brouette', 'agrafes'], $this->names('stock_desc'));
+    }
+
+    public function test_an_unknown_sort_falls_back_to_newest_first(): void
+    {
+        $this->assertSame(['ciment 50kg', 'agrafes', 'Vis 6mm', 'Brouette'], $this->names('id;drop_asc'));
     }
 }
