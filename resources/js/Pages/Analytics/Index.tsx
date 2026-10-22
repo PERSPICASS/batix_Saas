@@ -1,11 +1,13 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import {
     ArrowDownRight,
     ArrowUpRight,
     BarChart3,
     CreditCard,
+    Download,
     Package,
     Percent,
     ShoppingCart,
@@ -156,6 +158,11 @@ export default function Index({
     currencySymbol,
 }: AnalyticsProps) {
     const { t } = useLocale();
+    const route = useRoute();
+    // L'export reprend la période et la comparaison affichées, donc la query string de la
+    // page. usePage().url plutôt que window.location : la page est aussi rendue en SSR.
+    const pageUrl = usePage().url;
+    const exportUrl = route('analytics.export', {}) + (pageUrl.includes('?') ? pageUrl.slice(pageUrl.indexOf('?')) : '');
     const [compareMode, setCompareMode] = useState<'year' | 'month'>(comparisonData.mode);
     const [year1, setYear1] = useState(parseInt(comparisonData.label1));
     const [year2, setYear2] = useState(parseInt(comparisonData.label2));
@@ -229,7 +236,7 @@ export default function Index({
 
             <div className="space-y-6">
                 {/* Sélecteur de période */}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {periods.map((period) => (
                         <button
                             key={period.value}
@@ -243,6 +250,14 @@ export default function Index({
                             {period.label}
                         </button>
                     ))}
+                    {/* Téléchargement de fichier : un lien plein, pas une visite Inertia. */}
+                    <a
+                        href={exportUrl}
+                        className="inline-flex items-center gap-2 rounded-lg border border-amber-300/40 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-300/10 dark:text-amber-300 sm:ml-auto"
+                    >
+                        <Download className="size-4" />
+                        {t.analytics.export}
+                    </a>
                 </div>
                 {/* KPIs */}
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

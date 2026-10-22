@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SalesAnalyticsExport;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Product;
@@ -12,17 +13,62 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AnalyticsController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
-
         // Rediriger les caissiers vers la page de ventes (pas accès aux analytics)
-        if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
+        if ($this->isCashier($request)) {
             return redirect()->route('sales.create', ['code_user' => $request->route('code_user')]);
         }
+
+        $data = $this->analyticsData($request);
+
+        return Inertia::render('Analytics/Index', [
+            ...$data,
+            'shops' => $data['shops']->map(fn($shop) => [
+                'id' => $shop->id,
+                'name' => $shop->name,
+            ]),
+        ]);
+    }
+
+    /**
+     * Les chiffres de la page, à l'identique, dans un classeur Excel : mêmes calculs, même
+     * période, même boutique active, mêmes paramètres de comparaison (repris de l'URL).
+     */
+    public function export(Request $request)
+    {
+        abort_if($this->isCashier($request), 403);
+
+        $data = $this->analyticsData($request);
+        $range = $this->getDateRange($data['currentPeriod']);
+        $activeShop = $data['activeShopId'] ? $data['shops']->find($data['activeShopId']) : null;
+
+        return Excel::download(
+            new SalesAnalyticsExport(
+                $data,
+                $range['start'],
+                $range['end'],
+                $activeShop?->name ?? 'Toutes les boutiques',
+            ),
+            'Statistiques-' . $data['currentPeriod'] . '-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
+    private function isCashier(Request $request): bool
+    {
+        return in_array($request->user()->role, ['cashier', 'caisse', 'employee']);
+    }
+
+    /**
+     * Tout ce que la page affiche, calculé une fois pour la page et pour l'export.
+     */
+    private function analyticsData(Request $request): array
+    {
+        $user = $request->user();
 
         $shops = Shop::where('user_id', $user->id)->get();
         $shopIds = $shops->pluck('id');
@@ -36,27 +82,6 @@ class AnalyticsController extends Controller
         $dateRange = $this->getDateRange($period);
         $previousRange = $this->getPreviousDateRange($period);
 
-        // KPIs principaux
-        $kpis = $this->getKPIs($filterShopIds, $dateRange, $previousRange);
-
-        // Données du graphique des ventes
-        $salesChart = $this->getSalesChart($filterShopIds, $period);
-
-        // Top produits
-        $topProducts = $this->getTopProducts($filterShopIds, $dateRange);
-
-        // Ventes par catégorie
-        $salesByCategory = $this->getSalesByCategory($filterShopIds, $dateRange);
-
-        // Top clients
-        $topCustomers = $this->getTopCustomers($filterShopIds, $dateRange);
-
-        // Méthodes de paiement
-        $paymentMethods = $this->getPaymentMethods($filterShopIds, $dateRange);
-
-        // Performance par boutique
-        $shopPerformance = $this->getShopPerformance($shopIds, $dateRange);
-
         // Paramètres de comparaison
         $compareMode = $request->get('compare_mode', 'year');
         $year1 = (int) $request->get('year1', date('Y'));
@@ -65,11 +90,6 @@ class AnalyticsController extends Controller
         $month2 = (int) $request->get('month2', date('n'));
         $monthYear1 = (int) $request->get('month_year1', date('Y'));
         $monthYear2 = (int) $request->get('month_year2', date('Y') - 1);
-
-        // Données de comparaison
-        $comparisonData = $this->getComparisonData($filterShopIds, $compareMode, compact(
-            'year1', 'year2', 'month1', 'month2', 'monthYear1', 'monthYear2'
-        ));
 
         // Récupérer le symbole de devise
         $currencySymbol = 'FCFA';
@@ -80,23 +100,23 @@ class AnalyticsController extends Controller
             }
         }
 
-        return Inertia::render('Analytics/Index', [
-            'kpis' => $kpis,
-            'salesChart' => $salesChart,
-            'topProducts' => $topProducts,
-            'salesByCategory' => $salesByCategory,
-            'topCustomers' => $topCustomers,
-            'paymentMethods' => $paymentMethods,
-            'shopPerformance' => $shopPerformance,
-            'comparisonData' => $comparisonData,
+        return [
+            'kpis' => $this->getKPIs($filterShopIds, $dateRange, $previousRange),
+            'salesChart' => $this->getSalesChart($filterShopIds, $period),
+            'topProducts' => $this->getTopProducts($filterShopIds, $dateRange),
+            'salesByCategory' => $this->getSalesByCategory($filterShopIds, $dateRange),
+            'topCustomers' => $this->getTopCustomers($filterShopIds, $dateRange),
+            'paymentMethods' => $this->getPaymentMethods($filterShopIds, $dateRange),
+            // Performance par boutique : toutes les boutiques du compte, pour comparer
+            'shopPerformance' => $this->getShopPerformance($shopIds, $dateRange),
+            'comparisonData' => $this->getComparisonData($filterShopIds, $compareMode, compact(
+                'year1', 'year2', 'month1', 'month2', 'monthYear1', 'monthYear2'
+            )),
             'currentPeriod' => $period,
             'currencySymbol' => $currencySymbol,
-            'shops' => $shops->map(fn($shop) => [
-                'id' => $shop->id,
-                'name' => $shop->name,
-            ]),
+            'shops' => $shops,
             'activeShopId' => $activeShopId,
-        ]);
+        ];
     }
     
     private function getDateRange(string $period): array

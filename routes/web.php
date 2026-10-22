@@ -586,6 +586,7 @@ Route::prefix('{code_user}')
     Route::get('/billing/invoices/{subscriptionInvoice}/download', [BillingController::class, 'downloadInvoice'])->name('billing.invoice.download');
 
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index')->middleware('permission:analytics,view');
+    Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export')->middleware('permission:analytics,view');
 
     // AI Chat — throttle pour limiter le coût d'appels API en rafale (usage normal : quelques
     // messages par minute dans une conversation).

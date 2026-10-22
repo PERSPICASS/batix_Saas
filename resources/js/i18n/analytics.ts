@@ -1,6 +1,7 @@
 export const analytics = {
     fr: {
         title: 'Statistiques',
+        export: 'Exporter (Excel)',
         periods: {
             today: "Aujourd'hui",
             week: 'Cette semaine',
@@ -54,6 +55,7 @@ export const analytics = {
     },
     en: {
         title: 'Analytics',
+        export: 'Export (Excel)',
         periods: {
             today: 'Today',
             week: 'This week',
