@@ -63,6 +63,7 @@ interface Filters {
     category_id?: string;
     shop_id?: string;
     status?: string;
+    sort?: string;
 }
 
 interface Props extends PageProps {
@@ -82,6 +83,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     const [search, setSearch] = useState(filters.search || '');
     const [categoryId, setCategoryId] = useState(filters.category_id || '');
     const [status, setStatus] = useState(filters.status || '');
+    const [sort, setSort] = useState(filters.sort || '');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
     const [removeModal, setRemoveModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
@@ -152,10 +154,11 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                 search: search || undefined,
                 category_id: categoryId || undefined,
                 status: status || undefined,
+                sort: sort || undefined,
             }, { preserveState: true, preserveScroll: true, replace: true });
         }, 400);
         return () => clearTimeout(timer);
-    }, [search, categoryId, status]);
+    }, [search, categoryId, status, sort]);
 
     const columns = [
         {
@@ -407,6 +410,17 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             <option value="low_stock">{t.products.filters.lowStock}</option>
                         </select>
 
+                        <select
+                            value={sort}
+                            onChange={(e) => setSort(e.target.value)}
+                            aria-label={t.products.filters.sortLabel}
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-slate-800 dark:text-white"
+                        >
+                            <option value="">{t.products.filters.sortNewest}</option>
+                            <option value="name_asc">{t.products.filters.sortNameAsc}</option>
+                            <option value="name_desc">{t.products.filters.sortNameDesc}</option>
+                        </select>
+
                         {hasActiveFilters && (
                             <button
                                 type="button"
@@ -454,7 +468,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         <div className="flex gap-2">
                             {products.current_page > 1 && (
                                 <Link
-                                    href={route('products.index', { page: products.current_page - 1, search: search || undefined, category_id: categoryId || undefined, status: status || undefined })}
+                                    href={route('products.index', { page: products.current_page - 1, search: search || undefined, category_id: categoryId || undefined, status: status || undefined, sort: sort || undefined })}
                                     className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-100 dark:border-white/15 dark:hover:bg-white/10"
                                 >
                                     {t.common.table.previous}
@@ -462,7 +476,7 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             )}
                             {products.current_page < products.last_page && (
                                 <Link
-                                    href={route('products.index', { page: products.current_page + 1, search: search || undefined, category_id: categoryId || undefined, status: status || undefined })}
+                                    href={route('products.index', { page: products.current_page + 1, search: search || undefined, category_id: categoryId || undefined, status: status || undefined, sort: sort || undefined })}
                                     className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-100 dark:border-white/15 dark:hover:bg-white/10"
                                 >
                                     {t.common.table.next}

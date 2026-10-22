@@ -33,13 +33,23 @@ class ProductController extends Controller
         $categoryId = $request->input('category_id');
         $search = $request->input('search');
         $status = $request->input('status');
+        $sort = $request->input('sort');
         
         // withSum plutôt qu'un chargement des lignes de dépôt : la liste n'a besoin que
         // du total détenu, et charger la relation ferait 20 requêtes de plus par page.
         $query = Product::with(['shop', 'category', 'subcategory'])
             ->withSum('depotProducts as depot_stock', 'quantity')
-            ->whereNull('parent_id') // Exclure les déclinaisons
-            ->orderBy('created_at', 'desc'); // Du plus récent au plus ancien
+            ->whereNull('parent_id'); // Exclure les déclinaisons
+
+        // Par défaut du plus récent au plus ancien. LOWER() : selon la collation Postgres,
+        // « ciment » passerait après « Vis ». L'id départage les ex aequo, sans quoi un
+        // même produit peut apparaître sur deux pages.
+        match ($sort) {
+            'name_asc' => $query->orderByRaw('LOWER(name) asc'),
+            'name_desc' => $query->orderByRaw('LOWER(name) desc'),
+            default => $query->orderBy('created_at', 'desc'),
+        };
+        $query->orderBy('id', $sort === 'name_asc' ? 'asc' : 'desc');
 
         // Filtrer par boutique active si sélectionnée
         if ($activeShopId) {
@@ -103,7 +113,7 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => $categories,
             'shops' => $shops,
-            'filters' => $request->only(['shop_id', 'category_id', 'search', 'status']),
+            'filters' => $request->only(['shop_id', 'category_id', 'search', 'status', 'sort']),
             'canCreateProduct' => Auth::user()->canCreateProduct($activeShopId),
             'remainingProducts' => Auth::user()->remainingProductSlots($activeShopId),
         ]);
