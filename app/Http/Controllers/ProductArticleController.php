@@ -8,12 +8,31 @@ use Illuminate\Http\Request;
 
 class ProductArticleController extends Controller
 {
+    /**
+     * La boutique active, pas `users.shop_id` : celle-ci reste la boutique d'origine du
+     * propriétaire, et toute action sur un article de sa 2e boutique répondait 404.
+     */
+    private function activeShopId(): int
+    {
+        $shop = current_shop();
+        abort_unless($shop, 404);
+
+        return $shop->id;
+    }
+
     public function listByProduct(string $code_user, int $productId)
     {
         $product = Product::findOrFail($productId);
+        $shopId = $this->activeShopId();
+
+        if ($product->shop_id !== $shopId) {
+            return response()->json([
+                'message' => 'Produit non trouvé',
+            ], 404);
+        }
 
         $articles = $product->articles()
-            ->where('shop_id', auth()->user()->shop_id)
+            ->where('shop_id', $shopId)
             ->orderByDesc('created_at')
             ->get();
 
@@ -30,7 +49,7 @@ class ProductArticleController extends Controller
         ]);
 
         $product = Product::findOrFail($validated['product_id']);
-        $shopId = auth()->user()->shop_id;
+        $shopId = $this->activeShopId();
 
         // Vérifier que le produit appartient à la shop de l'utilisateur
         if ($product->shop_id !== $shopId) {
@@ -58,7 +77,7 @@ class ProductArticleController extends Controller
             'status' => 'required|in:available,sold,archived',
         ]);
 
-        $shopId = auth()->user()->shop_id;
+        $shopId = $this->activeShopId();
 
         if ($productArticle->shop_id !== $shopId) {
             return response()->json([
@@ -76,7 +95,7 @@ class ProductArticleController extends Controller
 
     public function destroy(string $code_user, ProductArticle $productArticle)
     {
-        $shopId = auth()->user()->shop_id;
+        $shopId = $this->activeShopId();
 
         if ($productArticle->shop_id !== $shopId) {
             return response()->json([
@@ -94,7 +113,7 @@ class ProductArticleController extends Controller
     public function getAvailableByProduct(string $code_user, int $productId)
     {
         $product = Product::findOrFail($productId);
-        $shopId = auth()->user()->shop_id;
+        $shopId = $this->activeShopId();
 
         if ($product->shop_id !== $shopId) {
             return response()->json([
