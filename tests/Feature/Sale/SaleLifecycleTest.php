@@ -115,6 +115,28 @@ class SaleLifecycleTest extends TestCase
         $this->assertEquals(9972, (float) $sale->remaining_amount);
     }
 
+    /**
+     * Le recalcul tourne après chaque ligne : borner la remise au sous-total de la
+     * seule première ligne, puis l'enregistrer, la ramenait de 8 000 à 5 000.
+     */
+    public function test_a_discount_larger_than_the_first_line_survives_the_next_lines(): void
+    {
+        $taxed = $this->product(['tax_rate' => 18]);
+        $exempt = $this->product(['tax_rate' => 0]);
+
+        $this->sell([
+            ['product_id' => $taxed->id, 'quantity' => 1, 'unit_price' => 5000],
+            ['product_id' => $exempt->id, 'quantity' => 1, 'unit_price' => 5000],
+        ], ['discount_amount' => 8000, 'amount_paid' => 0]);
+
+        $sale = $this->lastSale();
+        // Base 10 000 réduite de 80 % → 18 % de 5 000 = 900 → 180 ; total 2 000 + 180.
+        $this->assertEquals(8000, (float) $sale->discount_amount);
+        $this->assertEquals(180, (float) $sale->tax_amount);
+        $this->assertEquals(2180, (float) $sale->total);
+        $this->assertEquals(2180, (float) $sale->remaining_amount);
+    }
+
     public function test_a_discount_larger_than_the_sale_is_capped(): void
     {
         $cement = $this->product();

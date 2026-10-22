@@ -117,8 +117,13 @@ class Sale extends Model
         // service, et retranchait encore la remise du TTC : toute vente remisée sur
         // un produit taxé repartait avec une TVA et un total surévalués, une monnaie
         // rendue négative, et un reste dû calculé sur l'ancien total.
+        //
+        // La remise bornée sert au calcul mais n'est jamais réécrite : ce recalcul
+        // tourne après CHAQUE ligne, donc sur un sous-total encore partiel. L'écrire
+        // ramenait une remise de 80 sur deux lignes de 50 à 50 dès la première ligne,
+        // définitivement. La remise stockée est celle demandée, déjà bornée au
+        // sous-total complet par SaleCreationService (comme Invoice::calculateTotals).
         $discount = GlobalDiscount::effective((float) $this->subtotal, (float) $this->discount_amount);
-        $this->discount_amount = $discount;
         $this->tax_amount = round($this->items->sum('tax_amount') * GlobalDiscount::ratio((float) $this->subtotal, $discount), 2);
         $this->total = round($this->subtotal - $discount + $this->tax_amount, 2);
         $this->change_amount = max(0, $this->amount_paid - $this->total);
