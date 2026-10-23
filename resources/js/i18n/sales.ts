@@ -15,6 +15,7 @@ export const sales = {
             paymentMethod: 'Mode de paiement',
             dateFrom: 'Du',
             dateTo: 'Au',
+            today: "Aujourd'hui",
             creditOnly: 'Crédit uniquement',
             creditOnlyLabel: 'Afficher uniquement les ventes à crédit non soldées',
             applyFilters: 'Appliquer les filtres',
@@ -49,6 +50,8 @@ export const sales = {
         },
         actions: {
             new: 'Nouvelle vente',
+            export: 'Exporter (Excel)',
+            exportNeedsPeriod: "Choisissez une date de début (Du) dans les filtres, ou cliquez sur Aujourd'hui, pour exporter",
             view: 'Voir',
             cancel: 'Annuler',
             reactivate: 'Réactiver',
@@ -115,6 +118,7 @@ export const sales = {
             paymentMethod: 'Payment method',
             dateFrom: 'From',
             dateTo: 'To',
+            today: 'Today',
             creditOnly: 'Credit only',
             creditOnlyLabel: 'Show only unsettled credit sales',
             applyFilters: 'Apply filters',
@@ -149,6 +153,8 @@ export const sales = {
         },
         actions: {
             new: 'New sale',
+            export: 'Export (Excel)',
+            exportNeedsPeriod: 'Pick a start date (From) in the filters, or click Today, to export',
             view: 'View',
             cancel: 'Cancel',
             reactivate: 'Reactivate',

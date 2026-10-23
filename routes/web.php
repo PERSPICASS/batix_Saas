@@ -477,6 +477,8 @@ Route::prefix('{code_user}')
     // BadMethodCallException, donc un 500 au lieu d'un 404, et la permission
     // `sales,edit` qui leur était attachée laissait croire qu'une édition existait.
     // L'exclusion rend l'immuabilité explicite plutôt qu'accidentelle.
+    // Avant la ressource : sinon `ventes/export` serait pris pour `ventes/{sale}`.
+    Route::get('ventes/export', [SaleController::class, 'export'])->name('sales.export')->middleware('permission:sales,view');
     Route::resource('ventes', SaleController::class)->names('sales')->parameters(['ventes' => 'sale'])
         ->except(['edit', 'update'])
         ->middlewareFor(['index', 'show'], 'permission:sales,view')

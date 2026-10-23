@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import Table, { TableActionButton, TableActions, TableBadge } from '@/Components/Table';
 import { Head, Link, router } from '@inertiajs/react';
-import { Plus, Eye, Trash2, Search, X, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Plus, Eye, Trash2, Search, X, SlidersHorizontal, RotateCcw, Download, CalendarDays } from 'lucide-react';
 import Currency from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useEffect, useRef } from 'react';
@@ -72,18 +72,33 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
     const canRestoreSale = auth.user?.role === 'super_admin'
         || auth.user?.permissions?.find(p => p.module === 'sales_restore')?.can_view === true;
     const isAdmin = auth.user?.role === 'super_admin' || auth.user?.role === 'manager';
+    const canExport = auth.user?.role === 'super_admin' || auth.user?.role === 'admin';
+    // L'export reprend les filtres appliqués (ceux du serveur), pas ceux en cours de saisie.
+    // « Au » est facultatif : sans lui, l'export va jusqu'à aujourd'hui.
+    const hasExportPeriod = Boolean(filters.date_from);
+    const exportUrl = route('sales.export', Object.fromEntries(
+        Object.entries(filters).filter(([, v]) => v !== undefined && v !== null && v !== ''),
+    ));
 
     const activeFilterCount = [status, paymentMethod, dateFrom, dateTo, creditOnly ? '1' : ''].filter(Boolean).length;
 
-    const applyFilters = () => {
+    const applyFilters = (dates: { from: string; to: string } = { from: dateFrom, to: dateTo }) => {
         router.get(route('sales.index'), {
             ...(search        ? { search }          : {}),
             ...(status        ? { status }          : {}),
             ...(paymentMethod ? { payment_method: paymentMethod } : {}),
-            ...(dateFrom      ? { date_from: dateFrom } : {}),
-            ...(dateTo        ? { date_to: dateTo }   : {}),
+            ...(dates.from    ? { date_from: dates.from } : {}),
+            ...(dates.to      ? { date_to: dates.to }   : {}),
             ...(creditOnly    ? { credit_only: '1' }  : {}),
         }, { preserveState: true, replace: true });
+    };
+
+    // Date du jour de l'appareil (en-CA = AAAA-MM-JJ), calculée au clic : pas en SSR.
+    const showToday = () => {
+        const today = new Date().toLocaleDateString('en-CA');
+        setDateFrom(today);
+        setDateTo(today);
+        applyFilters({ from: today, to: today });
     };
 
     const resetFilters = () => {
@@ -223,6 +238,33 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
                             </button>
                         )}
 
+                        <button
+                            type="button"
+                            onClick={showToday}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-slate-600 hover:bg-gray-100 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/5"
+                        >
+                            <CalendarDays className="size-4" /> {t.sales.filters.today}
+                        </button>
+
+                        {canExport && (hasExportPeriod ? (
+                            // Téléchargement de fichier : un lien plein, pas une visite Inertia.
+                            <a
+                                href={exportUrl}
+                                className="inline-flex items-center gap-2 rounded-lg border border-amber-300/40 px-3 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-300/10 dark:text-amber-300"
+                            >
+                                <Download className="size-4" /> {t.sales.actions.export}
+                            </a>
+                        ) : (
+                            <button
+                                type="button"
+                                disabled
+                                title={t.sales.actions.exportNeedsPeriod}
+                                className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-slate-400 dark:border-white/15 dark:text-slate-500"
+                            >
+                                <Download className="size-4" /> {t.sales.actions.export}
+                            </button>
+                        ))}
+
                         <Link
                             href={route('sales.create')}
                             className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
@@ -303,7 +345,7 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
 
                         <div className="mt-4 flex justify-end">
                             <button
-                                onClick={applyFilters}
+                                onClick={() => applyFilters()}
                                 className="rounded-lg bg-amber-300 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200"
                             >
                                 {t.sales.filters.applyFilters}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SalesLinesExport;
 use App\Models\Customer;
 use App\Models\Preorder;
 use App\Models\Product;
@@ -13,15 +14,95 @@ use App\Services\SaleCreationService;
 use App\Services\DocumentLink;
 use App\Services\DocumentPdf;
 use App\Services\StockMovementService;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SaleController extends Controller
 {
     public function index(Request $request): Response
+    {
+        $user = Auth::user();
+        $activeShopId = get_active_shop_id();
+        $shops   = $user->accessibleShops();
+        $shopIds = $shops->pluck('id');
+
+        $query = $this->filteredSalesQuery($request)
+            ->with(['shop', 'user', 'customer'])
+            ->orderBy('sale_date', 'desc');
+
+        $sales = $query->paginate(20)->withQueryString();
+
+        // Calculer les statistiques en fonction de la boutique active
+        $statsQuery = Sale::where('status', 'completed')
+            ->whereIn('shop_id', $shopIds);
+
+        // Requête séparée pour les créances (pending avec remaining_amount > 0)
+        $creditQuery = Sale::whereIn('status', ['pending', 'completed'])
+            ->where('remaining_amount', '>', 0)
+            ->whereIn('shop_id', $shopIds);
+
+        // Les caissiers ne voient que leurs propres stats
+        if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
+            $statsQuery->where('user_id', $user->id);
+            $creditQuery->where('user_id', $user->id);
+        }
+
+        if ($activeShopId) {
+            $statsQuery->where('shop_id', $activeShopId);
+            $creditQuery->where('shop_id', $activeShopId);
+        }
+
+        $stats = [
+            'total_revenue'          => $statsQuery->sum('total'),
+            'total_sales'            => $statsQuery->count(),
+            'total_credit_remaining' => $creditQuery->sum('remaining_amount'),
+            'total_credit_sales'     => $creditQuery->count(),
+        ];
+
+        return Inertia::render('Sales/Index', [
+            'sales'   => $sales,
+            'shops'   => $shops,
+            'filters' => $request->only(['search', 'status', 'shop_id', 'payment_method', 'date_from', 'date_to', 'credit_only']),
+            'stats'   => $stats,
+        ]);
+    }
+
+    /**
+     * Les lignes des ventes filtrées, une par article vendu, en Excel. Réservé aux
+     * super_admin et admin ; « Du » est obligatoire, « Au » facultatif (sans lui, comme la
+     * liste, pas de borne de fin : le fichier va jusqu'à aujourd'hui). Mêmes filtres et
+     * même périmètre de boutiques que la liste : le fichier ne peut pas contenir une vente
+     * que la page ne montrerait pas.
+     */
+    public function export(Request $request): BinaryFileResponse
+    {
+        abort_unless(in_array(Auth::user()->role, ['super_admin', 'admin'], true), 403);
+
+        $validated = $request->validate([
+            'date_from' => ['required', 'date'],
+            'date_to'   => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
+
+        $saleIds = $this->filteredSalesQuery($request)->select('id');
+
+        $from = Carbon::parse($validated['date_from'])->format('Y-m-d');
+        $to   = Carbon::parse($validated['date_to'] ?? 'today')->format('Y-m-d');
+
+        return Excel::download(new SalesLinesExport($saleIds), "ventes_{$from}_{$to}.xlsx");
+    }
+
+    /**
+     * Les ventes que la liste montre : boutiques accessibles, ses propres ventes pour un
+     * caissier, puis les filtres de la page. Partagé par la liste et l'export.
+     */
+    private function filteredSalesQuery(Request $request): Builder
     {
         $user = Auth::user();
         $activeShopId = get_active_shop_id();
@@ -33,12 +114,7 @@ class SaleController extends Controller
         $dateTo        = $request->input('date_to');
         $creditOnly    = $request->boolean('credit_only');
 
-        $shops   = $user->accessibleShops();
-        $shopIds = $shops->pluck('id');
-
-        $query = Sale::with(['shop', 'user', 'customer'])
-            ->whereIn('shop_id', $shopIds)
-            ->orderBy('sale_date', 'desc');
+        $query = Sale::query()->whereIn('shop_id', $user->accessibleShops()->pluck('id'));
 
         // Les caissiers ne voient que leurs propres ventes
         if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
@@ -82,41 +158,7 @@ class SaleController extends Controller
             $query->where('remaining_amount', '>', 0);
         }
 
-        $sales = $query->paginate(20)->withQueryString();
-
-        // Calculer les statistiques en fonction de la boutique active
-        $statsQuery = Sale::where('status', 'completed')
-            ->whereIn('shop_id', $shopIds);
-
-        // Requête séparée pour les créances (pending avec remaining_amount > 0)
-        $creditQuery = Sale::whereIn('status', ['pending', 'completed'])
-            ->where('remaining_amount', '>', 0)
-            ->whereIn('shop_id', $shopIds);
-
-        // Les caissiers ne voient que leurs propres stats
-        if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
-            $statsQuery->where('user_id', $user->id);
-            $creditQuery->where('user_id', $user->id);
-        }
-
-        if ($activeShopId) {
-            $statsQuery->where('shop_id', $activeShopId);
-            $creditQuery->where('shop_id', $activeShopId);
-        }
-
-        $stats = [
-            'total_revenue'          => $statsQuery->sum('total'),
-            'total_sales'            => $statsQuery->count(),
-            'total_credit_remaining' => $creditQuery->sum('remaining_amount'),
-            'total_credit_sales'     => $creditQuery->count(),
-        ];
-
-        return Inertia::render('Sales/Index', [
-            'sales'   => $sales,
-            'shops'   => $shops,
-            'filters' => $request->only(['search', 'status', 'shop_id', 'payment_method', 'date_from', 'date_to', 'credit_only']),
-            'stats'   => $stats,
-        ]);
+        return $query;
     }
 
     public function create(Request $request): Response
