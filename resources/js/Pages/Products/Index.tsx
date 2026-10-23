@@ -418,8 +418,8 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             aria-label={t.products.filters.sortLabel}
                             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-amber-300/50 focus:outline-none focus:ring-1 focus:ring-amber-300/50 dark:border-white/15 dark:bg-slate-800 dark:text-white"
                         >
-                            <option value="">{t.products.filters.sortNewest}</option>
-                            <option value="name_asc">{t.products.filters.sortNameAsc}</option>
+                            <option value="">{t.products.filters.sortNameAsc}</option>
+                            <option value="newest">{t.products.filters.sortNewest}</option>
                             <option value="name_desc">{t.products.filters.sortNameDesc}</option>
                             <option value="price_asc">{t.products.filters.sortPriceAsc}</option>
                             <option value="price_desc">{t.products.filters.sortPriceDesc}</option>

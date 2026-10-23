@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** La liste des produits se trie par nom (sans tenir compte des majuscules), prix ou stock. */
+/** La liste des produits se trie par nom (par défaut, sans tenir compte des majuscules), date, prix ou stock. */
 class ProductIndexSortTest extends TestCase
 {
     use RefreshDatabase;
@@ -46,9 +46,14 @@ class ProductIndexSortTest extends TestCase
         return $names;
     }
 
-    public function test_newest_first_by_default(): void
+    public function test_by_name_by_default(): void
     {
-        $this->assertSame(['ciment 50kg', 'agrafes', 'Vis 6mm', 'Brouette'], $this->names());
+        $this->assertSame(['agrafes', 'Brouette', 'ciment 50kg', 'Vis 6mm'], $this->names());
+    }
+
+    public function test_newest_first(): void
+    {
+        $this->assertSame(['ciment 50kg', 'agrafes', 'Vis 6mm', 'Brouette'], $this->names('newest'));
     }
 
     public function test_by_name_ascending(): void
@@ -81,9 +86,9 @@ class ProductIndexSortTest extends TestCase
         $this->assertSame(['Vis 6mm', 'ciment 50kg', 'Brouette', 'agrafes'], $this->names('stock_desc'));
     }
 
-    public function test_an_unknown_sort_falls_back_to_newest_first(): void
+    public function test_an_unknown_sort_falls_back_to_name(): void
     {
-        $this->assertSame(['ciment 50kg', 'agrafes', 'Vis 6mm', 'Brouette'], $this->names('id;drop_asc'));
+        $this->assertSame(['agrafes', 'Brouette', 'ciment 50kg', 'Vis 6mm'], $this->names('id;drop_asc'));
     }
 
     /**

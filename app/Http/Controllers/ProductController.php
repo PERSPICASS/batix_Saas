@@ -41,7 +41,8 @@ class ProductController extends Controller
             ->withSum('depotProducts as depot_stock', 'quantity')
             ->whereNull('parent_id'); // Exclure les déclinaisons
 
-        // Par défaut du plus récent au plus ancien. LOWER() : selon la collation Postgres,
+        // Par défaut par nom (A → Z) ; « newest » garde l'ancien ordre, du plus récent au
+        // plus ancien. LOWER() : selon la collation Postgres,
         // « ciment » passerait après « Vis ». Le stock est celui du comptoir, la colonne
         // affichée. L'id départage les ex aequo, sans quoi un même produit peut
         // apparaître sur deux pages.
@@ -54,8 +55,10 @@ class ProductController extends Controller
 
         if (isset($sortColumns[$sortField]) && in_array($direction, ['asc', 'desc'], true)) {
             $query->orderByRaw("{$sortColumns[$sortField]} {$direction}")->orderBy('id', $direction);
-        } else {
+        } elseif ($sort === 'newest') {
             $query->orderBy('created_at', 'desc')->orderBy('id', 'desc');
+        } else {
+            $query->orderByRaw('LOWER(name) asc')->orderBy('id', 'asc');
         }
 
         // Filtrer par boutique active si sélectionnée
