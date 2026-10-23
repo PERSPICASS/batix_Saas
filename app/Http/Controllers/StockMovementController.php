@@ -132,10 +132,25 @@ class StockMovementController extends Controller
             abort(403);
         }
 
-        DB::transaction(function () use ($stockMovement) {
+        $error = DB::transaction(function () use ($stockMovement) {
+            // Annuler une entrée retire la quantité du stock : si elle a été vendue depuis,
+            // le stock passerait en négatif et la contrainte de la base levait un 500.
+            $product = Product::whereKey($stockMovement->product_id)->lockForUpdate()->first();
+
+            if ($product && $stockMovement->quantity > 0 && $product->stock_quantity < $stockMovement->quantity) {
+                return "Impossible de supprimer ce mouvement : il retirerait {$stockMovement->quantity} unité(s) de « {$product->name} », "
+                    . "dont le stock n'est plus que de {$product->stock_quantity}. Faites plutôt un ajustement.";
+            }
+
             StockMovementService::reverseMovement($stockMovement);
             $stockMovement->delete();
+
+            return null;
         });
+
+        if ($error) {
+            return back()->with('error', $error);
+        }
 
         return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement supprimé et stock ajusté.');
     }
