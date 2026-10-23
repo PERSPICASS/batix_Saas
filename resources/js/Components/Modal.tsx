@@ -64,7 +64,7 @@ export default function Modal({
                         s'affichait en blanc au milieu d'une interface sombre — ou, pire,
                         avec un texte clair devenu illisible. */}
                     <DialogPanel
-                        className={`mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:bg-slate-900 sm:mx-auto sm:w-full ${maxWidthClass}`}
+                        className={`mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all dark:bg-slate-900 w-full sm:mx-auto ${maxWidthClass}`}
                     >
                         {children}
                     </DialogPanel>
