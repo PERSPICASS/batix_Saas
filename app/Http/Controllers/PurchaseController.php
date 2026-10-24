@@ -207,7 +207,8 @@ class PurchaseController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erreur lors de la création: ' . $e->getMessage());
+            report($e);
+            return back()->with('error', "Erreur lors de la création du bon de commande. Veuillez réessayer.");
         }
     }
 
@@ -362,7 +363,8 @@ class PurchaseController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erreur lors de la modification: ' . $e->getMessage());
+            report($e);
+            return back()->with('error', "Erreur lors de la modification du bon de commande. Veuillez réessayer.");
         }
     }
 
@@ -445,7 +447,8 @@ class PurchaseController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Erreur lors de la réception: ' . $e->getMessage());
+            report($e);
+            return back()->with('error', "Erreur lors de l'enregistrement de la réception. Veuillez réessayer.");
         }
     }
 
