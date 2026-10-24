@@ -86,26 +86,36 @@
 
 <div class="rule"></div>
 
+{{-- Ce que le client garde : les lignes s'additionnent au sous-total (qui est celui d'après
+     les retours). Les retours sont listés à part, plutôt que mêlés à chaque ligne. --}}
 <table>
     @foreach ($sale->items as $item)
-        <tr>
-            <td colspan="2">{{ $item->product_name }}</td>
-        </tr>
-        <tr>
-            <td class="muted">
-                {{ $item->quantity }} × {{ number_format($item->unit_price, 2, ',', ' ') }}
-            </td>
-            <td class="right">{{ number_format($item->total, 2, ',', ' ') }}</td>
-        </tr>
-        {{-- Les totaux du bas sont ceux d'après les retours : la ligne dit ce qui en a été retiré. --}}
-        @if ($item->returns->isNotEmpty())
+        @php($kept = $item->quantity - $item->returns->sum('quantity_returned'))
+        @if ($kept > 0)
             <tr>
-                <td class="muted">{{ __('documents.returned') }} : -{{ $item->returns->sum('quantity_returned') }}</td>
-                <td class="right">-{{ number_format($item->returns->sum('refund_amount'), 2, ',', ' ') }}</td>
+                <td colspan="2">{{ $item->product_name }}</td>
+            </tr>
+            <tr>
+                <td class="muted">
+                    {{ $kept }} × {{ number_format($item->unit_price, 2, ',', ' ') }}
+                </td>
+                <td class="right">{{ number_format($item->unit_price * $kept, 2, ',', ' ') }}</td>
             </tr>
         @endif
     @endforeach
 </table>
+
+@if ($sale->items->contains(fn ($item) => $item->returns->isNotEmpty()))
+    <div class="muted" style="margin-top: 4pt; font-weight: bold;">{{ __('documents.returns') }}</div>
+    <table>
+        @foreach ($sale->items->filter(fn ($item) => $item->returns->isNotEmpty()) as $item)
+            <tr>
+                <td class="muted">{{ $item->product_name }} × {{ $item->returns->sum('quantity_returned') }}</td>
+                <td class="right">-{{ number_format($item->returns->sum('refund_amount'), 2, ',', ' ') }}</td>
+            </tr>
+        @endforeach
+    </table>
+@endif
 
 <div class="rule"></div>
 
@@ -125,13 +135,6 @@
             <td>{{ __('documents.discount') }}</td>
             <td class="right">-{{ number_format($sale->discount_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
-        {{-- Un retour réduit la remise au prorata : on rappelle celle accordée au comptoir. --}}
-        @if ($sale->original_discount_amount !== null && (float) $sale->original_discount_amount != (float) $sale->discount_amount)
-            <tr>
-                <td class="muted">{{ __('documents.original_discount') }}</td>
-                <td class="right muted">-{{ number_format($sale->original_discount_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
-            </tr>
-        @endif
     @endif
     <tr class="grand">
         <td>{{ __('documents.total') }}</td>

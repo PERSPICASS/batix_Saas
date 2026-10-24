@@ -42,8 +42,7 @@ return [
 
     'amount_paid' => 'Payé',
     'change' => 'Rendu',
-    'returned' => 'Retour',
-    'original_discount' => 'Remise initiale',
+    'returns' => 'Retours',
     'balance_due' => 'Reste dû',
 
     'notes' => 'Notes',

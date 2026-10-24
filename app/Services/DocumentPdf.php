@@ -105,12 +105,10 @@ class DocumentPdf
         $height = self::RECEIPT_BASE_HEIGHT
             + $sale->items->count() * self::RECEIPT_LINE_HEIGHT;
 
-        // Une ligne retournée ajoute sa mention « Retour ».
-        $height += $sale->items->filter(fn ($item) => $item->returns->isNotEmpty())->count() * 12;
-
-        // Et la remise initiale, rappelée quand des retours l'ont réduite.
-        if ($sale->original_discount_amount !== null && (float) $sale->original_discount_amount != (float) $sale->discount_amount) {
-            $height += 12;
+        // Le bloc « Retours » : un titre et une ligne par article retourné.
+        $returned = $sale->items->filter(fn ($item) => $item->returns->isNotEmpty())->count();
+        if ($returned > 0) {
+            $height += 16 + $returned * 12;
         }
 
         // Une vente à crédit ajoute le reste dû et son échéance.

@@ -41,8 +41,7 @@ return [
 
     'amount_paid' => 'Paid',
     'change' => 'Change',
-    'returned' => 'Returned',
-    'original_discount' => 'Original discount',
+    'returns' => 'Returns',
     'balance_due' => 'Balance due',
 
     'notes' => 'Notes',

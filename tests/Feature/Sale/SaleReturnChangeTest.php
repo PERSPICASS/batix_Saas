@@ -146,8 +146,10 @@ class SaleReturnChangeTest extends TestCase
 
         $html = view('pdf.ticket', ['sale' => $sale, 'logo' => null, 'shop' => $sale->shop, 'currencySymbol' => 'F'])->render();
 
-        // The 4 × 2 000 line stays, followed by what was taken off it…
-        $this->assertStringContainsString('Retour : -1', $html);
+        // The line shows what the customer keeps (3 of 4), the return is listed apart…
+        $this->assertStringContainsString('3 × 2 000,00', $html);
+        $this->assertStringNotContainsString('4 × 2 000,00', $html);
+        $this->assertStringContainsString('Retours', $html);
         $this->assertStringContainsString('-2 000,00', $html);
         // …so the lines add up to the totals, and the change follows.
         $this->assertStringContainsString('6 000,00 F', $html);
@@ -179,8 +181,10 @@ class SaleReturnChangeTest extends TestCase
         $this->assertEquals(1000, (float) $sale->original_discount_amount);
 
         $html = view('pdf.ticket', ['sale' => $sale, 'logo' => null, 'shop' => $sale->shop, 'currencySymbol' => 'F'])->render();
-        $this->assertStringContainsString('Remise initiale', $html);
-        $this->assertStringContainsString('-1 000,00 F', $html);
+        // The ticket stays light: the current discount only, the original one is for the screen.
+        $this->assertStringContainsString('-600,00 F', $html);
+        $this->assertStringNotContainsString('-1 000,00 F', $html);
+        $this->assertStringContainsString('3 × 2 000,00', $html);
     }
 
     /** Same figures as saleReturn.test.ts: the screen announces what the server refunds. */

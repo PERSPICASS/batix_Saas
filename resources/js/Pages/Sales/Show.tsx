@@ -104,6 +104,8 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
     const route = useRoute();
     const [displayedSale, setDisplayedSale] = useState<Sale>(sale);
     const { formatCurrency } = useShopSettings();
+    const returnedQuantity = (item: SaleItem) => (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
+    const keptQuantity = (item: SaleItem) => item.quantity - returnedQuantity(item);
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelling, setCancelling] = useState(false);
@@ -408,7 +410,9 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {displayedSale.items.map((item) => (
+                                {/* Ce que le client garde : les lignes s'additionnent au sous-total, les
+                                    retours sont listés à part plutôt que mêlés à chaque ligne. */}
+                                {displayedSale.items.filter((item) => keptQuantity(item) > 0).map((item) => (
                                     <tr key={item.id} className="border-b border-white/5">
                                         <td className="py-2">
                                             {item.product?.parent ? (
@@ -421,40 +425,32 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                                 <span className="text-slate-900 dark:text-white">{item.product_name}</span>
                                             )}
                                         </td>
-                                        <td className="py-2 text-center text-slate-300">
-                                            {(() => {
-                                                const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
-                                                if (alreadyReturned > 0) {
-                                                    return `${item.quantity} (-${alreadyReturned})`;
-                                                }
-                                                return item.quantity;
-                                            })()}
-                                        </td>
+                                        <td className="py-2 text-center text-slate-300">{keptQuantity(item)}</td>
                                         <td className="py-2 text-right text-slate-300">
                                             <Currency amount={parseFloat(item.unit_price)} />
                                         </td>
                                         <td className="py-2 text-right font-semibold text-white">
-                                            {(() => {
-                                                const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
-                                                if (alreadyReturned > 0) {
-                                                    // Le montant réellement remboursé (TVA et remise comprises), pas prix × quantité.
-                                                    const refundedAmount = (item.returns || []).reduce((sum, ret) => sum + parseFloat(ret.refund_amount), 0);
-                                                    return (
-                                                        <div className="flex flex-col items-end">
-                                                            <Currency amount={parseFloat(item.total)} />
-                                                            <span className="text-xs text-red-400">
-                                                                -<Currency amount={refundedAmount} />
-                                                            </span>
-                                                        </div>
-                                                    );
-                                                }
-                                                return <Currency amount={parseFloat(item.total)} />;
-                                            })()}
+                                            <Currency amount={parseFloat(item.unit_price) * keptQuantity(item)} />
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+
+                        {displayedSale.items.some((item) => returnedQuantity(item) > 0) && (
+                            <div className="mt-3 text-sm">
+                                <p className="mb-1 font-semibold text-slate-500 dark:text-slate-400">Retours</p>
+                                {displayedSale.items.filter((item) => returnedQuantity(item) > 0).map((item) => (
+                                    <div key={item.id} className="flex justify-between gap-3 text-slate-600 dark:text-slate-300">
+                                        <span>{item.product_name} × {returnedQuantity(item)}</span>
+                                        <span className="whitespace-nowrap text-red-400">
+                                            {/* Le montant réellement remboursé (TVA et remise comprises). */}
+                                            -<Currency amount={(item.returns || []).reduce((sum, ret) => sum + parseFloat(ret.refund_amount), 0)} />
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Totaux */}
@@ -476,9 +472,11 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                 <span className="text-slate-500 dark:text-slate-400">Remise:</span>
                                 <span className="text-right text-red-400">
                                     -<Currency amount={parseFloat(displayedSale.discount_amount)} />
-                                    {displayedSale.original_discount_amount !== null
+                                    {/* `!= null` : le champ manque tant que la migration n'est pas passée (-NaN).
+                                        À l'écran seulement : sur le ticket du client, c'était trop chargé. */}
+                                    {displayedSale.original_discount_amount != null
                                         && parseFloat(displayedSale.original_discount_amount) !== parseFloat(displayedSale.discount_amount) && (
-                                        <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                        <span className="block text-xs text-slate-500 dark:text-slate-400 print:hidden">
                                             initiale : -<Currency amount={parseFloat(displayedSale.original_discount_amount)} />, réduite par les retours
                                         </span>
                                     )}
