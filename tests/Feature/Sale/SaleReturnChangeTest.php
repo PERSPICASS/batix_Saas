@@ -144,6 +144,8 @@ class SaleReturnChangeTest extends TestCase
         $this->returnItems(1);
         $sale = $this->sale->fresh(['items.returns', 'shop', 'customer', 'user']);
 
+        // The labels follow the app locale, which is English in CI (.env.example).
+        app()->setLocale('fr');
         $html = view('pdf.ticket', ['sale' => $sale, 'logo' => null, 'shop' => $sale->shop, 'currencySymbol' => 'F'])->render();
 
         // The line shows what the customer keeps (3 of 4), the return is listed apart…
