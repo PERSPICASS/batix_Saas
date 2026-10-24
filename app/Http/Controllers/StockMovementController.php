@@ -45,6 +45,13 @@ class StockMovementController extends Controller
             $query->where('type', $request->type);
         }
 
+        // Historique d'un produit (lien « Voir tout l'historique » de la fiche produit).
+        $product = null;
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+            $product = Product::whereIn('shop_id', $shopIds)->select('id', 'name')->find($request->product_id);
+        }
+
         if ($request->filled('shop_id')) {
             $query->where('shop_id', $request->shop_id);
         }
@@ -61,7 +68,8 @@ class StockMovementController extends Controller
         return Inertia::render('Stocks/Index', [
             'movements' => $movements,
             'shops' => $shops,
-            'filters' => $request->only(['search', 'type', 'shop_id', 'date_from', 'date_to']),
+            'product' => $product,
+            'filters' => (object) $request->only(['search', 'type', 'shop_id', 'product_id', 'date_from', 'date_to']),
         ]);
     }
 
@@ -78,6 +86,7 @@ class StockMovementController extends Controller
         return Inertia::render('Stocks/Create', [
             'shops' => $shops,
             'products' => $products,
+            'reasons' => StockMovement::REASONS,
         ]);
     }
 
@@ -93,15 +102,24 @@ class StockMovementController extends Controller
                 'required',
                 Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
             ],
-            'type' => 'required|in:in,out,transfer,adjustment',
-            'quantity' => 'required|integer|not_in:0',
+            // Plus de « Transfert » ni d'« Ajustement » manuels : le premier ne touchait pas
+            // au stock, le second double la correction de la fiche produit et l'inventaire.
+            'type' => 'required|in:in,out',
+            'reason' => ['required', Rule::in(StockMovement::REASONS[$request->input('type')] ?? [])],
+            'quantity' => 'required|integer|min:1',
             'unit_cost' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:1000',
             'movement_date' => 'required|date',
         ]);
 
-        DB::transaction(function () use ($validated) {
-            $product = Product::findOrFail($validated['product_id']);
+        $error = DB::transaction(function () use ($validated) {
+            $product = Product::whereKey($validated['product_id'])->lockForUpdate()->firstOrFail();
+
+            // La base refuse un stock négatif : sans ce contrôle, la sortie levait un 500.
+            if ($validated['type'] === 'out' && $product->stock_quantity < $validated['quantity']) {
+                return "Stock insuffisant : il ne reste que {$product->stock_quantity} unité(s) de « {$product->name} ».";
+            }
+
             StockMovementService::recordManualAdjustment(
                 $product,
                 (int) $validated['quantity'],
@@ -109,9 +127,16 @@ class StockMovementController extends Controller
                 (int) $validated['shop_id'],
                 $validated['notes'] ?? null,
                 $validated['movement_date'],
-                isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null
+                isset($validated['unit_cost']) ? (float) $validated['unit_cost'] : null,
+                $validated['reason']
             );
+
+            return null;
         });
+
+        if ($error) {
+            return back()->withErrors(['quantity' => $error])->withInput();
+        }
 
         return redirect()->route('stocks.index', ['code_user' => request()->route('code_user')])->with('success', 'Mouvement de stock créé avec succès.');
     }
@@ -132,6 +157,11 @@ class StockMovementController extends Controller
             abort(403);
         }
 
+        if (!$stockMovement->is_manual) {
+            return back()->with('error', "Ce mouvement vient d'une vente, d'un document ou d'un dépôt : "
+                . "annulez-le depuis son origine. Pour corriger le stock, faites une entrée ou une sortie.");
+        }
+
         $error = DB::transaction(function () use ($stockMovement) {
             // Annuler une entrée retire la quantité du stock : si elle a été vendue depuis,
             // le stock passerait en négatif et la contrainte de la base levait un 500.
@@ -139,7 +169,7 @@ class StockMovementController extends Controller
 
             if ($product && $stockMovement->quantity > 0 && $product->stock_quantity < $stockMovement->quantity) {
                 return "Impossible de supprimer ce mouvement : il retirerait {$stockMovement->quantity} unité(s) de « {$product->name} », "
-                    . "dont le stock n'est plus que de {$product->stock_quantity}. Faites plutôt un ajustement.";
+                    . "dont le stock n'est plus que de {$product->stock_quantity}. Faites plutôt une sortie.";
             }
 
             StockMovementService::reverseMovement($stockMovement);

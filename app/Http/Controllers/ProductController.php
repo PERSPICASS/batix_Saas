@@ -9,6 +9,7 @@ use App\Imports\ProductsImport;
 use App\Models\Category;
 use App\Rules\AccessibleCategory;
 use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\Subcategory;
 use App\Services\ActivityLogger;
 use App\Services\ProductCreationService;
@@ -233,11 +234,21 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
         
+        // Ce qui a fait bouger le stock du comptoir : la seule réponse à « pourquoi il en
+        // reste 3 ? » visible depuis la fiche (le journal complet est dans Mouvements de stock).
+        $recentMovements = StockMovement::with('user:id,name')
+            ->where('product_id', $product->id)
+            ->atCounter()
+            ->latest('id')
+            ->limit(10)
+            ->get();
+
         return Inertia::render('Products/Edit', [
             'product' => $product,
             'shops' => $shops,
             'categories' => $categories,
             'subcategories' => $subcategories,
+            'recentMovements' => $recentMovements,
         ]);
     }
 

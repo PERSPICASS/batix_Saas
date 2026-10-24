@@ -6,6 +6,7 @@ import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
+import StockMovementTypeBadge from '@/Components/StockMovementTypeBadge';
 
 interface Shop {
     id: number;
@@ -46,15 +47,26 @@ interface Product {
     track_stock: boolean;
 }
 
+interface StockMovement {
+    id: number;
+    type: string;
+    quantity: number;
+    reason: string | null;
+    movement_date: string;
+    // nullable : auteur supprimé ou écriture système (voir Stocks/Index.tsx)
+    user: { id: number; name: string } | null;
+}
+
 interface Props {
     product: Product;
     shops: Shop[];
     categories: Category[];
     subcategories: Subcategory[];
+    recentMovements: StockMovement[];
 }
 
-export default function ProductsEdit({ product, shops, categories, subcategories }: Props) {
-    const { t } = useLocale();
+export default function ProductsEdit({ product, shops, categories, subcategories, recentMovements }: Props) {
+    const { t, locale } = useLocale();
     const route = useRoute();
     const { formatCurrency } = useShopSettings();
 
@@ -481,6 +493,44 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                         </button>
                     </div>
                 </form>
+
+                <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.stocks.history.title}</h2>
+                        <Link
+                            href={route('stocks.index', { product_id: product.id })}
+                            className="text-sm font-medium text-amber-600 hover:underline dark:text-amber-300"
+                        >
+                            {t.stocks.history.seeAll}
+                        </Link>
+                    </div>
+                    {recentMovements.length === 0 ? (
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{t.stocks.history.empty}</p>
+                    ) : (
+                        <ul className="divide-y divide-gray-100 dark:divide-white/5">
+                            {recentMovements.map((movement) => (
+                                <li key={movement.id}>
+                                    <Link
+                                        href={route('stocks.show', { stockMovement: movement.id })}
+                                        className="flex items-center justify-between gap-3 py-3 hover:opacity-80"
+                                    >
+                                        <div className="min-w-0">
+                                            <StockMovementTypeBadge type={movement.type} reason={movement.reason} />
+                                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                {new Date(movement.movement_date).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB')}
+                                                {' · '}
+                                                {movement.user?.name ?? t.stocks.unknownAuthor}
+                                            </p>
+                                        </div>
+                                        <span className={`shrink-0 font-semibold ${movement.quantity > 0 ? 'text-green-500' : 'text-red-400'}`}>
+                                            {movement.quantity > 0 ? '+' : ''}{movement.quantity}
+                                        </span>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
             </div>
         </AuthenticatedLayout>
     );

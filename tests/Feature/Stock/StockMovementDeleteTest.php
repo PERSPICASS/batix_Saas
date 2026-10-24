@@ -52,7 +52,7 @@ class StockMovementDeleteTest extends TestCase
     {
         $this->product->update(['stock_quantity' => 3]);
 
-        $this->deleteEntry()->assertRedirect()->assertSessionHas('error', fn ($m) => str_contains($m, 'Baguette 2,5') && str_contains($m, 'ajustement'));
+        $this->deleteEntry()->assertRedirect()->assertSessionHas('error', fn ($m) => str_contains($m, 'Baguette 2,5') && str_contains($m, 'sortie'));
 
         $this->assertSame(3, $this->product->fresh()->stock_quantity);
         $this->assertDatabaseHas('stock_movements', ['id' => $this->entry->id]);

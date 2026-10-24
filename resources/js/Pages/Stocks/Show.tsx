@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Package, Calendar, User, MapPin, FileText } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import ProductImage from '@/Components/ProductImage';
+import StockMovementTypeBadge from '@/Components/StockMovementTypeBadge';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useShopSettings } from '@/Components/Currency';
 
@@ -30,6 +31,7 @@ interface StockMovement {
     unit_cost: string | null;
     movement_date: string;
     notes: string | null;
+    reason: string | null;
     created_at: string;
     // `user_id` est nullable (employé supprimé, écriture système) : voir Stocks/Index.tsx.
     shop: Shop | null;
@@ -45,25 +47,6 @@ export default function StocksShow({ movement }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const { formatCurrency } = useShopSettings();
-
-    const getTypeBadge = (type: string) => {
-        const types: Record<string, { label: string; bg: string; text: string }> = {
-            in: { label: 'Entrée', bg: 'bg-green-500/20', text: 'text-green-300' },
-            out: { label: 'Sortie', bg: 'bg-red-500/20', text: 'text-red-300' },
-            transfer: { label: 'Transfert', bg: 'bg-blue-500/20', text: 'text-blue-300' },
-            adjustment: { label: 'Ajustement', bg: 'bg-amber-500/20', text: 'text-amber-300' },
-            sale: { label: 'Vente', bg: 'bg-purple-500/20', text: 'text-purple-300' },
-            return: { label: 'Retour', bg: 'bg-cyan-500/20', text: 'text-cyan-300' },
-        };
-
-        const typeInfo = types[type] || types.adjustment;
-
-        return (
-            <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${typeInfo.bg} ${typeInfo.text}`}>
-                {typeInfo.label}
-            </span>
-        );
-    };
 
     return (
         <AuthenticatedLayout
@@ -84,12 +67,12 @@ export default function StocksShow({ movement }: Props) {
             <div className="mx-auto max-w-3xl space-y-6">
                 {/* Header card */}
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-amber-300/10 via-orange-300/5 to-transparent p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <p className="text-sm text-slate-500 dark:text-slate-400">Mouvement de stock</p>
                             <h2 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">#{movement.id}</h2>
                         </div>
-                        <div>{getTypeBadge(movement.type)}</div>
+                        <StockMovementTypeBadge type={movement.type} />
                     </div>
 
                     <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -178,6 +161,15 @@ export default function StocksShow({ movement }: Props) {
                                 {movement.quantity}
                             </span>
                         </div>
+
+                        {movement.reason && (
+                            <div className="flex justify-between">
+                                <span className="text-slate-500 dark:text-slate-400">{t.stocks.reason}</span>
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                    {t.stocks.reasons[movement.reason as keyof typeof t.stocks.reasons] ?? movement.reason}
+                                </span>
+                            </div>
+                        )}
 
                         {movement.unit_cost && (
                             <div className="flex justify-between">

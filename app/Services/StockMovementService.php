@@ -440,6 +440,7 @@ class StockMovementService
      * @param string|null  $notes
      * @param string|null  $movementDate
      * @param float|null   $unitCost
+     * @param string|null  $reason     One of StockMovement::REASONS[$type]
      */
     public static function recordManualAdjustment(
         Product $product,
@@ -448,7 +449,8 @@ class StockMovementService
         int $shopId,
         ?string $notes = null,
         ?string $movementDate = null,
-        ?float $unitCost = null
+        ?float $unitCost = null,
+        ?string $reason = null
     ): StockMovement {
         $isIn = in_array($type, ['in', 'return', 'adjustment']) && $quantity > 0;
         $isOut = in_array($type, ['out', 'sale']) || $quantity < 0;
@@ -459,14 +461,19 @@ class StockMovementService
             $product->decrement('stock_quantity', abs($quantity));
         }
 
+        // Quantité signée comme partout ailleurs : une sortie saisie « 5 » s'écrit -5.
+        // Écrite +5, son annulation retirait 5 une seconde fois au lieu de les remettre.
+        $signed = $isOut ? -abs($quantity) : $quantity;
+
         return self::writeMovement([
             'shop_id'        => $shopId,
             'product_id'     => $product->id,
             'user_id'        => Auth::id(),
             'type'           => $type,
-            'quantity'       => $quantity,
+            'quantity'       => $signed,
             'unit_cost'      => $unitCost,
             'notes'          => $notes,
+            'reason'         => $reason,
             'movement_date'  => $movementDate ?? now()->toDateString(),
         ]);
     }

@@ -1,11 +1,12 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Package, Plus, Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 import Table, { TableActions, TableActionButton } from '@/Components/Table';
 import { useState } from 'react';
 import { useRoute } from '@/utils/route';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import ProductImage from '@/Components/ProductImage';
+import StockMovementTypeBadge from '@/Components/StockMovementTypeBadge';
 import { useLocale } from '@/contexts/LocaleContext';
 
 interface Shop {
@@ -32,6 +33,9 @@ interface StockMovement {
     unit_cost: string | null;
     movement_date: string;
     notes: string | null;
+    reason: string | null;
+    // Seul un mouvement saisi à la main se supprime (voir StockMovement::getIsManualAttribute).
+    is_manual: boolean;
     // Ces trois relations peuvent manquer : `user_id` est nullable depuis
     // make_stock_movement_author_optional (un employé supprimé laisse ses mouvements
     // sans auteur), et rien ne garantit qu'un eager load ait été fait.
@@ -52,16 +56,18 @@ interface PaginatedMovements {
 interface Props {
     movements: PaginatedMovements;
     shops: Shop[];
+    product: { id: number; name: string } | null;
     filters: {
         search?: string;
         type?: string;
         shop_id?: number;
+        product_id?: string;
         date_from?: string;
         date_to?: string;
     };
 }
 
-export default function StocksIndex({ movements, shops, filters }: Props) {
+export default function StocksIndex({ movements, shops, product, filters }: Props) {
     const route = useRoute();
     const { t, locale } = useLocale();
 
@@ -76,7 +82,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
     const handleSearch = () => {
         router.get(
             route('stocks.index'),
-            { search: searchTerm, type: typeFilter, shop_id: shopFilter, date_from: dateFrom, date_to: dateTo },
+            { search: searchTerm, type: typeFilter, shop_id: shopFilter, product_id: filters.product_id, date_from: dateFrom, date_to: dateTo },
             { preserveState: true }
         );
     };
@@ -95,35 +101,6 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
             },
             onError: () => setDeleting(false),
         });
-    };
-
-    const getTypeBadge = (type: string) => {
-        const typeLabels: Record<string, string> = {
-            in: t.stocks.types.in,
-            out: t.stocks.types.out,
-            transfer: t.stocks.types.transfer,
-            adjustment: t.stocks.types.adjustment,
-            sale: t.stocks.types.sale,
-            return: t.stocks.types.return,
-        };
-        const types: Record<string, { label: string; bg: string; text: string; icon: any }> = {
-            in: { label: typeLabels.in, bg: 'bg-green-500/20', text: 'text-green-300', icon: TrendingUp },
-            out: { label: typeLabels.out, bg: 'bg-red-500/20', text: 'text-red-300', icon: TrendingDown },
-            transfer: { label: typeLabels.transfer, bg: 'bg-blue-500/20', text: 'text-blue-300', icon: Package },
-            adjustment: { label: typeLabels.adjustment, bg: 'bg-amber-500/20', text: 'text-amber-300', icon: Package },
-            sale: { label: typeLabels.sale, bg: 'bg-purple-500/20', text: 'text-purple-300', icon: TrendingDown },
-            return: { label: typeLabels.return, bg: 'bg-cyan-500/20', text: 'text-cyan-300', icon: TrendingUp },
-        };
-
-        const typeInfo = types[type] || types.adjustment;
-        const Icon = typeInfo.icon;
-
-        return (
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${typeInfo.bg} ${typeInfo.text}`}>
-                <Icon className="size-3" />
-                {typeInfo.label}
-            </span>
-        );
     };
 
     const columns = [
@@ -151,7 +128,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
         {
             key: 'type',
             label: t.stocks.columns.type,
-            render: (movement: StockMovement) => getTypeBadge(movement.type),
+            render: (movement: StockMovement) => <StockMovementTypeBadge type={movement.type} reason={movement.reason} />,
         },
         {
             key: 'quantity',
@@ -192,9 +169,11 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                     >
                         {t.stocks.actions.view}
                     </Link>
-                    <TableActionButton variant="danger" onClick={() => handleDelete(movement)}>
-                        <Trash2 className="size-3.5" /> {t.stocks.actions.delete}
-                    </TableActionButton>
+                    {movement.is_manual && (
+                        <TableActionButton variant="danger" onClick={() => handleDelete(movement)}>
+                            <Trash2 className="size-3.5" /> {t.stocks.actions.delete}
+                        </TableActionButton>
+                    )}
                 </TableActions>
             ),
         },
@@ -205,6 +184,18 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
             <Head title={t.stocks.titleMovements} />
 
             <section className="space-y-6">
+                {product && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300/30 bg-amber-300/10 px-4 py-3">
+                        <p className="font-medium text-slate-900 dark:text-white">{t.stocks.productHistory(product.name)}</p>
+                        <Link
+                            href={route('stocks.index')}
+                            className="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                        >
+                            <X className="size-4" /> {t.stocks.allProducts}
+                        </Link>
+                    </div>
+                )}
+
                 {/* Filters */}
                 <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                     <div className="grid gap-4 md:grid-cols-6">
@@ -224,6 +215,8 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
                             <option value="">{t.stocks.filters.allTypes}</option>
                             <option value="in">{t.stocks.types.in}</option>
                             <option value="out">{t.stocks.types.out}</option>
+                            <option value="sale">{t.stocks.types.sale}</option>
+                            <option value="return">{t.stocks.types.return}</option>
                             <option value="transfer">{t.stocks.types.transfer}</option>
                             <option value="adjustment">{t.stocks.types.adjustment}</option>
                         </select>

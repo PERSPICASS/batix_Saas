@@ -20,12 +20,15 @@ interface Product {
     shop: Shop;
 }
 
+type MovementType = 'in' | 'out';
+
 interface Props {
     shops: Shop[];
     products: Product[];
+    reasons: Record<MovementType, string[]>;
 }
 
-export default function StocksCreate({ shops, products }: Props) {
+export default function StocksCreate({ shops, products, reasons }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const { currencySymbol } = useShopSettings();
@@ -36,7 +39,8 @@ export default function StocksCreate({ shops, products }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
         product_id: '',
-        type: 'in',
+        type: 'in' as MovementType,
+        reason: '',
         quantity: 1,
         unit_cost: '',
         notes: '',
@@ -89,7 +93,10 @@ export default function StocksCreate({ shops, products }: Props) {
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">Nouveau mouvement de stock</h1>}>
             <Head title="Nouveau mouvement de stock" />
 
-            <div className="mx-auto max-w-2xl">
+            <div className="mx-auto max-w-2xl space-y-4">
+                <p className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-slate-700 dark:text-blue-200">
+                    {t.stocks.form.hint}
+                </p>
                 <form onSubmit={submit} className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                     <div className="grid gap-6 md:grid-cols-2">
                         <div>
@@ -121,15 +128,34 @@ export default function StocksCreate({ shops, products }: Props) {
                             <select
                                 id="type"
                                 value={data.type}
-                                onChange={(e) => setData('type', e.target.value)}
+                                // Les motifs dépendent du type : on repart d'un choix vide.
+                                onChange={(e) => setData((d) => ({ ...d, type: e.target.value as MovementType, reason: '' }))}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             >
-                                <option value="in">Entrée (+)</option>
-                                <option value="out">Sortie (-)</option>
-                                <option value="transfer">Transfert</option>
-                                <option value="adjustment">Ajustement</option>
+                                <option value="in">{t.stocks.form.typeIn}</option>
+                                <option value="out">{t.stocks.form.typeOut}</option>
                             </select>
                             <InputError message={errors.type} />
+                        </div>
+
+                        <div className="md:col-span-2">
+                            <label htmlFor="reason" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                                {t.stocks.reason} *
+                            </label>
+                            <select
+                                id="reason"
+                                value={data.reason}
+                                onChange={(e) => setData('reason', e.target.value)}
+                                className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                            >
+                                <option value="">{t.stocks.form.reasonPlaceholder}</option>
+                                {(reasons[data.type] ?? []).map((reason) => (
+                                    <option key={reason} value={reason}>
+                                        {t.stocks.reasons[reason as keyof typeof t.stocks.reasons] ?? reason}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors.reason} />
                         </div>
 
                         <div className="md:col-span-2">
@@ -253,7 +279,7 @@ export default function StocksCreate({ shops, products }: Props) {
 
                         <div>
                             <label htmlFor="quantity" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                Quantité * {data.type === 'out' ? '(sera soustraite)' : '(sera ajoutée)'}
+                                {data.type === 'out' ? t.stocks.form.quantityOut : t.stocks.form.quantityIn}
                             </label>
                             <input
                                 type="number"
@@ -315,12 +341,12 @@ export default function StocksCreate({ shops, products }: Props) {
                     {selectedProduct && (
                         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
                             <p className="text-sm font-medium text-amber-300">
-                                Nouveau stock prévisionnel: {' '}
+                                {t.stocks.form.projected}{' '}
                                 <span className="text-lg font-bold">
-                                    {data.type === 'in' || data.type === 'adjustment' 
+                                    {data.type === 'in'
                                         ? selectedProduct.stock_quantity + (data.quantity || 0)
                                         : selectedProduct.stock_quantity - (data.quantity || 0)
-                                    } unités
+                                    } {t.stocks.form.units}
                                 </span>
                             </p>
                         </div>
