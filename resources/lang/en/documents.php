@@ -50,6 +50,10 @@ return [
 
     // Credit note
     'credit_note' => 'CREDIT NOTE',
+    'purchase_order' => 'PURCHASE ORDER',
+    'supplier' => 'Supplier',
+    'expected_date' => 'Expected delivery',
+    'shipping' => 'Shipping',
     'credit_note_for' => 'For invoice',
     'reason' => 'Reason',
 

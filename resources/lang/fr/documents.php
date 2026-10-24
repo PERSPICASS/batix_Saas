@@ -51,6 +51,10 @@ return [
 
     // Avoir
     'credit_note' => 'AVOIR',
+    'purchase_order' => 'BON DE COMMANDE',
+    'supplier' => 'Fournisseur',
+    'expected_date' => 'Livraison prévue',
+    'shipping' => 'Frais de port',
     'credit_note_for' => 'Sur facture',
     'reason' => 'Motif',
 

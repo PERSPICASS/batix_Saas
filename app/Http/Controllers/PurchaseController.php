@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Services\ActivityLogger;
+use App\Services\DocumentPdf;
 use App\Services\StockMovementService;
 use App\Support\ConcurrencySafe;
 use Illuminate\Http\RedirectResponse;
@@ -218,6 +219,18 @@ class PurchaseController extends Controller
     /**
      * Display the specified purchase.
      */
+    /**
+     * Le bon de commande en PDF, à imprimer ou à envoyer au fournisseur.
+     */
+    public function pdf(string $codeUser, Purchase $purchase, DocumentPdf $pdf)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {
+            abort(403);
+        }
+
+        return $pdf->forPurchase($purchase)->stream("Bon-de-commande-{$purchase->reference}.pdf");
+    }
+
     public function show(Request $request, string $codeUser, Purchase $purchase): Response
     {
         if (!Auth::user()->accessibleShopsQuery()->where('id', $purchase->shop_id)->exists()) {

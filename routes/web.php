@@ -558,6 +558,7 @@ Route::prefix('{code_user}')
         ->middlewareFor(['create', 'store'], 'permission:purchases,create')
         ->middlewareFor(['edit', 'update'], 'permission:purchases,edit')
         ->middlewareFor('destroy', 'permission:purchases,delete');
+    Route::get('purchases/{purchase}/pdf', [PurchaseController::class, 'pdf'])->name('purchases.pdf')->middleware('permission:purchases,view');
     Route::post('purchases/{purchase}/confirm', [PurchaseController::class, 'confirm'])->name('purchases.confirm')->middleware('permission:purchases,edit');
     Route::post('purchases/{purchase}/receive', [PurchaseController::class, 'receive'])->name('purchases.receive')->middleware('permission:purchases,edit');
     Route::post('purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])->name('purchases.cancel')->middleware('permission:purchases,edit');

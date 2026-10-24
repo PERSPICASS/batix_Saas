@@ -12,7 +12,8 @@ import {
     Building2,
     FileText,
     Truck,
-    DollarSign
+    DollarSign,
+    Printer
 } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useState } from 'react';
@@ -222,6 +223,17 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
                     <div className="flex flex-wrap items-center gap-3">
                         {getStatusBadge()}
+
+                        {/* Le PDF s'ouvre dans un nouvel onglet : on l'imprime ou on l'envoie au fournisseur. */}
+                        <a
+                            href={route('purchases.pdf', { code_user, purchase: purchase.id })}
+                            target="_blank"
+                            rel="noopener"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <Printer className="size-4" />
+                            Imprimer
+                        </a>
                         
                         {/* Actions selon le statut */}
                         {purchase.status === 'draft' && (

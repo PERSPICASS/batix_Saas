@@ -40,6 +40,9 @@
             border-bottom: 0.8pt solid #333;
             padding: 4pt 3pt;
         }
+        /* Même piège que `.breakdown th` plus bas : sans cette règle, les en-têtes des
+           colonnes de montants restaient à gauche au-dessus de chiffres alignés à droite. */
+        .lines th.right { text-align: right; }
         .lines td {
             padding: 4pt 3pt;
             border-bottom: 0.4pt solid #e0e0e0;

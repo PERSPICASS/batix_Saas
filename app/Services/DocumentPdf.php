@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CreditNote;
 use App\Models\Invoice;
+use App\Models\Purchase;
 use App\Models\Quote;
 use App\Models\Sale;
 use App\Models\Shop;
@@ -162,6 +163,19 @@ class DocumentPdf
             'currencySymbol' => get_currency_symbol($creditNote->shop?->currency),
             'fne' => FneDisplay::for($creditNote),
             'fneTitle' => __('documents.fne_credit_title'),
+        ])->setPaper('a4'));
+    }
+
+    /** Le bon de commande envoyé au fournisseur. */
+    public function forPurchase(Purchase $purchase): PdfWrapper
+    {
+        $purchase->loadMissing(['items', 'shop', 'supplier']);
+
+        return $this->inShopLocale($purchase->shop, fn () => Pdf::loadView('pdf.purchase-order', [
+            'purchase' => $purchase,
+            'logo' => $this->logo($purchase->shop),
+            'shop' => $purchase->shop,
+            'currencySymbol' => get_currency_symbol($purchase->currency ?: $purchase->shop?->currency),
         ])->setPaper('a4'));
     }
 
