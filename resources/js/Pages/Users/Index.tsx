@@ -188,7 +188,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
                 <Table columns={columns} data={users.data} emptyMessage={t.users.emptyMessage} />
 
                 {users.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {users.links.map((link, index) => (
                             <Link
                                 key={index}

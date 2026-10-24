@@ -45,7 +45,7 @@ export default function SuppliersShow({ supplier }: Props) {
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Détails du fournisseur</h1>
                     <Link
                         href={route('suppliers.edit', { supplier: supplier.id })}

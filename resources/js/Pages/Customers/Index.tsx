@@ -115,7 +115,7 @@ export default function CustomersIndex({ customers }: Props) {
                 />
 
                 {customers.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {customers.links.map((link: any, index: number) => (
                             <Link
                                 key={index}

@@ -480,16 +480,16 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                         <>
                         <div className="divide-y divide-slate-100 dark:divide-white/5">
                             {products.data.map(product => (
-                                <div key={product.id} className="flex items-center justify-between px-6 py-4">
-                                    <div className="flex items-center gap-3">
+                                <div key={product.id} className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6">
+                                    <div className="flex min-w-0 items-center gap-3">
                                         <ProductImage
                                             src={product.product_image}
                                             name={product.product_name}
                                             thumbnailClass="size-9"
                                         />
-                                        <div>
+                                        <div className="min-w-0">
                                             <p className="text-sm font-medium text-slate-900 dark:text-white">{product.product_name}</p>
-                                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                                            <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
                                                 {product.product_sku && <span>SKU: {product.product_sku}</span>}
                                                 {product.product_category && <span>• {product.product_category}</span>}
                                                 {product.purchase_price > 0 && (
@@ -508,7 +508,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex shrink-0 items-center gap-4">
                                         <div className="text-right">
                                             <p className={`text-lg font-bold ${product.is_low_stock ? 'text-amber-500' : 'text-slate-900 dark:text-white'}`}>
                                                 {product.quantity}
@@ -554,7 +554,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                     Page {products.current_page} / {products.last_page}
                                 </p>
-                                <div className="flex gap-1">
+                                <div className="flex flex-wrap gap-1">
                                     {products.links.map((link, i) => (
                                         link.url ? (
                                             <Link

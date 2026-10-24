@@ -93,7 +93,7 @@ export default function Show({ preorder }: Props) {
             <div className="space-y-6">
                 {/* Statut et alertes */}
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 dark:border-white/10 dark:bg-slate-900/50">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t.preorders.show.currentStatus}</p>
                             <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(preorder.status).bg} ${getStatusColor(preorder.status).text}`}>
@@ -108,7 +108,7 @@ export default function Show({ preorder }: Props) {
                             </div>
                         )}
                     </div>
-                    <div className="mt-4 flex items-center gap-3">
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
                         <button
                             onClick={() => setShowStatusModal(true)}
                             className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-400 transition"

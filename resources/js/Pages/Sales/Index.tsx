@@ -419,7 +419,7 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
                 />
 
                 {sales.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {sales.links.map((link: any, index: number) => (
                             <Link
                                 key={index}

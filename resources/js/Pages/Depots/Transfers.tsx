@@ -195,7 +195,7 @@ export default function Transfers({ depot, transfers, shops, depotProducts }: Pr
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
                                         Page {transfers.current_page} / {transfers.last_page}
                                     </p>
-                                    <div className="flex gap-1">
+                                    <div className="flex flex-wrap gap-1">
                                         {transfers.links.map((link, i) => (
                                             link.url ? (
                                                 <Link

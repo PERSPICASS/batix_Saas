@@ -162,7 +162,7 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                 const permission = getPermission(key);
                                 return (
                                     <div key={key} className="rounded-lg border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                             <button type="button" onClick={() => toggleModule(key)} className="flex items-center gap-3">
                                                 <div className={`flex size-5 items-center justify-center rounded border ${isSelected ? 'border-amber-300 bg-amber-300' : 'border-white/15 bg-slate-900/70'}`}>
                                                     {isSelected && <Check className="size-3 text-slate-950" />}
@@ -170,7 +170,7 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                                 <span className="font-medium text-slate-700 dark:text-slate-200">{moduleLabels[key] || modules[key]}</span>
                                             </button>
                                             {isSelected && permission && (
-                                                <div className="flex items-center gap-4">
+                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                                                     {(['can_view', 'can_create', 'can_edit', 'can_delete'] as const).map((action) => (
                                                         <label key={action} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                                                             <input type="checkbox" checked={permission[action]}

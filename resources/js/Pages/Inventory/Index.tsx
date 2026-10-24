@@ -262,7 +262,7 @@ export default function InventoryIndex({ inventories, filters }: Props) {
 
                 {/* Pagination */}
                 {inventories.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {inventories.links.map((link, index) => (
                             <Link
                                 key={index}

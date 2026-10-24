@@ -221,7 +221,7 @@ export default function InvoicesIndex({ invoices }: Props) {
                     >
                         {t.common.actions.search}
                     </button>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Link
                             href={route('invoices.create')}
                             className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-200"
@@ -246,7 +246,7 @@ export default function InvoicesIndex({ invoices }: Props) {
                 <Table columns={columns} data={invoices.data} />
 
                 {invoices.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {invoices.links.map((link, index) => (
                             <Link
                                 key={index}

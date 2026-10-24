@@ -309,7 +309,7 @@ export default function PurchasesIndex({ code_user, purchases, suppliers, curren
                 <Table columns={columns} data={purchases.data} emptyMessage={t.purchases.emptyMessage} />
 
                 {purchases.last_page > 1 && (
-                    <div className="mt-6 flex items-center justify-center gap-2">
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
                         {purchases.links.map((link, index) => {
                             if (link.url === null) {
                                 return (

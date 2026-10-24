@@ -814,7 +814,7 @@ export default function Credits({ credits, shops = [], kpis, filters = {}, auth 
                         <span>
                             {safeCredits.meta.from}–{safeCredits.meta.to} sur {safeCredits.meta.total} créances
                         </span>
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap gap-1">
                             {safeCredits.links.map((link: any, i: number) => (
                                 <Link
                                     key={i}

@@ -254,7 +254,7 @@ export default function Index({ preorders, shops, filters }: Props) {
 
                     {/* Pagination */}
                     {preorders.links.length > 3 && (
-                        <div className="flex items-center justify-center gap-2 border-t border-white/10 p-4">
+                        <div className="flex flex-wrap items-center justify-center gap-2 border-t border-white/10 p-4">
                             {preorders.links.map((link: any, index: number) => (
                                 <button
                                     key={index}

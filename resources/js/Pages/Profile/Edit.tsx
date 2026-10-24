@@ -92,14 +92,14 @@ export default function Edit({
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     {/* User Overview Card */}
                     <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 shadow-lg overflow-hidden">
-                        <div className="p-8">
-                            <div className="flex items-start gap-6">
+                        <div className="p-5 sm:p-8">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
                                 <div className="flex-shrink-0">
                                     <div className="h-24 w-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                                         <User className="h-12 w-12 text-white" />
                                     </div>
                                 </div>
-                                <div className="flex-1">
+                                <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                         <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{user.name}</h3>
                                         {user.is_active ? (
@@ -108,7 +108,7 @@ export default function Edit({
                                             <XCircle className="h-6 w-6 text-red-500" />
                                         )}
                                     </div>
-                                    <p className="text-slate-300 mb-4">{user.email}</p>
+                                    <p className="text-slate-300 mb-4 break-all">{user.email}</p>
 
                                     <div className="flex flex-wrap gap-3">
                                         <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/20">

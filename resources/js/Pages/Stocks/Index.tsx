@@ -275,7 +275,7 @@ export default function StocksIndex({ movements, shops, filters }: Props) {
 
                 {/* Pagination */}
                 {movements.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {movements.links.map((link, index) => (
                             <Link
                                 key={index}

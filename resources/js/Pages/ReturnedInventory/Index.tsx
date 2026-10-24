@@ -315,7 +315,7 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
                         <p className="text-slate-600 dark:text-slate-300">Aucun retour à traiter</p>
                     </div>
                 ) : (
-                    <div className="rounded-lg border border-white/10 overflow-hidden">
+                    <div className="rounded-lg border border-white/10 overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="border-b border-white/10 bg-white/5">
                                 <tr>
@@ -394,7 +394,7 @@ export default function ReturnedInventoryIndex({ items, auth, filters }: Props) 
                 )}
 
                 {items.meta && items.links && items.meta.last_page > 1 && (
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                         {items.links.map((link: any, index: number) => (
                             <a
                                 key={index}

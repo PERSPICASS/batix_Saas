@@ -157,7 +157,7 @@ export default function CreditNotesIndex({ creditNotes, filters }: Props) {
                 )}
 
                 {creditNotes.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {creditNotes.links.map((link, index) => (
                             <Link
                                 key={index}

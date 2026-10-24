@@ -209,7 +209,7 @@ export default function RecurringInvoicesIndex({ recurringInvoices, filters = {}
                 </div>
 
                 {/* Tableau */}
-                <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                <div className="rounded-2xl border border-white/10 bg-white/5 overflow-x-auto">
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-white/10 bg-white/5">
@@ -241,7 +241,7 @@ export default function RecurringInvoicesIndex({ recurringInvoices, filters = {}
 
                 {/* Pagination */}
                 {recurringInvoices.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {recurringInvoices.links.map((link: any, index: number) => (
                             <Link
                                 key={index}

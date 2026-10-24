@@ -237,7 +237,7 @@ export default function SuppliersIndex({ suppliers, filters }: Props) {
 
                 {/* Pagination */}
                 {suppliers.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {suppliers.links.map((link, index) => (
                             <Link
                                 key={index}

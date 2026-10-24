@@ -473,7 +473,7 @@ export default function ExpensesIndex({ expenses, totalAmount, monthTotal, curre
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {t.expenses.pagination(expenses.total, expenses.current_page, expenses.last_page)}
                         </p>
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap gap-1">
                             {expenses.links.map((link, i) => (
                                 link.url ? (
                                     <button key={i} onClick={() => router.get(link.url!)}

@@ -109,7 +109,7 @@ export default function ShopTransfers({ shop, transfers }: Props) {
                 )}
 
                 {transfers.links && (
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex flex-wrap items-center justify-center gap-1">
                         {transfers.links.map((link, index) => (
                             <Link
                                 key={index}

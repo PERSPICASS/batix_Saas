@@ -312,7 +312,7 @@ export default function Index({ activities, filters, filterOptions }: Props) {
 
                     {/* Pagination */}
                     {activities.links.length > 3 && (
-                        <div className="flex items-center justify-center gap-2 border-t border-white/10 p-4">
+                        <div className="flex flex-wrap items-center justify-center gap-2 border-t border-white/10 p-4">
                             {activities.links.map((link: any, index: number) => (
                                 <button
                                     key={index}
