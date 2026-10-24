@@ -211,6 +211,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
         discount_rate: 0 as number | string,
         notes: '',
         internal_notes: '',
+        show_unit_prices: true,
+        show_amounts: true,
         items: items,
     });
 
@@ -612,6 +614,30 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                     placeholder={t.purchases.form.internalPlaceholder}
                                 />
                                 <InputError message={errors.internal_notes} className="mt-2" />
+                            </div>
+                            <div className="border-t border-gray-200 pt-4 dark:border-white/10">
+                                <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">{t.purchases.form.pdfDisplay}</p>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.show_unit_prices}
+                                            onChange={(e) => setData('show_unit_prices', e.target.checked)}
+                                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900/70"
+                                        />
+                                        {t.purchases.form.showUnitPrices}
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.show_amounts}
+                                            onChange={(e) => setData('show_amounts', e.target.checked)}
+                                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900/70"
+                                        />
+                                        {t.purchases.form.showAmounts}
+                                    </label>
+                                </div>
+                                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.purchases.form.pdfDisplayHint}</p>
                             </div>
                         </div>
                     </div>

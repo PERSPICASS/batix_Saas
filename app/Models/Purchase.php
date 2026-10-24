@@ -29,6 +29,8 @@ class Purchase extends Model
         'currency',
         'notes',
         'internal_notes',
+        'show_unit_prices',
+        'show_amounts',
     ];
 
     protected $casts = [
@@ -40,6 +42,8 @@ class Purchase extends Model
         'discount_amount' => 'decimal:2',
         'shipping_cost' => 'decimal:2',
         'total' => 'decimal:2',
+        'show_unit_prices' => 'boolean',
+        'show_amounts' => 'boolean',
     ];
 
     /**

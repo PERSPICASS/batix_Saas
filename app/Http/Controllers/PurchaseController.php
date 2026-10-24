@@ -142,6 +142,8 @@ class PurchaseController extends Controller
             'discount_rate' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string',
             'internal_notes' => 'nullable|string',
+            'show_unit_prices' => 'boolean',
+            'show_amounts' => 'boolean',
             'items' => 'required|array|min:1',
             'items.*.product_id' => [
                 'required',
@@ -173,6 +175,8 @@ class PurchaseController extends Controller
                     'shipping_cost' => $validated['shipping_cost'] ?? 0,
                     'notes' => $validated['notes'] ?? null,
                     'internal_notes' => $validated['internal_notes'] ?? null,
+                    'show_unit_prices' => $validated['show_unit_prices'] ?? true,
+                    'show_amounts' => $validated['show_amounts'] ?? true,
                     'currency' => $shop->currency,
                     'status' => 'draft',
                 ]);
@@ -324,6 +328,8 @@ class PurchaseController extends Controller
             'discount_rate' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string',
             'internal_notes' => 'nullable|string',
+            'show_unit_prices' => 'boolean',
+            'show_amounts' => 'boolean',
             'items' => 'required|array|min:1',
             'items.*.product_id' => [
                 'required',
@@ -347,6 +353,8 @@ class PurchaseController extends Controller
                 'shipping_cost' => $validated['shipping_cost'] ?? 0,
                 'notes' => $validated['notes'] ?? null,
                 'internal_notes' => $validated['internal_notes'] ?? null,
+                'show_unit_prices' => $validated['show_unit_prices'] ?? $purchase->show_unit_prices,
+                'show_amounts' => $validated['show_amounts'] ?? $purchase->show_amounts,
             ]);
 
             $purchase->items()->delete();

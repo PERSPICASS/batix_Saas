@@ -79,4 +79,57 @@ class PurchaseOrderPdfTest extends TestCase
 
         $this->assertContains($response->status(), [403, 404]);
     }
+
+    private function render(Purchase $purchase): string
+    {
+        app()->setLocale('fr');
+        $purchase = $purchase->fresh(['items', 'shop', 'supplier']);
+
+        return view('pdf.purchase-order', ['purchase' => $purchase, 'logo' => null, 'shop' => $purchase->shop, 'currencySymbol' => 'F'])->render();
+    }
+
+    public function test_prices_and_amounts_are_shown_by_default(): void
+    {
+        $this->assertTrue($this->purchase->show_unit_prices);
+        $this->assertTrue($this->purchase->show_amounts);
+
+        $html = $this->render($this->purchase);
+        $this->assertStringContainsString('P.U. HT', $html);
+        $this->assertStringContainsString('92 500,00', $html);
+    }
+
+    public function test_unticking_both_prints_a_list_of_quantities_to_price(): void
+    {
+        $item = $this->purchase->items()->sole();
+
+        // Saved from the edit form, like the quote's two boxes.
+        $this->actingAs($this->owner)->put("/{$this->owner->code_user}/purchases/{$this->purchase->id}", [
+            'supplier_id' => $this->purchase->supplier_id,
+            'order_date' => now()->toDateString(),
+            'show_unit_prices' => false,
+            'show_amounts' => false,
+            'items' => [['product_id' => $item->product_id, 'quantity' => 20, 'unit_price' => 4500]],
+        ])->assertSessionHasNoErrors();
+
+        $purchase = $this->purchase->fresh();
+        $this->assertFalse($purchase->show_unit_prices);
+        $this->assertFalse($purchase->show_amounts);
+
+        $html = $this->render($purchase);
+        $this->assertStringContainsString('Ciment CPJ 45', $html);
+        $this->assertStringContainsString('>20<', $html);
+        foreach (['P.U. HT', '4 500,00', '90 000,00', 'Sous-total', 'TOTAL', 'TVA'] as $hidden) {
+            $this->assertStringNotContainsString($hidden, $html, "« {$hidden} » should not be printed");
+        }
+    }
+
+    public function test_unit_prices_can_be_hidden_alone(): void
+    {
+        $this->purchase->update(['show_unit_prices' => false]);
+
+        $html = $this->render($this->purchase);
+        $this->assertStringNotContainsString('P.U. HT', $html);
+        $this->assertStringNotContainsString('4 500,00', $html);
+        $this->assertStringContainsString('90 000,00', $html);
+    }
 }

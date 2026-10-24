@@ -55,6 +55,8 @@ interface Purchase {
     shipping_cost: string;
     notes: string | null;
     internal_notes: string | null;
+    show_unit_prices: boolean;
+    show_amounts: boolean;
     items: ExistingPurchaseItem[];
 }
 
@@ -234,6 +236,8 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
         discount_rate: parseFloat(purchase.items[0]?.discount_rate || '0') as number | string,
         notes: purchase.notes || '',
         internal_notes: purchase.internal_notes || '',
+        show_unit_prices: purchase.show_unit_prices ?? true,
+        show_amounts: purchase.show_amounts ?? true,
         items: items,
     });
 
@@ -657,6 +661,30 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                                     className="mt-1 block w-full rounded-lg border-gray-300 bg-white text-slate-900 shadow-sm focus:border-amber-300 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-900/50 dark:text-white"
                                     placeholder="Notes privées, non visibles sur le document..."
                                 />
+                            </div>
+                            <div className="border-t border-gray-200 pt-4 dark:border-white/10">
+                                <p className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">{t.purchases.form.pdfDisplay}</p>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.show_unit_prices}
+                                            onChange={(e) => setData('show_unit_prices', e.target.checked)}
+                                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900/70"
+                                        />
+                                        {t.purchases.form.showUnitPrices}
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.show_amounts}
+                                            onChange={(e) => setData('show_amounts', e.target.checked)}
+                                            className="rounded border-gray-300 text-amber-500 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900/70"
+                                        />
+                                        {t.purchases.form.showAmounts}
+                                    </label>
+                                </div>
+                                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{t.purchases.form.pdfDisplayHint}</p>
                             </div>
                         </div>
                     </div>

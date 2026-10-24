@@ -35,19 +35,33 @@
 @endsection
 
 @section('lines')
-    {{-- La colonne remise n'apparaît que si une ligne en porte une. --}}
-    @php($hasDiscount = $purchase->items->contains(fn ($item) => (float) $item->discount_amount > 0))
+    {{-- Comme le devis : show_unit_prices masque le prix unitaire, show_amounts tout ce qui
+         est un montant. TVA et remise n'ont de sens qu'à côté d'un prix : sans prix ni
+         montants, le bon devient une liste de quantités à chiffrer par le fournisseur.
+         La colonne remise n'apparaît que si une ligne en porte une. --}}
+    @php
+        $showUnitPrices = $purchase->show_unit_prices ?? true;
+        $showAmounts = $purchase->show_amounts ?? true;
+        $showRates = $showUnitPrices || $showAmounts;
+        $hasDiscount = $showRates && $purchase->items->contains(fn ($item) => (float) $item->discount_amount > 0);
+    @endphp
     <table class="lines">
         <thead>
             <tr>
                 <th>{{ __('documents.description') }}</th>
                 <th class="right" style="width: 9%;">{{ __('documents.quantity') }}</th>
-                <th class="right" style="width: 15%;">{{ __('documents.unit_price_excl') }}</th>
+                @if ($showUnitPrices)
+                    <th class="right" style="width: 15%;">{{ __('documents.unit_price_excl') }}</th>
+                @endif
                 @if ($hasDiscount)
                     <th class="right" style="width: 10%;">{{ __('documents.discount') }}</th>
                 @endif
-                <th class="right" style="width: 9%;">{{ __('documents.tax') }}</th>
-                <th class="right" style="width: 17%;">{{ __('documents.total_excl') }}</th>
+                @if ($showRates)
+                    <th class="right" style="width: 9%;">{{ __('documents.tax') }}</th>
+                @endif
+                @if ($showAmounts)
+                    <th class="right" style="width: 17%;">{{ __('documents.total_excl') }}</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -60,12 +74,18 @@
                         @endif
                     </td>
                     <td class="right">{{ $item->quantity_ordered }}</td>
-                    <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
+                    @if ($showUnitPrices)
+                        <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
+                    @endif
                     @if ($hasDiscount)
                         <td class="right">{{ rtrim(rtrim(number_format($item->discount_rate, 2, ',', ' '), '0'), ',') }} %</td>
                     @endif
-                    <td class="right">{{ rtrim(rtrim(number_format($item->tax_rate, 2, ',', ' '), '0'), ',') }} %</td>
-                    <td class="right">{{ number_format($item->subtotal - $item->discount_amount, 2, ',', ' ') }}</td>
+                    @if ($showRates)
+                        <td class="right">{{ rtrim(rtrim(number_format($item->tax_rate, 2, ',', ' '), '0'), ',') }} %</td>
+                    @endif
+                    @if ($showAmounts)
+                        <td class="right">{{ number_format($item->subtotal - $item->discount_amount, 2, ',', ' ') }}</td>
+                    @endif
                 </tr>
             @endforeach
         </tbody>
@@ -73,6 +93,7 @@
 @endsection
 
 @section('totals')
+    @if ($purchase->show_amounts ?? true)
     <table class="totals-wrap">
         <tr>
             <td style="width: 55%;"></td>
@@ -106,6 +127,7 @@
             </td>
         </tr>
     </table>
+    @endif
 @endsection
 
 @section('notes')
