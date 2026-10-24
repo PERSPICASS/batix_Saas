@@ -193,7 +193,7 @@ class ReturnsController extends Controller
 
     /**
      * Recalcule tous les montants d'une vente après des retours.
-     * Impacte: subtotal, tax_amount, discount_amount, total, remaining_amount, status
+     * Impacte: subtotal, tax_amount, discount_amount, total, remaining_amount, change_amount, status
      */
     private function recalculateSaleAmounts(Sale $sale): void
     {
@@ -223,6 +223,10 @@ class ReturnsController extends Controller
         $amountPaid = $sale->amount_paid ?? 0;
         $newRemaining = max(0, $newTotal - $amountPaid);
 
+        // La monnaie suit le total, comme à la vente (Sale::calculateTotals) : elle restait
+        // figée à sa valeur d'origine, sur la page de la vente comme sur le ticket.
+        $newChange = max(0, $amountPaid - $newTotal);
+
         // Déterminer le nouveau statut
         $allItemsReturned = $sale->items->every(function ($item) {
             return $item->returns->sum('quantity_returned') >= $item->quantity;
@@ -241,6 +245,7 @@ class ReturnsController extends Controller
             'discount_amount' => $newDiscountAmount,
             'total' => $newTotal,
             'remaining_amount' => $newRemaining,
+            'change_amount' => $newChange,
             'status' => $newStatus,
         ]);
 
