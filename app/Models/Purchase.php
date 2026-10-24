@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -50,14 +51,11 @@ class Purchase extends Model
 
         static::creating(function ($purchase) {
             if (!$purchase->reference) {
-                $year = date('Y');
-                $lastPurchase = static::where('shop_id', $purchase->shop_id)
-                    ->whereYear('created_at', $year)
-                    ->orderBy('id', 'desc')
-                    ->first();
-                
-                $number = $lastPurchase ? intval(substr($lastPurchase->reference, -4)) + 1 : 1;
-                $purchase->reference = 'PO-' . $year . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+                $purchase->reference = DocumentNumber::next(
+                    static::where('shop_id', $purchase->shop_id),
+                    'reference',
+                    'PO-' . date('Y') . '-',
+                );
             }
         });
     }

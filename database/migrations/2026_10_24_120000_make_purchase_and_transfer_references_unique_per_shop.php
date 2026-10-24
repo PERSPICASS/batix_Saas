@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Same defect as invoices/quotes (2026_07_24_131500): purchase and depot transfer
-     * references are generated PER SHOP — Purchase's creating hook filters on shop_id,
-     * and DepotTransfer::generateReference() is scoped by BelongsToShop — so every shop
-     * restarts at PO-YYYY-0001 / TRF-YYYY-0001. The unique constraint was GLOBAL, so the
-     * second shop to record its first purchase of the year hit a duplicate key.
+     * Same defect as invoices/quotes (2026_07_24_131500): purchase references are
+     * generated PER SHOP (Purchase's creating hook filters on shop_id), so every shop
+     * restarts at PO-YYYY-0001. The unique constraint was GLOBAL, so the second shop to
+     * record its first purchase of the year hit a duplicate key. Depot transfers are
+     * numbered per shop as well since DocumentNumber, so they get the same constraint.
      *
      * Aligning the DB with the generators: the reference is unique per shop.
      */

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -71,13 +72,7 @@ class Sale extends Model
         // below "…9999", the same number came back forever and every sale of every
         // shop failed until midnight. The max is now taken numerically, so a busy
         // shop simply goes to 5 digits.
-        $last = static::where('shop_id', $shopId)
-            ->where('ticket_number', 'like', "{$prefix}%")
-            ->pluck('ticket_number')
-            ->map(fn (string $number) => (int) substr($number, strlen($prefix)))
-            ->max() ?? 0;
-
-        return $prefix.str_pad((string) ($last + 1), 4, '0', STR_PAD_LEFT);
+        return DocumentNumber::next(static::where('shop_id', $shopId), 'ticket_number', $prefix);
     }
 
     public function shop(): BelongsTo

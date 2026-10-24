@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Shop;
 use App\Services\ActivityLogger;
 use App\Services\StockMovementService;
+use App\Support\ConcurrencySafe;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -152,61 +153,63 @@ class PurchaseController extends Controller
 
         $shop = Shop::find($activeShopId);
 
-        DB::beginTransaction();
         try {
-            // Calculer les taux globaux
-            // Champ laissé vide = on reprend le taux configuré de la boutique, pas un 0
-            // arbitraire : c'est le sens même d'un réglage `default_tax_rate`.
-            $globalTaxRate = $validated['tax_rate'] ?? $shop?->default_tax_rate ?? 0;
-            $globalDiscountRate = $validated['discount_rate'] ?? 0;
+            // Deux bons créés au même instant dans la boutique calculent le même numéro :
+            // on rejoue toute la transaction (Postgres l'annule entière sur la violation).
+            $purchase = ConcurrencySafe::retryOnDuplicate(fn () => DB::transaction(function () use ($validated, $shop, $activeShopId) {
+                // Calculer les taux globaux
+                // Champ laissé vide = on reprend le taux configuré de la boutique, pas un 0
+                // arbitraire : c'est le sens même d'un réglage `default_tax_rate`.
+                $globalTaxRate = $validated['tax_rate'] ?? $shop?->default_tax_rate ?? 0;
+                $globalDiscountRate = $validated['discount_rate'] ?? 0;
 
-            $purchase = Purchase::create([
-                'shop_id' => $activeShopId,
-                'supplier_id' => $validated['supplier_id'],
-                'user_id' => Auth::id(),
-                'order_date' => $validated['order_date'],
-                'expected_date' => $validated['expected_date'] ?? null,
-                'shipping_cost' => $validated['shipping_cost'] ?? 0,
-                'notes' => $validated['notes'] ?? null,
-                'internal_notes' => $validated['internal_notes'] ?? null,
-                'currency' => $shop->currency,
-                'status' => 'draft',
-            ]);
-
-            foreach ($validated['items'] as $item) {
-                $product = Product::find($item['product_id']);
-                
-                PurchaseItem::create([
-                    'purchase_id' => $purchase->id,
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'product_sku' => $product->sku,
-                    'quantity_ordered' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'tax_rate' => $globalTaxRate,
-                    'discount_rate' => $globalDiscountRate,
-                    'notes' => $item['notes'] ?? null,
+                $purchase = Purchase::create([
+                    'shop_id' => $activeShopId,
+                    'supplier_id' => $validated['supplier_id'],
+                    'user_id' => Auth::id(),
+                    'order_date' => $validated['order_date'],
+                    'expected_date' => $validated['expected_date'] ?? null,
+                    'shipping_cost' => $validated['shipping_cost'] ?? 0,
+                    'notes' => $validated['notes'] ?? null,
+                    'internal_notes' => $validated['internal_notes'] ?? null,
+                    'currency' => $shop->currency,
+                    'status' => 'draft',
                 ]);
-            }
 
-            $purchase->calculateTotals();
+                foreach ($validated['items'] as $item) {
+                    $product = Product::find($item['product_id']);
+                
+                    PurchaseItem::create([
+                        'purchase_id' => $purchase->id,
+                        'product_id' => $product->id,
+                        'product_name' => $product->name,
+                        'product_sku' => $product->sku,
+                        'quantity_ordered' => $item['quantity'],
+                        'unit_price' => $item['unit_price'],
+                        'tax_rate' => $globalTaxRate,
+                        'discount_rate' => $globalDiscountRate,
+                        'notes' => $item['notes'] ?? null,
+                    ]);
+                }
 
-            ActivityLogger::message(
-                'purchase_created',
-                'purchase_created',
-                ['reference' => $purchase->reference],
-                $purchase,
-                ['supplier' => $purchase->supplier->name]
-            );
+                $purchase->calculateTotals();
 
-            DB::commit();
+                ActivityLogger::message(
+                    'purchase_created',
+                    'purchase_created',
+                    ['reference' => $purchase->reference],
+                    $purchase,
+                    ['supplier' => $purchase->supplier->name]
+                );
+
+                return $purchase;
+            }));
 
             return redirect()
                 ->route('purchases.show', ['code_user' => $codeUser, 'purchase' => $purchase->id])
                 ->with('success', 'Bon de commande créé avec succès.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
             report($e);
             return back()->with('error', "Erreur lors de la création du bon de commande. Veuillez réessayer.");
         }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -101,16 +102,7 @@ class SubscriptionInvoice extends Model
      */
     public static function generateInvoiceNumber(): string
     {
-        $year = now()->year;
-        $month = now()->format('m');
-        $lastInvoice = self::whereYear('created_at', $year)
-                          ->whereMonth('created_at', now()->month)
-                          ->orderBy('id', 'desc')
-                          ->first();
-        
-        $sequence = $lastInvoice ? (int) substr($lastInvoice->invoice_number, -4) + 1 : 1;
-        
-        return sprintf('INV-%s%s-%04d', $year, $month, $sequence);
+        return DocumentNumber::next(self::query(), 'invoice_number', 'INV-' . now()->format('Ym') . '-');
     }
 
     /**

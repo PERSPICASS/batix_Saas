@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -34,19 +35,15 @@ class DepotTransfer extends Model
 
         static::creating(function ($transfer) {
             if (empty($transfer->reference)) {
-                $transfer->reference = self::generateReference();
+                $transfer->reference = self::generateReference($transfer->shop_id);
             }
         });
     }
 
-    public static function generateReference(): string
+    /** Per shop, like the (shop_id, reference) unique constraint. */
+    public static function generateReference($shopId): string
     {
-        $year = date('Y');
-        $lastTransfer = self::whereYear('created_at', $year)
-            ->orderBy('id', 'desc')
-            ->first();
-        $number = $lastTransfer ? (int) substr($lastTransfer->reference, -4) + 1 : 1;
-        return 'TRF-' . $year . '-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+        return DocumentNumber::next(self::where('shop_id', $shopId), 'reference', 'TRF-' . date('Y') . '-');
     }
 
     public function depot(): BelongsTo

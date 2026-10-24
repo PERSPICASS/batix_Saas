@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,16 +46,7 @@ class ShopTransfer extends Model
      */
     public static function generateReference($fromShopId): string
     {
-        $prefix = 'TRF-' . date('Ym');
-
-        $last = static::where('from_shop_id', $fromShopId)
-            ->where('reference', 'like', "{$prefix}%")
-            ->orderBy('reference', 'desc')
-            ->first();
-
-        $next = $last ? ((int) substr($last->reference, -4)) + 1 : 1;
-
-        return $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
+        return DocumentNumber::next(static::where('from_shop_id', $fromShopId), 'reference', 'TRF-' . date('Ym'));
     }
 
     public function fromShop(): BelongsTo

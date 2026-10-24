@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use App\Support\ConcurrencySafe;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -75,15 +76,15 @@ class Quote extends Model
             ->where('expiry_date', '<', now());
     }
 
+    /**
+     * One past the highest number issued this month in the shop. It used to COUNT the
+     * month's quotes: a draft quote can be deleted, the count went down and the next
+     * quote got a number already in use — and since every retry recounted the same,
+     * creating a quote kept failing.
+     */
     public static function generateNumber($shopId)
     {
-        $month = now()->format('Ym');
-        $count = Quote::where('shop_id', $shopId)
-            ->whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)
-            ->count() + 1;
-
-        return 'QTE-' . $month . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        return DocumentNumber::next(Quote::where('shop_id', $shopId), 'quote_number', 'QTE-' . now()->format('Ym') . '-', 3);
     }
 
     public function accept(): void

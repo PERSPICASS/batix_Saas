@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use App\Traits\CertifiedByFne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -70,16 +71,7 @@ class CreditNote extends Model
      */
     public static function generateNumber($shopId): string
     {
-        $prefix = 'AV-' . date('Ym');
-
-        $last = static::where('shop_id', $shopId)
-            ->where('credit_note_number', 'like', "{$prefix}%")
-            ->orderBy('credit_note_number', 'desc')
-            ->first();
-
-        $next = $last ? ((int) substr($last->credit_note_number, -4)) + 1 : 1;
-
-        return $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
+        return DocumentNumber::next(static::where('shop_id', $shopId), 'credit_note_number', 'AV-' . date('Ym'));
     }
 
     public function shop(): BelongsTo

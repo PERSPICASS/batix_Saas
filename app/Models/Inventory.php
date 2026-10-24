@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -50,16 +51,7 @@ class Inventory extends Model
      */
     public static function generateInventoryNumber($shopId): string
     {
-        $prefix = 'INV-' . now()->format('Ym');
-
-        $last = self::where('shop_id', $shopId)
-            ->where('inventory_number', 'like', "{$prefix}%")
-            ->orderBy('inventory_number', 'desc')
-            ->first();
-
-        $next = $last ? ((int) substr($last->inventory_number, -4)) + 1 : 1;
-
-        return $prefix . str_pad($next, 4, '0', STR_PAD_LEFT);
+        return DocumentNumber::next(self::where('shop_id', $shopId), 'inventory_number', 'INV-' . now()->format('Ym'));
     }
 
     public function shop(): BelongsTo
