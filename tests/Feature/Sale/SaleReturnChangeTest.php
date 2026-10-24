@@ -138,4 +138,22 @@ class SaleReturnChangeTest extends TestCase
         $this->assertEquals(900, (float) SaleReturn::sole()->refund_amount);
         $this->assertEquals(900, (float) $sale->fresh()->total);
     }
+
+    public function test_the_ticket_shows_the_return_and_the_new_change(): void
+    {
+        $this->returnItems(1);
+        $sale = $this->sale->fresh(['items.returns', 'shop', 'customer', 'user']);
+
+        $html = view('pdf.ticket', ['sale' => $sale, 'logo' => null, 'shop' => $sale->shop, 'currencySymbol' => 'F'])->render();
+
+        // The 4 × 2 000 line stays, followed by what was taken off it…
+        $this->assertStringContainsString('Retour : -1', $html);
+        $this->assertStringContainsString('-2 000,00', $html);
+        // …so the lines add up to the totals, and the change follows.
+        $this->assertStringContainsString('6 000,00 F', $html);
+        $this->assertStringContainsString('4 000,00 F', $html);
+
+        // And the real PDF still renders with the extra line.
+        $this->assertStringStartsWith('%PDF', app(\App\Services\DocumentPdf::class)->forSale($sale)->output());
+    }
 }

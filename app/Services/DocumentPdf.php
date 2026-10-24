@@ -60,7 +60,7 @@ class DocumentPdf
 
     public function forSale(Sale $sale): PdfWrapper
     {
-        $sale->loadMissing(['items', 'shop', 'customer', 'user']);
+        $sale->loadMissing(['items.returns', 'shop', 'customer', 'user']);
 
         return $this->inShopLocale($sale->shop, fn () => Pdf::loadView('pdf.ticket', [
             'sale' => $sale,
@@ -104,6 +104,9 @@ class DocumentPdf
     {
         $height = self::RECEIPT_BASE_HEIGHT
             + $sale->items->count() * self::RECEIPT_LINE_HEIGHT;
+
+        // Une ligne retournée ajoute sa mention « Retour ».
+        $height += $sale->items->filter(fn ($item) => $item->returns->isNotEmpty())->count() * 12;
 
         // Une vente à crédit ajoute le reste dû et son échéance.
         if ($sale->remaining_amount > 0) {

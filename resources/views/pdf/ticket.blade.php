@@ -97,6 +97,13 @@
             </td>
             <td class="right">{{ number_format($item->total, 2, ',', ' ') }}</td>
         </tr>
+        {{-- Les totaux du bas sont ceux d'après les retours : la ligne dit ce qui en a été retiré. --}}
+        @if ($item->returns->isNotEmpty())
+            <tr>
+                <td class="muted">{{ __('documents.returned') }} : -{{ $item->returns->sum('quantity_returned') }}</td>
+                <td class="right">-{{ number_format($item->returns->sum('refund_amount'), 2, ',', ' ') }}</td>
+            </tr>
+        @endif
     @endforeach
 </table>
 
