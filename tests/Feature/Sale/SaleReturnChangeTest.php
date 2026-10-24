@@ -97,4 +97,45 @@ class SaleReturnChangeTest extends TestCase
         $this->assertEquals(8000, (float) $this->sale->fresh()->total);
         $this->assertEquals(2000, (float) $this->sale->fresh()->change_amount);
     }
+
+    /** A fresh 2 × 1 000 sale, with the given product tax rate and sale attributes. */
+    private function saleOfTwo(int $taxRate, array $attrs = []): Sale
+    {
+        $product = Product::factory()->create([
+            'shop_id' => $this->shop->id, 'stock_quantity' => 50, 'track_stock' => true, 'tax_rate' => $taxRate, 'selling_price' => 1000,
+        ]);
+        $this->actingAs($this->owner)->post("/{$this->owner->code_user}/ventes", array_merge([
+            'shop_id' => $this->shop->id,
+            'payment_method' => 'cash',
+            'amount_paid' => 5000,
+            'items' => [['product_id' => $product->id, 'quantity' => 2, 'unit_price' => 1000]],
+        ], $attrs));
+
+        return $this->sale = Sale::latest('id')->firstOrFail();
+    }
+
+    public function test_the_refund_includes_the_vat(): void
+    {
+        // Regression: the refund was unit price × quantity (1 000), while the
+        // customer had paid 1 180 for that item — the total did drop by 1 180.
+        $sale = $this->saleOfTwo(18);
+        $this->assertEquals(2360, (float) $sale->total);
+
+        $this->returnItems(1)->assertOk()->assertJsonPath('message', fn ($m) => str_contains($m, '1 180'));
+
+        $this->assertEquals(1180, (float) SaleReturn::sole()->refund_amount);
+        $this->assertEquals(1180, (float) $sale->fresh()->total);
+    }
+
+    public function test_the_refund_takes_the_discount_off(): void
+    {
+        // With a 10 % discount the item cost 900: refunding 1 000 gave 100 away.
+        $sale = $this->saleOfTwo(0, ['discount_amount' => 200]);
+        $this->assertEquals(1800, (float) $sale->total);
+
+        $this->returnItems(1)->assertOk();
+
+        $this->assertEquals(900, (float) SaleReturn::sole()->refund_amount);
+        $this->assertEquals(900, (float) $sale->fresh()->total);
+    }
 }

@@ -37,6 +37,7 @@ interface Product {
 interface SaleReturn {
     id: number;
     quantity_returned: number;
+    refund_amount: string;
 }
 
 interface SaleItem {
@@ -430,7 +431,8 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                             {(() => {
                                                 const alreadyReturned = (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
                                                 if (alreadyReturned > 0) {
-                                                    const refundedAmount = alreadyReturned * parseFloat(item.unit_price);
+                                                    // Le montant réellement remboursé (TVA et remise comprises), pas prix × quantité.
+                                                    const refundedAmount = (item.returns || []).reduce((sum, ret) => sum + parseFloat(ret.refund_amount), 0);
                                                     return (
                                                         <div className="flex flex-col items-end">
                                                             <Currency amount={parseFloat(item.total)} />

@@ -41,15 +41,15 @@ class ReturnsController extends Controller
             ])->withInput();
         }
 
-        $refundAmount = (float)$saleItem->unit_price * $validated['quantity_returned'];
+        [$return, $refundAmount] = DB::transaction(function () use ($sale, $saleItem, $user, $validated) {
+            $totalBefore = (float) $sale->total;
 
-        $return = DB::transaction(function () use ($sale, $saleItem, $user, $validated, $refundAmount) {
             $return = SaleReturn::create([
                 'sale_id' => $sale->id,
                 'sale_item_id' => $saleItem->id,
                 'user_id' => $user->id,
                 'quantity_returned' => $validated['quantity_returned'],
-                'refund_amount' => $refundAmount,
+                'refund_amount' => 0,
                 'refund_method' => $validated['refund_method'],
                 'reason' => $validated['reason'],
                 'notes' => $validated['notes'] ?? null,
@@ -62,7 +62,13 @@ class ReturnsController extends Controller
             // Recalculer les montants de la vente après retour
             $this->recalculateSaleAmounts($sale);
 
-            return $return;
+            // On rembourse exactement ce dont le total a baissé, TVA et remise comprises.
+            // C'était prix unitaire × quantité : sur une vente à 18 % de TVA le client
+            // récupérait moins qu'il n'avait payé, avec une remise la boutique rendait trop.
+            $refundAmount = round($totalBefore - (float) $sale->total, 2);
+            $return->update(['refund_amount' => $refundAmount]);
+
+            return [$return, $refundAmount];
         });
 
         ActivityLogger::message('create', 'return_created', [
