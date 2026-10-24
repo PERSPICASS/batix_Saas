@@ -57,6 +57,16 @@ export function documentTotals(lines: TotalsLine[], rawDiscount: number | string
     };
 }
 
+/**
+ * Montant de remise à envoyer au serveur, qui n'attend qu'un montant : un pourcentage
+ * saisi au comptoir est converti sur la base HT.
+ */
+export function discountFromInput(subtotal: number, input: number | string, mode: 'amount' | 'percent'): number {
+    const entered = Math.max(Number(input) || 0, 0);
+
+    return round(mode === 'percent' ? (subtotal * entered) / 100 : entered);
+}
+
 function round(value: number): number {
     return Math.round(value * 100) / 100;
 }

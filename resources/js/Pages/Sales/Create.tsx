@@ -11,6 +11,7 @@ import { enqueue, newClientUuid } from '@/offline/outbox';
 import { useOfflineSales } from '@/offline/useOfflineSales';
 import { cacheCatalog, readCatalog } from '@/offline/catalog';
 import { matchesSearch } from '@/utils/search';
+import { discountFromInput, documentTotals } from '@/utils/totals';
 
 /**
  * Format attendu par la validation `date` de Laravel côté synchronisation.
@@ -87,7 +88,7 @@ interface CartItem {
 export default function SalesCreate({ shops, customers, products, preorder }: Props) {
     const { t } = useLocale();
     const route = useRoute();
-    const { formatCurrency } = useShopSettings();
+    const { formatCurrency, currencySymbol } = useShopSettings();
 
     const { props } = usePage();
     const activeShop = props.activeShop as { id: number; name: string } | null;
@@ -214,15 +215,20 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
         );
     };
 
-    const calculateTotal = () => {
-        const subtotal = cart.reduce((sum, item) => sum + item.subtotal, 0);
-        const taxAmount = cart.reduce(
-            (sum, item) => sum + (item.subtotal * item.tax_rate) / 100,
-            0
-        );
-        const discount = parseFloat(data.discount_amount || '0');
-        return subtotal + taxAmount - discount;
+    // Remise saisie en montant ou en pourcentage ; seul le montant part au serveur.
+    const [discountMode, setDiscountMode] = useState<'amount' | 'percent'>('amount');
+    const [discountInput, setDiscountInput] = useState('');
+
+    // Même calcul que le serveur (SaleCreationService + GlobalDiscount) : la remise est
+    // plafonnée au sous-total et réduit la base de la TVA. L'ancien calcul la retranchait
+    // du TTC, donc l'écran aurait affiché un total et une monnaie différents du ticket.
+    const computeTotals = () => {
+        const lines = cart.map((item) => ({ quantity: item.quantity, unit_price: item.unit_price, tax_rate: item.tax_rate }));
+        const subtotal = lines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0);
+        return documentTotals(lines, discountFromInput(subtotal, discountInput, discountMode));
     };
+
+    const calculateTotal = () => computeTotals().total;
 
     const isCredit = () => data.payment_method === 'credit';
 
@@ -266,6 +272,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
             preserveScroll: true,
             onBefore: () => {
                 data.items = items;
+                data.discount_amount = computeTotals().discount.toString();
                 return true;
             },
         });
@@ -280,7 +287,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
             customer_id: data.customer_id ? Number(data.customer_id) : null,
             payment_method: data.payment_method,
             amount_paid: parseFloat(data.amount_paid || '0') || total,
-            discount_amount: parseFloat(data.discount_amount || '0'),
+            discount_amount: computeTotals().discount,
             // L'heure de la vente, pas celle de la synchronisation : sans cela les
             // rapports du gérant dateraient toutes les ventes du retour du réseau.
             sale_date: formatSaleDate(new Date()),
@@ -292,6 +299,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
 
         setCart([]);
         setData('amount_paid', '');
+        setDiscountInput('');
         await refreshQueue();
         setJustQueued(true);
     };
@@ -566,18 +574,53 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                 <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300">
                                     <span>{t.common.form.subtotal}</span>
                                     <span>
-                                        <Currency amount={cart.reduce((sum, item) => sum + item.subtotal, 0)} />
+                                        <Currency amount={computeTotals().subtotal} />
                                     </span>
                                 </div>
+                                <div className="flex items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                    <label htmlFor="discount">{t.sales.form.discount}</label>
+                                    <div className="flex items-center gap-1">
+                                        <input
+                                            id="discount"
+                                            type="number"
+                                            min="0"
+                                            max={discountMode === 'percent' ? 100 : undefined}
+                                            step="any"
+                                            inputMode="decimal"
+                                            value={discountInput}
+                                            onChange={(e) => setDiscountInput(e.target.value)}
+                                            placeholder="0"
+                                            className="w-24 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
+                                        />
+                                        <div className="flex overflow-hidden rounded-lg border border-gray-300 text-xs dark:border-white/15">
+                                            {(['amount', 'percent'] as const).map((mode) => (
+                                                <button
+                                                    key={mode}
+                                                    type="button"
+                                                    onClick={() => setDiscountMode(mode)}
+                                                    aria-pressed={discountMode === mode}
+                                                    title={mode === 'percent' ? t.sales.form.discountInPercent : t.sales.form.discountInAmount}
+                                                    className={`px-2 py-1 font-medium ${discountMode === mode ? 'bg-amber-300 text-slate-950' : 'text-slate-600 dark:text-slate-300'}`}
+                                                >
+                                                    {mode === 'percent' ? '%' : currencySymbol}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                {computeTotals().discount > 0 && (
+                                    <div className="flex justify-between text-sm text-emerald-600 dark:text-emerald-400">
+                                        <span />
+                                        <span>-<Currency amount={computeTotals().discount} /></span>
+                                    </div>
+                                )}
+                                {errors.discount_amount && (
+                                    <p className="text-xs text-red-600 dark:text-red-400">{errors.discount_amount}</p>
+                                )}
                                 <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300">
                                     <span>{t.sales.form.tax}</span>
                                     <span>
-                                        <Currency amount={cart
-                                            .reduce(
-                                                (sum, item) =>
-                                                    sum + (item.subtotal * item.tax_rate) / 100,
-                                                0
-                                            )} />
+                                        <Currency amount={computeTotals().tax} />
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-lg font-bold text-amber-600 dark:text-amber-300">

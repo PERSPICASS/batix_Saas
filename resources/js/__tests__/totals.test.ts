@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { documentTotals } from '@/utils/totals';
+import { discountFromInput, documentTotals } from '@/utils/totals';
 
 /**
  * The browser-side twin of App\Support\GlobalDiscount and Invoice::calculateTotals. The
@@ -65,5 +65,30 @@ describe('documentTotals', () => {
 
         expect(totals.tax).toBe(0);
         expect(totals.total).toBe(1000);
+    });
+});
+
+describe('discountFromInput', () => {
+    it('passes an amount through', () => {
+        expect(discountFromInput(10000, '1000', 'amount')).toBe(1000);
+    });
+
+    it('converts a percentage on the base before tax', () => {
+        expect(discountFromInput(10000, '10', 'percent')).toBe(1000);
+        expect(discountFromInput(3333, '10', 'percent')).toBe(333.3);
+    });
+
+    it('treats an empty or negative entry as no discount', () => {
+        expect(discountFromInput(10000, '', 'percent')).toBe(0);
+        expect(discountFromInput(10000, '-5', 'amount')).toBe(0);
+    });
+
+    /** The counter screen must show what the ticket will say (SaleLifecycleTest). */
+    it('gives the server total once fed to documentTotals', () => {
+        const lines = [{ quantity: 10, unit_price: 1000, tax_rate: 18 }];
+        const totals = documentTotals(lines, discountFromInput(10000, '10', 'percent'));
+
+        expect(totals.tax).toBe(1620);
+        expect(totals.total).toBe(10620);
     });
 });
