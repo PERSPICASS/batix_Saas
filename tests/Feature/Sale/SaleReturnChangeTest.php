@@ -156,4 +156,53 @@ class SaleReturnChangeTest extends TestCase
         // And the real PDF still renders with the extra line.
         $this->assertStringStartsWith('%PDF', app(\App\Services\DocumentPdf::class)->forSale($sale)->output());
     }
+
+    public function test_the_original_discount_is_kept_from_the_first_return(): void
+    {
+        // 5 × 2 000 with 1 000 off.
+        $product = Product::factory()->create([
+            'shop_id' => $this->shop->id, 'stock_quantity' => 50, 'track_stock' => true, 'tax_rate' => 0, 'selling_price' => 2000,
+        ]);
+        $this->actingAs($this->owner)->post("/{$this->owner->code_user}/ventes", [
+            'shop_id' => $this->shop->id, 'payment_method' => 'cash', 'amount_paid' => 9000, 'discount_amount' => 1000,
+            'items' => [['product_id' => $product->id, 'quantity' => 5, 'unit_price' => 2000]],
+        ]);
+        $this->sale = Sale::latest('id')->firstOrFail();
+        $this->assertNull($this->sale->original_discount_amount);
+
+        $this->returnItems(1)->assertJsonPath('refund_amount', 1800);
+        $this->returnItems(1);
+
+        $sale = $this->sale->fresh(['items.returns', 'shop', 'customer', 'user']);
+        $this->assertEquals(600, (float) $sale->discount_amount);
+        // Kept from the first return, not overwritten by the second.
+        $this->assertEquals(1000, (float) $sale->original_discount_amount);
+
+        $html = view('pdf.ticket', ['sale' => $sale, 'logo' => null, 'shop' => $sale->shop, 'currencySymbol' => 'F'])->render();
+        $this->assertStringContainsString('Remise initiale', $html);
+        $this->assertStringContainsString('-1 000,00 F', $html);
+    }
+
+    /** Same figures as saleReturn.test.ts: the screen announces what the server refunds. */
+    public function test_the_refunds_match_the_preview_shown_at_the_counter(): void
+    {
+        [$a, $b] = [1000, 2000];
+        $products = collect([$a, $b])->map(fn ($price) => Product::factory()->create([
+            'shop_id' => $this->shop->id, 'stock_quantity' => 50, 'track_stock' => true, 'tax_rate' => 18, 'selling_price' => $price,
+        ]));
+        $this->actingAs($this->owner)->post("/{$this->owner->code_user}/ventes", [
+            'shop_id' => $this->shop->id, 'payment_method' => 'cash', 'amount_paid' => 4000, 'discount_amount' => 300,
+            'items' => $products->map(fn ($p) => ['product_id' => $p->id, 'quantity' => 1, 'unit_price' => $p->selling_price])->all(),
+        ]);
+        $this->sale = Sale::latest('id')->firstOrFail();
+        $this->assertEquals(3186, (float) $this->sale->total);
+
+        $refunds = $this->sale->items()->orderBy('id')->get()->map(fn ($item) => $this->actingAs($this->owner)
+            ->postJson("/{$this->owner->code_user}/ventes/{$this->sale->id}/retours", [
+                'sale_item_id' => $item->id, 'quantity_returned' => 1, 'refund_method' => 'cash', 'reason' => 'other',
+            ])->json('refund_amount'));
+
+        $this->assertEquals([1062, 2124], $refunds->all());
+        $this->assertEquals(3186, $refunds->sum());
+    }
 }

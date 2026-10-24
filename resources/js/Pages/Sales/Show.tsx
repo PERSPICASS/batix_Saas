@@ -3,11 +3,12 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
 import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw } from 'lucide-react';
 import WhatsAppShareButton from '@/Components/WhatsAppShareButton';
-import Currency from '@/Components/Currency';
+import Currency, { useShopSettings } from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
 import { useState, useEffect } from 'react';
 import { PageProps } from '@/types';
 import { useLocale } from '@/contexts/LocaleContext';
+import { discountPercent, refundPreview } from '@/utils/saleReturn';
 
 interface Shop {
     id: number;
@@ -61,6 +62,8 @@ interface Sale {
     subtotal: string;
     tax_amount: string;
     discount_amount: string;
+    // Remise accordée au comptoir, gardée au premier retour (qui réduit la remise au prorata).
+    original_discount_amount: string | null;
     total: string;
     amount_paid: string;
     change_amount: string;
@@ -100,6 +103,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const [displayedSale, setDisplayedSale] = useState<Sale>(sale);
+    const { formatCurrency } = useShopSettings();
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelling, setCancelling] = useState(false);
@@ -190,6 +194,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
         const itemsArray = Array.from(selectedItemIds);
         let index = 0;
         let successCount = 0;
+        let refunded = 0;
 
         const submitNextItem = () => {
             if (index >= itemsArray.length) {
@@ -197,7 +202,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                 if (successCount === itemsArray.length) {
                     setReturnMessage({
                         type: 'success',
-                        text: `${successCount} retour${successCount > 1 ? 's' : ''} enregistré${successCount > 1 ? 's' : ''} avec succès`
+                        text: `${successCount} retour${successCount > 1 ? 's' : ''} enregistré${successCount > 1 ? 's' : ''}. À rembourser : ${formatCurrency(refunded)}`
                     });
                     setTimeout(() => {
                         setShowReturnModal(false);
@@ -236,6 +241,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                 if (data.success && data.sale) {
                     setDisplayedSale(data.sale);
                     successCount++;
+                    refunded += Number(data.refund_amount) || 0;
                     submitNextItem();
                 } else {
                     console.error('Erreur: pas de données retournées', data);
@@ -468,8 +474,14 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                         {parseFloat(displayedSale.discount_amount) > 0 && (
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500 dark:text-slate-400">Remise:</span>
-                                <span className="text-red-400">
+                                <span className="text-right text-red-400">
                                     -<Currency amount={parseFloat(displayedSale.discount_amount)} />
+                                    {displayedSale.original_discount_amount !== null
+                                        && parseFloat(displayedSale.original_discount_amount) !== parseFloat(displayedSale.discount_amount) && (
+                                        <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                            initiale : -<Currency amount={parseFloat(displayedSale.original_discount_amount)} />, réduite par les retours
+                                        </span>
+                                    )}
                                 </span>
                             </div>
                         )}
@@ -795,6 +807,35 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                         })}
                                 </div>
                             )}
+
+                            {/* Montant à rendre, calculé comme le serveur : sans lui, le caissier ne
+                                découvrait qu'après validation qu'une remise réduit le remboursement. */}
+                            {selectedItemIds.size > 0 && (() => {
+                                const lines = displayedSale.items
+                                    .filter((item) => selectedItemIds.has(item.id))
+                                    .map((item) => {
+                                        const available = item.quantity - (item.returns || []).reduce((sum, ret) => sum + ret.quantity_returned, 0);
+                                        return { unit_price: item.unit_price, quantity: Math.min(itemQuantities[item.id] || 1, available) };
+                                    });
+                                const percent = discountPercent(displayedSale);
+                                return (
+                                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Montant à rembourser</span>
+                                            <span className="text-lg font-bold text-amber-600 dark:text-amber-300">
+                                                <Currency amount={refundPreview(displayedSale, lines)} />
+                                            </span>
+                                        </div>
+                                        {(percent > 0 || parseFloat(displayedSale.tax_amount) > 0) && (
+                                            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                                {percent > 0 && `Remise de ${String(percent).replace('.', ',')} % déduite`}
+                                                {percent > 0 && parseFloat(displayedSale.tax_amount) > 0 && ' · '}
+                                                {parseFloat(displayedSale.tax_amount) > 0 && 'TVA incluse'}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* Raison */}
                             <div>

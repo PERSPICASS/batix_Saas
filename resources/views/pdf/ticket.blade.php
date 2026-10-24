@@ -125,6 +125,13 @@
             <td>{{ __('documents.discount') }}</td>
             <td class="right">-{{ number_format($sale->discount_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
+        {{-- Un retour réduit la remise au prorata : on rappelle celle accordée au comptoir. --}}
+        @if ($sale->original_discount_amount !== null && (float) $sale->original_discount_amount != (float) $sale->discount_amount)
+            <tr>
+                <td class="muted">{{ __('documents.original_discount') }}</td>
+                <td class="right muted">-{{ number_format($sale->original_discount_amount, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+            </tr>
+        @endif
     @endif
     <tr class="grand">
         <td>{{ __('documents.total') }}</td>

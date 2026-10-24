@@ -59,6 +59,12 @@ class ReturnsController extends Controller
             $sale->refresh();
             $sale->load('items.returns');
 
+            // Le recalcul réduit la remise au prorata : on garde celle accordée au comptoir,
+            // tant qu'elle est encore intacte, c'est-à-dire au tout premier retour.
+            if ($sale->original_discount_amount === null && $sale->returns()->count() === 1) {
+                $sale->update(['original_discount_amount' => $sale->discount_amount]);
+            }
+
             // Recalculer les montants de la vente après retour
             $this->recalculateSaleAmounts($sale);
 
@@ -81,6 +87,7 @@ class ReturnsController extends Controller
 
         return response()->json([
             'success' => true,
+            'refund_amount' => $refundAmount,
             'message' => "Retour enregistré. Remboursement de " . number_format($refundAmount, 0, ',', ' ') . " FCFA",
             'sale' => [
                 'id' => $sale->id,
@@ -91,6 +98,7 @@ class ReturnsController extends Controller
                 'subtotal' => $sale->subtotal,
                 'tax_amount' => $sale->tax_amount,
                 'discount_amount' => $sale->discount_amount,
+                'original_discount_amount' => $sale->original_discount_amount,
                 'total' => $sale->total,
                 'amount_paid' => $sale->amount_paid,
                 'change_amount' => $sale->change_amount,

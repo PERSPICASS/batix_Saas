@@ -108,6 +108,11 @@ class DocumentPdf
         // Une ligne retournée ajoute sa mention « Retour ».
         $height += $sale->items->filter(fn ($item) => $item->returns->isNotEmpty())->count() * 12;
 
+        // Et la remise initiale, rappelée quand des retours l'ont réduite.
+        if ($sale->original_discount_amount !== null && (float) $sale->original_discount_amount != (float) $sale->discount_amount) {
+            $height += 12;
+        }
+
         // Une vente à crédit ajoute le reste dû et son échéance.
         if ($sale->remaining_amount > 0) {
             $height += 30;
