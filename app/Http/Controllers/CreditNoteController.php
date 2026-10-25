@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Services\ActivityLogger;
 use App\Services\DocumentPdf;
 use App\Services\Fne\FneDisplay;
+use App\Services\StockMovementService;
 use App\Support\ConcurrencySafe;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -70,6 +71,8 @@ class CreditNoteController extends Controller
                 'credited_total' => $invoice->creditedTotal(),
                 'net_total' => $invoice->netTotal(),
                 'customer' => $invoice->customer->only(['id', 'name']),
+                // Remettre en stock n'a de sens que si la facture l'avait sorti.
+                'stock_released' => $invoice->stock_released_at !== null,
                 // On n'expose que les lignes encore créditables, avec leur reste : le
                 // formulaire ne peut donc pas proposer de créditer ce qui l'a déjà été.
                 'items' => $invoice->items
@@ -80,7 +83,10 @@ class CreditNoteController extends Controller
                         'quantity' => $item->quantity,
                         'quantity_credited' => $item->quantityCredited(),
                         'quantity_creditable' => $item->quantityCreditable(),
-                        'unit_price' => $item->unit_price,
+                        // Le prix réellement facturé (remises déduites), HT puis TTC : c'est ce
+                        // que l'avoir créditera, et ce que l'écran doit annoncer.
+                        'unit_price' => round($item->creditableUnitPrice(), 2),
+                        'unit_price_incl_tax' => round($item->creditableUnitPrice() * (1 + (float) $item->tax_rate / 100), 2),
                         'tax_rate' => $item->tax_rate,
                     ])
                     ->values(),
@@ -105,6 +111,7 @@ class CreditNoteController extends Controller
         $validated = $request->validate([
             'reason' => 'required|string|max:255',
             'notes' => 'nullable|string',
+            'restock' => 'boolean',
             'items' => 'required|array|min:1',
             'items.*.invoice_item_id' => 'required|integer',
             'items.*.quantity' => 'required|integer|min:1',
@@ -112,7 +119,7 @@ class CreditNoteController extends Controller
 
         // Les lignes de la facture, indexées : c'est la facture qui fait foi sur le prix
         // et la quantité créditable, jamais ce que le client envoie.
-        $invoiceItems = $invoice->items()->get()->keyBy('id');
+        $invoiceItems = $invoice->items()->with('invoice', 'product')->get()->keyBy('id');
 
         $lines = [];
 
@@ -137,19 +144,25 @@ class CreditNoteController extends Controller
                 ]);
             }
 
+            // Au prix réellement facturé : remise de la ligne et part de la remise de la
+            // facture déduites (InvoiceItem::creditableUnitPrice).
+            $unitPrice = $item->creditableUnitPrice();
             $lines[] = [
                 'invoice_item_id' => $item->id,
                 'product_name' => $item->product_name,
                 'quantity' => $line['quantity'],
-                'unit_price' => $item->unit_price,
+                'unit_price' => round($unitPrice, 2),
                 'tax_rate' => $item->tax_rate,
-                'total' => round((float) $item->unit_price * $line['quantity'], 2),
+                'total' => round($unitPrice * $line['quantity'], 2),
             ];
         }
 
         // Le numéro se déduit du dernier connu : deux avoirs créés au même instant
         // calculeraient le même candidat. Même protection que sur les factures.
-        $creditNote = ConcurrencySafe::retryOnDuplicate(fn () => DB::transaction(function () use ($invoice, $validated, $lines) {
+        // La marchandise ne revient que si la facture l'avait sortie (stock_released_at).
+        $restock = ($validated['restock'] ?? false) && $invoice->stock_released_at !== null;
+
+        $creditNote = ConcurrencySafe::retryOnDuplicate(fn () => DB::transaction(function () use ($invoice, $validated, $lines, $restock, $invoiceItems) {
             $creditNote = CreditNote::create([
                 'shop_id' => $invoice->shop_id,
                 'invoice_id' => $invoice->id,
@@ -158,6 +171,7 @@ class CreditNoteController extends Controller
                 'credit_note_date' => now()->toDateString(),
                 'reason' => $validated['reason'],
                 'notes' => $validated['notes'] ?? null,
+                'restocked' => $restock,
             ]);
 
             foreach ($lines as $line) {
@@ -165,6 +179,16 @@ class CreditNoteController extends Controller
             }
 
             $creditNote->calculateTotals();
+
+            if ($restock) {
+                foreach ($lines as $line) {
+                    $product = $invoiceItems->get($line['invoice_item_id'])?->product;
+                    // Bornée à la boutique de la facture, comme Invoice::releaseStock.
+                    if ($product && (int) $product->shop_id === (int) $invoice->shop_id) {
+                        StockMovementService::recordCreditNoteReturn($product, $line['quantity'], $invoice->shop_id, $creditNote, $creditNote->credit_note_number);
+                    }
+                }
+            }
 
             return $creditNote;
         }));

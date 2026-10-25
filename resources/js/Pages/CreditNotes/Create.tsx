@@ -13,7 +13,9 @@ interface Item {
     quantity: number;
     quantity_credited: number;
     quantity_creditable: number;
+    // Prix réellement facturé (remises déduites) : HT, et TTC pour le total affiché.
     unit_price: string | number;
+    unit_price_incl_tax: string | number;
     tax_rate: string | number;
 }
 
@@ -26,6 +28,7 @@ interface Props {
         credited_total: number;
         net_total: number;
         customer: { id: number; name: string };
+        stock_released: boolean;
         items: Item[];
     };
 }
@@ -42,6 +45,8 @@ export default function CreateCreditNote({ invoice }: Props) {
     const { data, setData, post, processing, errors, transform } = useForm({
         reason: '',
         notes: '',
+        // La marchandise revient le plus souvent : coché par défaut, quand la facture avait sorti du stock.
+        restock: invoice.stock_released,
     });
 
     const selected = useMemo(
@@ -55,7 +60,7 @@ export default function CreateCreditNote({ invoice }: Props) {
     const creditTotal = useMemo(
         () =>
             invoice.items.reduce(
-                (sum, item) => sum + Number(item.unit_price) * (quantities[item.id] ?? 0),
+                (sum, item) => sum + Number(item.unit_price_incl_tax) * (quantities[item.id] ?? 0),
                 0
             ),
         [invoice.items, quantities]
@@ -184,7 +189,7 @@ export default function CreateCreditNote({ invoice }: Props) {
                                                     />
                                                 </td>
                                                 <td className="py-3 text-right text-slate-900 dark:text-slate-200">
-                                                    <Currency amount={Number(item.unit_price) * (quantities[item.id] ?? 0)} />
+                                                    <Currency amount={Number(item.unit_price_incl_tax) * (quantities[item.id] ?? 0)} />
                                                 </td>
                                             </tr>
                                         ))}
@@ -202,6 +207,25 @@ export default function CreateCreditNote({ invoice }: Props) {
                             {selected.length === 0 && (
                                 <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{t.creditNotes.create.nothingSelected}</p>
                             )}
+
+                            <div className="mt-4 border-t border-gray-200 pt-4 dark:border-white/10">
+                                {invoice.stock_released ? (
+                                    <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        <input
+                                            type="checkbox"
+                                            checked={data.restock}
+                                            onChange={(e) => setData('restock', e.target.checked)}
+                                            className="mt-0.5 rounded border-gray-300 text-amber-500 focus:ring-amber-300 dark:border-white/20 dark:bg-slate-900/70"
+                                        />
+                                        <span>
+                                            {t.creditNotes.create.restock}
+                                            <span className="block text-xs text-slate-500 dark:text-slate-400">{t.creditNotes.create.restockHint}</span>
+                                        </span>
+                                    </label>
+                                ) : (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{t.creditNotes.create.restockUnavailable}</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex items-center gap-3">

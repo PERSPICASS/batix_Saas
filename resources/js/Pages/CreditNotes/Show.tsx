@@ -12,6 +12,7 @@ interface Props {
         credit_note_number: string;
         credit_note_date: string;
         reason: string;
+        restocked: boolean;
         notes: string | null;
         subtotal: string | number;
         tax_amount: string | number;
@@ -122,6 +123,9 @@ export default function ShowCreditNote({ creditNote, fne }: Props) {
                     <div className="mb-6 rounded-xl border border-gray-200 p-4 text-sm dark:border-white/10">
                         <p className="text-slate-500 dark:text-slate-400">{t.creditNotes.create.reason}</p>
                         <p className="mt-1 font-medium text-slate-900 dark:text-slate-200">{creditNote.reason}</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {creditNote.restocked ? t.creditNotes.show.restocked : t.creditNotes.show.notRestocked}
+                        </p>
                         {creditNote.notes && (
                             <p className="mt-2 text-slate-600 dark:text-slate-400">{creditNote.notes}</p>
                         )}

@@ -30,6 +30,7 @@ class CreditNote extends Model
         'credit_note_date',
         'reason',
         'notes',
+        'restocked',
         'subtotal',
         'tax_amount',
         'total',
@@ -37,6 +38,7 @@ class CreditNote extends Model
 
     protected $casts = [
         'credit_note_date' => 'date',
+        'restocked' => 'boolean',
         'subtotal' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',

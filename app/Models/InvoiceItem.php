@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\GlobalDiscount;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,6 +53,26 @@ class InvoiceItem extends Model
      * Ce qu'il reste créditable. C'est la borne qu'un avoir ne peut pas franchir : sans
      * elle, deux avoirs successifs pourraient rembourser plus que ce qui a été facturé.
      */
+    /**
+     * Ce qu'une unité de cette ligne a réellement été facturée, hors taxes : remise de la
+     * ligne déduite, puis sa part de la remise de la facture. C'est le prix qu'un avoir
+     * crédite — il créditait le prix catalogue, donc plus que ce qui avait été facturé, et
+     * plus que l'avoir certifié par la FNE, qui ne reçoit que les quantités et recalcule le
+     * montant depuis la facture.
+     */
+    public function creditableUnitPrice(): float
+    {
+        if ((int) $this->quantity <= 0) {
+            return 0.0;
+        }
+
+        $lineExclTax = (float) $this->total - (float) $this->tax_amount;
+        $invoice = $this->invoice;
+
+        return $lineExclTax / (int) $this->quantity
+            * GlobalDiscount::ratio((float) $invoice->subtotal, (float) $invoice->discount_amount);
+    }
+
     public function quantityCreditable(): int
     {
         return max(0, $this->quantity - $this->quantityCredited());

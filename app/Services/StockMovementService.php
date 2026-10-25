@@ -362,6 +362,36 @@ class StockMovementService
 
 
     /**
+     * Retour en stock des articles d'un avoir, quand la marchandise revient vraiment
+     * (l'avoir peut aussi ne corriger qu'un prix : l'émetteur choisit).
+     */
+    public static function recordCreditNoteReturn(
+        Product $product,
+        int $quantity,
+        int $shopId,
+        Model $creditNote,
+        string $number
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->increment('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $shopId,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'return',
+            'quantity'       => $quantity,
+            'reference_id'   => $creditNote->getKey(),
+            'reference_type' => class_basename($creditNote),
+            'notes'          => "Avoir {$number}",
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
      * Un mouvement de stock survenu dans un dépôt.
      *
      * Les quantités de dépôt vivent dans `depot_products`, pas dans
