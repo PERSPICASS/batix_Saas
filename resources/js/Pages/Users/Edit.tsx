@@ -10,11 +10,11 @@ interface Shop { id: number; name: string }
 interface UserPermission { id: number; module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
 interface User { id: number; name: string; email: string; shop_id: number | null; role: string; is_active: boolean; permissions: UserPermission[] }
 interface ModulePermission { module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
-interface Props { user: User; shops: Shop[]; currentUserRole: string; modules: Record<string, string> }
+interface Props { user: User; shops: Shop[]; currentUserRole: string; assignableRoles: string[]; modules: Record<string, string> }
 
 const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
-export default function UsersEdit({ user, shops, currentUserRole, modules }: Props) {
+export default function UsersEdit({ user, shops, currentUserRole, assignableRoles, modules }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const isSuperAdmin = currentUserRole === 'super_admin';
@@ -136,7 +136,8 @@ export default function UsersEdit({ user, shops, currentUserRole, modules }: Pro
                                 <label htmlFor="role" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.role}</label>
                                 <select id="role" value={data.role} onChange={(e) => setData('role', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200">
-                                    {ROLE_KEYS.map((key) => <option key={key} value={key}>{roleLabels[key] || key}</option>)}
+                                    {/* Les rôles que le serveur acceptera, plus le rôle actuel pour qu'il reste affiché. */}
+                                    {ROLE_KEYS.filter((key) => assignableRoles.includes(key) || key === user.role).map((key) => <option key={key} value={key}>{roleLabels[key] || key}</option>)}
                                 </select>
                                 <InputError message={errors.role} />
                             </div>

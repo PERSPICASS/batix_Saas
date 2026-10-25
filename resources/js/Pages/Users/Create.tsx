@@ -22,12 +22,14 @@ interface ModulePermission {
 interface Props {
     shops: Shop[];
     currentUserRole: string;
+    // Les rôles que le serveur acceptera (UserController::assignableRoles).
+    assignableRoles: string[];
     modules: Record<string, string>;
 }
 
 const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
-export default function UsersCreate({ shops, currentUserRole, modules }: Props) {
+export default function UsersCreate({ shops, currentUserRole, assignableRoles, modules }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const isSuperAdmin = currentUserRole === 'super_admin';
@@ -193,7 +195,7 @@ export default function UsersCreate({ shops, currentUserRole, modules }: Props) 
                                     onChange={(e) => setData('role', e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
-                                    {ROLE_KEYS.map((key) => (
+                                    {ROLE_KEYS.filter((key) => assignableRoles.includes(key)).map((key) => (
                                         <option key={key} value={key}>{roleLabels[key] || key}</option>
                                     ))}
                                 </select>

@@ -56,6 +56,9 @@ class UserController extends Controller
         return Inertia::render('Users/Create', [
             'shops' => $shops,
             'currentUserRole' => $user->role,
+            // La liste qui valide le rôle à l'enregistrement : le menu affichait les six
+            // rôles en dur, « Admin plateforme » compris, que le serveur refuse de toute façon.
+            'assignableRoles' => self::assignableRoles($user),
             'modules' => UserPermission::MODULES,
         ]);
     }
@@ -136,6 +139,7 @@ class UserController extends Controller
             'user' => $user,
             'shops' => $shops,
             'currentUserRole' => $currentUser->role,
+            'assignableRoles' => self::assignableRoles($currentUser),
             'modules' => UserPermission::MODULES,
         ]);
     }
