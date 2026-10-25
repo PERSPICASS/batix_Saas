@@ -14,6 +14,13 @@ Schedule::command('subscriptions:send-expiry-reminders')->dailyAt('08:00');
 
 // Relances APRÈS la fin de l'essai gratuit sans paiement : J+1, 3, 7, 14, 30 (voir
 // SendTrialFollowups). Le rappel ci-dessus, lui, prévient AVANT l'échéance.
+// Le résumé des alertes du jour (baisse de CA, retards de paiement, stock, transferts),
+// tôt le matin, avant l'ouverture des boutiques.
+Schedule::command('alerts:send-daily')
+    ->dailyAt('07:30')
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::error('Scheduled alerts:send-daily failed.'));
+
 Schedule::command('trials:send-followups')
     ->dailyAt('09:30')
     ->withoutOverlapping()

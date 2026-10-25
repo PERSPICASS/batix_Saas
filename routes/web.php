@@ -125,6 +125,11 @@ Route::get('/relances-essai/desinscription/{user}', \App\Http\Controllers\TrialF
     ->middleware(['signed:relative', 'throttle:20,1'])
     ->name('trial-followups.unsubscribe');
 
+// Désinscription en un clic du résumé quotidien des alertes (lien dans DailyAlertsMail).
+Route::get('/alertes/desinscription/{user}', \App\Http\Controllers\AlertsUnsubscribeController::class)
+    ->middleware(['signed:relative', 'throttle:20,1'])
+    ->name('alerts.unsubscribe');
+
 // Route publique pour voir les plans
 Route::get('/plans', [SubscriptionPlanController::class, 'publicIndex'])->name('plans.index');
 

@@ -69,6 +69,7 @@ class User extends Authenticatable
             // Hors $fillable exprès : seul l'admin plateforme le pose (forceFill).
             'is_demo' => 'boolean',
             'trial_followups_opted_out_at' => 'datetime',
+            'alerts_opted_out_at' => 'datetime',
             'invitation_sent_at' => 'datetime',
             'invitation_accepted_at' => 'datetime',
             'email_verification_code_expires_at' => 'datetime',
