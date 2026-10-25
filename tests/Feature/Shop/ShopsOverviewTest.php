@@ -239,8 +239,11 @@ class ShopsOverviewTest extends TestCase
         $this->accra->update(['name' => '=HYPERLINK("http://evil")']);
 
         $sheet = $this->exportSheet();
-        $cell = $sheet->getCell('A4');
+        // Found by content: Postgres sorts names ignoring punctuation, SQLite does not.
+        $cell = collect(['A4', 'A5'])->map(fn ($c) => $sheet->getCell($c))
+            ->first(fn ($cell) => str_contains((string) $cell->getValue(), 'HYPERLINK'));
 
+        $this->assertNotNull($cell);
         $this->assertSame(\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING, $cell->getDataType());
         $this->assertStringStartsWith("'=", (string) $cell->getValue());
     }
