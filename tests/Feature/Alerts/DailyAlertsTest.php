@@ -82,6 +82,8 @@ class DailyAlertsTest extends TestCase
         $this->assertStringContainsString('-60 %', $html);
         $this->assertStringContainsString('1 500', $html);
         $this->assertStringContainsString('en route depuis 5 jours', $html);
+        $this->assertStringContainsString('1</strong> produit(s) en rupture', $html);
+        $this->assertStringContainsString('1 produit(s) sous le seuil', $html);
         $this->assertStringContainsString('/alertes/desinscription/', $html);
     }
 
@@ -137,5 +139,16 @@ class DailyAlertsTest extends TestCase
         $this->get(parse_url($url, PHP_URL_PATH) . '?' . parse_url($url, PHP_URL_QUERY))->assertOk();
 
         $this->assertNotNull($this->owner->fresh()->alerts_opted_out_at);
+    }
+
+    public function test_a_zero_count_is_not_written(): void
+    {
+        $this->owner->forceFill(['locale' => 'fr'])->save();
+        $digest = ['shops' => [['id' => 1, 'name' => 'Cocody', 'currency' => 'XOF', 'alerts' => ['stock' => ['out_of_stock' => 0, 'low' => 37]]]], 'transfers' => []];
+
+        $html = (new DailyAlertsMail($this->owner, $digest))->render();
+
+        $this->assertStringContainsString('37 produit(s) sous le seuil', $html);
+        $this->assertStringNotContainsString('rupture', $html);
     }
 }

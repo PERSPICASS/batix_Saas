@@ -32,9 +32,13 @@
                     @isset($shop['alerts']['overdue'])
                         <li>{!! $rich(__('mail.daily_alerts.overdue', ['count' => $shop['alerts']['overdue']['count'], 'owed' => $money($shop['alerts']['overdue']['owed'], $shop['currency'])])) !!}</li>
                     @endisset
-                    @isset($shop['alerts']['stock'])
-                        <li>{!! $rich(__('mail.daily_alerts.stock', ['out' => $shop['alerts']['stock']['out_of_stock'], 'low' => $shop['alerts']['stock']['low']])) !!}</li>
-                    @endisset
+                    {{-- Chaque chiffre seulement s'il n'est pas nul : « 0 en rupture » n'apprend rien. --}}
+                    @if (($shop['alerts']['stock']['out_of_stock'] ?? 0) > 0)
+                        <li>{!! $rich(__('mail.daily_alerts.stock_out', ['count' => $shop['alerts']['stock']['out_of_stock']])) !!}</li>
+                    @endif
+                    @if (($shop['alerts']['stock']['low'] ?? 0) > 0)
+                        <li>{{ __('mail.daily_alerts.stock_low', ['count' => $shop['alerts']['stock']['low']]) }}</li>
+                    @endif
                 </ul>
             </div>
         @endforeach
