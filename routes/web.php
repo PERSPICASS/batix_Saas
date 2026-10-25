@@ -23,6 +23,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\ShopsOverviewController;
 use App\Http\Controllers\SubcategoryController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SettingsController;
@@ -333,6 +334,8 @@ Route::prefix('{code_user}')
         ->name('shops.store')
         ->middleware(['subscription.limits:shop', 'permission:shops,create']);
     Route::get('boutiques', [ShopController::class, 'index'])->name('shops.index')->middleware('permission:shops,view');
+    // Toutes les boutiques côte à côte, avec leurs chiffres (propriétaire du compte seulement).
+    Route::get('mes-boutiques', [ShopsOverviewController::class, 'index'])->name('shops.overview');
     // Copie de produits d'une boutique à l'autre : le catalogue se saisit une fois, la
     // succursale démarre à stock zéro. Aucun stock n'est déplacé.
     Route::post('boutiques/{shop}/transferer', [ShopController::class, 'transferProducts'])
