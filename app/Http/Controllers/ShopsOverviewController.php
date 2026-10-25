@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ShopsOverviewExport;
+use App\Models\Shop;
+use App\Services\ShopReport;
 use App\Services\ShopsOverview;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -42,6 +44,58 @@ class ShopsOverviewController extends Controller
     }
 
     /**
+     * Le détail d'une boutique : ses indicateurs, l'évolution de son CA, ce qui le compose,
+     * et ce qui demande une action. Même période et mêmes définitions que la liste.
+     */
+    public function show(Request $request, string $codeUser, Shop $shop, ShopReport $report): Response
+    {
+        $user = Auth::user();
+        abort_unless($user->role === 'super_admin', 403);
+        // Une boutique d'un autre compte n'existe pas, vue d'ici.
+        abort_unless($user->accessibleShopsQuery()->whereKey($shop->id)->exists(), 404);
+
+        $period = $this->period($request);
+
+        return Inertia::render('Shops/OverviewShow', [
+            'shop' => [
+                'id' => $shop->id,
+                'name' => $shop->name,
+                'currency' => $shop->currency,
+                'currency_symbol' => get_currency_symbol($shop->currency),
+                'is_active' => (bool) $shop->is_active,
+            ],
+            'report' => $report->build($shop, ...array_values(array_slice($period, 1))),
+            'period' => $this->periodProps($period),
+            'filters' => (object) $request->only(['period', 'date_from', 'date_to']),
+        ]);
+    }
+
+    /**
+     * La période demandée et celle à laquelle on la compare.
+     *
+     * @return array{key: string, start: CarbonInterface, end: CarbonInterface, previous_start: CarbonInterface, previous_end: CarbonInterface}
+     */
+    private function period(Request $request): array
+    {
+        $validated = $request->validate([
+            'period' => ['nullable', 'in:'.implode(',', self::PERIODS)],
+            'date_from' => ['nullable', 'date', 'required_if:period,custom'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from', 'required_if:period,custom'],
+        ]);
+        $key = $validated['period'] ?? 'month';
+
+        [$start, $end] = $this->range($key, $validated);
+        [$previousStart, $previousEnd] = $this->previousRange($key, $start, $end);
+
+        return ['key' => $key, 'start' => $start, 'end' => $end, 'previous_start' => $previousStart, 'previous_end' => $previousEnd];
+    }
+
+    private function periodProps(array $period): array
+    {
+        return ['key' => $period['key']] + array_map(fn ($date) => $date->toDateString(), array_slice($period, 1));
+    }
+
+    /**
      * Les lignes, les totaux par devise et la période : partagé par l'écran et l'export,
      * pour qu'ils ne puissent pas dire deux choses différentes.
      */
@@ -50,15 +104,8 @@ class ShopsOverviewController extends Controller
         $user = Auth::user();
         abort_unless($user->role === 'super_admin', 403);
 
-        $validated = $request->validate([
-            'period' => ['nullable', 'in:'.implode(',', self::PERIODS)],
-            'date_from' => ['nullable', 'date', 'required_if:period,custom'],
-            'date_to' => ['nullable', 'date', 'after_or_equal:date_from', 'required_if:period,custom'],
-        ]);
-        $period = $validated['period'] ?? 'month';
-
-        [$start, $end] = $this->range($period, $validated);
-        [$previousStart, $previousEnd] = $this->previousRange($period, $start, $end);
+        $period = $this->period($request);
+        ['start' => $start, 'end' => $end, 'previous_start' => $previousStart, 'previous_end' => $previousEnd] = $period;
 
         $shops = $user->accessibleShopsQuery()->orderBy('name')->get(['shops.id', 'shops.name', 'shops.currency', 'shops.is_active']);
 
@@ -84,13 +131,7 @@ class ShopsOverviewController extends Controller
                 'figures' => $this->sum($group->pluck('figures')),
                 'previous' => $this->sum($group->pluck('previous')),
             ])->values(),
-            'period' => [
-                'key' => $period,
-                'start' => $start->toDateString(),
-                'end' => $end->toDateString(),
-                'previous_start' => $previousStart->toDateString(),
-                'previous_end' => $previousEnd->toDateString(),
-            ],
+            'period' => $this->periodProps($period),
         ];
     }
 

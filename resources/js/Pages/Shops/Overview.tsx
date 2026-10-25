@@ -1,23 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
-import { AlertTriangle, ChevronRight, Download, TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Download, Eye } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
-
-type PeriodKey = 'today' | 'week' | 'month' | 'year' | 'custom';
-
-interface Figures {
-    revenue: number;
-    count: number;
-    average_basket: number;
-    gross_margin: number;
-    expenses: number;
-    // Situation à ce jour : absents de la période de comparaison.
-    receivables?: number;
-    stock_value?: number;
-    low_stock?: number;
-}
+import { Figures, money, Period, PeriodFilters, PeriodPicker, periodQuery, Trend } from '@/Components/ShopsOverview/shared';
 
 interface Row {
     id: number;
@@ -39,66 +25,19 @@ interface Total {
 interface Props {
     rows: Row[];
     totals: Total[];
-    period: { key: PeriodKey; start: string; end: string; previous_start: string; previous_end: string };
-    filters: { period?: PeriodKey; date_from?: string; date_to?: string };
-}
-
-const PERIODS: PeriodKey[] = ['today', 'week', 'month', 'year', 'custom'];
-
-/** Le montant arrondi à l'unité : à cette échelle, les centimes brouillent la comparaison. */
-function money(amount: number, symbol: string): string {
-    return `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount)} ${symbol}`;
-}
-
-function shortDate(iso: string, locale: string): string {
-    return new Date(`${iso}T00:00:00`).toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-/** Évolution par rapport à la période précédente ; rien quand il n'y a pas de base. */
-function Trend({ current, previous }: { current: number; previous: number }) {
-    if (!previous) {
-        return null;
-    }
-    const change = Math.round(((current - previous) / Math.abs(previous)) * 100);
-    const up = change >= 0;
-    const Icon = up ? TrendingUp : TrendingDown;
-
-    return (
-        <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${up ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-            <Icon className="size-3" />
-            {up ? '+' : ''}{change} %
-        </span>
-    );
+    period: Period;
+    filters: PeriodFilters;
 }
 
 export default function ShopsOverview({ rows, totals, period, filters }: Props) {
     const route = useRoute();
-    const { t, locale } = useLocale();
+    const { t } = useLocale();
     const o = t.shopsOverview;
 
-    const [dateFrom, setDateFrom] = useState(filters.date_from ?? period.start);
-    const [dateTo, setDateTo] = useState(filters.date_to ?? period.end);
-    const [showCustom, setShowCustom] = useState(period.key === 'custom');
-
-    const choose = (key: PeriodKey) => {
-        if (key === 'custom') {
-            setShowCustom(true);
-            return;
-        }
-        setShowCustom(false);
-        router.get(route('shops.overview'), { period: key }, { preserveScroll: true });
-    };
-
-    // L'export reprend la période affichée, pas celle en cours de saisie.
-    const exportUrl = `${route('shops.overview.export')}?${new URLSearchParams(
-        period.key === 'custom' ? { period: 'custom', date_from: period.start, date_to: period.end } : { period: period.key },
-    ).toString()}`;
-
-    const applyCustom = () => router.get(route('shops.overview'), { period: 'custom', date_from: dateFrom, date_to: dateTo }, { preserveScroll: true });
-
-    // Cliquer une boutique la rend active et ouvre son tableau de bord (même mécanisme que
-    // le sélecteur de l'en-tête : `?shop=`).
-    const open = (row: Row) => router.visit(`${route('dashboard')}?shop=${row.id}`);
+    // L'export et le détail reprennent la période affichée, pas celle en cours de saisie.
+    const exportUrl = `${route('shops.overview.export')}?${periodQuery(period)}`;
+    const detailUrl = (row: Row) => `${route('shops.overview.show', { shop: row.id })}?${periodQuery(period)}`;
+    const open = (row: Row) => router.visit(detailUrl(row));
 
     const metrics: { key: keyof Figures; label: string; money: boolean; trend: boolean }[] = [
         { key: 'revenue', label: o.columns.revenue, money: true, trend: true },
@@ -127,57 +66,19 @@ export default function ShopsOverview({ rows, totals, period, filters }: Props) 
             <Head title={o.title} />
 
             <div className="space-y-6">
-                {/* Période */}
-                <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-                    <div className="flex flex-wrap items-center gap-2">
+                <PeriodPicker
+                    url={route('shops.overview')}
+                    period={period}
+                    filters={filters}
+                    actions={
                         <a
                             href={exportUrl}
-                            className="order-last inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-gray-100 sm:ml-auto dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
                         >
                             <Download className="size-4" /> {o.export}
                         </a>
-                        {PERIODS.map((key) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => choose(key)}
-                                aria-pressed={(showCustom ? 'custom' : period.key) === key}
-                                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                                    (showCustom ? 'custom' : period.key) === key
-                                        ? 'bg-amber-300 text-slate-950'
-                                        : 'border border-gray-300 text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10'
-                                }`}
-                            >
-                                {o.periods[key]}
-                            </button>
-                        ))}
-                    </div>
-
-                    {showCustom && (
-                        <div className="mt-3 flex flex-wrap items-end gap-3">
-                            <label className="text-sm text-slate-600 dark:text-slate-300">
-                                {o.from}
-                                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-                                    className="mt-1 block rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
-                            </label>
-                            <label className="text-sm text-slate-600 dark:text-slate-300">
-                                {o.to}
-                                <input type="date" value={dateTo} min={dateFrom} onChange={(e) => setDateTo(e.target.value)}
-                                    className="mt-1 block rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
-                            </label>
-                            <button type="button" onClick={applyCustom} disabled={!dateFrom || !dateTo}
-                                className="rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50">
-                                {o.apply}
-                            </button>
-                        </div>
-                    )}
-
-                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                        {o.range(shortDate(period.start, locale), shortDate(period.end, locale))}
-                        {' · '}
-                        {o.comparedWith(shortDate(period.previous_start, locale), shortDate(period.previous_end, locale))}
-                    </p>
-                </div>
+                    }
+                />
 
                 {rows.length === 0 ? (
                     <p className="text-sm text-slate-500 dark:text-slate-400">{o.empty}</p>
@@ -191,6 +92,7 @@ export default function ShopsOverview({ rows, totals, period, filters }: Props) 
                                         <th className="px-4 py-3">{o.columns.shop}</th>
                                         {metrics.map((m) => <th key={m.key} className="px-4 py-3 text-right">{m.label}</th>)}
                                         <th className="px-4 py-3 text-right">{o.columns.lowStock}</th>
+                                        <th className="px-2 py-3"><span className="sr-only">{o.details}</span></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -208,6 +110,11 @@ export default function ShopsOverview({ rows, totals, period, filters }: Props) 
                                                 </td>
                                             ))}
                                             <td className="px-4 py-3 text-right">{lowStock(row.figures.low_stock)}</td>
+                                            <td className="px-2 py-3 text-right">
+                                                <span className="inline-flex rounded-lg p-1.5 text-amber-600 dark:text-amber-300" aria-hidden="true">
+                                                    <Eye className="size-4" />
+                                                </span>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -222,6 +129,7 @@ export default function ShopsOverview({ rows, totals, period, filters }: Props) 
                                                 </td>
                                             ))}
                                             <td className="px-4 py-3 text-right">{lowStock(total.figures.low_stock)}</td>
+                                            <td />
                                         </tr>
                                     ))}
                                 </tfoot>
@@ -247,7 +155,7 @@ export default function ShopsOverview({ rows, totals, period, filters }: Props) 
                                             {card.name}
                                             {!card.is_active && <span className="ml-2 text-xs font-normal text-slate-500">{o.inactive}</span>}
                                         </span>
-                                        {!card.isTotal && <ChevronRight className="size-4 shrink-0 text-slate-400" />}
+                                        {!card.isTotal && <Eye className="size-4 shrink-0 text-amber-600 dark:text-amber-300" />}
                                     </div>
                                     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                         {metrics.map((m) => (

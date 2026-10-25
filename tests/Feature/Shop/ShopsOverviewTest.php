@@ -73,7 +73,8 @@ class ShopsOverviewTest extends TestCase
         return collect($rows)->firstWhere('name', $shopName);
     }
 
-    public function test_each_shop_gets_its_figures_with_the_agreed_definitions(): void
+    /** The month of Cocody, through the real routes; amounts worked out in the comments. */
+    private function cocodyMonth(): void
     {
         $code = $this->owner->code_user;
 
@@ -106,6 +107,12 @@ class ShopsOverviewTest extends TestCase
 
         // 5. An expense of the month.
         Expense::create(['shop_id' => $this->cocody->id, 'user_id' => $this->owner->id, 'title' => 'Loyer', 'amount' => 5000, 'expense_date' => now()->toDateString()]);
+
+    }
+
+    public function test_each_shop_gets_its_figures_with_the_agreed_definitions(): void
+    {
+        $this->cocodyMonth();
 
         $f = $this->figures('Cocody')['figures'];
 
@@ -236,5 +243,77 @@ class ShopsOverviewTest extends TestCase
 
         $this->assertSame(\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING, $cell->getDataType());
         $this->assertStringStartsWith("'=", (string) $cell->getValue());
+    }
+
+    private function detail(Shop $shop, array $query = []): array
+    {
+        return $this->actingAs($this->owner)
+            ->get("/{$this->owner->code_user}/mes-boutiques/{$shop->id}?" . http_build_query($query))
+            ->assertOk()->viewData('page')['props'];
+    }
+
+    public function test_the_detail_gives_the_same_figures_as_the_list_and_what_makes_them(): void
+    {
+        $this->cocodyMonth();
+
+        $props = $this->detail($this->cocody);
+        $report = $props['report'];
+
+        // Same figures as the row of the list: one definition for both screens.
+        $this->assertEquals($this->figures('Cocody')['figures'], $report['figures']);
+
+        // CA = counter 3 800 + invoices 4 000 - credit note 1 000.
+        $this->assertEquals(['counter' => 3800, 'invoices' => 3000], $report['split']);
+
+        // One bar per day of the month, adding up to the revenue.
+        $this->assertSame('day', $report['timeline']['unit']);
+        $this->assertCount(now()->daysInMonth, $report['timeline']['current']);
+        $this->assertEquals(6800, collect($report['timeline']['current'])->sum('revenue'));
+
+        // The hammer: 2 kept + 2 on credit + 4 invoiced - 1 credited; same revenue and margin.
+        $hammer = $report['products'][0];
+        $this->assertSame(7, $hammer['quantity']);
+        $this->assertEquals(6800, $hammer['revenue']);
+        $this->assertEquals(2600, $hammer['margin']);
+        $this->assertEquals(6800, collect($report['categories'])->sum('revenue'));
+
+        // The owner sold everything: two tickets and the invoice.
+        $this->assertSame(3, $report['sellers'][0]['count']);
+        $this->assertEquals(6800, $report['sellers'][0]['revenue']);
+
+        // Counter sales by payment method: 1 800 cash, 2 000 on credit.
+        $this->assertEqualsCanonicalizing(['cash' => 1800, 'credit' => 2000], collect($report['payment_methods'])->pluck('revenue', 'method')->all());
+
+        $this->assertEquals(5000, $report['expenses'][0]['amount']);
+        // The invoiced customer owes 3 000 (the credit sale had no customer).
+        $this->assertEquals(3000, $report['debtors'][0]['owed']);
+    }
+
+    public function test_a_year_is_drawn_month_by_month(): void
+    {
+        $report = $this->detail($this->cocody, ['period' => 'year'])['report'];
+
+        $this->assertSame('month', $report['timeline']['unit']);
+        $this->assertCount(12, $report['timeline']['current']);
+        $this->assertCount(12, $report['timeline']['previous']);
+    }
+
+    public function test_low_stock_lists_the_products_under_their_threshold(): void
+    {
+        $this->hammer->update(['stock_quantity' => 2, 'min_stock_alert' => 5]);
+
+        $low = $this->detail($this->cocody)['report']['low_stock'];
+
+        $this->assertSame([['id' => $this->hammer->id, 'name' => $this->hammer->name, 'stock' => 2, 'min' => 5]], $low);
+    }
+
+    public function test_the_detail_of_another_account_shop_does_not_exist(): void
+    {
+        $stranger = Shop::factory()->create();
+
+        $this->actingAs($this->owner)->get("/{$this->owner->code_user}/mes-boutiques/{$stranger->id}")->assertNotFound();
+
+        $manager = User::factory()->create(['role' => 'manager', 'shop_id' => $this->cocody->id]);
+        $this->actingAs($manager)->get("/{$this->owner->code_user}/mes-boutiques/{$this->cocody->id}")->assertForbidden();
     }
 }

@@ -258,14 +258,14 @@ export default function Authenticated({
             ...(isSuperAdmin && shops.length >= 2 ? [{
                 label: t.nav.shopsOverview,
                 href: buildRoute('shops.overview'),
-                active: route().current('shops.overview'),
+                active: route().current('shops.overview*'),
                 icon: LayoutGrid,
                 module: null,
             }] : []),
             {
                 label: t.nav.shops,
                 href: buildRoute('shops.index'),
-                active: route().current('shops.*') && !route().current('shops.overview'),
+                active: route().current('shops.*') && !route().current('shops.overview*'),
                 icon: Store,
                 module: 'shops',
             },
