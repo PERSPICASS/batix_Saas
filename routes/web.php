@@ -522,6 +522,8 @@ Route::prefix('{code_user}')
 
     // Transferts de stock entre les boutiques d'un compte (envoi, puis réception).
     Route::get('transferts-stock', [StockTransferController::class, 'index'])->name('stock-transfers.index')->middleware('permission:stocks,view');
+    Route::get('transferts-stock/reequilibrage', [StockTransferController::class, 'rebalance'])->name('stock-transfers.rebalance')->middleware('permission:stocks,create');
+    Route::get('transferts-stock/nouveau', [StockTransferController::class, 'create'])->name('stock-transfers.create')->middleware('permission:stocks,create');
     Route::post('transferts-stock', [StockTransferController::class, 'store'])->name('stock-transfers.store')->middleware('permission:stocks,create');
     Route::post('transferts-stock/{stockTransfer}/receptionner', [StockTransferController::class, 'receive'])->name('stock-transfers.receive')->middleware('permission:stocks,edit');
     Route::post('transferts-stock/{stockTransfer}/annuler', [StockTransferController::class, 'cancel'])->name('stock-transfers.cancel')->middleware('permission:stocks,edit');

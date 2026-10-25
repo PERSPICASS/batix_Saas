@@ -227,6 +227,9 @@ class StockTransferService
             }
         }
 
+        // Les plus urgentes d'abord : la boutique la plus loin sous son seuil, en proportion.
+        usort($suggestions, fn ($a, $b) => ($a['to_stock'] / $a['to_min']) <=> ($b['to_stock'] / $b['to_min']));
+
         return $suggestions;
     }
 

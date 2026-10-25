@@ -155,8 +155,8 @@ class StockTransferTest extends TestCase
         // Yopougon: 2 left, threshold 10. Cocody: 50, threshold 10.
         $low = $this->product($this->yopougon, ['stock_quantity' => 2]);
 
-        $suggestions = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock")
-            ->assertOk()->viewData('page')['props']['suggestions'];
+        $suggestions = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock/reequilibrage")
+            ->assertOk()->viewData('page')['props']['suggestions']['data'];
 
         // Up to 2 × 10 = 20 at Yopougon (need 18), Cocody keeps 2 × 10 (can spare 30).
         $this->assertCount(1, $suggestions);
@@ -170,8 +170,8 @@ class StockTransferTest extends TestCase
         $low = $this->product($this->yopougon, ['stock_quantity' => 2]);
         $this->send([$this->cement->id => 5]);
 
-        $suggestions = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock")
-            ->viewData('page')['props']['suggestions'];
+        $suggestions = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock/reequilibrage")
+            ->viewData('page')['props']['suggestions']['data'];
 
         // 18 needed, 5 already in transit.
         $this->assertSame(13, $suggestions[0]['quantity']);
@@ -192,5 +192,52 @@ class StockTransferTest extends TestCase
         $this->assertSame(2, StockTransfer::count());
         $this->assertSame(42, $this->cement->fresh()->stock_quantity);
         $this->assertSame(2, StockTransfer::where('to_shop_id', $this->yopougon->id)->sole()->items()->count());
+    }
+
+    public function test_the_home_page_only_counts_the_suggestions(): void
+    {
+        $this->product($this->yopougon, ['stock_quantity' => 2]);
+
+        $props = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock")->assertOk()->viewData('page')['props'];
+
+        // A count, not the list: a real catalogue gave thousands of rows on this page.
+        $this->assertSame(1, $props['rebalanceCount']);
+        $this->assertArrayNotHasKey('suggestions', $props);
+    }
+
+    public function test_rebalancing_is_paged_by_25_most_urgent_first_and_searchable(): void
+    {
+        foreach (range(1, 30) as $i) {
+            // Cocody holds plenty of each; Yopougon has $i % 10 left, threshold 10.
+            $this->product($this->cocody, ['name' => "Article {$i}", 'sku' => "ART-{$i}", 'stock_quantity' => 100]);
+            $this->product($this->yopougon, ['name' => "Article {$i}", 'sku' => "ART-{$i}", 'stock_quantity' => $i % 10]);
+        }
+
+        $page = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock/reequilibrage")->viewData('page')['props'];
+        $this->assertSame(30, $page['suggestions']['total']);
+        $this->assertCount(25, $page['suggestions']['data']);
+        $this->assertSame(0, $page['suggestions']['data'][0]['to_stock']);
+        $this->assertSame(30, $page['routes'][0]['count']);
+
+        $found = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock/reequilibrage?q=Article%2017")->viewData('page')['props'];
+        $this->assertSame(['Article 17'], collect($found['suggestions']['data'])->pluck('product')->all());
+    }
+
+    public function test_the_new_transfer_screen_searches_products_instead_of_listing_them(): void
+    {
+        $url = "/{$this->owner->code_user}/transferts-stock/nouveau?from_shop_id={$this->cocody->id}";
+
+        // Nothing until a search is typed.
+        $this->assertCount(0, $this->actingAs($this->owner)->get($url)->viewData('page')['props']['products']);
+
+        $found = $this->actingAs($this->owner)->get($url . '&q=cim')->viewData('page')['props']['products'];
+        $this->assertSame([$this->cement->id], collect($found)->pluck('id')->all());
+    }
+
+    public function test_a_manager_cannot_open_rebalancing(): void
+    {
+        $this->actingAs($this->manager($this->yopougon))
+            ->get("/{$this->owner->code_user}/transferts-stock/reequilibrage")
+            ->assertForbidden();
     }
 }

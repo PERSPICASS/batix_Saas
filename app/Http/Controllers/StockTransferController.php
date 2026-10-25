@@ -8,6 +8,7 @@ use App\Models\StockTransfer;
 use App\Services\ActivityLogger;
 use App\Services\StockTransferService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,10 +25,15 @@ class StockTransferController extends Controller
 {
     public function __construct(private StockTransferService $transfers) {}
 
+    /**
+     * L'accueil du module : deux actions (rééquilibrer, nouveau transfert) et la liste des
+     * transferts. Les suggestions et le choix des produits ont leur propre écran : tout
+     * empiler ici faisait une page de plusieurs milliers de lignes sur un vrai catalogue.
+     */
     public function index(Request $request): Response
     {
         $user = Auth::user();
-        $shops = $user->accessibleShopsQuery()->orderBy('name')->get(['shops.id', 'shops.name']);
+        $shops = $this->shops();
         $shopIds = $shops->pluck('id');
 
         $status = $request->input('status', 'in_transit');
@@ -41,23 +47,98 @@ class StockTransferController extends Controller
             ->through(fn ($transfer) => $transfer->setAttribute('can_receive', $transfer->status === 'in_transit' && $shopIds->contains($transfer->to_shop_id))
                 ->setAttribute('can_cancel', $transfer->status === 'in_transit' && $shopIds->contains($transfer->from_shop_id)));
 
-        // Le transfert à la main part d'une boutique choisie : ses produits en stock.
-        $fromShopId = (int) $request->input('from_shop_id', $shops->first()?->id);
-        $sourceProducts = $shopIds->contains($fromShopId)
-            ? Product::where('shop_id', $fromShopId)->where('track_stock', true)->where('has_variations', false)
-                ->where('stock_quantity', '>', 0)->orderBy('name')
-                ->get(['id', 'name', 'sku', 'stock_quantity'])
-            : collect();
-
         return Inertia::render('StockTransfers/Index', [
             'transfers' => $list,
-            'shops' => $shops,
-            // Rééquilibrer suppose de voir toutes les boutiques : le propriétaire seulement.
-            'suggestions' => $user->role === 'super_admin' && $shops->count() >= 2 ? $this->transfers->suggestions($shops) : [],
             'canSend' => $shops->count() >= 2,
-            'sourceProducts' => $sourceProducts,
-            'filters' => (object) ['status' => $status, 'from_shop_id' => $fromShopId],
+            // Le nombre seulement : le détail est sur l'écran Rééquilibrer.
+            'rebalanceCount' => $this->canRebalance($shops) ? count($this->transfers->suggestions($shops)) : null,
+            'inTransitCount' => StockTransfer::whereIn('to_shop_id', $shopIds)->where('status', 'in_transit')->count(),
+            'filters' => (object) ['status' => $status],
         ]);
+    }
+
+    /**
+     * Les suggestions, un trajet à la fois (de telle boutique vers telle autre), 25 par
+     * page, les plus urgentes d'abord, avec une recherche par produit.
+     */
+    public function rebalance(Request $request): Response
+    {
+        $shops = $this->shops();
+        abort_unless($this->canRebalance($shops), 403);
+
+        $all = collect($this->transfers->suggestions($shops));
+
+        $routes = $all->groupBy(fn ($s) => $s['from_shop_id'] . '-' . $s['to_shop_id'])
+            ->map(fn ($group) => [
+                'from_shop_id' => $group->first()['from_shop_id'],
+                'from_shop' => $group->first()['from_shop'],
+                'to_shop_id' => $group->first()['to_shop_id'],
+                'to_shop' => $group->first()['to_shop'],
+                'count' => $group->count(),
+            ])->sortByDesc('count')->values();
+
+        $from = (int) $request->input('from', $routes->first()['from_shop_id'] ?? 0);
+        $to = (int) $request->input('to', $routes->first()['to_shop_id'] ?? 0);
+        $search = trim((string) $request->input('q', ''));
+
+        $matching = $all->filter(fn ($s) => $s['from_shop_id'] === $from && $s['to_shop_id'] === $to)
+            ->when($search !== '', fn ($c) => $c->filter(fn ($s) => mb_stripos($s['product'], $search) !== false))
+            ->values();
+
+        $page = max(1, (int) $request->input('page', 1));
+        $suggestions = new LengthAwarePaginator(
+            $matching->forPage($page, 25)->values(),
+            $matching->count(),
+            25,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()],
+        );
+
+        return Inertia::render('StockTransfers/Rebalance', [
+            'routes' => $routes,
+            'route' => ['from' => $from, 'to' => $to],
+            'suggestions' => $suggestions,
+            'filters' => (object) ['q' => $search],
+        ]);
+    }
+
+    /**
+     * Un transfert à la main. Les produits ne sont envoyés qu'à la recherche (20 au plus) :
+     * une liste déroulante de tout le catalogue en comptait plus de 3 000.
+     */
+    public function create(Request $request): Response
+    {
+        $shops = $this->shops();
+        abort_unless($shops->count() >= 2, 403);
+
+        $fromShopId = (int) $request->input('from_shop_id', $shops->first()->id);
+        abort_unless($shops->pluck('id')->contains($fromShopId), 403);
+
+        $search = trim((string) $request->input('q', ''));
+        $products = $search === '' ? collect() : Product::where('shop_id', $fromShopId)
+            ->where('track_stock', true)->where('has_variations', false)->where('stock_quantity', '>', 0)
+            ->where(fn ($q) => $q->whereContains('name', $search)->orWhereContains('sku', $search))
+            ->orderBy('name')->limit(20)
+            ->get(['id', 'name', 'sku', 'stock_quantity']);
+
+        return Inertia::render('StockTransfers/Create', [
+            // Pas « shops » : ce nom est la prop partagée dont se servent le menu et le
+            // sélecteur de boutique, qui n'affichaient plus « aucune boutique ».
+            'shopChoices' => $shops,
+            'products' => $products,
+            'filters' => (object) ['from_shop_id' => $fromShopId, 'q' => $search],
+        ]);
+    }
+
+    private function shops()
+    {
+        return Auth::user()->accessibleShopsQuery()->orderBy('name')->get(['shops.id', 'shops.name']);
+    }
+
+    /** Rééquilibrer suppose de voir toutes les boutiques : le propriétaire seulement. */
+    private function canRebalance($shops): bool
+    {
+        return Auth::user()->role === 'super_admin' && $shops->count() >= 2;
     }
 
     /**
