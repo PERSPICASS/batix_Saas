@@ -19,6 +19,7 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\OfflineSaleSyncController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockMovementController;
+use App\Http\Controllers\StockTransferController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PermissionController;
@@ -518,6 +519,12 @@ Route::prefix('{code_user}')
         ->middlewareFor(['index', 'show'], 'permission:stocks,view')
         ->middlewareFor(['create', 'store'], 'permission:stocks,create')
         ->middlewareFor('destroy', 'permission:stocks,delete');
+
+    // Transferts de stock entre les boutiques d'un compte (envoi, puis réception).
+    Route::get('transferts-stock', [StockTransferController::class, 'index'])->name('stock-transfers.index')->middleware('permission:stocks,view');
+    Route::post('transferts-stock', [StockTransferController::class, 'store'])->name('stock-transfers.store')->middleware('permission:stocks,create');
+    Route::post('transferts-stock/{stockTransfer}/receptionner', [StockTransferController::class, 'receive'])->name('stock-transfers.receive')->middleware('permission:stocks,edit');
+    Route::post('transferts-stock/{stockTransfer}/annuler', [StockTransferController::class, 'cancel'])->name('stock-transfers.cancel')->middleware('permission:stocks,edit');
 
     // Inventaires
     Route::resource('inventory', InventoryController::class)

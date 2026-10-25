@@ -37,6 +37,7 @@ return [
         'App\\Models\\Expense' => 'Dépense',
         'App\\Models\\SaleReturn' => 'Retour',
         'App\\Models\\Purchase' => 'Achat',
+        'App\\Models\\StockTransfer' => 'Transfert de stock',
     ],
 
     'fields' => [
@@ -77,6 +78,8 @@ return [
         'purchase_received' => 'Réception de marchandise pour :reference',
         'purchase_cancelled' => 'Bon de commande :reference annulé',
         'purchase_deleted' => 'Bon de commande :reference supprimé',
+        'stock_transfer_received' => 'Transfert de stock :reference réceptionné',
+        'stock_transfer_cancelled' => 'Transfert de stock :reference annulé',
         'api_token_created' => "Token API créé : :name",
         'api_token_revoked' => 'Token API révoqué : :name',
         'login' => 'Connexion à la plateforme',

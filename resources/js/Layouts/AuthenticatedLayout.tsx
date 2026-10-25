@@ -26,6 +26,7 @@ import {
     Key,
     LayoutDashboard,
     LayoutGrid,
+    ArrowRightLeft,
     Lock,
     LogOut,
     Menu,
@@ -296,6 +297,13 @@ export default function Authenticated({
                 href: buildRoute('stocks.index'),
                 active: route().current('stocks.*'),
                 icon: Boxes,
+                module: 'stocks',
+            },
+            {
+                label: t.nav.stockTransfers,
+                href: buildRoute('stock-transfers.index'),
+                active: route().current('stock-transfers.*'),
+                icon: ArrowRightLeft,
                 module: 'stocks',
             },
             {

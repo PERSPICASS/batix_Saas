@@ -37,6 +37,7 @@ return [
         'App\\Models\\Expense' => 'Expense',
         'App\\Models\\SaleReturn' => 'Return',
         'App\\Models\\Purchase' => 'Purchase',
+        'App\\Models\\StockTransfer' => 'Stock transfer',
     ],
 
     'fields' => [
@@ -75,6 +76,8 @@ return [
         'purchase_received' => 'Goods received for :reference',
         'purchase_cancelled' => 'Purchase order :reference cancelled',
         'purchase_deleted' => 'Purchase order :reference deleted',
+        'stock_transfer_received' => 'Stock transfer :reference received',
+        'stock_transfer_cancelled' => 'Stock transfer :reference cancelled',
         'api_token_created' => 'API token created: :name',
         'api_token_revoked' => 'API token revoked: :name',
         'login' => 'Logged in to the platform',
