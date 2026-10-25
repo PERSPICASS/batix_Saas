@@ -26,6 +26,7 @@ import { expenses } from './expenses';
 import { suppliers } from './suppliers';
 import { users } from './users';
 import { stocks } from './stocks';
+import { shopsOverview } from './shopsOverview';
 import { inventory } from './inventory';
 import { depots } from './depots';
 import { categories } from './categories';
@@ -79,6 +80,7 @@ export const translations = {
         suppliers: suppliers.fr,
         users: users.fr,
         stocks: stocks.fr,
+        shopsOverview: shopsOverview.fr,
         inventory: inventory.fr,
         depots: depots.fr,
         categories: categories.fr,
@@ -131,6 +133,7 @@ export const translations = {
         suppliers: suppliers.en,
         users: users.en,
         stocks: stocks.en,
+        shopsOverview: shopsOverview.en,
         inventory: inventory.en,
         depots: depots.en,
         categories: categories.en,

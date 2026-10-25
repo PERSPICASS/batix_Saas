@@ -321,26 +321,13 @@ class ShopController extends Controller
 
         // La page rendait `Shops/Show`, un composant qui n'existait pas : Inertia ne
         // pouvait pas le résoudre, d'où un écran blanc au clic sur « Voir ».
-        // Les statistiques ne comptent que les produits parents, mais le transfert doit
-        // pouvoir porter sur une déclinaison : c'est elle qui détient le stock.
-        // La somme des dépôts est jointe en une fois : stockValue() et totalStock() la
-        // consultent pour chaque produit, et sans cela chacun déclencherait sa propre requête.
-        $products = $shop->products()
-            ->whereNull('parent_id')
-            ->withSum('depotProducts', 'quantity')
-            ->get();
+        // Les statistiques ne comptent que les produits parents (Shop::stockStats), mais le
+        // transfert doit pouvoir porter sur une déclinaison : c'est elle qui détient le stock.
         $transferable = $shop->products()->with('parent:id,name')->get();
 
         return Inertia::render('Shops/Show', [
             'shop' => $shop,
-            'stats' => [
-                'products' => $products->count(),
-                // Comptoir + dépôts, comme la valeur juste en dessous : compter les unités
-                // autrement que la valeur ferait dire deux choses différentes au même écran.
-                'stock_units' => (int) $products->sum(fn ($product) => $product->totalStock()),
-                'stock_value' => round($products->sum(fn ($product) => $product->stockValue()), 2),
-                'low_stock' => $products->filter(fn ($product) => $product->isLowStock())->count(),
-            ],
+            'stats' => $shop->stockStats(),
             // Les autres boutiques du compte, destinations possibles d'un transfert.
             'otherShops' => $user->accessibleShopsQuery()
                 ->where('id', '!=', $shop->id)

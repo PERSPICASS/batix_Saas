@@ -192,6 +192,31 @@ class Shop extends Model
         return $this->hasMany(Product::class);
     }
 
+    /**
+     * Le stock de la boutique : nombre de produits, unités, valeur et alertes.
+     *
+     * Une seule définition pour la fiche boutique et la vue « Mes boutiques » : seuls les
+     * produits parents comptent, et unités comme valeur couvrent comptoir ET dépôts, au
+     * coût du produit (voir Product::stockValue). La somme des dépôts est jointe en une
+     * fois : sans cela, chaque produit déclencherait sa propre requête.
+     *
+     * @return array{products: int, stock_units: int, stock_value: float, low_stock: int}
+     */
+    public function stockStats(): array
+    {
+        $products = $this->products()
+            ->whereNull('parent_id')
+            ->withSum('depotProducts', 'quantity')
+            ->get();
+
+        return [
+            'products' => $products->count(),
+            'stock_units' => (int) $products->sum(fn ($product) => $product->totalStock()),
+            'stock_value' => round($products->sum(fn ($product) => $product->stockValue()), 2),
+            'low_stock' => $products->filter(fn ($product) => $product->isLowStock())->count(),
+        ];
+    }
+
     public function customers(): HasMany
     {
         return $this->hasMany(Customer::class);

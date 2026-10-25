@@ -25,6 +25,7 @@ import {
     History,
     Key,
     LayoutDashboard,
+    LayoutGrid,
     Lock,
     LogOut,
     Menu,
@@ -252,10 +253,19 @@ export default function Authenticated({
                 icon: LayoutDashboard,
                 module: null,
             },
+            // Comparer n'a de sens qu'à partir de deux boutiques, et seul le propriétaire
+            // du compte les voit toutes (comme le sélecteur de boutique de l'en-tête).
+            ...(isSuperAdmin && shops.length >= 2 ? [{
+                label: t.nav.shopsOverview,
+                href: buildRoute('shops.overview'),
+                active: route().current('shops.overview*'),
+                icon: LayoutGrid,
+                module: null,
+            }] : []),
             {
                 label: t.nav.shops,
                 href: buildRoute('shops.index'),
-                active: route().current('shops.*'),
+                active: route().current('shops.*') && !route().current('shops.overview*'),
                 icon: Store,
                 module: 'shops',
             },
