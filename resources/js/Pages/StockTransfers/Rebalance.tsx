@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Search, Truck } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -45,10 +45,23 @@ export default function Rebalance({ routes, route: current, suggestions, filters
     const selected = suggestions.data.filter((sg) => (picked[sg.to_product_id] ?? 0) > 0);
     const target = routes.find((r) => r.from_shop_id === current.from && r.to_shop_id === current.to);
 
-    const submitSearch = (e: FormEvent) => {
-        e.preventDefault();
-        router.get(route('stock-transfers.rebalance'), { from: current.from, to: current.to, q: search }, { preserveScroll: true });
-    };
+    // Recherche à la saisie, 300 ms après la dernière touche. Le garde-fou de premier rendu
+    // évite qu'un remontage (lien de pagination) relance la recherche et renvoie en page 1.
+    const isFirstRender = useRef(true);
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const timer = setTimeout(() => {
+            router.get(route('stock-transfers.rebalance'), { from: current.from, to: current.to, q: search }, {
+                only: ['suggestions', 'filters'], preserveState: true, preserveScroll: true, replace: true,
+            });
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const submitSearch = (e: FormEvent) => e.preventDefault();
 
     const toggle = (sg: Suggestion, on: boolean) => setPicked((c) => {
         const next = { ...c };

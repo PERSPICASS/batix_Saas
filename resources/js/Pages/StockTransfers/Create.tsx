@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Plus, Search, Trash2, Truck } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -31,14 +31,25 @@ export default function CreateStockTransfer({ shopChoices: shops, products, filt
     // Changer de boutique d'origine change tout le catalogue : on repart de zéro.
     const changeFrom = (id: number) => router.get(route('stock-transfers.create'), { from_shop_id: id });
 
-    // La recherche ne recharge que les résultats : les lignes déjà ajoutées restent.
-    const submitSearch = (e: FormEvent) => {
-        e.preventDefault();
-        if (search.trim().length < 2) return;
-        router.get(route('stock-transfers.create'), { from_shop_id: filters.from_shop_id, q: search }, {
-            only: ['products', 'filters'], preserveState: true, preserveScroll: true, replace: true,
-        });
-    };
+    // Recherche à la saisie (dès 2 lettres, 300 ms après la dernière touche). Elle ne recharge
+    // que les résultats : les lignes déjà ajoutées restent. Garde-fou de premier rendu : un
+    // remontage ne doit pas relancer une recherche.
+    const isFirstRender = useRef(true);
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const q = search.trim();
+        const timer = setTimeout(() => {
+            router.get(route('stock-transfers.create'), { from_shop_id: filters.from_shop_id, q: q.length >= 2 ? q : '' }, {
+                only: ['products', 'filters'], preserveState: true, preserveScroll: true, replace: true,
+            });
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [search]);
+
+    const submitSearch = (e: FormEvent) => e.preventDefault();
 
     const add = (product: Props['products'][number]) => {
         const quantity = Math.max(1, Math.min(product.stock_quantity, quantities[product.id] ?? 1));
