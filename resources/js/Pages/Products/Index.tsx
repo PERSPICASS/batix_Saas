@@ -200,7 +200,8 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                                     <AlertTriangle className="size-3.5 shrink-0 text-amber-400" />
                                 </span>
                             )}
-                            <span className="font-medium text-slate-900 dark:text-white truncate">{product.name}</span>
+                            {/* La fiche en lecture : ouverte à qui peut voir les produits, sans droit de modifier. */}
+                            <Link href={route('products.show', { product: product.id })} className="truncate font-medium text-slate-900 hover:text-amber-600 hover:underline dark:text-white dark:hover:text-amber-300">{product.name}</Link>
                         </div>
                         {product.sku && <span className="text-xs text-slate-500 font-mono">{product.sku}</span>}
                     </div>

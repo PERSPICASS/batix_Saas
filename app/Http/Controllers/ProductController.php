@@ -12,6 +12,8 @@ use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Subcategory;
 use App\Services\ActivityLogger;
+use App\Services\ProductCopier;
+use App\Services\ShopReport;
 use App\Services\ProductCreationService;
 use App\Services\StockMovementService;
 use Illuminate\Http\Request;
@@ -201,6 +203,69 @@ class ProductController extends Controller
         ActivityLogger::created($product, $product->name);
 
         return redirect()->route('products.index', ['code_user' => request()->route('code_user')])->with('success', 'Produit créé avec succès.');
+    }
+
+    /**
+     * La fiche d'un produit, en lecture : prix et marge, stock (comptoir, dépôts, autres
+     * boutiques du compte), ventes des 30 derniers jours et derniers mouvements.
+     *
+     * Accessible avec le seul droit de voir les produits : sans elle, un employé qui ne peut
+     * pas modifier n'avait aucun moyen de consulter un produit.
+     */
+    public function show(string $code_user, Product $product, ShopReport $report, ProductCopier $copier): Response
+    {
+        $this->authorize('view', $product);
+
+        $product->load(['shop:id,name,currency', 'category:id,name', 'subcategory:id,name', 'parent:id,name', 'depotProducts.depot:id,name'])
+            ->loadCount('variations');
+        $user = Auth::user();
+
+        // Le même produit dans les autres boutiques du compte, reconnu comme pour la copie de
+        // catalogue et les transferts (ProductCopier) : utile avant d'en transférer.
+        $elsewhere = $user->accessibleShopsQuery()->where('shops.id', '!=', $product->shop_id)->orderBy('name')->get(['shops.id', 'shops.name'])
+            ->map(function ($shop) use ($product, $copier) {
+                $match = $product->parent_id
+                    ? ($product->sku ? Product::where('shop_id', $shop->id)->where('sku', $product->sku)->first() : null)
+                    : $copier->existingProductIn($shop, $product, null);
+
+                return $match ? ['shop' => $shop->name, 'stock' => (int) $match->stock_quantity, 'min' => $match->min_stock_alert] : null;
+            })->filter()->values();
+
+        // Les 30 derniers jours, avec les définitions de « Mes boutiques » (ShopReport).
+        $sold = $report->products([$product->shop_id], now()->subDays(30)->startOfDay(), now())
+            ->firstWhere('product_id', $product->id);
+
+        $unitCost = $product->unitCost();
+
+        return Inertia::render('Products/Show', [
+            'product' => $product,
+            'pricing' => [
+                'unit_cost' => round($unitCost, 2),
+                'price_with_tax' => round((float) $product->price_with_tax, 2),
+                // Le taux appliqué : celui du produit, à défaut celui de la boutique.
+                'tax_rate' => $product->effectiveTaxRate(),
+                'unit_margin' => round((float) $product->selling_price - $unitCost, 2),
+                'margin_rate' => (float) $product->selling_price > 0 ? round(((float) $product->selling_price - $unitCost) / (float) $product->selling_price * 100, 1) : null,
+            ],
+            'stock' => [
+                'counter' => (int) $product->stock_quantity,
+                'depots' => $product->depotProducts->filter(fn ($row) => $row->quantity > 0)
+                    ->map(fn ($row) => ['depot' => $row->depot?->name, 'quantity' => (int) $row->quantity])->values(),
+                'total' => $product->totalStock(),
+                'value' => $product->stockValue(),
+                'low' => $product->isLowStock(),
+            ],
+            'elsewhere' => $elsewhere,
+            'sales30' => [
+                'quantity' => $sold['quantity'] ?? 0,
+                'revenue' => $sold['revenue'] ?? 0,
+                'margin' => $sold['margin'] ?? 0,
+            ],
+            'movements' => StockMovement::with('user:id,name')->where('product_id', $product->id)->atCounter()
+                ->latest('id')->limit(15)->get(),
+            'canEdit' => $user->hasPermission('products', 'edit'),
+            'currencySymbol' => get_currency_symbol($product->shop?->currency),
+        ]);
     }
 
     /**

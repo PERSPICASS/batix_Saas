@@ -361,11 +361,8 @@ Route::prefix('{code_user}')
     Route::delete('boutiques/{shop}', [ShopController::class, 'destroy'])->name('shops.destroy')->middleware('permission:shops,delete');
 
     // Routes pour les produits
-    // Sans `show` : la fiche d'un produit est sa page d'édition (avec son historique de
-    // stock) ; la route rendait un composant Products/Show qui n'a jamais existé.
     Route::resource('produits', ProductController::class)->names('products')->parameters(['produits' => 'product'])
-        ->except(['show'])
-        ->middlewareFor('index', 'permission:products,view')
+        ->middlewareFor(['index', 'show'], 'permission:products,view')
         ->middlewareFor(['create', 'store'], 'permission:products,create')
         ->middlewareFor(['edit', 'update'], 'permission:products,edit')
         ->middlewareFor('destroy', 'permission:products,delete');
