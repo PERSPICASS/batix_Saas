@@ -344,6 +344,7 @@ Route::prefix('{code_user}')
     Route::get('mes-boutiques', [ShopsOverviewController::class, 'index'])->name('shops.overview');
     Route::get('mes-boutiques/export', [ShopsOverviewController::class, 'export'])->name('shops.overview.export');
     Route::get('mes-boutiques/{shop}', [ShopsOverviewController::class, 'show'])->whereNumber('shop')->name('shops.overview.show');
+    Route::get('mes-boutiques/{shop}/pdf', [ShopsOverviewController::class, 'pdf'])->whereNumber('shop')->name('shops.overview.pdf');
     // Copie de produits d'une boutique à l'autre : le catalogue se saisit une fois, la
     // succursale démarre à stock zéro. Aucun stock n'est déplacé.
     Route::post('boutiques/{shop}/transferer', [ShopController::class, 'transferProducts'])
@@ -360,8 +361,11 @@ Route::prefix('{code_user}')
     Route::delete('boutiques/{shop}', [ShopController::class, 'destroy'])->name('shops.destroy')->middleware('permission:shops,delete');
 
     // Routes pour les produits
+    // Sans `show` : la fiche d'un produit est sa page d'édition (avec son historique de
+    // stock) ; la route rendait un composant Products/Show qui n'a jamais existé.
     Route::resource('produits', ProductController::class)->names('products')->parameters(['produits' => 'product'])
-        ->middlewareFor(['index', 'show'], 'permission:products,view')
+        ->except(['show'])
+        ->middlewareFor('index', 'permission:products,view')
         ->middlewareFor(['create', 'store'], 'permission:products,create')
         ->middlewareFor(['edit', 'update'], 'permission:products,edit')
         ->middlewareFor('destroy', 'permission:products,delete');

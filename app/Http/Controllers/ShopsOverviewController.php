@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\ShopsOverviewExport;
 use App\Models\Shop;
+use App\Services\DocumentPdf;
 use App\Services\ShopReport;
 use App\Services\ShopsOverview;
 use Carbon\Carbon;
@@ -68,6 +69,19 @@ class ShopsOverviewController extends Controller
             'period' => $this->periodProps($period),
             'filters' => (object) $request->only(['period', 'date_from', 'date_to']),
         ]);
+    }
+
+    /** Le même détail en PDF : même période, mêmes chiffres. */
+    public function pdf(Request $request, string $codeUser, Shop $shop, ShopReport $report, DocumentPdf $pdf)
+    {
+        $user = Auth::user();
+        abort_unless($user->role === 'super_admin', 403);
+        abort_unless($user->accessibleShopsQuery()->whereKey($shop->id)->exists(), 404);
+
+        $period = $this->period($request);
+
+        return $pdf->forShopReport($shop, $report->build($shop, ...array_values(array_slice($period, 1))), $this->periodProps($period))
+            ->stream("Rapport-{$shop->name}-{$period['start']->toDateString()}.pdf");
     }
 
     /**

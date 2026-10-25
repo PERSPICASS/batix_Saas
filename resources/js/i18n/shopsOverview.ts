@@ -34,6 +34,7 @@ export const shopsOverview = {
         detail: {
             back: 'Toutes mes boutiques',
             switchTo: 'Passer sur cette boutique',
+            pdf: 'Télécharger le PDF',
             result: 'Résultat (marge − dépenses)',
             counter: 'Comptoir',
             invoices: 'Factures',
@@ -101,6 +102,7 @@ export const shopsOverview = {
         detail: {
             back: 'All my shops',
             switchTo: 'Switch to this shop',
+            pdf: 'Download PDF',
             result: 'Result (margin − expenses)',
             counter: 'Counter',
             invoices: 'Invoices',

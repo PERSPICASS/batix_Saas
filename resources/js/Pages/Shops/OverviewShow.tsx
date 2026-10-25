@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { ReactNode } from 'react';
-import { AlertTriangle, ArrowLeft, ArrowRightLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRightLeft, FileDown } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -103,6 +103,16 @@ export default function OverviewShow({ shop, report, period, filters }: Props) {
                     >
                         <ArrowLeft className="size-4" /> {d.back}
                     </Link>
+                    <div className="flex flex-wrap gap-2">
+                    {/* Le PDF de la période affichée, à imprimer ou à transmettre. */}
+                    <a
+                        href={`${route('shops.overview.pdf', { shop: shop.id })}?${periodQuery(period)}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                    >
+                        <FileDown className="size-4" /> {d.pdf}
+                    </a>
                     {/* Même mécanisme que le sélecteur de l'en-tête : `?shop=` rend la boutique active. */}
                     <Link
                         href={`${route('dashboard')}?shop=${shop.id}`}
@@ -110,6 +120,7 @@ export default function OverviewShow({ shop, report, period, filters }: Props) {
                     >
                         <ArrowRightLeft className="size-4" /> {d.switchTo}
                     </Link>
+                    </div>
                 </div>
 
                 <PeriodPicker url={route('shops.overview.show', { shop: shop.id })} period={period} filters={filters} />

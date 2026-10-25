@@ -179,6 +179,18 @@ class DocumentPdf
         ])->setPaper('a4'));
     }
 
+    /** Le détail d'une boutique de « Mes boutiques » (ShopReport), pour la période choisie. */
+    public function forShopReport(Shop $shop, array $report, array $period): PdfWrapper
+    {
+        return $this->inShopLocale($shop, fn () => Pdf::loadView('pdf.shop-report', [
+            'shop' => $shop,
+            'report' => $report,
+            'period' => $period,
+            'logo' => $this->logo($shop),
+            'currencySymbol' => get_currency_symbol($shop->currency),
+        ])->setPaper('a4'));
+    }
+
     public function forQuote(Quote $quote): PdfWrapper
     {
         $quote->loadMissing(['items', 'shop', 'customer', 'user']);

@@ -319,4 +319,33 @@ class ShopsOverviewTest extends TestCase
         $manager = User::factory()->create(['role' => 'manager', 'shop_id' => $this->cocody->id]);
         $this->actingAs($manager)->get("/{$this->owner->code_user}/mes-boutiques/{$this->cocody->id}")->assertForbidden();
     }
+
+    public function test_the_detail_prints_as_a_pdf_with_the_same_figures(): void
+    {
+        $this->cocodyMonth();
+
+        $this->actingAs($this->owner)
+            ->get("/{$this->owner->code_user}/mes-boutiques/{$this->cocody->id}/pdf?period=month")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        app()->setLocale('fr');
+        $period = ['key' => 'month', 'start' => now()->startOfMonth()->toDateString(), 'end' => now()->endOfMonth()->toDateString(),
+            'previous_start' => now()->subMonthNoOverflow()->startOfMonth()->toDateString(), 'previous_end' => now()->subMonthNoOverflow()->endOfMonth()->toDateString()];
+        $report = app(\App\Services\ShopReport::class)->build($this->cocody->fresh(), now()->startOfMonth(), now()->endOfMonth(), now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth());
+        $html = view('pdf.shop-report', ['shop' => $this->cocody->fresh(), 'report' => $report, 'period' => $period, 'logo' => null, 'currencySymbol' => 'F'])->render();
+
+        $this->assertStringContainsString('RAPPORT DE BOUTIQUE', $html);
+        $this->assertStringContainsString('6 800 F', $html);   // revenue, as on screen
+        $this->assertStringContainsString('2 600 F', $html);   // gross margin
+        $this->assertStringContainsString('-2 400 F', $html);  // result = margin - expenses 5 000
+        $this->assertStringContainsString('Espèces', $html);
+    }
+
+    public function test_the_pdf_of_another_account_shop_does_not_exist(): void
+    {
+        $stranger = Shop::factory()->create();
+
+        $this->actingAs($this->owner)->get("/{$this->owner->code_user}/mes-boutiques/{$stranger->id}/pdf")->assertNotFound();
+    }
 }
