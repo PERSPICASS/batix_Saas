@@ -24,8 +24,12 @@ use Illuminate\Support\Facades\DB;
  */
 class ShopReport
 {
-    /** Le coût unitaire d'un produit, comme Product::unitCost(). */
-    private const UNIT_COST = 'COALESCE(products.average_cost, products.purchase_price, 0)';
+    /**
+     * Le coût d'une unité vendue : celui figé sur la ligne au moment de la vente ou de la
+     * facture, à défaut le coût actuel du produit (Product::unitCost).
+     */
+    private const SALE_COST = 'COALESCE(sale_items.unit_cost, products.average_cost, products.purchase_price, 0)';
+    private const INVOICE_COST = 'COALESCE(invoice_items.unit_cost, products.average_cost, products.purchase_price, 0)';
 
     /**
      * Part de la remise globale d'une vente / d'une facture qui s'applique à chaque ligne.
@@ -117,7 +121,7 @@ class ShopReport
             ->selectRaw("sale_items.product_id, sale_items.product_name AS name, SUM({$kept}) AS quantity,
                 SUM({$kept} * sale_items.unit_price * ".self::SALE_KEEP." * (1 + COALESCE(sale_items.tax_rate, 0) / 100.0)) AS revenue,
                 SUM({$kept} * sale_items.unit_price * ".self::SALE_KEEP.") AS net,
-                SUM({$kept} * ".self::UNIT_COST.') AS cost')
+                SUM({$kept} * ".self::SALE_COST.') AS cost')
             ->get();
 
         $invoiced = DB::table('invoice_items')
@@ -131,7 +135,7 @@ class ShopReport
             ->selectRaw('invoice_items.product_id, invoice_items.product_name AS name, SUM(invoice_items.quantity) AS quantity,
                 SUM((invoice_items.total - invoice_items.tax_amount) * '.self::INVOICE_KEEP.' * (1 + COALESCE(invoice_items.tax_rate, 0) / 100.0)) AS revenue,
                 SUM((invoice_items.total - invoice_items.tax_amount) * '.self::INVOICE_KEEP.') AS net,
-                SUM(invoice_items.quantity * '.self::UNIT_COST.') AS cost')
+                SUM(invoice_items.quantity * '.self::INVOICE_COST.') AS cost')
             ->get();
 
         $credited = DB::table('credit_note_items')
@@ -144,7 +148,7 @@ class ShopReport
             ->selectRaw('invoice_items.product_id, credit_note_items.product_name AS name, SUM(credit_note_items.quantity) AS quantity,
                 SUM(credit_note_items.total * (1 + COALESCE(credit_note_items.tax_rate, 0) / 100.0)) AS revenue,
                 SUM(credit_note_items.total) AS net,
-                SUM(credit_note_items.quantity * '.self::UNIT_COST.') AS cost')
+                SUM(credit_note_items.quantity * '.self::INVOICE_COST.') AS cost')
             ->get();
 
         $lines = [];

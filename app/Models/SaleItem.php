@@ -19,6 +19,7 @@ class SaleItem extends Model
         'sku',
         'quantity',
         'unit_price',
+        'unit_cost',
         'tax_rate',
         'tax_amount',
         'discount_amount',
@@ -29,6 +30,7 @@ class SaleItem extends Model
     protected $casts = [
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
+        'unit_cost' => 'decimal:2',
         'tax_rate' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
@@ -41,6 +43,14 @@ class SaleItem extends Model
     protected static function boot()
     {
         parent::boot();
+
+        // Le coût d'achat du jour, figé sur la ligne : la marge d'une vente passée ne doit pas
+        // changer quand le coût moyen du produit bouge ensuite (achat plus cher ou moins cher).
+        static::creating(function ($item) {
+            if ($item->unit_cost === null && $item->product_id) {
+                $item->unit_cost = Product::find($item->product_id)?->unitCost();
+            }
+        });
 
         static::saving(function ($item) {
             // Calculer le montant de la taxe

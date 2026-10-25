@@ -84,7 +84,7 @@ class ShopsOverview
             ->whereNotIn('sales.status', ['cancelled', 'returned'])
             ->whereBetween('sales.sale_date', [$start, $end])
             ->groupBy('sales.shop_id')
-            ->selectRaw('sales.shop_id, SUM((sale_items.quantity - COALESCE(returned.qty, 0)) * '.self::UNIT_COST.') AS cost')
+            ->selectRaw('sales.shop_id, SUM((sale_items.quantity - COALESCE(returned.qty, 0)) * '.self::SALE_COST.') AS cost')
             ->get(), ['cost' => ['cost', 1]]);
 
         // Factures émises (le scope SoftDeletes écarte les factures supprimées).
@@ -104,7 +104,7 @@ class ShopsOverview
             ->whereIn('invoices.status', ['sent', 'paid'])
             ->whereDate('invoices.invoice_date', '>=', $start->toDateString())->whereDate('invoices.invoice_date', '<=', $end->toDateString())
             ->groupBy('invoices.shop_id')
-            ->selectRaw('invoices.shop_id, SUM(invoice_items.quantity * '.self::UNIT_COST.') AS cost')
+            ->selectRaw('invoices.shop_id, SUM(invoice_items.quantity * '.self::INVOICE_COST.') AS cost')
             ->get(), ['cost' => ['cost', 1]]);
 
         // Avoirs émis sur la période : ils retirent du CA ce qu'ils créditent, et le coût
@@ -123,7 +123,7 @@ class ShopsOverview
             ->whereIn('credit_notes.shop_id', $ids)
             ->whereDate('credit_notes.credit_note_date', '>=', $start->toDateString())->whereDate('credit_notes.credit_note_date', '<=', $end->toDateString())
             ->groupBy('credit_notes.shop_id')
-            ->selectRaw('credit_notes.shop_id, SUM(credit_note_items.quantity * '.self::UNIT_COST.') AS cost')
+            ->selectRaw('credit_notes.shop_id, SUM(credit_note_items.quantity * '.self::INVOICE_COST.') AS cost')
             ->get(), ['cost' => ['cost', -1]]);
 
         $add(Expense::query()
@@ -197,7 +197,7 @@ class ShopsOverview
             ->whereIn('sales.shop_id', $ids)->whereNotIn('sales.status', ['cancelled', 'returned'])
             ->whereBetween('sales.sale_date', [$start, $end])
             ->groupByRaw('DATE(sales.sale_date)')
-            ->selectRaw('DATE(sales.sale_date) AS day, SUM((sale_items.quantity - COALESCE(returned.qty, 0)) * '.self::UNIT_COST.') AS cost')
+            ->selectRaw('DATE(sales.sale_date) AS day, SUM((sale_items.quantity - COALESCE(returned.qty, 0)) * '.self::SALE_COST.') AS cost')
             ->get(), ['cost' => ['cost', 1]]);
 
         $add(Invoice::query()->whereIn('shop_id', $ids)->whereIn('status', ['sent', 'paid'])
@@ -212,7 +212,7 @@ class ShopsOverview
             ->whereNull('invoices.deleted_at')->whereIn('invoices.shop_id', $ids)->whereIn('invoices.status', ['sent', 'paid'])
             ->whereDate('invoices.invoice_date', '>=', $dates[0])->whereDate('invoices.invoice_date', '<=', $dates[1])
             ->groupBy('invoices.invoice_date')
-            ->selectRaw('invoices.invoice_date AS day, SUM(invoice_items.quantity * '.self::UNIT_COST.') AS cost')
+            ->selectRaw('invoices.invoice_date AS day, SUM(invoice_items.quantity * '.self::INVOICE_COST.') AS cost')
             ->get(), ['cost' => ['cost', 1]]);
 
         $add(CreditNote::query()->whereIn('shop_id', $ids)
@@ -228,7 +228,7 @@ class ShopsOverview
             ->whereIn('credit_notes.shop_id', $ids)
             ->whereDate('credit_notes.credit_note_date', '>=', $dates[0])->whereDate('credit_notes.credit_note_date', '<=', $dates[1])
             ->groupBy('credit_notes.credit_note_date')
-            ->selectRaw('credit_notes.credit_note_date AS day, SUM(credit_note_items.quantity * '.self::UNIT_COST.') AS cost')
+            ->selectRaw('credit_notes.credit_note_date AS day, SUM(credit_note_items.quantity * '.self::INVOICE_COST.') AS cost')
             ->get(), ['cost' => ['cost', -1]]);
 
         ksort($days);
@@ -264,8 +264,12 @@ class ShopsOverview
         return $hours;
     }
 
-    /** Le coût unitaire d'un produit, comme Product::unitCost(). */
-    private const UNIT_COST = 'COALESCE(products.average_cost, products.purchase_price, 0)';
+    /**
+     * Le coût d'une unité vendue : celui figé sur la ligne au moment de la vente ou de la
+     * facture, à défaut le coût actuel du produit (Product::unitCost).
+     */
+    private const SALE_COST = 'COALESCE(sale_items.unit_cost, products.average_cost, products.purchase_price, 0)';
+    private const INVOICE_COST = 'COALESCE(invoice_items.unit_cost, products.average_cost, products.purchase_price, 0)';
 
     /**
      * Ce que les clients doivent aujourd'hui.
