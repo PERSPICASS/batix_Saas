@@ -3,15 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Exports\SalesAnalyticsExport;
-use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Product;
-use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\Shop;
+use App\Services\ShopReport;
+use App\Services\ShopsOverview;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -183,317 +181,225 @@ class AnalyticsController extends Controller
         };
     }
     
+    /**
+     * Les ventes du comptoir et les factures, avec les définitions de « Mes boutiques »
+     * (ShopsOverview, ShopReport) : crédit compris, annulées exclues, retours et avoirs
+     * déduits, marge au coût du produit. Cette page ne comptait que les ventes terminées et
+     * calculait la marge sur le dernier prix d'achat, sans remise ni retour : elle donnait
+     * un autre CA que le tableau de bord et « Mes boutiques » pour la même boutique.
+     */
+    private function overview(): ShopsOverview
+    {
+        return app(ShopsOverview::class);
+    }
+
+    private function report(): ShopReport
+    {
+        return app(ShopReport::class);
+    }
+
+    private function ids($shopIds): array
+    {
+        return collect($shopIds)->map(fn ($id) => (int) $id)->all();
+    }
+
+    /** CA, nombre de ventes, HT et coût, additionnés sur une série de jours. */
+    private function sumDays(array $days): array
+    {
+        return [
+            'revenue' => (float) collect($days)->sum('revenue'),
+            'count' => (int) collect($days)->sum('count'),
+            'net' => (float) collect($days)->sum('net_excl_tax'),
+            'cost' => (float) collect($days)->sum('cost'),
+        ];
+    }
+
     private function getKPIs($shopIds, array $dateRange, array $previousRange): array
     {
-        // CA période actuelle
-        $currentRevenue = Sale::whereIn('shop_id', $shopIds)
-            ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-            ->where('status', 'completed')
-            ->sum('total');
-        
-        // CA période précédente
-        $previousRevenue = Sale::whereIn('shop_id', $shopIds)
-            ->whereBetween('sale_date', [$previousRange['start'], $previousRange['end']])
-            ->where('status', 'completed')
-            ->sum('total');
-        
-        $revenueGrowth = $previousRevenue > 0 
-            ? round((($currentRevenue - $previousRevenue) / $previousRevenue) * 100, 1)
-            : ($currentRevenue > 0 ? 100 : 0);
-        
-        // Nombre de ventes
-        $currentSalesCount = Sale::whereIn('shop_id', $shopIds)
-            ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-            ->where('status', 'completed')
-            ->count();
-        
-        $previousSalesCount = Sale::whereIn('shop_id', $shopIds)
-            ->whereBetween('sale_date', [$previousRange['start'], $previousRange['end']])
-            ->where('status', 'completed')
-            ->count();
-        
-        $salesCountGrowth = $previousSalesCount > 0 
-            ? round((($currentSalesCount - $previousSalesCount) / $previousSalesCount) * 100, 1)
-            : ($currentSalesCount > 0 ? 100 : 0);
-        
-        // Panier moyen
-        $avgBasket = $currentSalesCount > 0 ? $currentRevenue / $currentSalesCount : 0;
-        $previousAvgBasket = $previousSalesCount > 0 ? $previousRevenue / $previousSalesCount : 0;
-        
-        $avgBasketGrowth = $previousAvgBasket > 0 
-            ? round((($avgBasket - $previousAvgBasket) / $previousAvgBasket) * 100, 1)
-            : ($avgBasket > 0 ? 100 : 0);
-        
-        // Marge brute (calculée depuis le prix d'achat des produits)
-        $currentMargin = SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as margin'))
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->whereHas('sale', function($q) use ($shopIds, $dateRange) {
-                $q->whereIn('shop_id', $shopIds)
-                  ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-                  ->where('status', 'completed');
-            })
-            ->value('margin') ?? 0;
-        
-        $marginRate = $currentRevenue > 0 ? round(($currentMargin / $currentRevenue) * 100, 1) : 0;
-        
-        // Nouveaux clients
-        $newCustomers = Customer::whereIn('shop_id', $shopIds)
+        $ids = $this->ids($shopIds);
+        $current = $this->sumDays($this->overview()->daily($ids, $dateRange['start'], $dateRange['end']));
+        $previous = $this->sumDays($this->overview()->daily($ids, $previousRange['start'], $previousRange['end']));
+
+        $avgBasket = $current['count'] > 0 ? $current['revenue'] / $current['count'] : 0;
+        $previousAvgBasket = $previous['count'] > 0 ? $previous['revenue'] / $previous['count'] : 0;
+
+        // Taux de marge sur le CA hors taxes : la marge est elle-même hors taxes.
+        $margin = $current['net'] - $current['cost'];
+        $marginRate = $current['net'] > 0 ? round(($margin / $current['net']) * 100, 1) : 0;
+
+        $newCustomers = Customer::whereIn('shop_id', $ids)
             ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
             ->count();
-        
+
         return [
             'revenue' => [
-                'value' => (float) $currentRevenue,
-                'growth' => $revenueGrowth,
-                'previousValue' => (float) $previousRevenue,
+                'value' => round($current['revenue'], 2),
+                'growth' => $this->calcGrowth($current['revenue'], $previous['revenue']),
+                'previousValue' => round($previous['revenue'], 2),
             ],
             'salesCount' => [
-                'value' => $currentSalesCount,
-                'growth' => $salesCountGrowth,
-                'previousValue' => $previousSalesCount,
+                'value' => $current['count'],
+                'growth' => $this->calcGrowth($current['count'], $previous['count']),
+                'previousValue' => $previous['count'],
             ],
             'avgBasket' => [
                 'value' => round($avgBasket, 0),
-                'growth' => $avgBasketGrowth,
+                'growth' => $this->calcGrowth($avgBasket, $previousAvgBasket),
                 'previousValue' => round($previousAvgBasket, 0),
             ],
             'marginRate' => [
                 'value' => $marginRate,
-                'margin' => (float) $currentMargin,
+                'margin' => round($margin, 2),
             ],
             'newCustomers' => [
                 'value' => $newCustomers,
             ],
         ];
     }
-    
+
     private function getSalesChart($shopIds, string $period): array
     {
-        $data = [];
+        $ids = $this->ids($shopIds);
         $now = Carbon::now();
-        
+
+        if ($period === 'today') {
+            $hours = $this->overview()->hourly($ids, $now->copy()->startOfDay(), $now->copy()->endOfDay());
+
+            return collect(range(0, 23))->map(function ($i) use ($now, $hours) {
+                $hour = $now->copy()->startOfDay()->addHours($i);
+
+                return ['label' => $hour->format('H:00'), 'value' => round($hours[$hour->format('Y-m-d H')] ?? 0, 2)];
+            })->all();
+        }
+
+        $buckets = [];
         switch ($period) {
-            case 'today':
-                // Par heure
-                for ($i = 0; $i < 24; $i++) {
-                    $hour = $now->copy()->startOfDay()->addHours($i);
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$hour, $hour->copy()->endOfHour()])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $hour->format('H:00'),
-                        'value' => (float) $total,
-                    ];
-                }
-                break;
-                
             case 'week':
-                // Par jour
                 for ($i = 0; $i < 7; $i++) {
                     $day = $now->copy()->startOfWeek()->addDays($i);
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereDate('sale_date', $day)
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $day->isoFormat('ddd D'),
-                        'value' => (float) $total,
-                    ];
+                    $buckets[] = [$day, $day->copy()->endOfDay(), $day->isoFormat('ddd D')];
                 }
                 break;
-                
+
             case 'month':
-                // Par semaine
-                $startOfMonth = $now->copy()->startOfMonth();
+                $start = $now->copy()->startOfMonth();
                 $endOfMonth = $now->copy()->endOfMonth();
-                $weekNum = 1;
-                
-                while ($startOfMonth <= $endOfMonth) {
-                    $weekEnd = $startOfMonth->copy()->endOfWeek();
-                    if ($weekEnd > $endOfMonth) $weekEnd = $endOfMonth->copy();
-                    
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$startOfMonth, $weekEnd])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => "Sem. {$weekNum}",
-                        'value' => (float) $total,
-                    ];
-                    
-                    $startOfMonth = $weekEnd->copy()->addDay()->startOfDay();
-                    $weekNum++;
+                for ($week = 1; $start <= $endOfMonth; $week++) {
+                    $end = $start->copy()->endOfWeek()->min($endOfMonth);
+                    $buckets[] = [$start->copy(), $end, "Sem. {$week}"];
+                    $start = $end->copy()->addDay()->startOfDay();
                 }
                 break;
-                
+
             case 'quarter':
             case 'year':
-                // Par mois
-                $months = $period === 'quarter' ? 3 : 12;
-                $start = $period === 'quarter' 
-                    ? $now->copy()->startOfQuarter() 
-                    : $now->copy()->startOfYear();
-                
-                for ($i = 0; $i < $months; $i++) {
-                    $month = $start->copy()->addMonths($i);
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$month->startOfMonth(), $month->copy()->endOfMonth()])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $month->isoFormat('MMM'),
-                        'value' => (float) $total,
-                    ];
+                $first = $period === 'quarter' ? $now->copy()->startOfQuarter() : $now->copy()->startOfYear();
+                for ($i = 0; $i < ($period === 'quarter' ? 3 : 12); $i++) {
+                    $month = $first->copy()->addMonthsNoOverflow($i);
+                    $buckets[] = [$month->copy()->startOfMonth(), $month->copy()->endOfMonth(), $month->isoFormat('MMM')];
                 }
                 break;
         }
-        
-        return $data;
+
+        if ($buckets === []) {
+            return [];
+        }
+
+        $days = $this->overview()->daily($ids, $buckets[0][0], end($buckets)[1]);
+
+        return array_map(fn ($bucket) => [
+            'label' => $bucket[2],
+            'value' => round($this->revenueBetween($days, $bucket[0], $bucket[1]), 2),
+        ], $buckets);
     }
-    
+
+    private function revenueBetween(array $days, Carbon $start, Carbon $end): float
+    {
+        return (float) collect($days)
+            ->filter(fn ($figures, $day) => $day >= $start->toDateString() && $day <= $end->toDateString())
+            ->sum('revenue');
+    }
+
     private function getTopProducts($shopIds, array $dateRange, int $limit = 10): array
     {
-        return SaleItem::select(
-                'product_id',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(total) as total_revenue')
-            )
-            ->whereHas('sale', function($q) use ($shopIds, $dateRange) {
-                $q->whereIn('shop_id', $shopIds)
-                  ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-                  ->where('status', 'completed');
-            })
-            ->with('product:id,name,sku,image')
-            ->groupBy('product_id')
-            ->orderByDesc('total_revenue')
-            ->limit($limit)
-            ->get()
-            ->map(fn($item) => [
-                'id' => $item->product_id,
-                'name' => $item->product->name ?? 'Produit supprimé',
-                'sku' => $item->product->sku ?? '-',
-                'image' => $item->product->image ?? null,
-                'quantity' => (int) $item->total_quantity,
-                'revenue' => (float) $item->total_revenue,
-            ])
-            ->toArray();
+        $lines = $this->report()->products($this->ids($shopIds), $dateRange['start'], $dateRange['end'])
+            ->sortByDesc('revenue')->take($limit)->values();
+        $products = Product::whereIn('id', $lines->pluck('product_id')->filter())->get(['id', 'sku', 'image'])->keyBy('id');
+
+        return $lines->map(fn ($line) => [
+            'id' => $line['product_id'],
+            'name' => $line['name'] ?? 'Produit supprimé',
+            'sku' => $products->get($line['product_id'])?->sku ?? '-',
+            'image' => $products->get($line['product_id'])?->image,
+            'quantity' => $line['quantity'],
+            'revenue' => $line['revenue'],
+        ])->all();
     }
-    
+
     private function getSalesByCategory($shopIds, array $dateRange): array
     {
-        $results = SaleItem::select(
-                'products.category_id',
-                DB::raw('SUM(sale_items.total) as total_revenue')
-            )
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->whereHas('sale', function($q) use ($shopIds, $dateRange) {
-                $q->whereIn('shop_id', $shopIds)
-                  ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-                  ->where('status', 'completed');
-            })
-            ->groupBy('products.category_id')
-            ->orderByDesc('total_revenue')
-            ->limit(8)
-            ->get();
-        
-        $categories = Category::whereIn('id', $results->pluck('category_id'))->pluck('name', 'id');
-        $total = $results->sum('total_revenue');
-        
-        return $results->map(fn($item) => [
-            'name' => $categories[$item->category_id] ?? 'Sans catégorie',
-            'revenue' => (float) $item->total_revenue,
-            'percentage' => $total > 0 ? round(($item->total_revenue / $total) * 100, 1) : 0,
-        ])->toArray();
+        $report = $this->report();
+        $categories = collect($report->categories($report->products($this->ids($shopIds), $dateRange['start'], $dateRange['end'])))->take(8);
+        $total = $categories->sum('revenue');
+
+        return $categories->map(fn ($category) => [
+            'name' => $category['name'] ?? 'Sans catégorie',
+            'revenue' => $category['revenue'],
+            'percentage' => $total > 0 ? round(($category['revenue'] / $total) * 100, 1) : 0,
+        ])->all();
     }
-    
+
     private function getTopCustomers($shopIds, array $dateRange, int $limit = 10): array
     {
-        return Sale::select(
-                'customer_id',
-                DB::raw('COUNT(*) as sales_count'),
-                DB::raw('SUM(total) as total_spent')
-            )
-            ->whereIn('shop_id', $shopIds)
-            ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-            ->where('status', 'completed')
-            ->whereNotNull('customer_id')
-            ->with('customer:id,name,email,phone')
-            ->groupBy('customer_id')
-            ->orderByDesc('total_spent')
-            ->limit($limit)
-            ->get()
-            ->map(fn($item) => [
-                'id' => $item->customer_id,
-                'name' => $item->customer->name ?? 'Client supprimé',
-                'email' => $item->customer->email ?? '',
-                'phone' => $item->customer->phone ?? '',
-                'salesCount' => (int) $item->sales_count,
-                'totalSpent' => (float) $item->total_spent,
-            ])
-            ->toArray();
+        return collect($this->report()->customers($this->ids($shopIds), $dateRange['start'], $dateRange['end'], $limit))
+            ->map(fn ($customer) => [
+                'id' => $customer['id'],
+                'name' => $customer['name'] ?? 'Client supprimé',
+                'email' => $customer['email'] ?? '',
+                'phone' => $customer['phone'] ?? '',
+                'salesCount' => $customer['count'],
+                'totalSpent' => $customer['revenue'],
+            ])->all();
     }
-    
+
     private function getPaymentMethods($shopIds, array $dateRange): array
     {
-        $results = Sale::select(
-                'payment_method',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('SUM(total) as total')
-            )
-            ->whereIn('shop_id', $shopIds)
-            ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-            ->where('status', 'completed')
-            ->groupBy('payment_method')
-            ->orderByDesc('total')
-            ->get();
-        
-        $grandTotal = $results->sum('total');
-        
+        $methods = collect($this->report()->paymentMethods($this->ids($shopIds), $dateRange['start'], $dateRange['end']));
+        $grandTotal = $methods->sum('revenue');
+
         $labels = [
             'cash' => 'Espèces',
             'card' => 'Carte bancaire',
+            'mobile' => 'Mobile Money',
             'mobile_money' => 'Mobile Money',
             'transfer' => 'Virement',
             'check' => 'Chèque',
+            'multiple' => 'Multiple',
             'credit' => 'Crédit',
         ];
-        
-        return $results->map(fn($item) => [
-            'method' => $labels[$item->payment_method] ?? $item->payment_method,
-            'count' => (int) $item->count,
-            'total' => (float) $item->total,
-            'percentage' => $grandTotal > 0 ? round(($item->total / $grandTotal) * 100, 1) : 0,
-        ])->toArray();
+
+        return $methods->map(fn ($method) => [
+            'method' => $labels[$method['method']] ?? $method['method'],
+            'count' => $method['count'],
+            'total' => $method['revenue'],
+            'percentage' => $grandTotal > 0 ? round(($method['revenue'] / $grandTotal) * 100, 1) : 0,
+        ])->all();
     }
-    
+
+    /** Toutes les boutiques du compte, même sans vente sur la période : c'est celle-là qu'il faut voir. */
     private function getShopPerformance($shopIds, array $dateRange): array
     {
-        return Sale::select(
-                'shop_id',
-                DB::raw('COUNT(*) as sales_count'),
-                DB::raw('SUM(total) as total_revenue')
-            )
-            ->whereIn('shop_id', $shopIds)
-            ->whereBetween('sale_date', [$dateRange['start'], $dateRange['end']])
-            ->where('status', 'completed')
-            ->with('shop:id,name')
-            ->groupBy('shop_id')
-            ->orderByDesc('total_revenue')
-            ->get()
-            ->map(fn($item) => [
-                'id' => $item->shop_id,
-                'name' => $item->shop->name ?? 'Boutique supprimée',
-                'salesCount' => (int) $item->sales_count,
-                'revenue' => (float) $item->total_revenue,
-            ])
-            ->toArray();
+        $shops = Shop::whereIn('id', $this->ids($shopIds))->get(['id', 'name']);
+        $figures = $this->overview()->figures($shops, $dateRange['start'], $dateRange['end'], withSnapshot: false);
+
+        return $shops->map(fn ($shop) => [
+            'id' => $shop->id,
+            'name' => $shop->name,
+            'salesCount' => $figures[$shop->id]['count'],
+            'revenue' => $figures[$shop->id]['revenue'],
+        ])->sortByDesc('revenue')->values()->all();
     }
-    
+
     private function getCurrencySymbol(string $currency): string
     {
         return match($currency) {
@@ -524,74 +430,29 @@ class AnalyticsController extends Controller
     private function getYearlyComparison($shopIds, int $year1, int $year2): array
     {
         $months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        // Deux séries d'un an jour par jour, puis regroupées par mois : la boucle lançait
+        // six requêtes par mois.
+        $daily = fn (int $year) => $this->overview()->daily(
+            $this->ids($shopIds),
+            Carbon::create($year, 1, 1)->startOfDay(),
+            Carbon::create($year, 12, 31)->endOfDay(),
+        );
+        $byMonth = fn (array $days) => collect($days)
+            ->groupBy(fn ($figures, $day) => (int) substr($day, 5, 2), preserveKeys: true)
+            ->map(fn ($month) => $this->sumDays($month->all()));
+
+        [$days1, $days2] = [$daily($year1), $daily($year2)];
+        [$one, $two] = [$byMonth($days1), $byMonth($days2)];
         $chart = [];
-
-        $totalRevenue1 = 0;
-        $totalRevenue2 = 0;
-        $totalSales1 = 0;
-        $totalSales2 = 0;
-        $totalProfit1 = 0;
-        $totalProfit2 = 0;
-
-        for ($i = 1; $i <= 12; $i++) {
-            $revenue1 = (float) Sale::whereIn('shop_id', $shopIds)
-                ->whereYear('sale_date', $year1)
-                ->whereMonth('sale_date', $i)
-                ->where('status', 'completed')
-                ->sum('total');
-
-            $revenue2 = (float) Sale::whereIn('shop_id', $shopIds)
-                ->whereYear('sale_date', $year2)
-                ->whereMonth('sale_date', $i)
-                ->where('status', 'completed')
-                ->sum('total');
-
-            $sales1 = Sale::whereIn('shop_id', $shopIds)
-                ->whereYear('sale_date', $year1)
-                ->whereMonth('sale_date', $i)
-                ->where('status', 'completed')
-                ->count();
-
-            $sales2 = Sale::whereIn('shop_id', $shopIds)
-                ->whereYear('sale_date', $year2)
-                ->whereMonth('sale_date', $i)
-                ->where('status', 'completed')
-                ->count();
-
-            $profit1 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
-                ->join('products', 'sale_items.product_id', '=', 'products.id')
-                ->whereHas('sale', function($q) use ($shopIds, $year1, $i) {
-                    $q->whereIn('shop_id', $shopIds)
-                      ->whereYear('sale_date', $year1)
-                      ->whereMonth('sale_date', $i)
-                      ->where('status', 'completed');
-                })
-                ->value('p') ?? 0);
-
-            $profit2 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
-                ->join('products', 'sale_items.product_id', '=', 'products.id')
-                ->whereHas('sale', function($q) use ($shopIds, $year2, $i) {
-                    $q->whereIn('shop_id', $shopIds)
-                      ->whereYear('sale_date', $year2)
-                      ->whereMonth('sale_date', $i)
-                      ->where('status', 'completed');
-                })
-                ->value('p') ?? 0);
-
+        foreach ($months as $index => $label) {
+            $month = $index + 1;
             $chart[] = [
-                'label' => $months[$i - 1],
-                'revenue1' => $revenue1,
-                'revenue2' => $revenue2,
-                'sales1' => $sales1,
-                'sales2' => $sales2,
+                'label' => $label,
+                'revenue1' => round($one[$month]['revenue'] ?? 0, 2),
+                'revenue2' => round($two[$month]['revenue'] ?? 0, 2),
+                'sales1' => $one[$month]['count'] ?? 0,
+                'sales2' => $two[$month]['count'] ?? 0,
             ];
-
-            $totalRevenue1 += $revenue1;
-            $totalRevenue2 += $revenue2;
-            $totalSales1 += $sales1;
-            $totalSales2 += $sales2;
-            $totalProfit1 += $profit1;
-            $totalProfit2 += $profit2;
         }
 
         return [
@@ -599,136 +460,51 @@ class AnalyticsController extends Controller
             'label1' => (string) $year1,
             'label2' => (string) $year2,
             'chart' => $chart,
-            'totals' => [
-                'revenue' => [
-                    'v1' => $totalRevenue1,
-                    'v2' => $totalRevenue2,
-                    'growth' => $this->calcGrowth($totalRevenue1, $totalRevenue2),
-                ],
-                'sales' => [
-                    'v1' => $totalSales1,
-                    'v2' => $totalSales2,
-                    'growth' => $this->calcGrowth($totalSales1, $totalSales2),
-                ],
-                'profit' => [
-                    'v1' => $totalProfit1,
-                    'v2' => $totalProfit2,
-                    'growth' => $this->calcGrowth($totalProfit1, $totalProfit2),
-                ],
-            ],
+            'totals' => $this->comparisonTotals($days1, $days2),
         ];
     }
 
     private function getMonthlyComparison($shopIds, int $month1, int $month2, int $year1, int $year2): array
     {
-        $daysInMonth1 = Carbon::createFromDate($year1, $month1, 1)->daysInMonth;
-        $daysInMonth2 = Carbon::createFromDate($year2, $month2, 1)->daysInMonth;
-        $maxDays = max($daysInMonth1, $daysInMonth2);
+        $first1 = Carbon::create($year1, $month1, 1)->startOfDay();
+        $first2 = Carbon::create($year2, $month2, 1)->startOfDay();
+        $one = $this->overview()->daily($this->ids($shopIds), $first1, $first1->copy()->endOfMonth());
+        $two = $this->overview()->daily($this->ids($shopIds), $first2, $first2->copy()->endOfMonth());
 
         $chart = [];
-        $totalRevenue1 = 0;
-        $totalRevenue2 = 0;
-        $totalSales1 = 0;
-        $totalSales2 = 0;
-        $totalProfit1 = 0;
-        $totalProfit2 = 0;
-
-        for ($day = 1; $day <= $maxDays; $day++) {
-            $label = str_pad($day, 2, '0', STR_PAD_LEFT);
-
-            // Mois 1
-            $revenue1 = 0;
-            $sales1 = 0;
-            $profit1 = 0;
-            if ($day <= $daysInMonth1) {
-                $date1 = Carbon::createFromDate($year1, $month1, $day);
-                $revenue1 = (float) Sale::whereIn('shop_id', $shopIds)
-                    ->whereDate('sale_date', $date1)
-                    ->where('status', 'completed')
-                    ->sum('total');
-
-                $sales1 = Sale::whereIn('shop_id', $shopIds)
-                    ->whereDate('sale_date', $date1)
-                    ->where('status', 'completed')
-                    ->count();
-
-                $profit1 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
-                    ->join('products', 'sale_items.product_id', '=', 'products.id')
-                    ->whereHas('sale', function($q) use ($shopIds, $date1) {
-                        $q->whereIn('shop_id', $shopIds)
-                          ->whereDate('sale_date', $date1)
-                          ->where('status', 'completed');
-                    })
-                    ->value('p') ?? 0);
-            }
-
-            // Mois 2
-            $revenue2 = 0;
-            $sales2 = 0;
-            $profit2 = 0;
-            if ($day <= $daysInMonth2) {
-                $date2 = Carbon::createFromDate($year2, $month2, $day);
-                $revenue2 = (float) Sale::whereIn('shop_id', $shopIds)
-                    ->whereDate('sale_date', $date2)
-                    ->where('status', 'completed')
-                    ->sum('total');
-
-                $sales2 = Sale::whereIn('shop_id', $shopIds)
-                    ->whereDate('sale_date', $date2)
-                    ->where('status', 'completed')
-                    ->count();
-
-                $profit2 = (float) (SaleItem::select(DB::raw('SUM((sale_items.unit_price - COALESCE(products.purchase_price, 0)) * sale_items.quantity) as p'))
-                    ->join('products', 'sale_items.product_id', '=', 'products.id')
-                    ->whereHas('sale', function($q) use ($shopIds, $date2) {
-                        $q->whereIn('shop_id', $shopIds)
-                          ->whereDate('sale_date', $date2)
-                          ->where('status', 'completed');
-                    })
-                    ->value('p') ?? 0);
-            }
-
+        for ($day = 1; $day <= max($first1->daysInMonth, $first2->daysInMonth); $day++) {
+            $key1 = $first1->copy()->day($day)->toDateString();
+            $key2 = $first2->copy()->day($day)->toDateString();
             $chart[] = [
-                'label' => $label,
-                'revenue1' => $revenue1,
-                'revenue2' => $revenue2,
-                'sales1' => $sales1,
-                'sales2' => $sales2,
+                'label' => str_pad((string) $day, 2, '0', STR_PAD_LEFT),
+                'revenue1' => $day <= $first1->daysInMonth ? round($one[$key1]['revenue'] ?? 0, 2) : 0,
+                'revenue2' => $day <= $first2->daysInMonth ? round($two[$key2]['revenue'] ?? 0, 2) : 0,
+                'sales1' => $day <= $first1->daysInMonth ? ($one[$key1]['count'] ?? 0) : 0,
+                'sales2' => $day <= $first2->daysInMonth ? ($two[$key2]['count'] ?? 0) : 0,
             ];
-
-            $totalRevenue1 += $revenue1;
-            $totalRevenue2 += $revenue2;
-            $totalSales1 += $sales1;
-            $totalSales2 += $sales2;
-            $totalProfit1 += $profit1;
-            $totalProfit2 += $profit2;
         }
-
-        $label1 = Carbon::createFromDate($year1, $month1, 1)->isoFormat('MMMM YYYY');
-        $label2 = Carbon::createFromDate($year2, $month2, 1)->isoFormat('MMMM YYYY');
 
         return [
             'mode' => 'month',
-            'label1' => $label1,
-            'label2' => $label2,
+            'label1' => $first1->isoFormat('MMMM YYYY'),
+            'label2' => $first2->isoFormat('MMMM YYYY'),
             'chart' => $chart,
-            'totals' => [
-                'revenue' => [
-                    'v1' => $totalRevenue1,
-                    'v2' => $totalRevenue2,
-                    'growth' => $this->calcGrowth($totalRevenue1, $totalRevenue2),
-                ],
-                'sales' => [
-                    'v1' => $totalSales1,
-                    'v2' => $totalSales2,
-                    'growth' => $this->calcGrowth($totalSales1, $totalSales2),
-                ],
-                'profit' => [
-                    'v1' => $totalProfit1,
-                    'v2' => $totalProfit2,
-                    'growth' => $this->calcGrowth($totalProfit1, $totalProfit2),
-                ],
-            ],
+            'totals' => $this->comparisonTotals($one, $two),
+        ];
+    }
+
+    /** CA, ventes et bénéfice (la marge brute) des deux périodes comparées. */
+    private function comparisonTotals(array $one, array $two): array
+    {
+        $a = $this->sumDays($one);
+        $b = $this->sumDays($two);
+        $profitA = $a['net'] - $a['cost'];
+        $profitB = $b['net'] - $b['cost'];
+
+        return [
+            'revenue' => ['v1' => round($a['revenue'], 2), 'v2' => round($b['revenue'], 2), 'growth' => $this->calcGrowth($a['revenue'], $b['revenue'])],
+            'sales' => ['v1' => $a['count'], 'v2' => $b['count'], 'growth' => $this->calcGrowth($a['count'], $b['count'])],
+            'profit' => ['v1' => round($profitA, 2), 'v2' => round($profitB, 2), 'growth' => $this->calcGrowth($profitA, $profitB)],
         ];
     }
 }

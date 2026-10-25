@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Shop;
+use App\Services\ShopsOverview;
 use App\Models\StockMovement;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -35,17 +36,14 @@ class DashboardController extends Controller
         $today = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
         
-        // CA du jour
-        $todaySales = Sale::whereIn('shop_id', $filterShopIds)
-            ->whereDate('sale_date', $today)
-            ->where('status', 'completed')
-            ->sum('total');
-        
-        // CA d'hier pour comparer
-        $yesterdaySales = Sale::whereIn('shop_id', $filterShopIds)
-            ->whereDate('sale_date', $today->copy()->subDay())
-            ->where('status', 'completed')
-            ->sum('total');
+        // CA du jour et d'hier, avec les définitions de « Mes boutiques » (ShopsOverview) :
+        // crédit compris, annulées exclues, factures émises, avoirs déduits. Ce tableau de bord
+        // ne comptait que les ventes terminées, donc pas une vente à crédit encore due.
+        $overview = app(ShopsOverview::class);
+        $filterIds = collect($filterShopIds)->map(fn ($id) => (int) $id)->all();
+        $byDay = $overview->daily($filterIds, $today->copy()->subDay(), $today->copy()->endOfDay());
+        $todaySales = $byDay[$today->toDateString()]['revenue'] ?? 0;
+        $yesterdaySales = $byDay[$today->copy()->subDay()->toDateString()]['revenue'] ?? 0;
         
         // Tendance CA
         $salesTrend = $yesterdaySales > 0 
@@ -75,7 +73,7 @@ class DashboardController extends Controller
             ->count();
         
         // Données de performance selon la période
-        $performanceData = $this->getPerformanceData($filterShopIds, $period);
+        $performanceData = $this->getPerformanceData($filterIds, $period, $overview);
         
         // Activités récentes
         $recentActivities = $this->getRecentActivities($filterShopIds);
@@ -90,7 +88,8 @@ class DashboardController extends Controller
         }
         
         $totalProducts = Product::whereIn('shop_id', $shopIds)->count();
-        $totalSales    = Sale::whereIn('shop_id', $shopIds)->where('status', 'completed')->count();
+        // Une vente à crédit est une vente : l'étape d'accueil ne doit pas la réclamer encore.
+        $totalSales    = Sale::whereIn('shop_id', $shopIds)->where('status', '!=', 'cancelled')->count();
 
         $onboarding = [
             'has_shop'     => $totalShops > 0,
@@ -120,127 +119,53 @@ class DashboardController extends Controller
     /**
      * Récupérer les données de performance selon la période
      */
-    private function getPerformanceData(array|\Illuminate\Support\Collection $shopIds, string $period): array
+    private function getPerformanceData(array $shopIds, string $period, ShopsOverview $overview): array
     {
         $data = [];
         $today = Carbon::today();
-        
-        switch ($period) {
-            case 'day':
-                // Performance par heure (dernières 24h)
-                for ($i = 23; $i >= 0; $i--) {
-                    $hour = Carbon::now()->subHours($i);
-                    $hourStart = $hour->copy()->startOfHour();
-                    $hourEnd = $hour->copy()->endOfHour();
-                    
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$hourStart, $hourEnd])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $hour->format('H:00'),
-                        'shortLabel' => $hour->format('H') . 'h',
-                        'total' => (float) $total,
+
+        // Une seule série (heure par heure pour « 24 h », sinon jour par jour), découpée
+        // ensuite en barres : la boucle lançait une requête par barre, sur les seules
+        // ventes terminées.
+        if ($period === 'day') {
+            $hours = $overview->hourly($shopIds, Carbon::now()->subHours(23)->startOfHour(), Carbon::now()->endOfHour());
+            for ($i = 23; $i >= 0; $i--) {
+                $hour = Carbon::now()->subHours($i);
+                $data[] = [
+                    'label' => $hour->format('H:00'),
+                    'shortLabel' => $hour->format('H') . 'h',
+                    'total' => round($hours[$hour->format('Y-m-d H')] ?? 0, 2),
+                ];
+            }
+        } else {
+            $buckets = match ($period) {
+                'week' => collect(range(6, 0))->map(fn ($i) => [
+                    $today->copy()->subDays($i), $today->copy()->subDays($i)->endOfDay(),
+                    $today->copy()->subDays($i)->isoFormat('ddd D'), $today->copy()->subDays($i)->isoFormat('ddd'),
+                ]),
+                'month' => collect(range(3, 0))->map(function ($i) use ($today) {
+                    $start = $today->copy()->subWeeks($i)->startOfWeek();
+
+                    return [$start, $start->copy()->endOfWeek(), 'Sem. ' . $start->weekOfYear, 'S' . $start->weekOfYear];
+                }),
+                default => collect(range(['quarter' => 2, 'semester' => 5, 'year' => 11][$period] ?? 11, 0))->map(function ($i) use ($today, $period) {
+                    $month = $today->copy()->subMonthsNoOverflow($i);
+
+                    return [
+                        $month->copy()->startOfMonth(), $month->copy()->endOfMonth(),
+                        $month->isoFormat(['quarter' => 'MMMM', 'semester' => 'MMMM YYYY'][$period] ?? 'MMM YYYY'),
+                        $month->isoFormat('MMM'),
                     ];
-                }
-                break;
-                
-            case 'week':
-                // Performance par jour (7 derniers jours)
-                for ($i = 6; $i >= 0; $i--) {
-                    $date = $today->copy()->subDays($i);
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereDate('sale_date', $date)
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $date->isoFormat('ddd D'),
-                        'shortLabel' => $date->isoFormat('ddd'),
-                        'total' => (float) $total,
-                    ];
-                }
-                break;
-                
-            case 'month':
-                // Performance par semaine (4 dernières semaines)
-                for ($i = 3; $i >= 0; $i--) {
-                    $weekStart = $today->copy()->subWeeks($i)->startOfWeek();
-                    $weekEnd = $weekStart->copy()->endOfWeek();
-                    
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$weekStart, $weekEnd])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => 'Sem. ' . $weekStart->weekOfYear,
-                        'shortLabel' => 'S' . $weekStart->weekOfYear,
-                        'total' => (float) $total,
-                    ];
-                }
-                break;
-                
-            case 'quarter':
-                // Performance par mois (3 derniers mois)
-                for ($i = 2; $i >= 0; $i--) {
-                    $month = $today->copy()->subMonths($i);
-                    $monthStart = $month->copy()->startOfMonth();
-                    $monthEnd = $month->copy()->endOfMonth();
-                    
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$monthStart, $monthEnd])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $month->isoFormat('MMMM'),
-                        'shortLabel' => $month->isoFormat('MMM'),
-                        'total' => (float) $total,
-                    ];
-                }
-                break;
-                
-            case 'semester':
-                // Performance par mois (6 derniers mois)
-                for ($i = 5; $i >= 0; $i--) {
-                    $month = $today->copy()->subMonths($i);
-                    $monthStart = $month->copy()->startOfMonth();
-                    $monthEnd = $month->copy()->endOfMonth();
-                    
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$monthStart, $monthEnd])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $month->isoFormat('MMMM YYYY'),
-                        'shortLabel' => $month->isoFormat('MMM'),
-                        'total' => (float) $total,
-                    ];
-                }
-                break;
-                
-            case 'year':
-                // Performance par mois (12 derniers mois)
-                for ($i = 11; $i >= 0; $i--) {
-                    $month = $today->copy()->subMonths($i);
-                    $monthStart = $month->copy()->startOfMonth();
-                    $monthEnd = $month->copy()->endOfMonth();
-                    
-                    $total = Sale::whereIn('shop_id', $shopIds)
-                        ->whereBetween('sale_date', [$monthStart, $monthEnd])
-                        ->where('status', 'completed')
-                        ->sum('total');
-                    
-                    $data[] = [
-                        'label' => $month->isoFormat('MMM YYYY'),
-                        'shortLabel' => $month->isoFormat('MMM'),
-                        'total' => (float) $total,
-                    ];
-                }
-                break;
+                }),
+            };
+
+            $days = $overview->daily($shopIds, $buckets->first()[0], $buckets->last()[1]);
+            foreach ($buckets as [$start, $end, $label, $shortLabel]) {
+                $total = collect($days)
+                    ->filter(fn ($figures, $day) => $day >= $start->toDateString() && $day <= $end->toDateString())
+                    ->sum('revenue');
+                $data[] = ['label' => $label, 'shortLabel' => $shortLabel, 'total' => round($total, 2)];
+            }
         }
         
         // Calculer le max et les pourcentages

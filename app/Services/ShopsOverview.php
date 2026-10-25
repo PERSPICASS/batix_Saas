@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Sale;
 use App\Models\Shop;
+use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -90,7 +91,7 @@ class ShopsOverview
         $add(Invoice::query()
             ->whereIn('shop_id', $ids)
             ->whereIn('status', ['sent', 'paid'])
-            ->whereBetween('invoice_date', [$start->toDateString(), $end->toDateString()])
+            ->whereDate('invoice_date', '>=', $start->toDateString())->whereDate('invoice_date', '<=', $end->toDateString())
             ->groupBy('shop_id')
             ->selectRaw('shop_id, COUNT(*) AS n, SUM(total) AS revenue, SUM(subtotal - discount_amount) AS net')
             ->get(), ['revenue' => ['revenue', 1], 'count' => ['n', 1], 'net_excl_tax' => ['net', 1]]);
@@ -101,7 +102,7 @@ class ShopsOverview
             ->whereNull('invoices.deleted_at')
             ->whereIn('invoices.shop_id', $ids)
             ->whereIn('invoices.status', ['sent', 'paid'])
-            ->whereBetween('invoices.invoice_date', [$start->toDateString(), $end->toDateString()])
+            ->whereDate('invoices.invoice_date', '>=', $start->toDateString())->whereDate('invoices.invoice_date', '<=', $end->toDateString())
             ->groupBy('invoices.shop_id')
             ->selectRaw('invoices.shop_id, SUM(invoice_items.quantity * '.self::UNIT_COST.') AS cost')
             ->get(), ['cost' => ['cost', 1]]);
@@ -110,7 +111,7 @@ class ShopsOverview
         // des articles crédités ne pèse plus sur la marge.
         $add(CreditNote::query()
             ->whereIn('shop_id', $ids)
-            ->whereBetween('credit_note_date', [$start->toDateString(), $end->toDateString()])
+            ->whereDate('credit_note_date', '>=', $start->toDateString())->whereDate('credit_note_date', '<=', $end->toDateString())
             ->groupBy('shop_id')
             ->selectRaw('shop_id, SUM(total) AS revenue, SUM(subtotal) AS net')
             ->get(), ['revenue' => ['revenue', -1], 'net_excl_tax' => ['net', -1]]);
@@ -120,14 +121,14 @@ class ShopsOverview
             ->join('invoice_items', 'invoice_items.id', '=', 'credit_note_items.invoice_item_id')
             ->leftJoin('products', 'products.id', '=', 'invoice_items.product_id')
             ->whereIn('credit_notes.shop_id', $ids)
-            ->whereBetween('credit_notes.credit_note_date', [$start->toDateString(), $end->toDateString()])
+            ->whereDate('credit_notes.credit_note_date', '>=', $start->toDateString())->whereDate('credit_notes.credit_note_date', '<=', $end->toDateString())
             ->groupBy('credit_notes.shop_id')
             ->selectRaw('credit_notes.shop_id, SUM(credit_note_items.quantity * '.self::UNIT_COST.') AS cost')
             ->get(), ['cost' => ['cost', -1]]);
 
         $add(Expense::query()
             ->whereIn('shop_id', $ids)
-            ->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
+            ->whereDate('expense_date', '>=', $start->toDateString())->whereDate('expense_date', '<=', $end->toDateString())
             ->groupBy('shop_id')
             ->selectRaw('shop_id, SUM(amount) AS amount')
             ->get(), ['expenses' => ['amount', 1]]);
@@ -152,6 +153,115 @@ class ShopsOverview
         }
 
         return $figures;
+    }
+
+    /**
+     * Les mêmes chiffres, jour par jour, pour les graphiques et les comparaisons : CA, nombre
+     * de ventes, CA hors taxes et coût (la marge est net_excl_tax - cost). Seuls les jours qui
+     * ont bougé sont présents.
+     *
+     * @param  array<int, int>  $ids
+     * @return array<string, array{revenue: float, count: int, net_excl_tax: float, cost: float}>  indexé par 'Y-m-d'
+     */
+    public function daily(array $ids, CarbonInterface $start, CarbonInterface $end): array
+    {
+        $days = [];
+        if ($ids === []) {
+            return $days;
+        }
+
+        $add = function ($rows, array $map) use (&$days) {
+            foreach ($rows as $row) {
+                $day = substr((string) $row->day, 0, 10);
+                $days[$day] ??= ['revenue' => 0.0, 'count' => 0, 'net_excl_tax' => 0.0, 'cost' => 0.0];
+                foreach ($map as $key => [$column, $sign]) {
+                    $days[$day][$key] += $sign * (float) $row->{$column};
+                }
+            }
+        };
+        $dates = [$start->toDateString(), $end->toDateString()];
+
+        $add(Sale::query()->whereIn('shop_id', $ids)->whereNotIn('status', ['cancelled', 'returned'])
+            ->whereBetween('sale_date', [$start, $end])
+            ->groupByRaw('DATE(sale_date)')
+            ->selectRaw('DATE(sale_date) AS day, COUNT(*) AS n, SUM(total) AS revenue, SUM(subtotal - discount_amount) AS net')
+            ->get(), ['revenue' => ['revenue', 1], 'count' => ['n', 1], 'net_excl_tax' => ['net', 1]]);
+
+        $add(DB::table('sale_items')
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->leftJoin('products', 'products.id', '=', 'sale_items.product_id')
+            ->leftJoinSub(
+                DB::table('returns')->groupBy('sale_item_id')->selectRaw('sale_item_id, SUM(quantity_returned) AS qty'),
+                'returned', 'returned.sale_item_id', '=', 'sale_items.id'
+            )
+            ->whereIn('sales.shop_id', $ids)->whereNotIn('sales.status', ['cancelled', 'returned'])
+            ->whereBetween('sales.sale_date', [$start, $end])
+            ->groupByRaw('DATE(sales.sale_date)')
+            ->selectRaw('DATE(sales.sale_date) AS day, SUM((sale_items.quantity - COALESCE(returned.qty, 0)) * '.self::UNIT_COST.') AS cost')
+            ->get(), ['cost' => ['cost', 1]]);
+
+        $add(Invoice::query()->whereIn('shop_id', $ids)->whereIn('status', ['sent', 'paid'])
+            ->whereDate('invoice_date', '>=', $dates[0])->whereDate('invoice_date', '<=', $dates[1])
+            ->groupBy('invoice_date')
+            ->selectRaw('invoice_date AS day, COUNT(*) AS n, SUM(total) AS revenue, SUM(subtotal - discount_amount) AS net')
+            ->get(), ['revenue' => ['revenue', 1], 'count' => ['n', 1], 'net_excl_tax' => ['net', 1]]);
+
+        $add(DB::table('invoice_items')
+            ->join('invoices', 'invoices.id', '=', 'invoice_items.invoice_id')
+            ->leftJoin('products', 'products.id', '=', 'invoice_items.product_id')
+            ->whereNull('invoices.deleted_at')->whereIn('invoices.shop_id', $ids)->whereIn('invoices.status', ['sent', 'paid'])
+            ->whereDate('invoices.invoice_date', '>=', $dates[0])->whereDate('invoices.invoice_date', '<=', $dates[1])
+            ->groupBy('invoices.invoice_date')
+            ->selectRaw('invoices.invoice_date AS day, SUM(invoice_items.quantity * '.self::UNIT_COST.') AS cost')
+            ->get(), ['cost' => ['cost', 1]]);
+
+        $add(CreditNote::query()->whereIn('shop_id', $ids)
+            ->whereDate('credit_note_date', '>=', $dates[0])->whereDate('credit_note_date', '<=', $dates[1])
+            ->groupBy('credit_note_date')
+            ->selectRaw('credit_note_date AS day, SUM(total) AS revenue, SUM(subtotal) AS net')
+            ->get(), ['revenue' => ['revenue', -1], 'net_excl_tax' => ['net', -1]]);
+
+        $add(DB::table('credit_note_items')
+            ->join('credit_notes', 'credit_notes.id', '=', 'credit_note_items.credit_note_id')
+            ->join('invoice_items', 'invoice_items.id', '=', 'credit_note_items.invoice_item_id')
+            ->leftJoin('products', 'products.id', '=', 'invoice_items.product_id')
+            ->whereIn('credit_notes.shop_id', $ids)
+            ->whereDate('credit_notes.credit_note_date', '>=', $dates[0])->whereDate('credit_notes.credit_note_date', '<=', $dates[1])
+            ->groupBy('credit_notes.credit_note_date')
+            ->selectRaw('credit_notes.credit_note_date AS day, SUM(credit_note_items.quantity * '.self::UNIT_COST.') AS cost')
+            ->get(), ['cost' => ['cost', -1]]);
+
+        ksort($days);
+
+        return $days;
+    }
+
+    /**
+     * Le CA heure par heure, pour la vue « aujourd'hui ». Une facture ou un avoir n'a qu'une
+     * date de document : il tombe à l'heure où il a été saisi.
+     *
+     * @param  array<int, int>  $ids
+     * @return array<string, float>  indexé par 'Y-m-d H'
+     */
+    public function hourly(array $ids, CarbonInterface $start, CarbonInterface $end): array
+    {
+        $hours = [];
+        $add = function ($rows, string $at, int $sign) use (&$hours) {
+            foreach ($rows as $row) {
+                $hour = Carbon::parse($row->{$at})->format('Y-m-d H');
+                $hours[$hour] = ($hours[$hour] ?? 0) + $sign * (float) $row->total;
+            }
+        };
+        $dates = [$start->toDateString(), $end->toDateString()];
+
+        $add(Sale::query()->whereIn('shop_id', $ids)->whereNotIn('status', ['cancelled', 'returned'])
+            ->whereBetween('sale_date', [$start, $end])->get(['sale_date', 'total']), 'sale_date', 1);
+        $add(Invoice::query()->whereIn('shop_id', $ids)->whereIn('status', ['sent', 'paid'])
+            ->whereDate('invoice_date', '>=', $dates[0])->whereDate('invoice_date', '<=', $dates[1])->whereBetween('created_at', [$start, $end])->get(['created_at', 'total']), 'created_at', 1);
+        $add(CreditNote::query()->whereIn('shop_id', $ids)
+            ->whereDate('credit_note_date', '>=', $dates[0])->whereDate('credit_note_date', '<=', $dates[1])->whereBetween('created_at', [$start, $end])->get(['created_at', 'total']), 'created_at', -1);
+
+        return $hours;
     }
 
     /** Le coût unitaire d'un produit, comme Product::unitCost(). */

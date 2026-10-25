@@ -43,35 +43,36 @@ class ShopReport
         $current = $this->overview->figures($shops, $start, $end)[$shop->id];
         $previous = $this->overview->figures($shops, $previousStart, $previousEnd, withSnapshot: false)[$shop->id];
 
+        $ids = [$shop->id];
         $byMonth = $start->diffInDays($end) > 62;
-        $products = $this->products($shop->id, $start, $end);
+        $products = $this->products($ids, $start, $end);
 
         return [
             'figures' => $current,
             'previous' => $previous,
-            'split' => $this->split($shop->id, $start, $end),
+            'split' => $this->split($ids, $start, $end),
             'timeline' => [
                 'unit' => $byMonth ? 'month' : 'day',
-                'current' => $this->timeline($shop->id, $start, $end, $byMonth),
-                'previous' => $this->timeline($shop->id, $previousStart, $previousEnd, $byMonth),
+                'current' => $this->timeline($ids, $start, $end, $byMonth),
+                'previous' => $this->timeline($ids, $previousStart, $previousEnd, $byMonth),
             ],
             'products' => $products->sortByDesc('revenue')->take(10)->values(),
             'categories' => $this->categories($products),
-            'sellers' => $this->sellers($shop->id, $start, $end),
-            'payment_methods' => $this->paymentMethods($shop->id, $start, $end),
-            'expenses' => $this->expenses($shop->id, $start, $end),
+            'sellers' => $this->sellers($ids, $start, $end),
+            'payment_methods' => $this->paymentMethods($ids, $start, $end),
+            'expenses' => $this->expenses($ids, $start, $end),
             'low_stock' => $this->lowStock($shop),
-            'debtors' => $this->debtors($shop->id),
+            'debtors' => $this->debtors($ids),
         ];
     }
 
     /** Ventes au comptoir et factures (avoirs déduits) : ce qui compose le CA. */
-    private function split(int $shopId, CarbonInterface $start, CarbonInterface $end): array
+    private function split(array $ids, CarbonInterface $start, CarbonInterface $end): array
     {
-        $counter = (float) $this->sales($shopId, $start, $end)->sum('total');
-        $invoiced = (float) $this->invoices($shopId, $start, $end)->sum('total')
-            - (float) DB::table('credit_notes')->where('shop_id', $shopId)
-                ->whereBetween('credit_note_date', [$start->toDateString(), $end->toDateString()])->sum('total');
+        $counter = (float) $this->sales($ids, $start, $end)->sum('total');
+        $invoiced = (float) $this->invoices($ids, $start, $end)->sum('total')
+            - (float) DB::table('credit_notes')->whereIn('shop_id', $ids)
+                ->whereDate('credit_note_date', '>=', $start->toDateString())->whereDate('credit_note_date', '<=', $end->toDateString())->sum('total');
 
         return ['counter' => round($counter, 2), 'invoices' => round($invoiced, 2)];
     }
@@ -82,26 +83,14 @@ class ShopReport
      *
      * @return array<int, array{label: string, revenue: float}>
      */
-    private function timeline(int $shopId, CarbonInterface $start, CarbonInterface $end, bool $byMonth): array
+    private function timeline(array $ids, CarbonInterface $start, CarbonInterface $end, bool $byMonth): array
     {
-        $byDay = [];
-        $add = function ($rows, int $sign) use (&$byDay) {
-            foreach ($rows as $row) {
-                $day = substr((string) $row->day, 0, 10);
-                $byDay[$day] = ($byDay[$day] ?? 0) + $sign * (float) $row->revenue;
-            }
-        };
-
-        $add($this->sales($shopId, $start, $end)->groupByRaw('DATE(sale_date)')->selectRaw('DATE(sale_date) AS day, SUM(total) AS revenue')->get(), 1);
-        $add($this->invoices($shopId, $start, $end)->groupBy('invoice_date')->selectRaw('invoice_date AS day, SUM(total) AS revenue')->get(), 1);
-        $add(DB::table('credit_notes')->where('shop_id', $shopId)
-            ->whereBetween('credit_note_date', [$start->toDateString(), $end->toDateString()])
-            ->groupBy('credit_note_date')->selectRaw('credit_note_date AS day, SUM(total) AS revenue')->get(), -1);
+        $byDay = $this->overview->daily($ids, $start, $end);
 
         $series = [];
         foreach (CarbonPeriod::create($start->copy()->startOfDay(), $end->copy()->startOfDay()) as $day) {
             $key = $byMonth ? $day->format('Y-m') : $day->toDateString();
-            $series[$key] = ($series[$key] ?? 0) + ($byDay[$day->toDateString()] ?? 0);
+            $series[$key] = ($series[$key] ?? 0) + ($byDay[$day->toDateString()]['revenue'] ?? 0);
         }
 
         return collect($series)->map(fn ($revenue, $key) => ['label' => $key, 'revenue' => round($revenue, 2)])->values()->all();
@@ -112,7 +101,7 @@ class ShopReport
      *
      * @return Collection<int, array{product_id: int|null, name: string, category: string|null, quantity: int, revenue: float, margin: float}>
      */
-    private function products(int $shopId, CarbonInterface $start, CarbonInterface $end): Collection
+    public function products(array $ids, CarbonInterface $start, CarbonInterface $end): Collection
     {
         $returned = DB::table('returns')->groupBy('sale_item_id')->selectRaw('sale_item_id, SUM(quantity_returned) AS qty');
         $kept = '(sale_items.quantity - COALESCE(returned.qty, 0))';
@@ -121,7 +110,7 @@ class ShopReport
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->leftJoin('products', 'products.id', '=', 'sale_items.product_id')
             ->leftJoinSub($returned, 'returned', 'returned.sale_item_id', '=', 'sale_items.id')
-            ->where('sales.shop_id', $shopId)
+            ->whereIn('sales.shop_id', $ids)
             ->whereNotIn('sales.status', ['cancelled', 'returned'])
             ->whereBetween('sales.sale_date', [$start, $end])
             ->groupBy('sale_items.product_id', 'sale_items.product_name')
@@ -135,9 +124,9 @@ class ShopReport
             ->join('invoices', 'invoices.id', '=', 'invoice_items.invoice_id')
             ->leftJoin('products', 'products.id', '=', 'invoice_items.product_id')
             ->whereNull('invoices.deleted_at')
-            ->where('invoices.shop_id', $shopId)
+            ->whereIn('invoices.shop_id', $ids)
             ->whereIn('invoices.status', ['sent', 'paid'])
-            ->whereBetween('invoices.invoice_date', [$start->toDateString(), $end->toDateString()])
+            ->whereDate('invoices.invoice_date', '>=', $start->toDateString())->whereDate('invoices.invoice_date', '<=', $end->toDateString())
             ->groupBy('invoice_items.product_id', 'invoice_items.product_name')
             ->selectRaw('invoice_items.product_id, invoice_items.product_name AS name, SUM(invoice_items.quantity) AS quantity,
                 SUM((invoice_items.total - invoice_items.tax_amount) * '.self::INVOICE_KEEP.' * (1 + COALESCE(invoice_items.tax_rate, 0) / 100.0)) AS revenue,
@@ -149,8 +138,8 @@ class ShopReport
             ->join('credit_notes', 'credit_notes.id', '=', 'credit_note_items.credit_note_id')
             ->join('invoice_items', 'invoice_items.id', '=', 'credit_note_items.invoice_item_id')
             ->leftJoin('products', 'products.id', '=', 'invoice_items.product_id')
-            ->where('credit_notes.shop_id', $shopId)
-            ->whereBetween('credit_notes.credit_note_date', [$start->toDateString(), $end->toDateString()])
+            ->whereIn('credit_notes.shop_id', $ids)
+            ->whereDate('credit_notes.credit_note_date', '>=', $start->toDateString())->whereDate('credit_notes.credit_note_date', '<=', $end->toDateString())
             ->groupBy('invoice_items.product_id', 'credit_note_items.product_name')
             ->selectRaw('invoice_items.product_id, credit_note_items.product_name AS name, SUM(credit_note_items.quantity) AS quantity,
                 SUM(credit_note_items.total * (1 + COALESCE(credit_note_items.tax_rate, 0) / 100.0)) AS revenue,
@@ -183,7 +172,7 @@ class ShopReport
     }
 
     /** @return array<int, array{name: string|null, revenue: float}> */
-    private function categories(Collection $products): array
+    public function categories(Collection $products): array
     {
         return $products
             ->groupBy(fn ($line) => $line['category'] ?? '')
@@ -196,10 +185,10 @@ class ShopReport
      * au vendeur de la facture qu'il corrige, pas à celui qui l'a émis : c'est sa vente qui
      * a été réduite.
      */
-    private function sellers(int $shopId, CarbonInterface $start, CarbonInterface $end): array
+    public function sellers(array $ids, CarbonInterface $start, CarbonInterface $end): array
     {
         $rows = [];
-        foreach ([$this->sales($shopId, $start, $end), $this->invoices($shopId, $start, $end)] as $query) {
+        foreach ([$this->sales($ids, $start, $end), $this->invoices($ids, $start, $end)] as $query) {
             foreach ($query->groupBy('user_id')->selectRaw('user_id, COUNT(*) AS n, SUM(total) AS revenue')->get() as $row) {
                 $rows[$row->user_id] ??= ['count' => 0, 'revenue' => 0.0];
                 $rows[$row->user_id]['count'] += (int) $row->n;
@@ -208,8 +197,8 @@ class ShopReport
         }
 
         $credited = DB::table('credit_notes')->join('invoices', 'invoices.id', '=', 'credit_notes.invoice_id')
-            ->where('credit_notes.shop_id', $shopId)
-            ->whereBetween('credit_notes.credit_note_date', [$start->toDateString(), $end->toDateString()])
+            ->whereIn('credit_notes.shop_id', $ids)
+            ->whereDate('credit_notes.credit_note_date', '>=', $start->toDateString())->whereDate('credit_notes.credit_note_date', '<=', $end->toDateString())
             ->groupBy('invoices.user_id')->selectRaw('invoices.user_id, SUM(credit_notes.total) AS revenue')->get();
         foreach ($credited as $row) {
             $rows[$row->user_id] ??= ['count' => 0, 'revenue' => 0.0];
@@ -226,10 +215,51 @@ class ShopReport
         ])->sortByDesc('revenue')->values()->all();
     }
 
-    /** Les ventes au comptoir par mode de paiement (une facture n'en porte pas). */
-    private function paymentMethods(int $shopId, CarbonInterface $start, CarbonInterface $end): array
+    /**
+     * Les meilleurs clients de la période : tickets et factures, avoirs déduits. Une vente
+     * sans client (passage au comptoir) n'appartient à personne et n'y figure pas.
+     *
+     * @return array<int, array{id: int, name: string|null, email: string|null, phone: string|null, count: int, revenue: float}>
+     */
+    public function customers(array $ids, CarbonInterface $start, CarbonInterface $end, int $limit = 10): array
     {
-        return $this->sales($shopId, $start, $end)
+        $rows = [];
+        foreach ([$this->sales($ids, $start, $end), $this->invoices($ids, $start, $end)] as $query) {
+            foreach ($query->whereNotNull('customer_id')->groupBy('customer_id')->selectRaw('customer_id, COUNT(*) AS n, SUM(total) AS revenue')->get() as $row) {
+                $rows[$row->customer_id] ??= ['count' => 0, 'revenue' => 0.0];
+                $rows[$row->customer_id]['count'] += (int) $row->n;
+                $rows[$row->customer_id]['revenue'] += (float) $row->revenue;
+            }
+        }
+
+        $credited = DB::table('credit_notes')
+            ->whereIn('shop_id', $ids)
+            ->whereDate('credit_note_date', '>=', $start->toDateString())->whereDate('credit_note_date', '<=', $end->toDateString())
+            ->whereNotNull('customer_id')
+            ->groupBy('customer_id')->selectRaw('customer_id, SUM(total) AS revenue')->get();
+        foreach ($credited as $row) {
+            $rows[$row->customer_id] ??= ['count' => 0, 'revenue' => 0.0];
+            $rows[$row->customer_id]['revenue'] -= (float) $row->revenue;
+        }
+
+        uasort($rows, fn ($a, $b) => $b['revenue'] <=> $a['revenue']);
+        $rows = array_slice($rows, 0, $limit, true);
+        $customers = DB::table('customers')->whereIn('id', array_keys($rows))->get(['id', 'name', 'email', 'phone'])->keyBy('id');
+
+        return collect($rows)->map(fn ($row, $customerId) => [
+            'id' => $customerId,
+            'name' => $customers[$customerId]->name ?? null,
+            'email' => $customers[$customerId]->email ?? null,
+            'phone' => $customers[$customerId]->phone ?? null,
+            'count' => $row['count'],
+            'revenue' => round($row['revenue'], 2),
+        ])->values()->all();
+    }
+
+    /** Les ventes au comptoir par mode de paiement (une facture n'en porte pas). */
+    public function paymentMethods(array $ids, CarbonInterface $start, CarbonInterface $end): array
+    {
+        return $this->sales($ids, $start, $end)
             ->groupBy('payment_method')
             ->selectRaw('payment_method, COUNT(*) AS n, SUM(total) AS revenue')
             ->orderByDesc('revenue')
@@ -238,10 +268,10 @@ class ShopReport
             ->all();
     }
 
-    private function expenses(int $shopId, CarbonInterface $start, CarbonInterface $end): array
+    public function expenses(array $ids, CarbonInterface $start, CarbonInterface $end): array
     {
-        return Expense::where('shop_id', $shopId)
-            ->whereBetween('expense_date', [$start->toDateString(), $end->toDateString()])
+        return Expense::whereIn('shop_id', $ids)
+            ->whereDate('expense_date', '>=', $start->toDateString())->whereDate('expense_date', '<=', $end->toDateString())
             ->groupBy('category')
             ->selectRaw('category, COUNT(*) AS n, SUM(amount) AS amount')
             ->orderByDesc('amount')
@@ -270,16 +300,16 @@ class ShopReport
     }
 
     /** Les clients qui doivent le plus aujourd'hui : crédits de caisse et factures envoyées. */
-    private function debtors(int $shopId): array
+    public function debtors(array $ids): array
     {
         $owed = [];
 
-        $credit = Sale::where('shop_id', $shopId)->where('status', 'pending')->whereNotNull('customer_id')
+        $credit = Sale::whereIn('shop_id', $ids)->where('status', 'pending')->whereNotNull('customer_id')
             ->groupBy('customer_id')->selectRaw('customer_id, SUM(remaining_amount) AS owed')->get();
-        $invoiced = Invoice::where('shop_id', $shopId)->where('status', 'sent')
+        $invoiced = Invoice::whereIn('shop_id', $ids)->where('status', 'sent')
             ->groupBy('customer_id')->selectRaw('customer_id, SUM(total) AS owed')->get();
         $credited = DB::table('credit_notes')->join('invoices', 'invoices.id', '=', 'credit_notes.invoice_id')
-            ->whereNull('invoices.deleted_at')->where('invoices.shop_id', $shopId)->where('invoices.status', 'sent')
+            ->whereNull('invoices.deleted_at')->whereIn('invoices.shop_id', $ids)->where('invoices.status', 'sent')
             ->groupBy('invoices.customer_id')->selectRaw('invoices.customer_id, SUM(credit_notes.total) AS owed')->get();
 
         foreach ([[$credit, 1], [$invoiced, 1], [$credited, -1]] as [$rows, $sign]) {
@@ -301,18 +331,18 @@ class ShopReport
     }
 
     /** Les ventes qui comptent, comme dans ShopsOverview. */
-    private function sales(int $shopId, CarbonInterface $start, CarbonInterface $end)
+    private function sales(array $ids, CarbonInterface $start, CarbonInterface $end)
     {
-        return Sale::query()->where('shop_id', $shopId)
+        return Sale::query()->whereIn('shop_id', $ids)
             ->whereNotIn('status', ['cancelled', 'returned'])
             ->whereBetween('sale_date', [$start, $end]);
     }
 
     /** Les factures émises, comme dans ShopsOverview. */
-    private function invoices(int $shopId, CarbonInterface $start, CarbonInterface $end)
+    private function invoices(array $ids, CarbonInterface $start, CarbonInterface $end)
     {
-        return Invoice::query()->where('shop_id', $shopId)
+        return Invoice::query()->whereIn('shop_id', $ids)
             ->whereIn('status', ['sent', 'paid'])
-            ->whereBetween('invoice_date', [$start->toDateString(), $end->toDateString()]);
+            ->whereDate('invoice_date', '>=', $start->toDateString())->whereDate('invoice_date', '<=', $end->toDateString());
     }
 }
