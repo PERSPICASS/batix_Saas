@@ -130,7 +130,7 @@ export function useUserRoute() {
  *     Voir les produits
  * </UserLink>
  * 
- * <UserLink route="products.show" params={{ product: 123 }}>
+ * <UserLink route="products.edit" params={{ product: 123 }}>
  *     Voir le produit
  * </UserLink>
  * ```

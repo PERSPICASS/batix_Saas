@@ -204,20 +204,6 @@ class ProductController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $code_user, Product $product)
-    {
-        $this->authorize('view', $product);
-        
-        $product->load(['shop', 'category', 'subcategory']);
-        
-        return Inertia::render('Products/Show', [
-            'product' => $product,
-        ]);
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $code_user, Product $product): Response
