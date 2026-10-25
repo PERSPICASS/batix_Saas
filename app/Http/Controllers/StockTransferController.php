@@ -36,6 +36,7 @@ class StockTransferController extends Controller
         $shops = $this->shops();
         $shopIds = $shops->pluck('id');
 
+        $acting = $this->actingShopId();
         $status = $request->input('status', 'in_transit');
         $list = StockTransfer::with(['fromShop:id,name', 'toShop:id,name', 'user:id,name', 'receiver:id,name', 'items'])
             ->where(fn ($q) => $q->whereIn('from_shop_id', $shopIds)->orWhereIn('to_shop_id', $shopIds))
@@ -44,8 +45,8 @@ class StockTransferController extends Controller
             ->paginate(20)
             ->withQueryString()
             // Les mêmes règles que receive() et cancel() : n'afficher que les boutons utiles.
-            ->through(fn ($transfer) => $transfer->setAttribute('can_receive', $transfer->status === 'in_transit' && $shopIds->contains($transfer->to_shop_id))
-                ->setAttribute('can_cancel', $transfer->status === 'in_transit' && $shopIds->contains($transfer->from_shop_id)));
+            ->through(fn ($transfer) => $transfer->setAttribute('can_receive', $transfer->status === 'in_transit' && (int) $transfer->to_shop_id === $acting)
+                ->setAttribute('can_cancel', $transfer->status === 'in_transit' && (int) $transfer->from_shop_id === $acting));
 
         return Inertia::render('StockTransfers/Index', [
             'transfers' => $list,
@@ -130,6 +131,24 @@ class StockTransferController extends Controller
         ]);
     }
 
+    /**
+     * La boutique au nom de laquelle on agit : la boutique active (sélecteur de l'en-tête),
+     * à défaut celle de l'utilisateur. Le propriétaire a accès aux deux boutiques d'un
+     * transfert : sans cette règle, la boutique qui envoie se voyait proposer de réceptionner.
+     */
+    private function actingShopId(): ?int
+    {
+        $user = Auth::user();
+
+        foreach ([get_active_shop_id(), $user->shop_id] as $id) {
+            if ($id && $user->accessibleShopsQuery()->whereKey($id)->exists()) {
+                return (int) $id;
+            }
+        }
+
+        return null;
+    }
+
     private function shops()
     {
         return Auth::user()->accessibleShopsQuery()->orderBy('name')->get(['shops.id', 'shops.name']);
@@ -197,8 +216,8 @@ class StockTransferController extends Controller
     public function receive(string $codeUser, StockTransfer $stockTransfer): RedirectResponse
     {
         $user = Auth::user();
-        // Réceptionner revient à la boutique qui reçoit.
-        abort_unless($user->accessibleShopsQuery()->whereKey($stockTransfer->to_shop_id)->exists(), 403);
+        // Réceptionner revient à la boutique qui reçoit : celle sur laquelle on se trouve.
+        abort_unless($this->actingShopId() === (int) $stockTransfer->to_shop_id, 403);
 
         $this->transfers->receive($stockTransfer, $user);
         ActivityLogger::message('update', 'stock_transfer_received', ['reference' => $stockTransfer->reference], $stockTransfer);
@@ -209,8 +228,8 @@ class StockTransferController extends Controller
     public function cancel(string $codeUser, StockTransfer $stockTransfer): RedirectResponse
     {
         $user = Auth::user();
-        // Annuler revient à la boutique qui a envoyé.
-        abort_unless($user->accessibleShopsQuery()->whereKey($stockTransfer->from_shop_id)->exists(), 403);
+        // Annuler revient à la boutique qui a envoyé : celle sur laquelle on se trouve.
+        abort_unless($this->actingShopId() === (int) $stockTransfer->from_shop_id, 403);
 
         $this->transfers->cancel($stockTransfer, $user);
         ActivityLogger::message('update', 'stock_transfer_cancelled', ['reference' => $stockTransfer->reference], $stockTransfer);

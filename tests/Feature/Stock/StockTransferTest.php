@@ -106,7 +106,9 @@ class StockTransferTest extends TestCase
         $this->assertSame('cancelled', $transfer->fresh()->status);
         $this->assertSame(50, $this->cement->fresh()->stock_quantity);
 
-        $this->actingAs($this->owner)->post("/{$this->owner->code_user}/transferts-stock/{$transfer->id}/receptionner")
+        // On the receiving shop, which is where receiving happens.
+        $this->actingAs($this->owner)->withSession(['active_shop_id' => $this->yopougon->id])
+            ->post("/{$this->owner->code_user}/transferts-stock/{$transfer->id}/receptionner")
             ->assertSessionHasErrors('transfer');
         $this->assertSame(0, Product::where('shop_id', $this->yopougon->id)->sole()->stock_quantity);
     }
@@ -117,8 +119,9 @@ class StockTransferTest extends TestCase
         $transfer = StockTransfer::sole();
         $url = "/{$this->owner->code_user}/transferts-stock/{$transfer->id}/receptionner";
 
-        $this->actingAs($this->owner)->post($url)->assertSessionHasNoErrors();
-        $this->actingAs($this->owner)->post($url)->assertSessionHasErrors('transfer');
+        $onYopougon = $this->actingAs($this->owner)->withSession(['active_shop_id' => $this->yopougon->id]);
+        $onYopougon->post($url)->assertSessionHasNoErrors();
+        $onYopougon->post($url)->assertSessionHasErrors('transfer');
 
         $this->assertSame(5, Product::where('shop_id', $this->yopougon->id)->sole()->stock_quantity);
     }
@@ -239,5 +242,25 @@ class StockTransferTest extends TestCase
         $this->actingAs($this->manager($this->yopougon))
             ->get("/{$this->owner->code_user}/transferts-stock/reequilibrage")
             ->assertForbidden();
+    }
+
+    public function test_the_sending_shop_cannot_receive_its_own_transfer(): void
+    {
+        // The owner reaches both shops: what counts is the shop he is on (the active one).
+        $this->send([$this->cement->id => 5]);
+        $transfer = StockTransfer::sole();
+
+        $onCocody = $this->actingAs($this->owner)->withSession(['active_shop_id' => $this->cocody->id]);
+        $row = $onCocody->get("/{$this->owner->code_user}/transferts-stock")->viewData('page')['props']['transfers']['data'][0];
+        $this->assertFalse($row['can_receive']);
+        $this->assertTrue($row['can_cancel']);
+        $onCocody->post("/{$this->owner->code_user}/transferts-stock/{$transfer->id}/receptionner")->assertForbidden();
+
+        // Switched to Yopougon, it is the other way round.
+        $onYopougon = $this->actingAs($this->owner)->withSession(['active_shop_id' => $this->yopougon->id]);
+        $row = $onYopougon->get("/{$this->owner->code_user}/transferts-stock")->viewData('page')['props']['transfers']['data'][0];
+        $this->assertTrue($row['can_receive']);
+        $this->assertFalse($row['can_cancel']);
+        $onYopougon->post("/{$this->owner->code_user}/transferts-stock/{$transfer->id}/annuler")->assertForbidden();
     }
 }

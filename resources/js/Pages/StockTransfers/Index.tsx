@@ -131,7 +131,11 @@ export default function StockTransfersIndex({ transfers, canSend, rebalanceCount
                                             {transfer.received_at && ` · ${s.list.receivedBy(date(transfer.received_at), transfer.receiver?.name ?? s.list.unknown)}`}
                                         </p>
                                     </div>
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        {/* La boutique qui envoie attend : c'est la boutique de destination qui réceptionne. */}
+                                        {transfer.status === 'in_transit' && !transfer.can_receive && (
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">{s.list.awaiting(transfer.to_shop?.name ?? s.list.unknown)}</span>
+                                        )}
                                         {transfer.can_receive && (
                                             <button type="button" onClick={() => receive(transfer)}
                                                 className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500">
