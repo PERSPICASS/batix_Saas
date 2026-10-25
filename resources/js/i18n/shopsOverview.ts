@@ -12,6 +12,7 @@ export const shopsOverview = {
         from: 'Du',
         to: 'Au',
         apply: 'Appliquer',
+        export: 'Exporter (Excel)',
         range: (start: string, end: string) => `du ${start} au ${end}`,
         comparedWith: (start: string, end: string) => `comparé au ${start} – ${end}`,
         columns: {
@@ -47,6 +48,7 @@ export const shopsOverview = {
         from: 'From',
         to: 'To',
         apply: 'Apply',
+        export: 'Export (Excel)',
         range: (start: string, end: string) => `from ${start} to ${end}`,
         comparedWith: (start: string, end: string) => `compared with ${start} – ${end}`,
         columns: {

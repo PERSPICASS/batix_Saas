@@ -336,6 +336,7 @@ Route::prefix('{code_user}')
     Route::get('boutiques', [ShopController::class, 'index'])->name('shops.index')->middleware('permission:shops,view');
     // Toutes les boutiques côte à côte, avec leurs chiffres (propriétaire du compte seulement).
     Route::get('mes-boutiques', [ShopsOverviewController::class, 'index'])->name('shops.overview');
+    Route::get('mes-boutiques/export', [ShopsOverviewController::class, 'export'])->name('shops.overview.export');
     // Copie de produits d'une boutique à l'autre : le catalogue se saisit une fois, la
     // succursale démarre à stock zéro. Aucun stock n'est déplacé.
     Route::post('boutiques/{shop}/transferer', [ShopController::class, 'transferProducts'])

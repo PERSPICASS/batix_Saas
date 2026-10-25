@@ -182,4 +182,59 @@ class ShopsOverviewTest extends TestCase
         $this->assertEqualsCanonicalizing(['Cocody', 'Accra'], $names->all());
         $this->assertNotContains($stranger->name, $names);
     }
+
+    private function exportSheet(array $query = []): \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
+    {
+        $response = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/mes-boutiques/export?" . http_build_query($query));
+        $response->assertOk();
+
+        return \PhpOffice\PhpSpreadsheet\IOFactory::load($response->baseResponse->getFile()->getPathname())->getActiveSheet();
+    }
+
+    public function test_the_export_holds_the_screen_figures_with_the_comparison(): void
+    {
+        $old = $this->sell($this->cocody, $this->hammer, 2);
+        $old->update(['sale_date' => now()->subMonthNoOverflow()->startOfMonth()->addDays(3)]);
+        $this->sell($this->cocody, $this->hammer, 3);
+
+        $sheet = $this->exportSheet();
+
+        $this->assertStringStartsWith('Mes boutiques — du ', $sheet->getCell('A1')->getValue());
+        $headings = $sheet->rangeToArray('A3:P3')[0];
+        $this->assertSame(['Boutique', 'Devise', 'CA', 'CA (période précédente)', 'CA : évolution'], array_slice($headings, 0, 5));
+
+        // Rows sorted by name: Accra, Cocody, then one total per currency.
+        $rows = collect($sheet->rangeToArray('A4:E7', null, true, false));
+        $cocody = $rows->firstWhere(0, 'Cocody');
+        $this->assertSame('XOF', $cocody[1]);
+        $this->assertEquals(3000, $cocody[2]);
+        $this->assertEquals(2000, $cocody[3]);
+        // +50 %, stored as a number shown as a percentage.
+        $this->assertEquals(0.5, $cocody[4]);
+        $this->assertSame('+0.0%;-0.0%;0.0%', $sheet->getStyle('E5')->getNumberFormat()->getFormatCode());
+
+        // A shop with nothing before has no evolution rather than a fake +100 %.
+        $this->assertNull($rows->firstWhere(0, 'Accra')[4]);
+
+        $this->assertSame(['Total GHS', 'Total XOF'], $rows->pluck(0)->filter(fn ($v) => str_starts_with((string) $v, 'Total'))->values()->all());
+        $this->assertTrue($sheet->getStyle('A7')->getFont()->getBold());
+    }
+
+    public function test_the_export_is_for_the_account_owner_only(): void
+    {
+        $manager = User::factory()->create(['role' => 'manager', 'shop_id' => $this->cocody->id]);
+
+        $this->actingAs($manager)->get("/{$this->owner->code_user}/mes-boutiques/export")->assertForbidden();
+    }
+
+    public function test_a_shop_name_cannot_inject_a_formula(): void
+    {
+        $this->accra->update(['name' => '=HYPERLINK("http://evil")']);
+
+        $sheet = $this->exportSheet();
+        $cell = $sheet->getCell('A4');
+
+        $this->assertSame(\PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING, $cell->getDataType());
+        $this->assertStringStartsWith("'=", (string) $cell->getValue());
+    }
 }

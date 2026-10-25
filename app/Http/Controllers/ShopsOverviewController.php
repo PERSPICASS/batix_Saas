@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ShopsOverviewExport;
 use App\Services\ShopsOverview;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -9,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * « Mes boutiques » : toutes les boutiques du compte côte à côte, avec leurs chiffres.
@@ -21,6 +24,28 @@ class ShopsOverviewController extends Controller
     private const PERIODS = ['today', 'week', 'month', 'year', 'custom'];
 
     public function index(Request $request, ShopsOverview $overview): Response
+    {
+        return Inertia::render('Shops/Overview', $this->data($request, $overview) + [
+            'filters' => (object) $request->only(['period', 'date_from', 'date_to']),
+        ]);
+    }
+
+    /** Le même tableau, en Excel : mêmes boutiques, même période, mêmes chiffres. */
+    public function export(Request $request, ShopsOverview $overview): BinaryFileResponse
+    {
+        $data = $this->data($request, $overview);
+
+        return Excel::download(
+            new ShopsOverviewExport($data['rows'], $data['totals'], $data['period']),
+            "mes-boutiques_{$data['period']['start']}_{$data['period']['end']}.xlsx"
+        );
+    }
+
+    /**
+     * Les lignes, les totaux par devise et la période : partagé par l'écran et l'export,
+     * pour qu'ils ne puissent pas dire deux choses différentes.
+     */
+    private function data(Request $request, ShopsOverview $overview): array
     {
         $user = Auth::user();
         abort_unless($user->role === 'super_admin', 403);
@@ -50,7 +75,7 @@ class ShopsOverviewController extends Controller
             'previous' => $previous[$shop->id],
         ])->values();
 
-        return Inertia::render('Shops/Overview', [
+        return [
             'rows' => $rows,
             // Des boutiques dans des pays différents ne s'additionnent pas : un total par devise.
             'totals' => $rows->groupBy('currency')->map(fn ($group, $currency) => [
@@ -66,8 +91,7 @@ class ShopsOverviewController extends Controller
                 'previous_start' => $previousStart->toDateString(),
                 'previous_end' => $previousEnd->toDateString(),
             ],
-            'filters' => (object) $request->only(['period', 'date_from', 'date_to']),
-        ]);
+        ];
     }
 
     /** @return array{0: CarbonInterface, 1: CarbonInterface} */

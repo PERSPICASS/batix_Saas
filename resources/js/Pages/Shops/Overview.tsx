@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { AlertTriangle, ChevronRight, TrendingDown, TrendingUp } from 'lucide-react';
+import { AlertTriangle, ChevronRight, Download, TrendingDown, TrendingUp } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 
@@ -89,6 +89,11 @@ export default function ShopsOverview({ rows, totals, period, filters }: Props) 
         router.get(route('shops.overview'), { period: key }, { preserveScroll: true });
     };
 
+    // L'export reprend la période affichée, pas celle en cours de saisie.
+    const exportUrl = `${route('shops.overview.export')}?${new URLSearchParams(
+        period.key === 'custom' ? { period: 'custom', date_from: period.start, date_to: period.end } : { period: period.key },
+    ).toString()}`;
+
     const applyCustom = () => router.get(route('shops.overview'), { period: 'custom', date_from: dateFrom, date_to: dateTo }, { preserveScroll: true });
 
     // Cliquer une boutique la rend active et ouvre son tableau de bord (même mécanisme que
@@ -125,6 +130,12 @@ export default function ShopsOverview({ rows, totals, period, filters }: Props) 
                 {/* Période */}
                 <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                     <div className="flex flex-wrap items-center gap-2">
+                        <a
+                            href={exportUrl}
+                            className="order-last inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-gray-100 sm:ml-auto dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
+                        >
+                            <Download className="size-4" /> {o.export}
+                        </a>
                         {PERIODS.map((key) => (
                             <button
                                 key={key}
