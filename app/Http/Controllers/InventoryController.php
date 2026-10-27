@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\InventoryExport;
 use App\Rules\QuantityForProduct;
 use App\Models\Inventory;
 use App\Models\InventoryItem;
 use App\Models\Product;
+use App\Services\DocumentPdf;
 use App\Services\StockMovementService;
 use App\Services\InventoryAnalysisService;
 use Illuminate\Http\Request;
@@ -15,6 +17,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InventoryController extends Controller
 {
@@ -144,6 +147,28 @@ class InventoryController extends Controller
         return Inertia::render('Inventory/Show', [
             'inventory' => $inventory,
         ]);
+    }
+
+    /** Le résultat de l'inventaire en PDF, à imprimer ou à archiver. */
+    public function pdf(string $code_user, Inventory $inventory, DocumentPdf $pdf)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
+        return $pdf->forInventory($inventory)->stream("Inventaire-{$inventory->inventory_number}.pdf");
+    }
+
+    /** Le même résultat en Excel, pour le retravailler. */
+    public function export(string $code_user, Inventory $inventory)
+    {
+        if (!Auth::user()->accessibleShopsQuery()->where('id', $inventory->shop_id)->exists()) {
+            abort(403);
+        }
+
+        $inventory->load(['items.product:id,name,sku,unit', 'shop', 'user']);
+
+        return Excel::download(new InventoryExport($inventory), "inventaire_{$inventory->inventory_number}.xlsx");
     }
 
     public function edit(string $code_user, Inventory $inventory): Response

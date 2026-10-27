@@ -541,6 +541,8 @@ Route::prefix('{code_user}')
         ->middlewareFor(['edit', 'update'], 'permission:inventory,edit')
         ->middlewareFor('destroy', 'permission:inventory,delete');
     Route::post('inventory/{inventory}/complete', [InventoryController::class, 'complete'])->name('inventory.complete')->middleware('permission:inventory,edit');
+    Route::get('inventory/{inventory}/pdf', [InventoryController::class, 'pdf'])->name('inventory.pdf')->middleware('permission:inventory,view');
+    Route::get('inventory/{inventory}/export', [InventoryController::class, 'export'])->name('inventory.export')->middleware('permission:inventory,view');
     Route::get('inventory/{inventory}/completion-preview', [InventoryController::class, 'completionPreview'])->name('inventory.completion-preview')->middleware('permission:inventory,view');
 
     // Utilisateurs (avec vérification des limites d'abonnement)
