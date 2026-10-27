@@ -92,6 +92,11 @@ class UserController extends Controller
         $validated['shop_id'] = self::resolveShopId($currentUser, $validated);
         self::assertNotOrphan($validated['role'], $validated['shop_id']);
 
+        // Une limite par boutique (essai avec dérogation) se vérifie sur la boutique choisie.
+        if ($validated['shop_id'] && !$currentUser->canCreateUser((int) $validated['shop_id'])) {
+            return back()->with('error', self::shopFullMessage($currentUser));
+        }
+
         $validated['password'] = Hash::make($validated['password']);
         $permissions = $validated['permissions'] ?? [];
         unset($validated['permissions']);
@@ -174,6 +179,12 @@ class UserController extends Controller
 
         $validated['shop_id'] = self::resolveShopId($currentUser, $validated);
         self::assertNotOrphan($validated['role'], $validated['shop_id']);
+
+        // Déplacer quelqu'un vers une boutique déjà pleine contournerait la limite par boutique.
+        if ($validated['shop_id'] && (int) $validated['shop_id'] !== (int) $user->shop_id
+            && !$currentUser->canCreateUser((int) $validated['shop_id'])) {
+            return back()->with('error', self::shopFullMessage($currentUser));
+        }
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -299,5 +310,12 @@ class UserController extends Controller
         }
 
         return array_values(array_diff($all, ['super_admin', 'admin']));
+    }
+
+    private static function shopFullMessage(User $currentUser): string
+    {
+        $perShop = $currentUser->getSubscriptionLimits()['max_users_per_shop'] ?? null;
+
+        return "Cette boutique a atteint sa limite de {$perShop} utilisateur(s). Choisissez une autre boutique ou passez à un plan supérieur.";
     }
 }

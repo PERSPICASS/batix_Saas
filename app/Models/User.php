@@ -572,23 +572,23 @@ class User extends Authenticatable
             return false; // No active subscription
         }
 
-        $plan = $subscription->plan;
-        
-        // Check if plan allows unlimited shops
-        if ($plan->hasUnlimitedShops()) {
+        // Le plan, ou la dérogation accordée à un essai (Subscription::trialLimit).
+        $maxShops = $subscription->maxShops();
+
+        if ($maxShops === -1) {
             return true;
         }
 
         // Check current shop count
         $currentShopCount = Shop::where('user_id', $this->ownerId())->count();
 
-        return $currentShopCount < $plan->max_shops;
+        return $currentShopCount < $maxShops;
     }
 
     /**
      * Check if user can create more users based on their subscription plan.
      */
-    public function canCreateUser(): bool
+    public function canCreateUser(?int $shopId = null): bool
     {
         // Admin platforme can't create users
         if ($this->role === 'admin_platforme') {
@@ -600,6 +600,14 @@ class User extends Authenticatable
 
         if (!$subscription) {
             return false; // No active subscription
+        }
+
+        // Un essai qui a reçu une limite PAR BOUTIQUE : on regarde la boutique visée, ou à
+        // défaut s'il reste une place dans l'une d'elles.
+        if (($perShop = $subscription->maxUsersPerShop()) !== null) {
+            return $shopId !== null
+                ? $this->staffCountIn($shopId) < $perShop
+                : $this->remainingUserSlots() > 0;
         }
 
         $plan = $subscription->plan;
@@ -621,6 +629,12 @@ class User extends Authenticatable
         return $currentUserCount < $plan->max_users;
     }
 
+    /** Les collaborateurs rattachés à une boutique du compte, propriétaire non compris. */
+    private function staffCountIn(int $shopId): int
+    {
+        return User::where('shop_id', $shopId)->where('id', '!=', $this->ownerId())->count();
+    }
+
     /**
      * Get remaining shop slots.
      */
@@ -632,15 +646,15 @@ class User extends Authenticatable
             return 0;
         }
 
-        $plan = $subscription->plan;
-        
-        if ($plan->hasUnlimitedShops()) {
+        $maxShops = $subscription->maxShops();
+
+        if ($maxShops === -1) {
             return -1; // Unlimited
         }
 
         $currentShopCount = Shop::where('user_id', $this->ownerId())->count();
 
-        return max(0, $plan->max_shops - $currentShopCount);
+        return max(0, $maxShops - $currentShopCount);
     }
 
     /**
@@ -652,6 +666,11 @@ class User extends Authenticatable
 
         if (!$subscription) {
             return 0;
+        }
+
+        if (($perShop = $subscription->maxUsersPerShop()) !== null) {
+            return Shop::where('user_id', $this->ownerId())->pluck('id')
+                ->sum(fn ($id) => max(0, $perShop - $this->staffCountIn($id)));
         }
 
         $plan = $subscription->plan;
@@ -833,12 +852,16 @@ class User extends Authenticatable
             'has_subscription' => true,
             'plan_name' => $plan->name,
             'plan_slug' => $plan->slug,
-            'max_shops' => $plan->max_shops,
-            'max_users' => $plan->max_users,
+            'max_shops' => $subscription->maxShops(),
+            // Avec une limite par boutique : toutes les boutiques permises, plus le propriétaire.
+            'max_users' => $subscription->maxUsersPerShop() !== null
+                ? $subscription->maxShops() * $subscription->maxUsersPerShop() + 1
+                : $plan->max_users,
+            'max_users_per_shop' => $subscription->maxUsersPerShop(),
             'max_products' => $plan->max_products,
             'max_depots' => $plan->max_depots,
-            'unlimited_shops' => $plan->hasUnlimitedShops(),
-            'unlimited_users' => $plan->hasUnlimitedUsers(),
+            'unlimited_shops' => $subscription->maxShops() === -1,
+            'unlimited_users' => $subscription->maxUsersPerShop() === null && $plan->hasUnlimitedUsers(),
             'unlimited_products' => $plan->hasUnlimitedProducts(),
             'unlimited_depots' => $plan->hasUnlimitedDepots(),
             'current_shops' => $currentShops,

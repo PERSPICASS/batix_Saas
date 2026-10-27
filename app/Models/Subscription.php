@@ -68,6 +68,35 @@ class Subscription extends Model
     }
 
     /**
+     * Une limite accordée à la main à CET essai (`metadata.limits`), au-dessus de son plan.
+     *
+     * Seul un essai en profite : un abonnement payé suit son plan, et la dérogation ne doit
+     * pas survivre au passage en payant — elle ne ferait alors que brider un plan supérieur.
+     * Posée par `subscription:grant-trial-limits`.
+     */
+    public function trialLimit(string $key): ?int
+    {
+        if ($this->status !== 'trial') {
+            return null;
+        }
+
+        $value = $this->metadata['limits'][$key] ?? null;
+
+        return $value === null ? null : (int) $value;
+    }
+
+    public function maxShops(): int
+    {
+        return $this->trialLimit('max_shops') ?? $this->plan->max_shops;
+    }
+
+    /** Collaborateurs par boutique, propriétaire non compris ; null si aucune dérogation. */
+    public function maxUsersPerShop(): ?int
+    {
+        return $this->trialLimit('max_users_per_shop');
+    }
+
+    /**
      * Check if subscription is active.
      */
     public function isActive(): bool
