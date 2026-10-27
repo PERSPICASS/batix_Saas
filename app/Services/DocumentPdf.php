@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\CreditNote;
+use App\Models\Inventory;
+use App\Models\InventoryItem;
 use App\Models\Invoice;
 use App\Models\Purchase;
 use App\Models\Quote;
@@ -176,6 +178,21 @@ class DocumentPdf
             'logo' => $this->logo($purchase->shop),
             'shop' => $purchase->shop,
             'currencySymbol' => get_currency_symbol($purchase->currency ?: $purchase->shop?->currency),
+        ])->setPaper('a4'));
+    }
+
+    /** Le résultat d'un inventaire : attendu, compté, écart et sa valeur, par produit. */
+    public function forInventory(Inventory $inventory): PdfWrapper
+    {
+        $inventory->loadMissing(['items.product:id,name,sku,unit', 'shop', 'user']);
+
+        return $this->inShopLocale($inventory->shop, fn () => Pdf::loadView('pdf.inventory', [
+            'inventory' => $inventory,
+            // Par nom : c'est ainsi qu'on relit un inventaire, rayon par rayon.
+            'items' => $inventory->items->sortBy(fn (InventoryItem $item) => mb_strtolower($item->product?->name ?? ''))->values(),
+            'logo' => $this->logo($inventory->shop),
+            'shop' => $inventory->shop,
+            'currencySymbol' => get_currency_symbol($inventory->shop?->currency),
         ])->setPaper('a4'));
     }
 

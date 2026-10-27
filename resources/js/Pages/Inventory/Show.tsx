@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, CheckCircle, Package, AlertTriangle, TrendingUp, TrendingDown, Info } from 'lucide-react';
+import { ArrowLeft, Pencil, CheckCircle, FileText, FileSpreadsheet, Package, AlertTriangle, TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import Currency from '@/Components/Currency';
 import { useState } from 'react';
@@ -138,8 +138,27 @@ export default function InventoryShow({ inventory }: Props) {
             <Head title={`${t.inventory.title} ${inventory.inventory_number}`} />
 
             <div className="space-y-6">
-                {inventory.status !== 'completed' && inventory.status !== 'cancelled' && (
-                    <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Le résultat s'exporte à tout moment : un brouillon se relit sur papier
+                        avant d'être appliqué, et le PDF le signale comme non appliqué. */}
+                    <a
+                        href={route('inventory.pdf', { inventory: inventory.id })}
+                        target="_blank"
+                        rel="noopener"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    >
+                        <FileText className="size-4" />
+                        {t.inventory.actions.exportPdf}
+                    </a>
+                    <a
+                        href={route('inventory.export', { inventory: inventory.id })}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                    >
+                        <FileSpreadsheet className="size-4" />
+                        {t.inventory.actions.exportExcel}
+                    </a>
+                    {inventory.status !== 'completed' && inventory.status !== 'cancelled' && (
+                    <>
                         <Link
                             href={route('inventory.edit', { inventory: inventory.id })}
                             className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 transition hover:bg-gray-100 dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
@@ -154,8 +173,9 @@ export default function InventoryShow({ inventory }: Props) {
                             <CheckCircle className="size-4" />
                             {t.inventory.completeModal.title}
                         </button>
-                    </div>
-                )}
+                    </>
+                    )}
+                </div>
 
                 {/* Informations générales */}
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">

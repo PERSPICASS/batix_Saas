@@ -40,6 +40,8 @@ export const inventory = {
             edit: 'Modifier',
             delete: 'Supprimer',
             validate: 'Valider',
+            exportPdf: 'PDF',
+            exportExcel: 'Excel',
         },
         emptyMessage: 'Aucun inventaire trouvé',
         form: {
@@ -138,6 +140,8 @@ export const inventory = {
             edit: 'Edit',
             delete: 'Delete',
             validate: 'Validate',
+            exportPdf: 'PDF',
+            exportExcel: 'Excel',
         },
         emptyMessage: 'No inventories found',
         form: {

@@ -51,6 +51,15 @@ class InventoryItem extends Model
         });
     }
 
+    /**
+     * Ce que coûte l'écart de la ligne : seul l'écart de stock bon est valorisé, une pièce
+     * défectueuse ne vaut rien. Miroir de utils/inventoryValue.ts, qui explique la règle.
+     */
+    public function discrepancyValue(): float
+    {
+        return round((float) $this->difference * (float) $this->unit_cost, 2);
+    }
+
     public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class);
