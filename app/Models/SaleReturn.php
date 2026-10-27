@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Unit;
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,7 +45,7 @@ class SaleReturn extends Model
     ];
 
     protected $casts = [
-        'quantity_returned' => 'integer',
+        'quantity_returned' => Quantity::class,
         'refund_amount' => 'decimal:2',
         'return_date' => 'datetime',
     ];
@@ -61,7 +63,7 @@ class SaleReturn extends Model
         static::created(function ($return) {
             // Marquer l'article comme retourné si toute la quantité est retournée
             $saleItem = $return->saleItem;
-            $totalReturned = $saleItem->returns->sum('quantity_returned');
+            $totalReturned = Unit::round($saleItem->returns->sum('quantity_returned'));
 
             if ($totalReturned >= $saleItem->quantity) {
                 $saleItem->update(['is_returned' => true]);

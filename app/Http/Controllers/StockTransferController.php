@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Unit;
+use App\Rules\QuantityForProduct;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\StockTransfer;
@@ -174,7 +176,7 @@ class StockTransferController extends Controller
             'transfers.*.notes' => 'nullable|string|max:1000',
             'transfers.*.items' => 'required|array|min:1',
             'transfers.*.items.*.product_id' => 'required|integer',
-            'transfers.*.items.*.quantity' => 'required|integer|min:1',
+            'transfers.*.items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
         ]);
 
         $accessible = $user->accessibleShopsQuery()->pluck('shops.id')->map(fn ($id) => (int) $id);
@@ -187,7 +189,7 @@ class StockTransferController extends Controller
 
                 $lines = [];
                 foreach ($data['items'] as $item) {
-                    $lines[(int) $item['product_id']] = ($lines[(int) $item['product_id']] ?? 0) + (int) $item['quantity'];
+                    $lines[(int) $item['product_id']] = Unit::round(($lines[(int) $item['product_id']] ?? 0) + $item['quantity']);
                 }
 
                 $sent[] = $this->transfers->send(

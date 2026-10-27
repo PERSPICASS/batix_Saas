@@ -86,7 +86,7 @@ class CreditNoteTest extends TestCase
         $invoice->refresh();
         $this->assertSame('sent', $invoice->status);
         $this->assertSame('1000.00', (string) $invoice->total);
-        $this->assertSame(10, $invoice->items->first()->quantity);
+        $this->assertSame(10.0, $invoice->items->first()->quantity);
 
         // Only the computed view of it changes.
         $this->assertSame(200.0, $invoice->creditedTotal());
@@ -108,7 +108,7 @@ class CreditNoteTest extends TestCase
 
         // Fully credited: there is nothing left to credit.
         $this->assertFalse($invoice->isCreditable());
-        $this->assertSame(0, $invoice->items->first()->quantityCreditable());
+        $this->assertSame(0.0, $invoice->items->first()->quantityCreditable());
     }
 
     public function test_crediting_more_than_was_invoiced_is_refused(): void

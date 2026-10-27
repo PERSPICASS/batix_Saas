@@ -45,7 +45,7 @@ class CrossTenantAccessTest extends TestCase
             ]);
 
         $response->assertNotFound();
-        $this->assertSame(50, $depotProductB->fresh()->quantity);
+        $this->assertSame(50.0, $depotProductB->fresh()->quantity);
     }
 
     public function test_user_cannot_remove_another_tenants_depot_product_through_their_own_depot(): void

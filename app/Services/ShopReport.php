@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Unit;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Product;
@@ -169,7 +170,7 @@ class ShopReport
             'product_id' => $line['product_id'],
             'name' => $line['name'],
             'category' => $line['product_id'] ? $categories->get($line['product_id'])?->category?->name : null,
-            'quantity' => (int) $line['quantity'],
+            'quantity' => Unit::round($line['quantity']),
             'revenue' => round($line['revenue'], 2),
             'margin' => round($line['net'] - $line['cost'], 2),
         ])->filter(fn ($line) => $line['quantity'] > 0 || $line['revenue'] != 0.0)->values();
@@ -298,8 +299,8 @@ class ShopReport
             ->map(fn ($product) => [
                 'id' => $product->id,
                 'name' => $product->name,
-                'stock' => (int) $product->stock_quantity,
-                'min' => (int) $product->min_stock_alert,
+                'stock' => (float) $product->stock_quantity,
+                'min' => (float) $product->min_stock_alert,
             ])->all();
     }
 

@@ -61,7 +61,7 @@ class DocumentPdf
 
     public function forSale(Sale $sale): PdfWrapper
     {
-        $sale->loadMissing(['items.returns', 'shop', 'customer', 'user']);
+        $sale->loadMissing(['items.returns', 'items.product:id,unit', 'shop', 'customer', 'user']);
 
         return $this->inShopLocale($sale->shop, fn () => Pdf::loadView('pdf.ticket', [
             'sale' => $sale,
@@ -136,7 +136,7 @@ class DocumentPdf
 
     public function forInvoice(Invoice $invoice): PdfWrapper
     {
-        $invoice->loadMissing(['items', 'shop', 'customer', 'user']);
+        $invoice->loadMissing(['items.product:id,unit', 'shop', 'customer', 'user']);
 
         return $this->inShopLocale($invoice->shop, fn () => Pdf::loadView('pdf.invoice', [
             'invoice' => $invoice,
@@ -154,7 +154,7 @@ class DocumentPdf
 
     public function forCreditNote(CreditNote $creditNote): PdfWrapper
     {
-        $creditNote->loadMissing(['items', 'shop', 'customer', 'invoice']);
+        $creditNote->loadMissing(['items.invoiceItem.product:id,unit', 'shop', 'customer', 'invoice']);
 
         return $this->inShopLocale($creditNote->shop, fn () => Pdf::loadView('pdf.credit-note', [
             'creditNote' => $creditNote,
@@ -169,7 +169,7 @@ class DocumentPdf
     /** Le bon de commande envoyé au fournisseur. */
     public function forPurchase(Purchase $purchase): PdfWrapper
     {
-        $purchase->loadMissing(['items', 'shop', 'supplier']);
+        $purchase->loadMissing(['items.product:id,unit', 'shop', 'supplier']);
 
         return $this->inShopLocale($purchase->shop, fn () => Pdf::loadView('pdf.purchase-order', [
             'purchase' => $purchase,
@@ -193,7 +193,7 @@ class DocumentPdf
 
     public function forQuote(Quote $quote): PdfWrapper
     {
-        $quote->loadMissing(['items', 'shop', 'customer', 'user']);
+        $quote->loadMissing(['items.product:id,unit', 'shop', 'customer', 'user']);
 
         return $this->inShopLocale($quote->shop, fn () => Pdf::loadView('pdf.quote', [
             'quote' => $quote,

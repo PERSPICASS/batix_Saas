@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Unit;
+use App\Casts\Quantity;
 use App\Support\GlobalDiscount;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,7 +31,7 @@ class InvoiceItem extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'quantity' => Quantity::class,
         'unit_price' => 'decimal:2',
         'unit_cost' => 'decimal:2',
         'tax_rate' => 'decimal:2',
@@ -46,9 +48,9 @@ class InvoiceItem extends Model
     /**
      * Quantité déjà créditée sur cette ligne, tous avoirs confondus.
      */
-    public function quantityCredited(): int
+    public function quantityCredited(): float
     {
-        return (int) $this->creditNoteItems()->sum('quantity');
+        return Unit::round($this->creditNoteItems()->sum('quantity'));
     }
 
     /**
@@ -64,20 +66,20 @@ class InvoiceItem extends Model
      */
     public function creditableUnitPrice(): float
     {
-        if ((int) $this->quantity <= 0) {
+        if ((float) $this->quantity <= 0) {
             return 0.0;
         }
 
         $lineExclTax = (float) $this->total - (float) $this->tax_amount;
         $invoice = $this->invoice;
 
-        return $lineExclTax / (int) $this->quantity
+        return $lineExclTax / (float) $this->quantity
             * GlobalDiscount::ratio((float) $invoice->subtotal, (float) $invoice->discount_amount);
     }
 
-    public function quantityCreditable(): int
+    public function quantityCreditable(): float
     {
-        return max(0, $this->quantity - $this->quantityCredited());
+        return max(0, Unit::round($this->quantity - $this->quantityCredited()));
     }
 
     protected static function boot()

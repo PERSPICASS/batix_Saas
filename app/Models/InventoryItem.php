@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -21,12 +22,12 @@ class InventoryItem extends Model
     ];
 
     protected $casts = [
-        'expected_quantity' => 'integer',
-        'expected_defective_quantity' => 'integer',
-        'counted_quantity' => 'integer',
-        'defective_quantity' => 'integer',
-        'difference' => 'integer',
-        'defective_difference' => 'integer',
+        'expected_quantity' => Quantity::class,
+        'expected_defective_quantity' => Quantity::class,
+        'counted_quantity' => Quantity::class,
+        'defective_quantity' => Quantity::class,
+        'difference' => Quantity::class,
+        'defective_difference' => Quantity::class,
         'unit_cost' => 'decimal:2',
     ];
 

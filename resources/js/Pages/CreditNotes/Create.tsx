@@ -180,7 +180,7 @@ export default function CreateCreditNote({ invoice }: Props) {
                                                 <td className="py-3 text-right text-slate-600 dark:text-slate-400">{item.quantity_creditable}</td>
                                                 <td className="py-3 text-right">
                                                     <input
-                                                        type="number"
+                                                        type="number" step="0.001"
                                                         min={0}
                                                         max={item.quantity_creditable}
                                                         value={quantities[item.id] ?? 0}

@@ -97,15 +97,15 @@ class DepotStockTemplateExport implements FromArray, WithHeadings, WithStyles, S
         }
 
         // Format numérique pour les colonnes quantité, stock_min, prix_achat
-        $sheet->getStyle("D2:D{$lastRow}")->getNumberFormat()->setFormatCode('0');
-        $sheet->getStyle("E2:E{$lastRow}")->getNumberFormat()->setFormatCode('0');
+        $sheet->getStyle("D2:D{$lastRow}")->getNumberFormat()->setFormatCode('0.###');
+        $sheet->getStyle("E2:E{$lastRow}")->getNumberFormat()->setFormatCode('0.###');
         $sheet->getStyle("F2:F{$lastRow}")->getNumberFormat()->setFormatCode('#,##0');
 
         // Commentaires d'aide sur les en-têtes
         $sheet->getComment('A1')->getText()->createTextRun('SKU / Référence du produit (optionnel si code-barres ou nom fourni)');
         $sheet->getComment('B1')->getText()->createTextRun('Code-barres EAN (optionnel si SKU ou nom fourni)');
         $sheet->getComment('C1')->getText()->createTextRun('Obligatoire si ni SKU ni code-barres fourni. Doit correspondre exactement au nom du produit dans la boutique.');
-        $sheet->getComment('D1')->getText()->createTextRun('Quantité à ajouter au stock existant (nombre entier ≥ 1)');
+        $sheet->getComment('D1')->getText()->createTextRun('Quantité à ajouter au stock existant (> 0 ; décimale permise au kilo, au litre, au mètre : 2,5)');
         $sheet->getComment('E1')->getText()->createTextRun('Seuil d\'alerte stock faible (optionnel, 0 par défaut)');
         $sheet->getComment('F1')->getText()->createTextRun('Prix d\'achat unitaire en FCFA (optionnel)');
 

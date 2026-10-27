@@ -287,7 +287,8 @@ export default function Transfers({ depot, transfers, shops, depotProducts }: Pr
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="number"
-                                                        min="1"
+                                                        min="0.001"
+                                                        step="0.001"
                                                         max={depotProd?.quantity ?? undefined}
                                                         value={item.quantity}
                                                         onChange={e => {

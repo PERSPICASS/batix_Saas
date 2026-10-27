@@ -460,7 +460,8 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
                                             <InputLabel value={`${t.purchases.form.quantity} *`} />
                                             <TextInput
                                                 type="number"
-                                                min="1"
+                                                min="0.001"
+                                                step="0.001"
                                                 value={item.quantity}
                                                 onChange={(e) =>
                                                     updateItem(index, 'quantity', e.target.value)

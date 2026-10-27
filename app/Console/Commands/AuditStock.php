@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\DepotProduct;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Support\Unit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -63,7 +64,7 @@ class AuditStock extends Command
                 $r['location'],
                 $r['counter'],
                 $r['ledger'],
-                sprintf('%+d', $r['drift']),
+                ($r['drift'] > 0 ? '+' : '') . Unit::format($r['drift']),
             ])->all()
         );
 
@@ -112,10 +113,10 @@ class AuditStock extends Command
             ->select('id', 'shop_id', 'name', 'stock_quantity')
             ->chunkById(500, function ($products) use ($ledger, &$rows) {
                 foreach ($products as $product) {
-                    $counter = (int) $product->stock_quantity;
-                    $sum = (int) ($ledger[$product->id] ?? 0);
+                    $counter = (float) $product->stock_quantity;
+                    $sum = Unit::round($ledger[$product->id] ?? 0);
 
-                    if ($counter !== $sum) {
+                    if ($counter != $sum) {
                         $rows[] = [
                             'shop_id' => $product->shop_id,
                             'product_id' => $product->id,
@@ -124,7 +125,7 @@ class AuditStock extends Command
                             'location' => 'Comptoir',
                             'counter' => $counter,
                             'ledger' => $sum,
-                            'drift' => $counter - $sum,
+                            'drift' => Unit::round($counter - $sum),
                         ];
                     }
                 }
@@ -159,10 +160,10 @@ class AuditStock extends Command
                         continue;
                     }
 
-                    $counter = (int) $dp->quantity;
-                    $sum = (int) ($ledger["{$dp->depot_id}:{$dp->product_id}"]->total ?? 0);
+                    $counter = (float) $dp->quantity;
+                    $sum = Unit::round($ledger["{$dp->depot_id}:{$dp->product_id}"]->total ?? 0);
 
-                    if ($counter !== $sum) {
+                    if ($counter != $sum) {
                         $rows[] = [
                             'shop_id' => $dp->product->shop_id,
                             'product_id' => $dp->product_id,
@@ -171,7 +172,7 @@ class AuditStock extends Command
                             'location' => $dp->depot->name,
                             'counter' => $counter,
                             'ledger' => $sum,
-                            'drift' => $counter - $sum,
+                            'drift' => Unit::round($counter - $sum),
                         ];
                     }
                 }

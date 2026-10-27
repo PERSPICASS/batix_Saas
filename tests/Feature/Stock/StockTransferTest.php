@@ -69,13 +69,13 @@ class StockTransferTest extends TestCase
         $transfer = StockTransfer::sole();
         $this->assertSame('in_transit', $transfer->status);
         $this->assertStringStartsWith('TRS-', $transfer->reference);
-        $this->assertSame(30, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(30.0, $this->cement->fresh()->stock_quantity);
 
         // Yopougon did not have it: created like a catalogue copy, with nothing in stock yet.
         $copy = Product::where('shop_id', $this->yopougon->id)->sole();
         $this->assertSame('CIM-45', $copy->sku);
-        $this->assertSame(0, $copy->stock_quantity);
-        $this->assertSame(-20, StockMovement::where('reference_type', 'StockTransfer')->sole()->quantity);
+        $this->assertSame(0.0, $copy->stock_quantity);
+        $this->assertSame(-20.0, StockMovement::where('reference_type', 'StockTransfer')->sole()->quantity);
     }
 
     public function test_the_receiving_shop_takes_it_in_at_the_sending_cost(): void
@@ -92,7 +92,7 @@ class StockTransferTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $this->assertSame('received', $transfer->fresh()->status);
-        $this->assertSame(20, $theirs->fresh()->stock_quantity);
+        $this->assertSame(20.0, $theirs->fresh()->stock_quantity);
         $this->assertEquals(600, (float) $theirs->fresh()->average_cost);
     }
 
@@ -104,13 +104,13 @@ class StockTransferTest extends TestCase
         $this->actingAs($this->owner)->post("/{$this->owner->code_user}/transferts-stock/{$transfer->id}/annuler")->assertSessionHasNoErrors();
 
         $this->assertSame('cancelled', $transfer->fresh()->status);
-        $this->assertSame(50, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(50.0, $this->cement->fresh()->stock_quantity);
 
         // On the receiving shop, which is where receiving happens.
         $this->actingAs($this->owner)->withSession(['active_shop_id' => $this->yopougon->id])
             ->post("/{$this->owner->code_user}/transferts-stock/{$transfer->id}/receptionner")
             ->assertSessionHasErrors('transfer');
-        $this->assertSame(0, Product::where('shop_id', $this->yopougon->id)->sole()->stock_quantity);
+        $this->assertSame(0.0, Product::where('shop_id', $this->yopougon->id)->sole()->stock_quantity);
     }
 
     public function test_a_transfer_is_received_once(): void
@@ -123,14 +123,14 @@ class StockTransferTest extends TestCase
         $onYopougon->post($url)->assertSessionHasNoErrors();
         $onYopougon->post($url)->assertSessionHasErrors('transfer');
 
-        $this->assertSame(5, Product::where('shop_id', $this->yopougon->id)->sole()->stock_quantity);
+        $this->assertSame(5.0, Product::where('shop_id', $this->yopougon->id)->sole()->stock_quantity);
     }
 
     public function test_sending_more_than_the_stock_is_refused_and_changes_nothing(): void
     {
         $this->send([$this->cement->id => 51])->assertSessionHasErrors('items');
 
-        $this->assertSame(50, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(50.0, $this->cement->fresh()->stock_quantity);
         $this->assertSame(0, StockTransfer::count());
     }
 
@@ -150,7 +150,7 @@ class StockTransferTest extends TestCase
         $stranger = Shop::factory()->create();
 
         $this->send([$this->cement->id => 5], to: $stranger)->assertForbidden();
-        $this->assertSame(50, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(50.0, $this->cement->fresh()->stock_quantity);
     }
 
     public function test_suggestions_top_up_a_low_shop_from_one_with_plenty(): void
@@ -165,7 +165,7 @@ class StockTransferTest extends TestCase
         $this->assertCount(1, $suggestions);
         $this->assertSame($this->cement->id, $suggestions[0]['from_product_id']);
         $this->assertSame($low->id, $suggestions[0]['to_product_id']);
-        $this->assertSame(18, $suggestions[0]['quantity']);
+        $this->assertSame(18.0, $suggestions[0]['quantity']);
     }
 
     public function test_what_is_already_on_its_way_is_not_suggested_again(): void
@@ -177,7 +177,7 @@ class StockTransferTest extends TestCase
             ->viewData('page')['props']['suggestions']['data'];
 
         // 18 needed, 5 already in transit.
-        $this->assertSame(13, $suggestions[0]['quantity']);
+        $this->assertSame(13.0, $suggestions[0]['quantity']);
     }
 
     public function test_several_suggestions_are_sent_as_one_transfer_per_pair_of_shops(): void
@@ -193,7 +193,7 @@ class StockTransferTest extends TestCase
         ]])->assertSessionHasNoErrors();
 
         $this->assertSame(2, StockTransfer::count());
-        $this->assertSame(42, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(42.0, $this->cement->fresh()->stock_quantity);
         $this->assertSame(2, StockTransfer::where('to_shop_id', $this->yopougon->id)->sole()->items()->count());
     }
 
@@ -219,7 +219,7 @@ class StockTransferTest extends TestCase
         $page = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock/reequilibrage")->viewData('page')['props'];
         $this->assertSame(30, $page['suggestions']['total']);
         $this->assertCount(25, $page['suggestions']['data']);
-        $this->assertSame(0, $page['suggestions']['data'][0]['to_stock']);
+        $this->assertSame(0.0, $page['suggestions']['data'][0]['to_stock']);
         $this->assertSame(30, $page['routes'][0]['count']);
 
         $found = $this->actingAs($this->owner)->get("/{$this->owner->code_user}/transferts-stock/reequilibrage?q=Article%2017")->viewData('page')['props'];

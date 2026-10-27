@@ -94,14 +94,14 @@ class CreditNoteAmountAndStockTest extends TestCase
     public function test_the_goods_go_back_in_stock_when_asked(): void
     {
         $invoice = $this->discountedInvoice();
-        $this->assertSame(40, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(40.0, $this->cement->fresh()->stock_quantity);
 
         $this->credit($invoice, 3)->assertSessionHasNoErrors();
 
-        $this->assertSame(43, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(43.0, $this->cement->fresh()->stock_quantity);
         $this->assertTrue(CreditNote::sole()->restocked);
         $movement = StockMovement::where('reference_type', 'CreditNote')->sole();
-        $this->assertSame(3, $movement->quantity);
+        $this->assertSame(3.0, $movement->quantity);
         $this->assertSame('return', $movement->type);
     }
 
@@ -111,7 +111,7 @@ class CreditNoteAmountAndStockTest extends TestCase
 
         $this->credit($invoice, 3, restock: false)->assertSessionHasNoErrors();
 
-        $this->assertSame(40, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(40.0, $this->cement->fresh()->stock_quantity);
         $this->assertFalse(CreditNote::sole()->restocked);
     }
 
@@ -124,7 +124,7 @@ class CreditNoteAmountAndStockTest extends TestCase
 
         $this->credit($invoice, 3, restock: true)->assertSessionHasNoErrors();
 
-        $this->assertSame(40, $this->cement->fresh()->stock_quantity);
+        $this->assertSame(40.0, $this->cement->fresh()->stock_quantity);
         $this->assertFalse(CreditNote::sole()->restocked);
     }
 }

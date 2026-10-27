@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
+use App\Support\Unit;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,13 +46,25 @@ class Product extends Model
         'average_cost' => 'decimal:2',
         'selling_price' => 'decimal:2',
         'tax_rate' => 'decimal:2',
-        'stock_quantity' => 'integer',
-        'defective_stock_quantity' => 'integer',
-        'min_stock_alert' => 'integer',
+        'stock_quantity' => Quantity::class,
+        'defective_stock_quantity' => Quantity::class,
+        'min_stock_alert' => Quantity::class,
         'is_active' => 'boolean',
         'track_stock' => 'boolean',
         'has_variations' => 'boolean',
     ];
+
+    /** Une unité inconnue est gardée telle quelle ; les variantes connues deviennent un code. */
+    protected function unit(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value) => Unit::normalize($value));
+    }
+
+    /** Vendu au kilo, au mètre, au litre… : accepte une quantité décimale. */
+    public function isDivisible(): bool
+    {
+        return Unit::isDivisible($this->unit);
+    }
 
     protected static function boot()
     {
@@ -136,9 +151,9 @@ class Product extends Model
     }
 
     /** Ce que la boutique détient réellement : comptoir + dépôts. */
-    public function totalStock(): int
+    public function totalStock(): float
     {
-        return (int) $this->stock_quantity + $this->depotStock();
+        return Unit::round((float) $this->stock_quantity + $this->depotStock());
     }
 
     /**
@@ -152,15 +167,15 @@ class Product extends Model
      * Le repli par requête reste, pour un modèle chargé seul — mais il ne doit jamais être
      * atteint depuis une collection.
      */
-    private function depotStock(): int
+    private function depotStock(): float
     {
         foreach (['depot_stock', 'depot_products_sum_quantity'] as $alias) {
             if ($this->getAttribute($alias) !== null) {
-                return (int) $this->getAttribute($alias);
+                return (float) $this->getAttribute($alias);
             }
         }
 
-        return (int) $this->depotProducts()->sum('quantity');
+        return (float) $this->depotProducts()->sum('quantity');
     }
 
     /**
@@ -213,13 +228,13 @@ class Product extends Model
      * Une entrée sans coût connu ne change pas la moyenne : l'inventer à zéro
      * effondrerait la valorisation d'un seul mouvement mal saisi.
      */
-    public function foldIntoAverageCost(int $incomingQuantity, ?float $unitCost): void
+    public function foldIntoAverageCost(float $incomingQuantity, ?float $unitCost): void
     {
         if ($unitCost === null || $incomingQuantity <= 0) {
             return;
         }
 
-        $held = max((int) $this->stock_quantity, 0);
+        $held = max((float) $this->stock_quantity, 0);
         $current = $this->average_cost !== null ? (float) $this->average_cost : (float) ($this->purchase_price ?? $unitCost);
 
         $total = $held + $incomingQuantity;

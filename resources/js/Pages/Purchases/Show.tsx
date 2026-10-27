@@ -645,14 +645,14 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
                                         <div className="w-32">
                                             <InputLabel value="Quantité" className="text-sm font-semibold text-slate-900 dark:text-white" />
                                             <TextInput
-                                                type="number"
+                                                type="number" step="0.001"
                                                 min="0"
                                                 max={remaining}
                                                 value={receivingQuantities[item.id]}
                                                 onChange={(e) =>
                                                     setReceivingQuantities({
                                                         ...receivingQuantities,
-                                                        [item.id]: parseInt(e.target.value) || 0,
+                                                        [item.id]: parseFloat(e.target.value) || 0,
                                                     })
                                                 }
                                                 className="mt-1 block w-full text-center text-base font-semibold text-slate-900 dark:text-white"

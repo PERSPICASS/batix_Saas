@@ -60,20 +60,20 @@ class ManualStockMovementTest extends TestCase
         $this->record(['type' => 'out', 'reason' => 'breakage'])->assertSessionHasNoErrors();
 
         $exit = StockMovement::sole();
-        $this->assertSame(-4, $exit->quantity);
+        $this->assertSame(-4.0, $exit->quantity);
         $this->assertSame('breakage', $exit->reason);
-        $this->assertSame(6, $this->product->fresh()->stock_quantity);
+        $this->assertSame(6.0, $this->product->fresh()->stock_quantity);
 
         $this->deleteMovement($exit)->assertSessionMissing('error');
 
-        $this->assertSame(10, $this->product->fresh()->stock_quantity);
+        $this->assertSame(10.0, $this->product->fresh()->stock_quantity);
     }
 
     public function test_an_exit_larger_than_the_stock_is_refused(): void
     {
         $this->record(['type' => 'out', 'reason' => 'theft', 'quantity' => 11])->assertSessionHasErrors('quantity');
 
-        $this->assertSame(10, $this->product->fresh()->stock_quantity);
+        $this->assertSame(10.0, $this->product->fresh()->stock_quantity);
         $this->assertSame(0, StockMovement::count());
     }
 
@@ -110,7 +110,7 @@ class ManualStockMovementTest extends TestCase
 
         $this->deleteMovement($saleLine)->assertSessionHas('error');
 
-        $this->assertSame(10, $this->product->fresh()->stock_quantity);
+        $this->assertSame(10.0, $this->product->fresh()->stock_quantity);
         $this->assertDatabaseHas('stock_movements', ['id' => $saleLine->id]);
     }
 

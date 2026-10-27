@@ -29,7 +29,7 @@ class PosCatalogPayloadTest extends TestCase
         Product::factory()->create(['shop_id' => $shop->id, 'parent_id' => $parent->id]);
         Customer::factory()->create(['shop_id' => $shop->id]);
 
-        $expected = ['id', 'parent_id', 'name', 'sku', 'image', 'selling_price', 'tax_rate', 'stock_quantity', 'has_variations'];
+        $expected = ['id', 'parent_id', 'name', 'sku', 'image', 'selling_price', 'tax_rate', 'stock_quantity', 'unit', 'has_variations'];
 
         $this->actingAs($owner->fresh())->get('/'.$owner->accountCode().'/ventes/create')
             ->assertOk()

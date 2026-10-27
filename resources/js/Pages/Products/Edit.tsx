@@ -4,6 +4,7 @@ import { FormEventHandler, useMemo, useState } from 'react';
 import { TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import { UNIT_CODES } from '@/utils/quantity';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
 import StockMovementTypeBadge from '@/Components/StockMovementTypeBadge';
@@ -264,7 +265,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
 
                         <div>
                             <label htmlFor="unit" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                Unité *
+                                {t.products.form.unit} *
                             </label>
                             <select
                                 id="unit"
@@ -272,13 +273,15 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 onChange={(e) => setData('unit', e.target.value)}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                             >
-                                <option value="piece">Pièce</option>
-                                <option value="kg">Kilogramme</option>
-                                <option value="liter">Litre</option>
-                                <option value="meter">Mètre</option>
-                                <option value="box">Boîte</option>
-                                <option value="pack">Pack</option>
+                                {/* Une unité importée hors liste reste sélectionnée plutôt que remplacée en silence. */}
+                                {data.unit && !UNIT_CODES.includes(data.unit) && <option value={data.unit}>{data.unit}</option>}
+                                {UNIT_CODES.map((code) => (
+                                    <option key={code} value={code}>
+                                        {t.products.form.units[code]}
+                                    </option>
+                                ))}
                             </select>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.products.form.unitHint}</p>
                             <InputError message={errors.unit} />
                         </div>
 
@@ -371,7 +374,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 Quantité en stock *
                             </label>
                             <input
-                                type="number"
+                                type="number" step="0.001"
                                 id="stock_quantity"
                                 value={data.stock_quantity}
                                 // La saisie brute : Number('') vaut 0, et effacer le champ y
@@ -390,7 +393,7 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                                 Seuil d'alerte stock
                             </label>
                             <input
-                                type="number"
+                                type="number" step="0.001"
                                 id="min_stock_alert"
                                 value={data.min_stock_alert}
                                 onChange={(e) => setData('min_stock_alert', e.target.value ? Number(e.target.value) : '')}

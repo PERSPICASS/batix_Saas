@@ -99,7 +99,7 @@ class InventoryAnalysisService
             // récent comptage gagne.
             ->keyBy('product_id')
             ->map(fn ($row) => [
-                'quantity' => (int) $row->counted_quantity,
+                'quantity' => (float) $row->counted_quantity,
                 'at' => (string) $row->completed_at,
             ]);
     }

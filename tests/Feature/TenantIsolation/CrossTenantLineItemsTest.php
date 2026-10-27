@@ -74,7 +74,7 @@ class CrossTenantLineItemsTest extends TestCase
 
     private function assertTheirStockUntouched(): void
     {
-        $this->assertSame(50, (int) $this->theirProduct->fresh()->stock_quantity, "Le stock d'un autre compte a bougé.");
+        $this->assertEquals(50, (int) $this->theirProduct->fresh()->stock_quantity, "Le stock d'un autre compte a bougé.");
     }
 
     private function sale(array $overrides = [], array $item = []): array
@@ -112,7 +112,7 @@ class CrossTenantLineItemsTest extends TestCase
             ->assertSessionHasNoErrors()
             ->assertRedirect();
 
-        $this->assertSame(48, (int) $this->myProduct->fresh()->stock_quantity);
+        $this->assertEquals(48, (int) $this->myProduct->fresh()->stock_quantity);
     }
 
     public function test_a_sale_cannot_sell_another_tenants_product(): void

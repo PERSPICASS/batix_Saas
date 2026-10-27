@@ -41,7 +41,7 @@
             @foreach ($creditNote->items as $item)
                 <tr>
                     <td>{{ $item->product_name }}</td>
-                    <td class="right">{{ $item->quantity }}</td>
+                    <td class="right">{{ \App\Support\Unit::format($item->quantity, $item->invoiceItem?->product?->unit) }}</td>
                     <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
                     <td class="right">{{ rtrim(rtrim(number_format($item->tax_rate, 2, ',', ' '), '0'), ',') }} %</td>
                     <td class="right">{{ number_format($item->total, 2, ',', ' ') }}</td>

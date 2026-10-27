@@ -55,7 +55,7 @@ class SaleTenantScopeTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('items.0.product_id');
 
-        $this->assertSame(10, $foreignProduct->fresh()->stock_quantity);
+        $this->assertSame(10.0, $foreignProduct->fresh()->stock_quantity);
     }
 
     public function test_v1_rejects_a_customer_from_another_account(): void
@@ -85,7 +85,7 @@ class SaleTenantScopeTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('items.0.product_id');
 
-        $this->assertSame(10, $foreignProduct->fresh()->stock_quantity);
+        $this->assertSame(10.0, $foreignProduct->fresh()->stock_quantity);
     }
 
     public function test_a_sale_with_the_shops_own_product_still_goes_through(): void

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
@@ -126,7 +127,7 @@ class InvoiceController extends Controller
             'items.*.product_name' => 'required|string',
             'items.*.article_name' => 'nullable|string',
             'items.*.description' => 'nullable|string',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'items.*.discount_amount' => 'nullable|numeric|min:0',
@@ -302,7 +303,7 @@ class InvoiceController extends Controller
             'items.*.product_name' => 'required|string',
             'items.*.article_name' => 'nullable|string',
             'items.*.description' => 'nullable|string',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'items.*.discount_amount' => 'nullable|numeric|min:0',

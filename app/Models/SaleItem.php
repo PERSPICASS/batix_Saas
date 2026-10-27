@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Unit;
+use App\Casts\Quantity;
 use App\Services\StockMovementService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +30,7 @@ class SaleItem extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'quantity' => Quantity::class,
         'unit_price' => 'decimal:2',
         'unit_cost' => 'decimal:2',
         'tax_rate' => 'decimal:2',
@@ -38,7 +40,7 @@ class SaleItem extends Model
         'is_returned' => 'boolean',
     ];
 
-    public int $originalQuantityBeforeSave = 0;
+    public float $originalQuantityBeforeSave = 0;
 
     protected static function boot()
     {
@@ -60,7 +62,7 @@ class SaleItem extends Model
 
             // Capture original quantity before save (for delta calculation on updates)
             if ($item->exists) {
-                $item->originalQuantityBeforeSave = (int) $item->getOriginal('quantity');
+                $item->originalQuantityBeforeSave = (float) $item->getOriginal('quantity');
             }
         });
 
@@ -110,9 +112,8 @@ class SaleItem extends Model
         return $this->hasMany(SaleReturn::class);
     }
 
-    public function getRemainingQuantityAttribute(): int
+    public function getRemainingQuantityAttribute(): float
     {
-        $returnedQty = $this->returns->sum('quantity_returned');
-        return $this->quantity - $returnedQty;
+        return Unit::round($this->quantity - $this->returns->sum('quantity_returned'));
     }
 }

@@ -59,7 +59,7 @@ class DepotStockCsvUploadTest extends TestCase
             ->assertOk()
             ->assertJson(['success' => true]);
 
-        $this->assertSame(5, DepotProduct::sole()->quantity);
+        $this->assertSame(5.0, DepotProduct::sole()->quantity);
     }
 
     public function test_semicolon_separated_csv_imports(): void
@@ -68,7 +68,7 @@ class DepotStockCsvUploadTest extends TestCase
             ->assertOk()
             ->assertJson(['success' => true]);
 
-        $this->assertSame(5, DepotProduct::sole()->quantity);
+        $this->assertSame(5.0, DepotProduct::sole()->quantity);
     }
 
     /** Ce qu'Excel FR produit réellement : BOM UTF-8, « ; », CRLF et en-têtes accentués. */
@@ -82,8 +82,8 @@ class DepotStockCsvUploadTest extends TestCase
             ->assertJson(['success' => true]);
 
         $line = DepotProduct::sole();
-        $this->assertSame(12, $line->quantity);
-        $this->assertSame(3, $line->min_stock_alert);
+        $this->assertSame(12.0, $line->quantity);
+        $this->assertSame(3.0, $line->min_stock_alert);
         $this->assertSame('Café moulu 250g', Product::find($line->product_id)->name);
     }
 
@@ -109,7 +109,7 @@ class DepotStockCsvUploadTest extends TestCase
         $response->assertRedirect("/{$this->owner->code_user}/depots/{$this->depot->id}");
         $response->assertSessionHas('success');
 
-        $this->assertSame(5, DepotProduct::sole()->quantity);
+        $this->assertSame(5.0, DepotProduct::sole()->quantity);
     }
 
     /** Les lignes en erreur doivent atteindre la page : `import_errors` doit être une prop partagée. */

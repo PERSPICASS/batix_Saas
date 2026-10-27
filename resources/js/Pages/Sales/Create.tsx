@@ -5,6 +5,7 @@ import { FormEventHandler, useEffect, useState } from 'react';
 import { Plus, Minus, Trash2, CreditCard, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import ProductImage from '@/Components/ProductImage';
+import QuantityInput from '@/Components/QuantityInput';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { enqueue, newClientUuid } from '@/offline/outbox';
@@ -12,6 +13,7 @@ import { useOfflineSales } from '@/offline/useOfflineSales';
 import { cacheCatalog, readCatalog } from '@/offline/catalog';
 import { matchesSearch } from '@/utils/search';
 import { discountFromInput, documentTotals } from '@/utils/totals';
+import { formatQuantity, roundQuantity } from '@/utils/quantity';
 
 /**
  * Format attendu par la validation `date` de Laravel côté synchronisation.
@@ -45,6 +47,7 @@ interface Product {
     selling_price: string;
     tax_rate: string;
     stock_quantity: number;
+    unit?: string | null;
     has_variations: boolean;
     variations: Array<{
         id: number;
@@ -54,6 +57,7 @@ interface Product {
         selling_price: string;
         tax_rate: string;
         stock_quantity: number;
+        unit?: string | null;
         has_variations: boolean;
         variations: [];
     }>;
@@ -80,13 +84,14 @@ interface CartItem {
     product_id: number;
     product_name: string;
     quantity: number;
+    unit?: string | null;
     unit_price: number;
     tax_rate: number;
     subtotal: number;
 }
 
 export default function SalesCreate({ shops, customers, products, preorder }: Props) {
-    const { t } = useLocale();
+    const { t, locale } = useLocale();
     const route = useRoute();
     const { formatCurrency, currencySymbol } = useShopSettings();
 
@@ -131,6 +136,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                 {
                     product_id: product.id,
                     product_name: product.name,
+                    unit: product.unit,
                     quantity: preorder.quantity,
                     unit_price: preorder.unit_price,
                     tax_rate: parseFloat(product.tax_rate || '0'),
@@ -157,8 +163,8 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                     item.product_id === product.id
                         ? {
                               ...item,
-                              quantity: item.quantity + 1,
-                              subtotal: (item.quantity + 1) * item.unit_price,
+                              quantity: roundQuantity(item.quantity + 1),
+                              subtotal: roundQuantity(item.quantity + 1) * item.unit_price,
                           }
                         : item
                 )
@@ -169,6 +175,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                 {
                     product_id: product.id,
                     product_name: product.name,
+                    unit: product.unit,
                     quantity: 1,
                     unit_price: parseFloat(product.selling_price),
                     tax_rate: parseFloat(product.tax_rate || '0'),
@@ -182,11 +189,20 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
         setCart(cart.filter((item) => item.product_id !== productId));
     };
 
+    // Les boutons + et − : descendre à zéro retire la ligne.
     const updateQuantity = (productId: number, quantity: number) => {
         if (quantity <= 0) {
             removeFromCart(productId);
             return;
         }
+
+        setLineQuantity(productId, quantity);
+    };
+
+    // La saisie au clavier, elle, ne retire jamais la ligne : effacer « 2 » pour taper
+    // « 2,5 » passe par un champ vide, et le panier perdait l'article à ce moment-là.
+    const setLineQuantity = (productId: number, quantity: number) => {
+        quantity = roundQuantity(quantity);
 
         setCart(
             cart.map((item) =>
@@ -250,6 +266,11 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
 
         if (cart.length === 0) {
             showToast('warning', t.sales.form.addProductValidation);
+            return;
+        }
+
+        if (cart.some((item) => !(item.quantity > 0))) {
+            showToast('warning', t.sales.form.invalidQuantity);
             return;
         }
 
@@ -431,7 +452,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                                                 <div>
                                                                     <p className="text-sm font-medium text-slate-900 dark:text-white">{variation.name}</p>
                                                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                                        SKU: {variation.sku} • Stock: {variation.stock_quantity}
+                                                                        SKU: {variation.sku} • Stock: {formatQuantity(variation.stock_quantity, variation.unit, locale)}
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -453,7 +474,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                                     <div>
                                                         <p className="font-medium text-slate-900 dark:text-white">{product.name}</p>
                                                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                            SKU: {product.sku} • Stock: {product.stock_quantity}
+                                                            SKU: {product.sku} • Stock: {formatQuantity(product.stock_quantity, product.unit, locale)}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -524,23 +545,17 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                                             onClick={() =>
                                                                 updateQuantity(
                                                                     item.product_id,
-                                                                    item.quantity - 1
+                                                                    roundQuantity(item.quantity - 1)
                                                                 )
                                                             }
                                                             className="flex items-center justify-center rounded border border-gray-300 bg-white p-2 text-slate-700 hover:bg-gray-100 transition dark:border-white/15 dark:bg-slate-900/70 dark:text-white dark:hover:bg-white/10"
                                                         >
                                                             <Minus className="size-4" />
                                                         </button>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
+                                                        <QuantityInput
                                                             value={item.quantity}
-                                                            onChange={(e) =>
-                                                                updateQuantity(
-                                                                    item.product_id,
-                                                                    parseInt(e.target.value) || 0
-                                                                )
-                                                            }
+                                                            unit={item.unit}
+                                                            onChange={(quantity) => setLineQuantity(item.product_id, quantity ?? 0)}
                                                             className="w-full rounded border border-gray-300 bg-white px-2 py-2 text-center text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                                                         />
                                                         <button
@@ -548,7 +563,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                                             onClick={() =>
                                                                 updateQuantity(
                                                                     item.product_id,
-                                                                    item.quantity + 1
+                                                                    roundQuantity(item.quantity + 1)
                                                                 )
                                                             }
                                                             className="flex items-center justify-center rounded border border-gray-300 bg-white p-2 text-slate-700 hover:bg-gray-100 transition dark:border-white/15 dark:bg-slate-900/70 dark:text-white dark:hover:bg-white/10"

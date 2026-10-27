@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\StockMovement;
 use App\Models\Shop;
 use App\Models\Product;
@@ -106,7 +107,7 @@ class StockMovementController extends Controller
             // au stock, le second double la correction de la fiche produit et l'inventaire.
             'type' => 'required|in:in,out',
             'reason' => ['required', Rule::in(StockMovement::REASONS[$request->input('type')] ?? [])],
-            'quantity' => 'required|integer|min:1',
+            'quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'unit_cost' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string|max:1000',
             'movement_date' => 'required|date',
@@ -122,7 +123,7 @@ class StockMovementController extends Controller
 
             StockMovementService::recordManualAdjustment(
                 $product,
-                (int) $validated['quantity'],
+                (float) $validated['quantity'],
                 $validated['type'],
                 (int) $validated['shop_id'],
                 $validated['notes'] ?? null,

@@ -57,10 +57,10 @@ class ProductShowTest extends TestCase
         $this->assertEquals(600, $props['pricing']['unit_cost']);
         $this->assertEquals(400, $props['pricing']['unit_margin']);
         $this->assertEquals(40, $props['pricing']['margin_rate']);
-        $this->assertSame(37, $props['stock']['counter']);
+        $this->assertSame(37.0, $props['stock']['counter']);
         $this->assertEquals(['quantity' => 3, 'revenue' => 3000, 'margin' => 1200], $props['sales30']);
         $this->assertEquals([['shop' => 'Yopougon', 'stock' => 12, 'min' => 5]], $props['elsewhere']);
-        $this->assertSame(-3, $props['movements'][0]['quantity']);
+        $this->assertSame(-3.0, $props['movements'][0]['quantity']);
         $this->assertTrue($props['canEdit']);
     }
 

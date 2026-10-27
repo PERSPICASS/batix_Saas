@@ -143,11 +143,11 @@ class TheoreticalStockTest extends TestCase
 
         $row = $this->enrich($product)[0];
 
-        $this->assertSame(100, $row['last_counted_quantity']);
+        $this->assertSame(100.0, $row['last_counted_quantity']);
         $this->assertSame(30, $row['purchased_since_last_inventory']);
         $this->assertSame(12, $row['sold_since_last_inventory']);
-        $this->assertSame(118, $row['theoretical_stock']);
-        $this->assertSame(0, $row['ledger_drift']);
+        $this->assertSame(118.0, $row['theoretical_stock']);
+        $this->assertSame(0.0, $row['ledger_drift']);
     }
 
     /** Le cas qui justifie tout : le compteur et l'historique ne racontent pas la même chose. */
@@ -164,8 +164,8 @@ class TheoreticalStockTest extends TestCase
 
         $row = $this->enrich($product)[0];
 
-        $this->assertSame(118, $row['theoretical_stock']);
-        $this->assertSame(3, $row['ledger_drift']);
+        $this->assertSame(118.0, $row['theoretical_stock']);
+        $this->assertSame(3.0, $row['ledger_drift']);
     }
 
     public function test_without_a_previous_count_the_counter_is_the_only_reference(): void
@@ -176,8 +176,8 @@ class TheoreticalStockTest extends TestCase
 
         $this->assertNull($row['last_counted_quantity']);
         $this->assertNull($row['last_counted_at']);
-        $this->assertSame(42, $row['theoretical_stock']);
-        $this->assertSame(0, $row['ledger_drift']);
+        $this->assertSame(42.0, $row['theoretical_stock']);
+        $this->assertSame(0.0, $row['ledger_drift']);
     }
 
     /**
@@ -201,11 +201,11 @@ class TheoreticalStockTest extends TestCase
 
         // Le produit compté récemment ignore la vente d'il y a dix jours.
         $this->assertSame(0, $rows[$recent->id]['sold_since_last_inventory']);
-        $this->assertSame(45, $rows[$recent->id]['theoretical_stock']);
+        $this->assertSame(45.0, $rows[$recent->id]['theoretical_stock']);
 
         // Celui compté il y a un mois la prend en compte.
         $this->assertSame(5, $rows[$old->id]['sold_since_last_inventory']);
-        $this->assertSame(10, $rows[$old->id]['theoretical_stock']);
+        $this->assertSame(10.0, $rows[$old->id]['theoretical_stock']);
     }
 
     /** Un comptage plus récent remplace le précédent comme point de départ. */
@@ -219,10 +219,10 @@ class TheoreticalStockTest extends TestCase
 
         $row = $this->enrich($product)[0];
 
-        $this->assertSame(80, $row['last_counted_quantity']);
+        $this->assertSame(80.0, $row['last_counted_quantity']);
         // La vente précède le dernier comptage : elle est déjà dedans.
         $this->assertSame(0, $row['sold_since_last_inventory']);
-        $this->assertSame(80, $row['theoretical_stock']);
+        $this->assertSame(80.0, $row['theoretical_stock']);
     }
 
     /** Un inventaire non appliqué ne borne rien : il n'a rien ajusté. */
@@ -242,7 +242,7 @@ class TheoreticalStockTest extends TestCase
         $row = $this->enrich($product)[0];
 
         $this->assertNull($row['last_counted_quantity']);
-        $this->assertSame(30, $row['theoretical_stock']);
+        $this->assertSame(30.0, $row['theoretical_stock']);
     }
 
     /** Une ligne laissée vide dans un inventaire appliqué ne borne pas non plus. */

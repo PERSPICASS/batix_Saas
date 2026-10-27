@@ -80,7 +80,7 @@ class DepotMovementLedgerTest extends TestCase
 
         $movement = StockMovement::inDepot($depot->id)->firstOrFail();
 
-        $this->assertSame(25, $movement->quantity);
+        $this->assertSame(25.0, $movement->quantity);
         $this->assertSame('in', $movement->type);
         $this->assertSame($product->id, $movement->product_id);
     }
@@ -101,7 +101,7 @@ class DepotMovementLedgerTest extends TestCase
 
         $movement = StockMovement::inDepot($depot->id)->firstOrFail();
 
-        $this->assertSame(-7, $movement->quantity);
+        $this->assertSame(-7.0, $movement->quantity);
         $this->assertSame('adjustment', $movement->type);
     }
 
@@ -137,11 +137,11 @@ class DepotMovementLedgerTest extends TestCase
         $outOfDepot = StockMovement::inDepot($depot->id)->firstOrFail();
         $intoCounter = StockMovement::atCounter()->firstOrFail();
 
-        $this->assertSame(-20, $outOfDepot->quantity);
-        $this->assertSame(20, $intoCounter->quantity);
+        $this->assertSame(-20.0, $outOfDepot->quantity);
+        $this->assertSame(20.0, $intoCounter->quantity);
 
         // Un transfert déplace du stock, il n'en crée pas.
-        $this->assertSame(0, StockMovement::sum('quantity'));
+        $this->assertEquals(0, StockMovement::sum('quantity'));
     }
 
     public function test_a_transfer_between_depots_records_both_sides(): void
@@ -156,9 +156,9 @@ class DepotMovementLedgerTest extends TestCase
             'items' => [['product_id' => $product->id, 'quantity' => 12]],
         ])->assertSessionHasNoErrors();
 
-        $this->assertSame(-12, StockMovement::inDepot($source->id)->sum('quantity'));
-        $this->assertSame(12, StockMovement::inDepot($target->id)->sum('quantity'));
-        $this->assertSame(0, StockMovement::sum('quantity'));
+        $this->assertEquals(-12, StockMovement::inDepot($source->id)->sum('quantity'));
+        $this->assertEquals(12, StockMovement::inDepot($target->id)->sum('quantity'));
+        $this->assertEquals(0, StockMovement::sum('quantity'));
     }
 
     /**

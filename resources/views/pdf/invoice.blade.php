@@ -53,7 +53,7 @@
                             <div class="muted">{{ $item->description }}</div>
                         @endif
                     </td>
-                    <td class="right">{{ $item->quantity }}</td>
+                    <td class="right">{{ \App\Support\Unit::format($item->quantity, $item->product?->unit) }}</td>
                     <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
                     <td class="right">{{ rtrim(rtrim(number_format($item->tax_rate, 2, ',', ' '), '0'), ',') }} %</td>
                     <td class="right">{{ number_format($item->total, 2, ',', ' ') }}</td>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Rules\QuantityForProduct;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Preorder;
@@ -166,7 +167,7 @@ class MobileController extends Controller
             'amount_paid' => 'nullable|numeric|min:0',
             'items' => 'required|array|min:1',
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('shop_id', $shopId)],
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
 

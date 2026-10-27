@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Unit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -200,7 +201,7 @@ class Shop extends Model
      * coût du produit (voir Product::stockValue). La somme des dépôts est jointe en une
      * fois : sans cela, chaque produit déclencherait sa propre requête.
      *
-     * @return array{products: int, stock_units: int, stock_value: float, low_stock: int}
+     * @return array{products: int, stock_units: float, stock_value: float, low_stock: int}
      */
     public function stockStats(): array
     {
@@ -211,7 +212,7 @@ class Shop extends Model
 
         return [
             'products' => $products->count(),
-            'stock_units' => (int) $products->sum(fn ($product) => $product->totalStock()),
+            'stock_units' => Unit::round($products->sum(fn ($product) => $product->totalStock())),
             'stock_value' => round($products->sum(fn ($product) => $product->stockValue()), 2),
             'low_stock' => $products->filter(fn ($product) => $product->isLowStock())->count(),
         ];

@@ -90,14 +90,14 @@
      les retours). Les retours sont listés à part, plutôt que mêlés à chaque ligne. --}}
 <table>
     @foreach ($sale->items as $item)
-        @php($kept = $item->quantity - $item->returns->sum('quantity_returned'))
+        @php($kept = \App\Support\Unit::round($item->quantity - $item->returns->sum('quantity_returned')))
         @if ($kept > 0)
             <tr>
                 <td colspan="2">{{ $item->product_name }}</td>
             </tr>
             <tr>
                 <td class="muted">
-                    {{ $kept }} × {{ number_format($item->unit_price, 2, ',', ' ') }}
+                    {{ \App\Support\Unit::format($kept, $item->product?->unit) }} × {{ number_format($item->unit_price, 2, ',', ' ') }}
                 </td>
                 <td class="right">{{ number_format($item->unit_price * $kept, 2, ',', ' ') }}</td>
             </tr>
@@ -110,7 +110,7 @@
     <table>
         @foreach ($sale->items->filter(fn ($item) => $item->returns->isNotEmpty()) as $item)
             <tr>
-                <td class="muted">{{ $item->product_name }} × {{ $item->returns->sum('quantity_returned') }}</td>
+                <td class="muted">{{ $item->product_name }} × {{ \App\Support\Unit::format($item->returns->sum('quantity_returned'), $item->product?->unit) }}</td>
                 <td class="right">-{{ number_format($item->returns->sum('refund_amount'), 2, ',', ' ') }}</td>
             </tr>
         @endforeach

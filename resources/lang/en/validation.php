@@ -3,6 +3,10 @@
 // Seuls les noms de champs : les messages viennent des fichiers anglais de Laravel,
 // fusionnés avec celui-ci.
 return [
+    'quantity_precision' => 'The :attribute field cannot have more than :precision decimal places.',
+    'quantity_whole' => ':product is sold by the unit: the quantity must be a whole number.',
+    'quantity_whole_unit' => 'This unit is sold whole: the quantity must be a whole number.',
+
     'attributes' => [
         'name' => 'name',
         'email' => 'email address',

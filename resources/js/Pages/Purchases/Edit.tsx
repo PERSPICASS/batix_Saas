@@ -489,8 +489,8 @@ export default function PurchasesEdit({ code_user, suppliers, products, currency
                                             <InputLabel value="Qté *" />
                                             <TextInput
                                                 type="number"
-                                                min="1"
-                                                step="1"
+                                                min="0.001"
+                                                step="0.001"
                                                 value={item.quantity}
                                                 onChange={(e) =>
                                                     updateItem(index, 'quantity', e.target.value)

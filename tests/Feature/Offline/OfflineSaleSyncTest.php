@@ -71,7 +71,7 @@ class OfflineSaleSyncTest extends TestCase
         $response->assertOk();
         $this->assertSame('synced', $response->json('results.0.status'));
         $this->assertNotEmpty($response->json('results.0.ticket_number'));
-        $this->assertSame(7, $product->fresh()->stock_quantity);
+        $this->assertSame(7.0, $product->fresh()->stock_quantity);
     }
 
     public function test_replaying_the_same_sale_does_not_record_it_twice(): void
@@ -96,7 +96,7 @@ class OfflineSaleSyncTest extends TestCase
 
         $this->assertSame(1, Sale::where('client_uuid', $uuid)->count());
         // Le point qui compte : le stock n'a été décrémenté qu'une fois.
-        $this->assertSame(8, $product->fresh()->stock_quantity);
+        $this->assertSame(8.0, $product->fresh()->stock_quantity);
     }
 
     public function test_the_real_sale_time_is_kept_not_the_sync_time(): void
@@ -126,7 +126,7 @@ class OfflineSaleSyncTest extends TestCase
         $response->assertOk();
         $this->assertSame('rejected', $response->json('results.0.status'));
         $this->assertStringContainsString('Stock insuffisant', $response->json('results.0.message'));
-        $this->assertSame(2, $product->fresh()->stock_quantity, 'Aucun stock ne doit bouger.');
+        $this->assertSame(2.0, $product->fresh()->stock_quantity, 'Aucun stock ne doit bouger.');
     }
 
     public function test_one_rejected_sale_does_not_block_the_rest_of_the_batch(): void
@@ -142,7 +142,7 @@ class OfflineSaleSyncTest extends TestCase
         $response->assertOk();
         $this->assertSame('rejected', $response->json('results.0.status'));
         $this->assertSame('synced', $response->json('results.1.status'));
-        $this->assertSame(2, $product->fresh()->stock_quantity);
+        $this->assertSame(2.0, $product->fresh()->stock_quantity);
     }
 
     public function test_a_sale_for_another_tenants_shop_is_refused(): void
@@ -162,7 +162,7 @@ class OfflineSaleSyncTest extends TestCase
         $response->assertOk();
         $this->assertSame('rejected', $response->json('results.0.status'));
         $this->assertSame(0, Sale::count());
-        $this->assertSame(10, $otherProduct->fresh()->stock_quantity);
+        $this->assertSame(10.0, $otherProduct->fresh()->stock_quantity);
     }
 
     public function test_guests_cannot_sync(): void

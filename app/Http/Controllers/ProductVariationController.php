@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\Product;
 use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Support\Unit;
 
 class ProductVariationController extends Controller
 {
@@ -37,7 +39,7 @@ class ProductVariationController extends Controller
             'name' => 'required|string|max:255',
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'nullable|integer|min:0',
+            'stock_quantity' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($product->unit)],
         ]);
 
         // Créer la déclinaison (c'est un produit avec parent_id)
@@ -88,12 +90,12 @@ class ProductVariationController extends Controller
             'name' => 'required|string|max:255',
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'nullable|integer|min:0',
+            'stock_quantity' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($variation->unit)],
             'is_active' => 'boolean',
         ]);
 
         $oldStock = $variation->stock_quantity;
-        $newStock = (int) ($validated['stock_quantity'] ?? $oldStock);
+        $newStock = Unit::round($validated['stock_quantity'] ?? $oldStock);
 
         DB::transaction(function () use ($variation, $validated, $oldStock, $newStock) {
             $variation->update([
@@ -103,10 +105,10 @@ class ProductVariationController extends Controller
                 'is_active' => $validated['is_active'] ?? $variation->is_active,
             ]);
 
-            if ($newStock !== $oldStock) {
+            if ($newStock != $oldStock) {
                 StockMovementService::recordManualAdjustment(
                     $variation,
-                    $newStock - $oldStock,
+                    Unit::round($newStock - $oldStock),
                     'adjustment',
                     $variation->shop_id,
                     "Correction manuelle via formulaire déclinaison (ancienne valeur: {$oldStock}, nouvelle: {$newStock})"

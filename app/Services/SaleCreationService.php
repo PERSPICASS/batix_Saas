@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Unit;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Support\GlobalDiscount;
@@ -39,7 +40,7 @@ class SaleCreationService
             // transaction, to prevent two concurrent sales from oversell the same stock.
             $neededByProduct = [];
             foreach ($items as $itemData) {
-                $neededByProduct[$itemData['product_id']] = ($neededByProduct[$itemData['product_id']] ?? 0) + $itemData['quantity'];
+                $neededByProduct[$itemData['product_id']] = Unit::round(($neededByProduct[$itemData['product_id']] ?? 0) + $itemData['quantity']);
             }
 
             // The shop boundary lives here, not in each caller's validation: the web

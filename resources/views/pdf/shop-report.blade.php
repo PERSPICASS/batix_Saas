@@ -134,7 +134,7 @@
         @foreach ($report['products'] as $product)
             <tr>
                 <td>{{ $product['name'] }}@if ($product['category'])<span class="muted"> · {{ $product['category'] }}</span>@endif</td>
-                <td class="right">{{ $count($product['quantity']) }}</td>
+                <td class="right">{{ \App\Support\Unit::format($product['quantity']) }}</td>
                 <td class="right">{{ $money($product['revenue']) }}</td>
                 <td class="right {{ $product['margin'] < 0 ? 'down' : '' }}">{{ $money($product['margin']) }}</td>
             </tr>

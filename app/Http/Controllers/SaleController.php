@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Exports\SalesLinesExport;
 use App\Models\Customer;
 use App\Models\Preorder;
@@ -177,7 +178,7 @@ class SaleController extends Controller
         // (3 MB of HTML for 3 000 products), a heavy load on a mobile connection.
         $customers = Customer::where('shop_id', $activeShopId)->get(['id', 'name']);
 
-        $posColumns = ['id', 'parent_id', 'name', 'sku', 'image', 'selling_price', 'tax_rate', 'stock_quantity', 'has_variations'];
+        $posColumns = ['id', 'parent_id', 'name', 'sku', 'image', 'selling_price', 'tax_rate', 'stock_quantity', 'unit', 'has_variations'];
 
         $products = Product::where('shop_id', $activeShopId)
             ->where('is_active', true)
@@ -222,7 +223,7 @@ class SaleController extends Controller
             'notes'              => 'nullable|string',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity'   => 'required|integer|min:1',
+            'items.*.quantity'   => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'preorder_id'        => 'nullable|exists:preorders,id',
         ]);

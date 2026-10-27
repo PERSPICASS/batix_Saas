@@ -75,7 +75,7 @@ class SaleLifecycleTest extends TestCase
         $this->assertEquals(1460, (float) $sale->change_amount);
         $this->assertEquals(0, (float) $sale->remaining_amount);
         $this->assertSame('completed', $sale->status);
-        $this->assertSame(47, $cement->fresh()->stock_quantity);
+        $this->assertSame(47.0, $cement->fresh()->stock_quantity);
     }
 
     /** La remise réduit la base imposable, elle ne se retranche pas du TTC. */
@@ -189,7 +189,7 @@ class SaleLifecycleTest extends TestCase
         ])->assertSessionHasErrors('items');
 
         $this->assertSame(0, Sale::count());
-        $this->assertSame(5, $cement->fresh()->stock_quantity);
+        $this->assertSame(5.0, $cement->fresh()->stock_quantity);
     }
 
     public function test_selling_more_than_the_stock_is_refused_and_writes_nothing(): void
@@ -200,7 +200,7 @@ class SaleLifecycleTest extends TestCase
             ->assertSessionHasErrors('items');
 
         $this->assertSame(0, Sale::count());
-        $this->assertSame(2, $cement->fresh()->stock_quantity);
+        $this->assertSame(2.0, $cement->fresh()->stock_quantity);
     }
 
     public function test_a_product_without_stock_tracking_sells_freely(): void
@@ -210,7 +210,7 @@ class SaleLifecycleTest extends TestCase
         $this->sell([['product_id' => $service->id, 'quantity' => 4, 'unit_price' => 500]], ['amount_paid' => 2000]);
 
         $this->assertSame('completed', $this->lastSale()->status);
-        $this->assertSame(0, $service->fresh()->stock_quantity);
+        $this->assertSame(0.0, $service->fresh()->stock_quantity);
     }
 
     // --- Annulation et réactivation ----------------------------------------------
@@ -235,7 +235,7 @@ class SaleLifecycleTest extends TestCase
         $this->cancel($sale)->assertSessionHas('error');
 
         $this->assertSame('cancelled', $sale->fresh()->status);
-        $this->assertSame(50, $cement->fresh()->stock_quantity);
+        $this->assertSame(50.0, $cement->fresh()->stock_quantity);
     }
 
     /** Les unités retournées sont déjà revenues en stock : les y remettre une 2ᵉ fois gonflait le stock. */
@@ -270,7 +270,7 @@ class SaleLifecycleTest extends TestCase
         $this->cancel($this->lastSale(), $cashier);
 
         $this->assertSame('completed', $this->lastSale()->status);
-        $this->assertSame(49, $cement->fresh()->stock_quantity);
+        $this->assertSame(49.0, $cement->fresh()->stock_quantity);
     }
 
     public function test_restoring_takes_the_goods_out_again(): void
@@ -283,7 +283,7 @@ class SaleLifecycleTest extends TestCase
         $this->restore($sale);
 
         $this->assertSame('completed', $sale->fresh()->status);
-        $this->assertSame(46, $cement->fresh()->stock_quantity);
+        $this->assertSame(46.0, $cement->fresh()->stock_quantity);
     }
 
     public function test_restoring_is_refused_when_the_stock_has_gone_since(): void
@@ -297,7 +297,7 @@ class SaleLifecycleTest extends TestCase
         $this->restore($sale)->assertSessionHas('error');
 
         $this->assertSame('cancelled', $sale->fresh()->status);
-        $this->assertSame(1, $cement->fresh()->stock_quantity);
+        $this->assertSame(1.0, $cement->fresh()->stock_quantity);
     }
 
     /** Réactivée, une vente à crédit passait en « completed » avec un reste dû. */

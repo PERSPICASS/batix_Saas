@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +26,7 @@ class ReturnedInventory extends Model
     ];
 
     protected $casts = [
+        'quantity' => Quantity::class,
         'reviewed_at' => 'datetime',
     ];
 

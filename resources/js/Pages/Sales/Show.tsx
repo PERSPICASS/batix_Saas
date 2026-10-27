@@ -789,11 +789,12 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                                         <span className="text-xs text-slate-500 dark:text-slate-400">{item.product_name}</span>
                                                         <input
                                                             type="number"
-                                                            min="1"
+                                                            min="0.001"
+                                                            step="0.001"
                                                             max={available}
                                                             value={Math.min(itemQuantities[item.id] || 1, available)}
                                                             onChange={(e) => {
-                                                                const val = Math.min(parseInt(e.target.value) || 1, available);
+                                                                const val = Math.min(parseFloat(e.target.value) || 1, available);
                                                                 setItemQuantities({...itemQuantities, [item.id]: val});
                                                             }}
                                                             className="w-12 text-xs rounded border border-white/10 bg-slate-800 px-2 py-1 text-white focus:border-amber-500 focus:outline-none"

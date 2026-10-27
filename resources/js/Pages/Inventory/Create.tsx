@@ -350,7 +350,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                     {t.inventory.form.countedGood}
                                                 </label>
                                                 <input
-                                                    type="number"
+                                                    type="number" step="0.001"
                                                     min="0"
                                                     value={item.counted_quantity}
                                                     onChange={(e) => updateItem(index, 'counted_quantity', e.target.value)}
@@ -364,7 +364,7 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                     {t.inventory.show.defective}
                                                 </label>
                                                 <input
-                                                    type="number"
+                                                    type="number" step="0.001"
                                                     min="0"
                                                     value={item.defective_quantity}
                                                     onChange={(e) => updateItem(index, 'defective_quantity', e.target.value)}

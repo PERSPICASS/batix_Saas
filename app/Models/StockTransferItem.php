@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,7 +18,7 @@ class StockTransferItem extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'quantity' => Quantity::class,
         'unit_cost' => 'decimal:2',
     ];
 

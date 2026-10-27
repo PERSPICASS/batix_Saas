@@ -83,7 +83,7 @@ class InvoiceStockTest extends TestCase
         $invoice->load('items')->releaseStock();
 
         // Rien n'est sorti : un brouillon n'a rien livré.
-        $this->assertSame(100, $product->fresh()->stock_quantity);
+        $this->assertSame(100.0, $product->fresh()->stock_quantity);
     }
 
     public function test_issuing_an_invoice_takes_the_goods_out(): void
@@ -93,9 +93,9 @@ class InvoiceStockTest extends TestCase
 
         $invoice->load('items')->releaseStock();
 
-        $this->assertSame(90, $product->fresh()->stock_quantity);
+        $this->assertSame(90.0, $product->fresh()->stock_quantity);
         $this->assertNotNull($invoice->fresh()->stock_released_at);
-        $this->assertSame(-10, StockMovement::sum('quantity'));
+        $this->assertEquals(-10, StockMovement::sum('quantity'));
     }
 
     /**
@@ -109,7 +109,7 @@ class InvoiceStockTest extends TestCase
         $invoice->load('items')->releaseStock();
         $invoice->fresh()->load('items')->releaseStock();
 
-        $this->assertSame(90, $product->fresh()->stock_quantity);
+        $this->assertSame(90.0, $product->fresh()->stock_quantity);
         $this->assertSame(1, StockMovement::count());
     }
 
@@ -139,7 +139,7 @@ class InvoiceStockTest extends TestCase
         $invoice = $this->invoice($product, 'sent', 10, ['recurring_invoice_id' => $cycle->id]);
         $invoice->load('items')->releaseStock();
 
-        $this->assertSame(100, $product->fresh()->stock_quantity);
+        $this->assertSame(100.0, $product->fresh()->stock_quantity);
         $this->assertNull($invoice->fresh()->stock_released_at);
     }
 
@@ -153,9 +153,9 @@ class InvoiceStockTest extends TestCase
             'status' => 'cancelled',
         ])->assertSessionHas('success');
 
-        $this->assertSame(100, $product->fresh()->stock_quantity);
+        $this->assertSame(100.0, $product->fresh()->stock_quantity);
         $this->assertNull($invoice->fresh()->stock_released_at);
-        $this->assertSame(0, StockMovement::sum('quantity'));
+        $this->assertEquals(0, StockMovement::sum('quantity'));
     }
 
     /**
@@ -168,7 +168,7 @@ class InvoiceStockTest extends TestCase
 
         $invoice->load('items.product')->restoreStock();
 
-        $this->assertSame(100, $product->fresh()->stock_quantity);
+        $this->assertSame(100.0, $product->fresh()->stock_quantity);
         $this->assertSame(0, StockMovement::count());
     }
 
@@ -188,7 +188,7 @@ class InvoiceStockTest extends TestCase
             $this->assertStringContainsString('Stock insuffisant', implode(' ', $e->validator->errors()->all()));
         }
 
-        $this->assertSame(5, $product->fresh()->stock_quantity);
+        $this->assertSame(5.0, $product->fresh()->stock_quantity);
         $this->assertNull($invoice->fresh()->stock_released_at);
     }
 
@@ -201,7 +201,7 @@ class InvoiceStockTest extends TestCase
 
         $this->post("/{$this->user->code_user}/factures/{$invoice->id}/envoyer");
 
-        $this->assertSame(90, $product->fresh()->stock_quantity);
+        $this->assertSame(90.0, $product->fresh()->stock_quantity);
         $this->assertNotNull($invoice->fresh()->stock_released_at);
     }
 }

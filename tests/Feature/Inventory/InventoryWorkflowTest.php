@@ -86,8 +86,8 @@ class InventoryWorkflowTest extends TestCase
 
         $this->actingAs($this->user)->post($this->url('inventory.complete', $inventory));
 
-        $this->assertSame(7, $this->product->fresh()->stock_quantity);
-        $this->assertSame(5, $this->product->fresh()->defective_stock_quantity);
+        $this->assertSame(7.0, $this->product->fresh()->stock_quantity);
+        $this->assertSame(5.0, $this->product->fresh()->defective_stock_quantity);
         $this->assertSame('completed', $inventory->fresh()->status);
         $this->assertNotNull($inventory->fresh()->completed_at);
     }
@@ -112,7 +112,7 @@ class InventoryWorkflowTest extends TestCase
             ->assertSessionHasErrors('status');
 
         $this->assertSame('draft', $inventory->fresh()->status);
-        $this->assertSame(10, $this->product->fresh()->stock_quantity);
+        $this->assertSame(10.0, $this->product->fresh()->stock_quantity);
     }
 
     public function test_a_cancelled_inventory_cannot_be_applied(): void
@@ -124,7 +124,7 @@ class InventoryWorkflowTest extends TestCase
             ->assertSessionHasErrors('error');
 
         $this->assertSame('cancelled', $inventory->fresh()->status);
-        $this->assertSame(10, $this->product->fresh()->stock_quantity);
+        $this->assertSame(10.0, $this->product->fresh()->stock_quantity);
         $this->assertSame(0, StockMovement::count());
     }
 
@@ -137,7 +137,7 @@ class InventoryWorkflowTest extends TestCase
 
         // Le compteur est fixé en absolu, donc insensible à la répétition ; le registre, lui,
         // porterait deux fois le même écart — exactement la dérive que stock:audit signale.
-        $this->assertSame(7, $this->product->fresh()->stock_quantity);
+        $this->assertSame(7.0, $this->product->fresh()->stock_quantity);
         $this->assertSame(1, StockMovement::where('product_id', $this->product->id)->count());
     }
 
@@ -165,7 +165,7 @@ class InventoryWorkflowTest extends TestCase
         $movements = StockMovement::all();
         $this->assertCount(1, $movements);
         $this->assertSame('return_defective', $movements->first()->type);
-        $this->assertSame(3, $movements->first()->quantity);
+        $this->assertSame(3.0, $movements->first()->quantity);
     }
 
     // ── Saisie ───────────────────────────────────────────────────────────────
@@ -207,10 +207,10 @@ class InventoryWorkflowTest extends TestCase
 
         $inventory->refresh();
         $this->assertSame('in_progress', $inventory->status);
-        $this->assertSame(4, $inventory->items->first()->counted_quantity);
+        $this->assertSame(4.0, $inventory->items->first()->counted_quantity);
         // La quantité attendue reste celle du premier comptage, elle ne suit pas le stock vivant.
-        $this->assertSame(10, $inventory->items->first()->expected_quantity);
-        $this->assertSame(-6, $inventory->items->first()->difference);
+        $this->assertSame(10.0, $inventory->items->first()->expected_quantity);
+        $this->assertSame(-6.0, $inventory->items->first()->difference);
     }
 
     public function test_an_inventory_cannot_change_shop(): void

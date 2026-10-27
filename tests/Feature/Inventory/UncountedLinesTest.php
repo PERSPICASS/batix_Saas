@@ -77,8 +77,8 @@ class UncountedLinesTest extends TestCase
         $this->assertNull($item->counted_quantity);
         $this->assertNull($item->defective_quantity);
         // Et surtout : aucun écart annoncé. C'était -40 auparavant.
-        $this->assertSame(0, $item->difference);
-        $this->assertSame(0, $item->defective_difference);
+        $this->assertSame(0.0, $item->difference);
+        $this->assertSame(0.0, $item->defective_difference);
     }
 
     public function test_an_uncounted_line_leaves_the_stock_alone(): void
@@ -93,9 +93,9 @@ class UncountedLinesTest extends TestCase
 
         $this->complete(Inventory::first());
 
-        $this->assertSame(38, $counted->fresh()->stock_quantity);
+        $this->assertSame(38.0, $counted->fresh()->stock_quantity);
         // Auparavant : 0, tout le stock effacé pour n'avoir pas été regardé.
-        $this->assertSame(25, $skipped->fresh()->stock_quantity);
+        $this->assertSame(25.0, $skipped->fresh()->stock_quantity);
         $this->assertSame(1, StockMovement::count());
     }
 
@@ -107,7 +107,7 @@ class UncountedLinesTest extends TestCase
         $this->store([['product_id' => $product->id, 'counted_quantity' => 0, 'defective_quantity' => 0]]);
         $this->complete(Inventory::first());
 
-        $this->assertSame(0, $product->fresh()->stock_quantity);
+        $this->assertSame(0.0, $product->fresh()->stock_quantity);
     }
 
     public function test_an_uncounted_defective_keeps_the_existing_one(): void
@@ -118,7 +118,7 @@ class UncountedLinesTest extends TestCase
         $this->complete(Inventory::first());
 
         // Ne pas avoir compté le défectueux ne veut pas dire qu'il n'y en a plus.
-        $this->assertSame(3, $product->fresh()->defective_stock_quantity);
+        $this->assertSame(3.0, $product->fresh()->defective_stock_quantity);
         $this->assertSame(0, StockMovement::count());
     }
 

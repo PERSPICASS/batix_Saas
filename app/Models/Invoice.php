@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Unit;
 use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -216,7 +217,7 @@ class Invoice extends Model
             $needed = [];
             foreach ($this->items as $item) {
                 if ($item->product_id) {
-                    $needed[$item->product_id] = ($needed[$item->product_id] ?? 0) + (int) $item->quantity;
+                    $needed[$item->product_id] = Unit::round(($needed[$item->product_id] ?? 0) + $item->quantity);
                 }
             }
 
@@ -275,7 +276,7 @@ class Invoice extends Model
 
                 StockMovementService::recordInvoiceCancellation(
                     $item->product,
-                    (int) $item->quantity,
+                    (float) $item->quantity,
                     $this->shop_id,
                     $this
                 );

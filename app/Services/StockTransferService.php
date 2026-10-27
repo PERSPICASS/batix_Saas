@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Unit;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\StockMovement;
@@ -159,7 +160,7 @@ class StockTransferService
      * est reconnu d'une boutique à l'autre par son SKU, à défaut par son nom et sa marque.
      *
      * @param  Collection<int, Shop>  $shops
-     * @return array<int, array{product: string, from_shop_id: int, from_shop: string, from_product_id: int, from_stock: int, from_min: int, to_shop_id: int, to_shop: string, to_product_id: int, to_stock: int, to_min: int, quantity: int}>
+     * @return array<int, array{product: string, from_shop_id: int, from_shop: string, from_product_id: int, from_stock: float, from_min: float, to_shop_id: int, to_shop: string, to_product_id: int, to_stock: float, to_min: float, quantity: float}>
      */
     public function suggestions(Collection $shops): array
     {
@@ -190,13 +191,13 @@ class StockTransferService
             }
 
             // Ce que chaque donneur peut céder, entamé au fil des propositions.
-            $spare = $group->mapWithKeys(fn ($p) => [$p->id => max(0, $p->stock_quantity - 2 * $p->min_stock_alert)])->all();
+            $spare = $group->mapWithKeys(fn ($p) => [$p->id => max(0, Unit::round($p->stock_quantity - 2 * $p->min_stock_alert))])->all();
 
             $lows = $group->filter(fn ($p) => $p->stock_quantity <= $p->min_stock_alert)
                 ->sortBy(fn ($p) => $p->stock_quantity - $p->min_stock_alert);
 
             foreach ($lows as $low) {
-                $need = 2 * $low->min_stock_alert - $low->stock_quantity - (int) ($inTransit[$low->id] ?? 0);
+                $need = Unit::round(2 * $low->min_stock_alert - $low->stock_quantity - (float) ($inTransit[$low->id] ?? 0));
 
                 $donors = $group->filter(fn ($p) => $p->shop_id !== $low->shop_id && $spare[$p->id] > 0)
                     ->sortByDesc(fn ($p) => $spare[$p->id]);
@@ -206,21 +207,21 @@ class StockTransferService
                         break;
                     }
                     $quantity = min($need, $spare[$donor->id]);
-                    $spare[$donor->id] -= $quantity;
-                    $need -= $quantity;
+                    $spare[$donor->id] = Unit::round($spare[$donor->id] - $quantity);
+                    $need = Unit::round($need - $quantity);
 
                     $suggestions[] = [
                         'product' => $low->name,
                         'from_shop_id' => $donor->shop_id,
                         'from_shop' => $names[$donor->shop_id] ?? '',
                         'from_product_id' => $donor->id,
-                        'from_stock' => (int) $donor->stock_quantity,
-                        'from_min' => (int) $donor->min_stock_alert,
+                        'from_stock' => (float) $donor->stock_quantity,
+                        'from_min' => (float) $donor->min_stock_alert,
                         'to_shop_id' => $low->shop_id,
                         'to_shop' => $names[$low->shop_id] ?? '',
                         'to_product_id' => $low->id,
-                        'to_stock' => (int) $low->stock_quantity,
-                        'to_min' => (int) $low->min_stock_alert,
+                        'to_stock' => (float) $low->stock_quantity,
+                        'to_min' => (float) $low->min_stock_alert,
                         'quantity' => $quantity,
                     ];
                 }
@@ -242,7 +243,7 @@ class StockTransferService
         }
     }
 
-    private function movement(Product $product, int $shopId, int $quantity, StockTransfer $transfer, string $notes): void
+    private function movement(Product $product, int $shopId, float $quantity, StockTransfer $transfer, string $notes): void
     {
         StockMovement::create([
             'shop_id' => $shopId,

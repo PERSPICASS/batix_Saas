@@ -6,6 +6,7 @@ import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import ProductImage from '@/Components/ProductImage';
 import StockMovementTypeBadge from '@/Components/StockMovementTypeBadge';
+import { formatQuantity } from '@/utils/quantity';
 
 interface Props {
     product: {
@@ -126,7 +127,7 @@ export default function ProductShow({ product, pricing, stock, elsewhere, sales3
                         ) : (
                             <>
                                 <Row label={s.counter} strong>
-                                    {count(stock.counter)}{product.unit ? ` ${product.unit}` : ''}
+                                    {formatQuantity(stock.counter, product.unit, locale)}
                                     {stock.low && <span className="ml-2 inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-300"><AlertTriangle className="size-3.5" /> {s.lowStock}</span>}
                                 </Row>
                                 {stock.depots.map((row, i) => <Row key={i} label={row.depot ?? s.unknown}>{count(row.quantity)}</Row>)}

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Depot;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Support\Unit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,14 +15,14 @@ class StockMovementService
      * Decrease stock when a sale item is created (POS sale).
      *
      * @param Product      $product
-     * @param int          $quantity   Positive number of units sold
+     * @param float          $quantity   Positive number of units sold
      * @param int          $shopId
      * @param Model|null   $reference  The Sale model (for polymorphic reference)
      * @param string|null  $notes
      */
     public static function recordSale(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         ?Model $reference = null,
         ?string $notes = null
@@ -49,15 +50,15 @@ class StockMovementService
      * Adjust stock when a sale item quantity is edited (delta correction).
      *
      * @param Product  $product
-     * @param int      $oldQuantity  The original quantity before edit
-     * @param int      $newQuantity  The new quantity after edit
+     * @param float      $oldQuantity  The original quantity before edit
+     * @param float      $newQuantity  The new quantity after edit
      * @param int      $shopId
      * @param Model    $reference    The Sale model
      */
     public static function recordSaleItemEdit(
         Product $product,
-        int $oldQuantity,
-        int $newQuantity,
+        float $oldQuantity,
+        float $newQuantity,
         int $shopId,
         Model $reference
     ): ?StockMovement {
@@ -65,9 +66,9 @@ class StockMovementService
             return null;
         }
 
-        $delta = $newQuantity - $oldQuantity;
+        $delta = Unit::round($newQuantity - $oldQuantity);
 
-        if ($delta === 0) {
+        if ($delta == 0) {
             return null;
         }
 
@@ -94,13 +95,13 @@ class StockMovementService
      * Return stock to shelf when a sale is cancelled.
      *
      * @param Product      $product
-     * @param int          $quantity
+     * @param float          $quantity
      * @param int          $shopId
      * @param Model        $reference  The Sale model
      */
     public static function recordSaleCancellation(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         Model $reference
     ): ?StockMovement {
@@ -127,13 +128,13 @@ class StockMovementService
      * Re-deduct stock when a cancelled sale is restored.
      *
      * @param Product  $product
-     * @param int      $quantity
+     * @param float      $quantity
      * @param int      $shopId
      * @param Model    $reference  The Sale model
      */
     public static function recordSaleRestore(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         Model $reference
     ): ?StockMovement {
@@ -161,7 +162,7 @@ class StockMovementService
      */
     public static function recordReturnCancellation(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         Model $reference
     ): ?StockMovement {
@@ -189,14 +190,14 @@ class StockMovementService
      * Add defective-condition returned item to defective_stock_quantity.
      *
      * @param Product  $product
-     * @param int      $quantity
+     * @param float      $quantity
      * @param string   $condition  'good' or 'defective'
      * @param int      $shopId
      * @param Model    $reference  The ReturnedInventory model
      */
     public static function recordReturnedInventoryApproval(
         Product $product,
-        int $quantity,
+        float $quantity,
         string $condition,
         int $shopId,
         Model $reference
@@ -232,7 +233,7 @@ class StockMovementService
      * Add stock when a purchase order is received.
      *
      * @param Product       $product
-     * @param int           $quantity
+     * @param float           $quantity
      * @param float|null    $unitCost
      * @param int           $shopId
      * @param Model         $reference  The Purchase model
@@ -240,7 +241,7 @@ class StockMovementService
      */
     public static function recordPurchaseReceipt(
         Product $product,
-        int $quantity,
+        float $quantity,
         ?float $unitCost,
         int $shopId,
         Model $reference,
@@ -270,13 +271,13 @@ class StockMovementService
      * Add stock from depot transfer to shop product.
      *
      * @param Product  $product
-     * @param int      $quantity
+     * @param float      $quantity
      * @param int      $shopId
      * @param Model    $reference  The DepotTransfer model
      */
     public static function recordDepotTransfer(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         Model $reference
     ): ?StockMovement {
@@ -309,7 +310,7 @@ class StockMovementService
      */
     public static function recordInvoiceIssue(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         Model $reference
     ): ?StockMovement {
@@ -337,7 +338,7 @@ class StockMovementService
      */
     public static function recordInvoiceCancellation(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         Model $reference
     ): ?StockMovement {
@@ -367,7 +368,7 @@ class StockMovementService
      */
     public static function recordCreditNoteReturn(
         Product $product,
-        int $quantity,
+        float $quantity,
         int $shopId,
         Model $creditNote,
         string $number
@@ -399,12 +400,12 @@ class StockMovementService
      * fait qu'enregistrer. L'appelant reste responsable du `increment`/`decrement` sur la
      * ligne `depot_products`, comme il le faisait déjà — ce qui manquait, c'était la trace.
      *
-     * @param int $signedQuantity  Positif pour une entrée, négatif pour une sortie.
+     * @param float $signedQuantity  Positif pour une entrée, négatif pour une sortie.
      */
     public static function recordDepotMovement(
         Product $product,
         Depot $depot,
-        int $signedQuantity,
+        float $signedQuantity,
         string $type,
         ?Model $reference = null,
         ?string $notes = null
@@ -440,13 +441,13 @@ class StockMovementService
     public static function recordDepotCount(
         Product $product,
         Depot $depot,
-        int $previousQuantity,
-        int $countedQuantity,
+        float $previousQuantity,
+        float $countedQuantity,
         ?string $notes = null
     ): ?StockMovement {
-        $delta = $countedQuantity - $previousQuantity;
+        $delta = Unit::round($countedQuantity - $previousQuantity);
 
-        if ($delta === 0) {
+        if ($delta == 0) {
             return null;
         }
 
@@ -464,7 +465,7 @@ class StockMovementService
      * Manual adjustment (from StockMovementController form submission).
      *
      * @param Product      $product
-     * @param int          $quantity   Can be positive (in) or negative (out)
+     * @param float          $quantity   Can be positive (in) or negative (out)
      * @param string       $type       One of: in, out, transfer, adjustment
      * @param int          $shopId
      * @param string|null  $notes
@@ -474,7 +475,7 @@ class StockMovementService
      */
     public static function recordManualAdjustment(
         Product $product,
-        int $quantity,
+        float $quantity,
         string $type,
         int $shopId,
         ?string $notes = null,
@@ -512,21 +513,21 @@ class StockMovementService
      * Hard-set stock_quantity to a counted value (inventory completion).
      *
      * @param Product       $product
-     * @param int           $countedQty
+     * @param float           $countedQty
      * @param int           $shopId
      * @param Model         $reference   The Inventory model
      * @param float|null    $unitCost
      */
     public static function recordInventoryAdjustment(
         Product $product,
-        int $countedQty,
+        float $countedQty,
         int $shopId,
         Model $reference,
         ?float $unitCost = null
     ): ?StockMovement {
-        $difference = $countedQty - $product->stock_quantity;
+        $difference = Unit::round($countedQty - $product->stock_quantity);
 
-        if ($difference === 0) {
+        if ($difference == 0) {
             return null;
         }
 
@@ -550,25 +551,25 @@ class StockMovementService
      * Adjust both stock_quantity and defective_stock_quantity from inventory count.
      *
      * @param Product       $product
-     * @param int           $countedGoodQty      Good items counted
-     * @param int           $countedDefectiveQty Defective items found
+     * @param float           $countedGoodQty      Good items counted
+     * @param float           $countedDefectiveQty Defective items found
      * @param int           $shopId
      * @param Model         $reference           The Inventory model
      * @param float|null    $unitCost
      */
     public static function recordInventoryAdjustmentWithDefective(
         Product $product,
-        int $countedGoodQty,
-        int $countedDefectiveQty,
+        float $countedGoodQty,
+        float $countedDefectiveQty,
         int $shopId,
         Model $reference,
         ?float $unitCost = null
     ): void {
-        $goodDifference = $countedGoodQty - $product->stock_quantity;
-        $defectiveDifference = $countedDefectiveQty - $product->defective_stock_quantity;
+        $goodDifference = Unit::round($countedGoodQty - $product->stock_quantity);
+        $defectiveDifference = Unit::round($countedDefectiveQty - $product->defective_stock_quantity);
 
         // Adjust good stock
-        if ($goodDifference !== 0) {
+        if ($goodDifference != 0) {
             // Un excédent constaté entre dans la moyenne pondérée, valorisé au dernier prix
             // d'achat — c'est `$unitCost`, que l'inventaire a capturé depuis
             // `products.purchase_price`, ce que ce projet appelle le dernier prix d'achat
@@ -605,7 +606,7 @@ class StockMovementService
         // 3 comptés) écrivait un mouvement de quantité 0. Sans effet sur les totaux, mais le
         // registre est ce que stock:audit réconcilie chaque semaine — il n'a pas à porter la
         // trace d'un ajustement qui n'a pas eu lieu.
-        if ($defectiveDifference !== 0) {
+        if ($defectiveDifference != 0) {
             $product->update(['defective_stock_quantity' => $countedDefectiveQty]);
             self::writeMovement([
                 'shop_id'        => $shopId,

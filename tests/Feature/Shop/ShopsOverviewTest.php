@@ -275,7 +275,7 @@ class ShopsOverviewTest extends TestCase
 
         // The hammer: 2 kept + 2 on credit + 4 invoiced - 1 credited; same revenue and margin.
         $hammer = $report['products'][0];
-        $this->assertSame(7, $hammer['quantity']);
+        $this->assertSame(7.0, $hammer['quantity']);
         $this->assertEquals(6800, $hammer['revenue']);
         $this->assertEquals(2600, $hammer['margin']);
         $this->assertEquals(6800, collect($report['categories'])->sum('revenue'));
@@ -307,7 +307,7 @@ class ShopsOverviewTest extends TestCase
 
         $low = $this->detail($this->cocody)['report']['low_stock'];
 
-        $this->assertSame([['id' => $this->hammer->id, 'name' => $this->hammer->name, 'stock' => 2, 'min' => 5]], $low);
+        $this->assertSame([['id' => $this->hammer->id, 'name' => $this->hammer->name, 'stock' => 2.0, 'min' => 5.0]], $low);
     }
 
     public function test_the_detail_of_another_account_shop_does_not_exist(): void

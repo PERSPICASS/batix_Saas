@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Support\Unit;
 use App\Models\Depot;
 use App\Models\DepotProduct;
 use App\Models\Product;
@@ -57,7 +58,7 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $barcode       = $this->clean($this->get($data, ['code_barres', 'barcode', 'ean']));
         $name          = $this->clean($this->get($data, ['nom', 'name', 'produit', 'product']));
         $brand         = $this->clean($this->get($data, ['marque', 'brand', 'fabricant']));
-        $quantity      = (int) $this->get($data, ['quantite', 'quantity', 'qte', 'qty', 'stock'], 0);
+        $quantity      = $this->quantity($this->get($data, ['quantite', 'quantity', 'qte', 'qty', 'stock'], 0));
         $minAlert      = $this->get($data, ['stock_minimum', 'stock_min', 'min_stock', 'seuil', 'alerte'], null);
         $purchasePrice = $this->get($data, ['prix_achat', 'purchase_price', 'prix_d_achat', 'cout', 'cost'], null);
 
@@ -147,7 +148,7 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             }
             $updates = [];
             if ($minAlert !== null) {
-                $updates['min_stock_alert'] = (int) $minAlert;
+                $updates['min_stock_alert'] = $this->quantity($minAlert);
             }
             if ($purchasePrice !== null) {
                 $updates['purchase_price'] = (float) $purchasePrice;
@@ -161,7 +162,7 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 'depot_id'        => $this->depot->id,
                 'product_id'      => $product->id,
                 'quantity'        => max(0, $quantity),
-                'min_stock_alert' => $minAlert !== null ? (int) $minAlert : 0,
+                'min_stock_alert' => $minAlert !== null ? $this->quantity($minAlert) : 0,
                 'purchase_price'  => $purchasePrice !== null ? (float) $purchasePrice : 0,
             ]);
             $this->importedCount['created']++;
@@ -196,5 +197,11 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    /** « 2,5 » comme « 2.5 » : un tableur français écrit la virgule. */
+    private function quantity(mixed $value): float
+    {
+        return Unit::round(str_replace([' ', ','], ['', '.'], (string) $value));
     }
 }
