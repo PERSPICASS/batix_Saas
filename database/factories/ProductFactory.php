@@ -31,7 +31,8 @@ class ProductFactory extends Factory
             'description' => fake()->optional()->paragraph(),
             'sku' => strtoupper(Str::random(3)) . '-' . fake()->unique()->numberBetween(1000, 9999),
             'barcode' => fake()->optional()->ean13(),
-            'unit' => fake()->randomElement(['piece', 'kg', 'liter', 'meter', 'box']),
+            // Fixe : l'unité décide si une quantité décimale passe, et le ticket l'affiche.
+            'unit' => 'piece',
             'purchase_price' => $purchasePrice,
             'selling_price' => $sellingPrice,
             'tax_rate' => fake()->randomElement([0, 5.5, 10, 20]),

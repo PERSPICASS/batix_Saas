@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Rules\QuantityForProduct;
 use App\Rules\AccessibleCategory;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -30,8 +31,8 @@ class StoreProductApiRequest extends FormRequest
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'min_stock_alert' => 'nullable|integer|min:0',
+            'stock_quantity' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($this->input('unit'))],
+            'min_stock_alert' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($this->input('unit'))],
             'unit' => 'nullable|string|max:50',
             'track_stock' => 'boolean',
             'is_active' => 'boolean',

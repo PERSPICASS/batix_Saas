@@ -92,11 +92,11 @@ class ShopProductCopyTest extends TestCase
 
         $this->assertSame('Ciment 50kg', $created->name);
         $this->assertSame('Lafarge', $created->brand);
-        $this->assertSame('sac', $created->unit);
+        $this->assertSame('bag', $created->unit, 'Les unités saisies en clair sont ramenées à leur code.');
         $this->assertEquals(4000, $created->purchase_price);
         $this->assertEquals(5000, $created->selling_price);
         $this->assertEquals(18, $created->tax_rate);
-        $this->assertSame(10, $created->min_stock_alert);
+        $this->assertSame(10.0, $created->min_stock_alert);
     }
 
     /**
@@ -109,7 +109,7 @@ class ShopProductCopyTest extends TestCase
 
         $this->copy([$source->id])->assertSessionHas('success');
 
-        $this->assertSame(120, $source->fresh()->stock_quantity);
+        $this->assertSame(120.0, $source->fresh()->stock_quantity);
 
         // Aucune marchandise n'a bougé : le registre des stocks reste vide.
         $this->assertSame(0, StockMovement::count());
@@ -123,7 +123,7 @@ class ShopProductCopyTest extends TestCase
 
         $created = Product::where('shop_id', $this->target->id)->where('sku', 'CIM-50')->firstOrFail();
 
-        $this->assertSame(0, $created->stock_quantity);
+        $this->assertSame(0.0, $created->stock_quantity);
     }
 
     /**
@@ -159,7 +159,7 @@ class ShopProductCopyTest extends TestCase
 
         $existing->refresh();
         $this->assertEquals(9999, $existing->selling_price);
-        $this->assertSame(42, $existing->stock_quantity);
+        $this->assertSame(42.0, $existing->stock_quantity);
         $this->assertSame(1, Product::where('shop_id', $this->target->id)->count());
     }
 

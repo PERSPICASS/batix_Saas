@@ -84,7 +84,7 @@ class InventoryAverageCostTest extends TestCase
         $this->countAndApply($product, counted: 120);
 
         $product->refresh();
-        $this->assertSame(120, $product->stock_quantity);
+        $this->assertSame(120.0, $product->stock_quantity);
         $this->assertSame('1050.00', $product->average_cost);
     }
 
@@ -96,7 +96,7 @@ class InventoryAverageCostTest extends TestCase
         $this->countAndApply($product, counted: 80);
 
         $product->refresh();
-        $this->assertSame(80, $product->stock_quantity);
+        $this->assertSame(80.0, $product->stock_quantity);
         $this->assertSame('1000.00', $product->average_cost);
     }
 
@@ -131,7 +131,7 @@ class InventoryAverageCostTest extends TestCase
         $this->countAndApply($product, counted: 12);
 
         $product->refresh();
-        $this->assertSame(12, $product->stock_quantity);
+        $this->assertSame(12.0, $product->stock_quantity);
         $this->assertSame('750.00', $product->average_cost);
     }
 
@@ -159,7 +159,7 @@ class InventoryAverageCostTest extends TestCase
         ]));
 
         $this->assertSame('1000.00', $skipped->fresh()->average_cost);
-        $this->assertSame(100, $skipped->fresh()->stock_quantity);
+        $this->assertSame(100.0, $skipped->fresh()->stock_quantity);
     }
 
     /** Le stock valorisé suit la nouvelle moyenne, sans quoi le correctif n'aurait pas d'effet. */

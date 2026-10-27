@@ -49,8 +49,8 @@ class DepotStockImportTest extends TestCase
         ]);
 
         $this->assertSame(2, Product::where('name', 'Perceuse 500W')->count());
-        $this->assertSame(5, $this->quantityFor('Perceuse 500W', 'Bosch'));
-        $this->assertSame(3, $this->quantityFor('Perceuse 500W', 'Makita'));
+        $this->assertSame(5.0, $this->quantityFor('Perceuse 500W', 'Bosch'));
+        $this->assertSame(3.0, $this->quantityFor('Perceuse 500W', 'Makita'));
     }
 
     public function test_the_same_branded_product_across_two_rows_is_matched_not_duplicated(): void
@@ -61,7 +61,7 @@ class DepotStockImportTest extends TestCase
         ]);
 
         $this->assertSame(1, Product::where('name', 'Perceuse 500W')->count());
-        $this->assertSame(9, $this->quantityFor('Perceuse 500W', 'Bosch'), 'quantities accumulate');
+        $this->assertSame(9.0, $this->quantityFor('Perceuse 500W', 'Bosch'), 'quantities accumulate');
     }
 
     /**
@@ -75,8 +75,8 @@ class DepotStockImportTest extends TestCase
         ]);
 
         $this->assertSame(2, Product::where('name', 'Marteau')->count());
-        $this->assertSame(2, $this->quantityFor('Marteau', 'Stanley'));
-        $this->assertSame(7, $this->quantityFor('Marteau', null));
+        $this->assertSame(2.0, $this->quantityFor('Marteau', 'Stanley'));
+        $this->assertSame(7.0, $this->quantityFor('Marteau', null));
     }
 
     public function test_it_matches_an_existing_product_by_brand_rather_than_creating_one(): void
@@ -92,7 +92,7 @@ class DepotStockImportTest extends TestCase
         ]);
 
         $this->assertSame(0, $import->getImportedCount()['products_created']);
-        $this->assertSame(6, DepotProduct::where('product_id', $existing->id)->value('quantity'));
+        $this->assertSame(6.0, DepotProduct::where('product_id', $existing->id)->value('quantity'));
     }
 
     public function test_sku_still_wins_over_name_and_brand(): void
@@ -109,7 +109,7 @@ class DepotStockImportTest extends TestCase
         ]);
 
         $this->assertSame(0, $import->getImportedCount()['products_created']);
-        $this->assertSame(2, DepotProduct::where('product_id', $existing->id)->value('quantity'));
+        $this->assertSame(2.0, DepotProduct::where('product_id', $existing->id)->value('quantity'));
     }
 
     /**
@@ -124,8 +124,8 @@ class DepotStockImportTest extends TestCase
             ['nom' => 'Pince', 'marque' => 'Facom', 'quantite' => 6],
         ]);
 
-        $this->assertSame(4, $this->quantityFor('Tournevis', 'Facom'));
-        $this->assertSame(6, $this->quantityFor('Pince', 'Facom'));
+        $this->assertSame(4.0, $this->quantityFor('Tournevis', 'Facom'));
+        $this->assertSame(6.0, $this->quantityFor('Pince', 'Facom'));
         $this->assertSame(1, $import->getImportedCount()['errors']);
         $this->assertCount(1, $import->getErrors());
     }
@@ -166,14 +166,14 @@ class DepotStockImportTest extends TestCase
                 ['nom' => 'Perceuse 500W', 'marque' => 'Makita', 'quantite' => 3],
             ]);
 
-            $this->assertSame(5, $this->quantityFor('Perceuse 500W', 'Bosch'), "Bosch stock must not absorb Makita's");
+            $this->assertSame(5.0, $this->quantityFor('Perceuse 500W', 'Bosch'), "Bosch stock must not absorb Makita's");
             $this->assertSame(1, $import->getImportedCount()['errors'], 'the Makita row must be reported, not merged');
         } finally {
             DB::statement('DROP INDEX products_shop_slug_unique');
         }
     }
 
-    private function quantityFor(string $name, ?string $brand): ?int
+    private function quantityFor(string $name, ?string $brand): ?float
     {
         $query = Product::where('name', $name);
         $brand === null ? $query->whereNull('brand') : $query->where('brand', $brand);
@@ -184,8 +184,11 @@ class DepotStockImportTest extends TestCase
             return null;
         }
 
-        return DepotProduct::where('depot_id', $this->depot->id)
+        // value() lit la colonne brute, sans le cast : un entier sous SQLite, « 5.000 » sous Postgres.
+        $quantity = DepotProduct::where('depot_id', $this->depot->id)
             ->where('product_id', $product->id)
             ->value('quantity');
+
+        return $quantity === null ? null : (float) $quantity;
     }
 }

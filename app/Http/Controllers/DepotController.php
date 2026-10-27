@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Exports\DepotStockTemplateExport;
 use App\Imports\DepotStockImport;
 use App\Models\Depot;
@@ -269,8 +270,8 @@ class DepotController extends Controller
         $validated = $request->validate([
             'name'            => 'required|string|max:255',
             'sku'             => 'nullable|string|max:100',
-            'quantity'        => 'required|integer|min:1',
-            'min_stock_alert' => 'nullable|integer|min:0',
+            'quantity'        => ['required', 'numeric', 'gt:0', new QuantityForProduct],
+            'min_stock_alert' => ['nullable', 'numeric', 'min:0', new QuantityForProduct],
             'purchase_price'  => 'nullable|numeric|min:0',
             'image'           => 'nullable|image|max:2048',
         ]);
@@ -330,7 +331,7 @@ class DepotController extends Controller
         StockMovementService::recordDepotMovement(
             $product,
             $depot,
-            (int) $validated['quantity'],
+            (float) $validated['quantity'],
             'in',
             null,
             'Entrée en dépôt'
@@ -361,8 +362,8 @@ class DepotController extends Controller
         }
 
         $validated = $request->validate([
-            'quantity'        => 'required|integer|min:0',
-            'min_stock_alert' => 'nullable|integer|min:0',
+            'quantity'        => ['required', 'numeric', 'min:0', new QuantityForProduct],
+            'min_stock_alert' => ['nullable', 'numeric', 'min:0', new QuantityForProduct],
             'purchase_price'  => 'nullable|numeric|min:0',
             'name'            => 'nullable|string|max:255',
             'sku'             => 'nullable|string|max:100',
@@ -371,7 +372,7 @@ class DepotController extends Controller
 
         // La quantité est REMPLACÉE, pas corrigée d'un delta : un écart y disparaissait
         // sans laisser de trace. On note l'écart avant de l'appliquer.
-        $previousQuantity = (int) $depotProduct->quantity;
+        $previousQuantity = (float) $depotProduct->quantity;
 
         // Mettre à jour les champs DepotProduct
         $depotProduct->update([
@@ -388,7 +389,7 @@ class DepotController extends Controller
                 $product,
                 $depot,
                 $previousQuantity,
-                (int) $validated['quantity']
+                (float) $validated['quantity']
             );
 
             $productUpdates = [];
@@ -448,7 +449,7 @@ class DepotController extends Controller
             'notes'                => 'nullable|string',
             'items'                => 'required|array|min:1',
             'items.*.product_id'   => 'required|exists:products,id',
-            'items.*.quantity'     => 'required|integer|min:1',
+            'items.*.quantity'     => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.selling_price' => 'nullable|numeric|min:0',
         ]);
 
@@ -573,7 +574,7 @@ class DepotController extends Controller
             'notes'              => 'nullable|string',
             'items'              => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity'   => 'required|integer|min:1',
+            'items.*.quantity'   => ['required', 'numeric', 'gt:0', new QuantityForProduct],
         ]);
 
         $targetDepot = Depot::findOrFail($validated['target_depot_id']);
@@ -633,7 +634,7 @@ class DepotController extends Controller
                 StockMovementService::recordDepotMovement(
                     $srcProduct->product,
                     $targetDepot,
-                    (int) $item['quantity'],
+                    (float) $item['quantity'],
                     'transfer',
                     null,
                     "Transfert depuis « {$depot->name} »"

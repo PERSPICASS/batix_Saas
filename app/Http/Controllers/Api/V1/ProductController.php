@@ -15,6 +15,7 @@ use App\Services\StockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
+use App\Support\Unit;
 
 class ProductController extends Controller
 {
@@ -72,17 +73,17 @@ class ProductController extends Controller
         $validated = $request->validated();
 
         $oldStock = $product->stock_quantity;
-        $newStock = (int) ($validated['stock_quantity'] ?? $oldStock);
+        $newStock = Unit::round($validated['stock_quantity'] ?? $oldStock);
 
         $updateData = collect($validated)->except(['stock_quantity'])->toArray();
 
         DB::transaction(function () use ($product, $updateData, $oldStock, $newStock) {
             $product->update($updateData);
 
-            if ($newStock !== $oldStock) {
+            if ($newStock != $oldStock) {
                 StockMovementService::recordManualAdjustment(
                     $product,
-                    $newStock - $oldStock,
+                    Unit::round($newStock - $oldStock),
                     'adjustment',
                     $product->shop_id,
                     "Correction manuelle via API (ancienne valeur: {$oldStock}, nouvelle: {$newStock})"

@@ -81,7 +81,7 @@ class StockValuationTest extends TestCase
         $product->refresh();
 
         $this->assertSame('4500.00', (string) $product->average_cost);
-        $this->assertSame(200, $product->stock_quantity);
+        $this->assertSame(200.0, $product->stock_quantity);
         $this->assertSame(900000.0, $product->stockValue());
     }
 
@@ -138,7 +138,7 @@ class StockValuationTest extends TestCase
         $product->refresh();
 
         $this->assertSame('4000.00', (string) $product->average_cost);
-        $this->assertSame(70, $product->stock_quantity);
+        $this->assertSame(70.0, $product->stock_quantity);
         $this->assertSame(280000.0, $product->stockValue());
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,6 +21,7 @@ class QuoteItem extends Model
     ];
 
     protected $casts = [
+        'quantity' => Quantity::class,
         'unit_price' => 'decimal:2',
         'line_total' => 'decimal:2',
         'tax_rate' => 'decimal:2',

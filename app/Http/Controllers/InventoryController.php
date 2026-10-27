@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\Inventory;
 use App\Models\InventoryItem;
 use App\Models\Product;
@@ -91,8 +92,8 @@ class InventoryController extends Controller
                 'distinct',
                 Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
             ],
-            'items.*.counted_quantity' => 'nullable|integer|min:0',
-            'items.*.defective_quantity' => 'nullable|integer|min:0',
+            'items.*.counted_quantity' => ['nullable', 'numeric', 'min:0', new QuantityForProduct],
+            'items.*.defective_quantity' => ['nullable', 'numeric', 'min:0', new QuantityForProduct],
         ]);
 
         DB::transaction(function () use ($validated, $request) {
@@ -207,8 +208,8 @@ class InventoryController extends Controller
                 'distinct',
                 Rule::exists('products', 'id')->where('shop_id', $request->input('shop_id')),
             ],
-            'items.*.counted_quantity' => 'nullable|integer|min:0',
-            'items.*.defective_quantity' => 'nullable|integer|min:0',
+            'items.*.counted_quantity' => ['nullable', 'numeric', 'min:0', new QuantityForProduct],
+            'items.*.defective_quantity' => ['nullable', 'numeric', 'min:0', new QuantityForProduct],
         ]);
 
         DB::transaction(function () use ($validated, $inventory) {

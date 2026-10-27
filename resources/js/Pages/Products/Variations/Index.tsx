@@ -379,7 +379,7 @@ export default function VariationsIndex({ product, variations }: Props) {
                                     Stock initial
                                 </label>
                                 <input
-                                    type="number"
+                                    type="number" step="0.001"
                                     value={addForm.data.stock_quantity}
                                     onChange={(e) => addForm.setData('stock_quantity', e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
@@ -467,7 +467,7 @@ export default function VariationsIndex({ product, variations }: Props) {
                                     Stock
                                 </label>
                                 <input
-                                    type="number"
+                                    type="number" step="0.001"
                                     value={editForm.data.stock_quantity}
                                     onChange={(e) => editForm.setData('stock_quantity', e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"

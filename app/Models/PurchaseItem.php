@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\Unit;
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -25,8 +27,8 @@ class PurchaseItem extends Model
     ];
 
     protected $casts = [
-        'quantity_ordered' => 'integer',
-        'quantity_received' => 'integer',
+        'quantity_ordered' => Quantity::class,
+        'quantity_received' => Quantity::class,
         'unit_price' => 'decimal:2',
         'tax_rate' => 'decimal:2',
         'tax_amount' => 'decimal:2',
@@ -94,8 +96,8 @@ class PurchaseItem extends Model
     /**
      * Get remaining quantity to receive
      */
-    public function getRemainingQuantityAttribute(): int
+    public function getRemainingQuantityAttribute(): float
     {
-        return $this->quantity_ordered - $this->quantity_received;
+        return Unit::round($this->quantity_ordered - $this->quantity_received);
     }
 }

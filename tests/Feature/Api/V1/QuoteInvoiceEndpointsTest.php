@@ -254,7 +254,7 @@ class QuoteInvoiceEndpointsTest extends TestCase
         $invoice = Invoice::find($response->json('data.id'));
         $this->assertSame('draft', $invoice->status);
         $this->assertNull($invoice->stock_released_at, 'Un brouillon ne doit pas sortir la marchandise.');
-        $this->assertSame(50, $product->fresh()->stock_quantity, 'Le stock ne doit pas bouger sur un brouillon.');
+        $this->assertSame(50.0, $product->fresh()->stock_quantity, 'Le stock ne doit pas bouger sur un brouillon.');
     }
 
     public function test_invoice_line_without_tax_rate_falls_back_to_the_shop_rate(): void
@@ -446,7 +446,7 @@ class QuoteInvoiceEndpointsTest extends TestCase
 
         // La quantité d'origine vient de quotePayload() : 2. Le refus doit avoir laissé
         // le devis intact, pas seulement renvoyé le bon code HTTP.
-        $this->assertSame(2, Quote::find($id)->items()->first()->quantity, 'Le devis envoyé ne doit pas avoir bougé.');
+        $this->assertSame(2.0, Quote::find($id)->items()->first()->quantity, 'Le devis envoyé ne doit pas avoir bougé.');
     }
 
     public function test_a_quote_from_another_shop_cannot_be_modified(): void
@@ -500,7 +500,7 @@ class QuoteInvoiceEndpointsTest extends TestCase
 
         // Le brouillon modifié ne doit toujours pas avoir sorti la marchandise.
         $this->assertNull(Invoice::find($id)->stock_released_at);
-        $this->assertSame(50, $product->fresh()->stock_quantity);
+        $this->assertSame(50.0, $product->fresh()->stock_quantity);
 
         Invoice::find($id)->update(['status' => 'sent']);
 

@@ -279,7 +279,8 @@ export default function Create({ shops, customers, products }: Props) {
                                                 <label className="text-xs text-slate-500 dark:text-slate-400">{t.preorders.form.quantity}</label>
                                                 <input
                                                     type="number"
-                                                    min="1"
+                                                    min="0.001"
+                                                    step="0.001"
                                                     value={item.quantity_ordered}
                                                     onChange={(e) => updateItem(index, 'quantity_ordered', e.target.value)}
                                                     onFocus={(e) => e.target.select()}

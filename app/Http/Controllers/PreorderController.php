@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\Customer;
 use App\Models\Preorder;
 use App\Models\Product;
@@ -93,7 +94,7 @@ class PreorderController extends Controller
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity_ordered' => 'required|integer|min:1',
+            'items.*.quantity_ordered' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.expected_delivery_date' => 'required|date|after:today',
             'items.*.deposit_amount' => 'nullable|numeric|min:0',

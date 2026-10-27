@@ -80,7 +80,7 @@ class DepotValuationTest extends TestCase
         $this->store($this->depot(), $product, 40);
 
         // 50 unités détenues à 1 000, et non les 10 du comptoir seules.
-        $this->assertSame(50, $product->totalStock());
+        $this->assertSame(50.0, $product->totalStock());
         $this->assertSame(50000.0, $product->stockValue());
     }
 
@@ -119,7 +119,7 @@ class DepotValuationTest extends TestCase
         $this->store($this->depot(), $product, 7);
         $this->store($this->depot(), $product, 10);
 
-        $this->assertSame(20, $product->totalStock());
+        $this->assertSame(20.0, $product->totalStock());
         $this->assertSame(2000.0, $product->stockValue());
     }
 
@@ -164,7 +164,7 @@ class DepotValuationTest extends TestCase
             ->assertOk();
 
         $stats = $response->viewData('page')['props']['stats'];
-        $this->assertSame(50, $stats['stock_units']);
+        $this->assertSame(50.0, $stats['stock_units']);
         $this->assertSame(50000.0, $stats['stock_value']);
     }
 

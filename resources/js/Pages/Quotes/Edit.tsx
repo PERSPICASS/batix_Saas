@@ -238,9 +238,10 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
 
                                     <input
                                         type="number"
-                                        min="1"
+                                        min="0.001"
+                                        step="0.001"
                                         value={item.quantity}
-                                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
+                                        onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))}
                                         className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     />
 

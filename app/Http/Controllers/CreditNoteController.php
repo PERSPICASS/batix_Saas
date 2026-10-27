@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Services\ActivityLogger;
@@ -114,7 +115,7 @@ class CreditNoteController extends Controller
             'restock' => 'boolean',
             'items' => 'required|array|min:1',
             'items.*.invoice_item_id' => 'required|integer',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
         ]);
 
         // Les lignes de la facture, indexées : c'est la facture qui fait foi sur le prix

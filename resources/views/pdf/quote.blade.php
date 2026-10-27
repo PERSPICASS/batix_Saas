@@ -58,7 +58,7 @@
                             <div class="muted">{{ $item->description }}</div>
                         @endif
                     </td>
-                    <td class="right">{{ $item->quantity }}</td>
+                    <td class="right">{{ \App\Support\Unit::format($item->quantity, $item->product?->unit) }}</td>
                     @if ($showUnitPrices)
                         <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
                     @endif

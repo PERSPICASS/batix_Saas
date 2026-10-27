@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\Quote;
 use App\Models\Customer;
 use App\Models\Product;
@@ -103,7 +104,7 @@ class QuoteController extends Controller
                 \Illuminate\Validation\Rule::exists('product_articles', 'id')->where('shop_id', $shop->id),
             ],
             'items.*.article_name' => 'nullable|string',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
             'terms' => 'nullable|string',
@@ -182,7 +183,7 @@ class QuoteController extends Controller
                 'required',
                 \Illuminate\Validation\Rule::exists('products', 'id')->where('shop_id', $quote->shop_id),
             ],
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
             'terms' => 'nullable|string',

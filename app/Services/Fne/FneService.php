@@ -2,6 +2,7 @@
 
 namespace App\Services\Fne;
 
+use App\Support\Unit;
 use App\Models\CreditNote;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -182,12 +183,12 @@ class FneService
         $zeroCode = in_array($shop->fne_zero_rate_code, self::ZERO_RATE_CODES, true) ? $shop->fne_zero_rate_code : 'TVAD';
 
         $items = $invoice->items->map(function ($item) use ($zeroCode) {
-            $gross = (float) $item->unit_price * (int) $item->quantity;
+            $gross = (float) $item->unit_price * (float) $item->quantity;
 
             $line = [
                 'taxes' => [$this->taxCode((float) $item->tax_rate, $zeroCode)],
                 'description' => $item->product_name ?: ($item->description ?: 'Article'),
-                'quantity' => (int) $item->quantity,
+                'quantity' => $this->quantity($item->quantity),
                 // Prix unitaire HT : c'est ce que stocke InvoiceItem, la taxe étant
                 // calculée à part dans son hook saving.
                 'amount' => (float) $item->unit_price,
@@ -200,14 +201,14 @@ class FneService
             }
 
             if ($unit = $item->product?->unit) {
-                $line['measurementUnit'] = $unit;
+                $line['measurementUnit'] = Unit::label($unit);
             }
 
             return $line;
         })->values()->all();
 
         // Même base que Invoice::calculateTotals() : le HT après remises de ligne.
-        $base = (float) $invoice->items->sum(fn ($item) => (float) $item->unit_price * (int) $item->quantity - (float) $item->discount_amount);
+        $base = (float) $invoice->items->sum(fn ($item) => (float) $item->unit_price * (float) $item->quantity - (float) $item->discount_amount);
         $globalDiscount = GlobalDiscount::effective($base, (float) $invoice->discount_amount);
 
         $payload = [
@@ -235,7 +236,7 @@ class FneService
     }
 
     /**
-     * @return array{items: array<int, array{id: string, quantity: int}>}
+     * @return array{items: array<int, array{id: string, quantity: int|float}>}
      *
      * @throws FneDataException
      */
@@ -253,7 +254,7 @@ class FneService
                 throw new FneDataException("La ligne « {$line->product_name} » n'a pas d'identifiant FNE : la facture d'origine doit être certifiée ligne à ligne.");
             }
 
-            $items[] = ['id' => $fneItemId, 'quantity' => (int) $line->quantity];
+            $items[] = ['id' => $fneItemId, 'quantity' => $this->quantity($line->quantity)];
         }
 
         return ['items' => $items];
@@ -393,5 +394,16 @@ class FneService
             filled($message) => "FNE : {$message}",
             default => "La FNE a répondu HTTP {$status}.",
         };
+    }
+
+    /**
+     * Un entier reste un entier dans le JSON (10, pas 10.0) : la FNE n'a jamais reçu que
+     * ça, et rien ne dit encore qu'elle accepte une quantité décimale.
+     */
+    private function quantity(float|int|string $quantity): int|float
+    {
+        $value = Unit::round($quantity);
+
+        return $value == floor($value) ? (int) $value : $value;
     }
 }

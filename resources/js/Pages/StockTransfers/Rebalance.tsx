@@ -156,7 +156,7 @@ export default function Rebalance({ routes, route: current, suggestions, filters
                                                 <td className="whitespace-nowrap py-2 pr-3 text-xs text-slate-500 dark:text-slate-400">{s.suggestions.stockOf(sg.from_stock, sg.from_min)}</td>
                                                 <td className="whitespace-nowrap py-2 pr-3 text-xs text-rose-500">{s.suggestions.stockOf(sg.to_stock, sg.to_min)}</td>
                                                 <td className="py-2 text-right">
-                                                    <input type="number" min={1} max={sg.from_stock} value={picked[sg.to_product_id] ?? sg.quantity} disabled={!on}
+                                                    <input type="number" min={0.001} step={0.001} max={sg.from_stock} value={picked[sg.to_product_id] ?? sg.quantity} disabled={!on}
                                                         onChange={(e) => setPicked((c) => ({ ...c, [sg.to_product_id]: Math.max(1, Math.min(sg.from_stock, Number(e.target.value) || 1)) }))}
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm text-slate-900 disabled:opacity-40 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
                                                 </td>

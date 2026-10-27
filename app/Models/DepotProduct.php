@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,8 +20,8 @@ class DepotProduct extends Model
     ];
 
     protected $casts = [
-        'quantity'       => 'integer',
-        'min_stock_alert' => 'integer',
+        'quantity'       => Quantity::class,
+        'min_stock_alert' => Quantity::class,
         'purchase_price' => 'decimal:2',
     ];
 

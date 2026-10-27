@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use App\Support\DocumentNumber;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +26,7 @@ class DepotTransfer extends Model
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'quantity' => Quantity::class,
         'transferred_at' => 'datetime',
     ];
 

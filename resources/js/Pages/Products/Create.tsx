@@ -4,6 +4,7 @@ import { FormEventHandler, useState, useMemo } from 'react';
 import { RefreshCw, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
+import { UNIT_CODES } from '@/utils/quantity';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
 
@@ -254,15 +255,13 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                             onChange={(e) => setData('unit', e.target.value)}
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         >
-                            <option value="piece">Pièce</option>
-                            <option value="kg">Kilogramme</option>
-                            <option value="g">Gramme</option>
-                            <option value="l">Litre</option>
-                            <option value="ml">Millilitre</option>
-                            <option value="m">Mètre</option>
-                            <option value="m2">Mètre carré</option>
-                            <option value="pack">Pack</option>
+                            {UNIT_CODES.map((code) => (
+                                <option key={code} value={code}>
+                                    {t.products.form.units[code]}
+                                </option>
+                            ))}
                         </select>
+                        <span className="block text-xs text-slate-500 dark:text-slate-400">{t.products.form.unitHint}</span>
                         <InputError message={errors.unit} />
                     </label>
 
@@ -341,7 +340,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.stock}</span>
                         <input
-                            type="number"
+                            type="number" step="0.001"
                             value={data.stock_quantity}
                             onChange={(e) => setData('stock_quantity', e.target.value)}
                             onFocus={(e) => e.target.select()}
@@ -354,7 +353,7 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
                     <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.minStockAlert}</span>
                         <input
-                            type="number"
+                            type="number" step="0.001"
                             value={data.min_stock_alert}
                             onChange={(e) => setData('min_stock_alert', e.target.value)}
                             onFocus={(e) => e.target.select()}

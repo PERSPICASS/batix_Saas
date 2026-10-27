@@ -89,10 +89,10 @@ class StockAuditTest extends TestCase
         ]);
 
         $this->artisan('stock:audit')->assertSuccessful();
-        $this->assertSame(42, $product->fresh()->stock_quantity);
+        $this->assertSame(42.0, $product->fresh()->stock_quantity);
 
         $this->artisan('stock:audit', ['--baseline' => true])->assertSuccessful();
-        $this->assertSame(42, $product->fresh()->stock_quantity);
+        $this->assertSame(42.0, $product->fresh()->stock_quantity);
     }
 
     /**
@@ -111,7 +111,7 @@ class StockAuditTest extends TestCase
 
         $this->artisan('stock:audit', ['--baseline' => true])->assertSuccessful();
 
-        $this->assertSame(42, (int) StockMovement::where('product_id', $product->id)->sum('quantity'));
+        $this->assertEquals(42, (int) StockMovement::where('product_id', $product->id)->sum('quantity'));
 
         // Et l'audit suivant ne signale plus rien.
         $this->artisan('stock:audit')
@@ -198,7 +198,7 @@ class StockAuditTest extends TestCase
 
         $this->artisan('stock:audit', ['--baseline' => true])->assertSuccessful();
 
-        $this->assertSame(60, (int) StockMovement::inDepot($depot->id)->sum('quantity'));
+        $this->assertEquals(60, (int) StockMovement::inDepot($depot->id)->sum('quantity'));
 
         $this->artisan('stock:audit')
             ->expectsOutputToContain('Aucun écart')

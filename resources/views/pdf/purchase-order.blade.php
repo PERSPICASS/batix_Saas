@@ -73,7 +73,7 @@
                             <div class="muted">{{ $item->product_sku }}</div>
                         @endif
                     </td>
-                    <td class="right">{{ $item->quantity_ordered }}</td>
+                    <td class="right">{{ \App\Support\Unit::format($item->quantity_ordered, $item->product?->unit) }}</td>
                     @if ($showUnitPrices)
                         <td class="right">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
                     @endif

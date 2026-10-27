@@ -129,7 +129,7 @@ class SupplierController extends Controller
             'sku' => $product->sku,
             'image' => $product->image,
             'price' => (float) $product->selling_price,
-            'stock' => (int) $product->stock_quantity,
+            'stock' => (float) $product->stock_quantity,
         ]));
 
         return Inertia::render('Suppliers/Show', [

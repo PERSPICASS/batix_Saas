@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Supplier;
@@ -149,7 +150,7 @@ class PurchaseController extends Controller
                 'required',
                 Rule::exists('products', 'id')->where('shop_id', $activeShopId),
             ],
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
         ]);
@@ -335,7 +336,7 @@ class PurchaseController extends Controller
                 'required',
                 Rule::exists('products', 'id')->where('shop_id', $purchase->shop_id),
             ],
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
         ]);
@@ -429,7 +430,7 @@ class PurchaseController extends Controller
                 'required',
                 Rule::exists('purchase_items', 'id')->where('purchase_id', $purchase->id),
             ],
-            'items.*.quantity' => 'required|integer|min:0',
+            'items.*.quantity' => ['required', 'numeric', 'min:0', new QuantityForProduct],
         ]);
 
         DB::beginTransaction();

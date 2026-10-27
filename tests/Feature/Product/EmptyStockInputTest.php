@@ -41,7 +41,7 @@ class EmptyStockInputTest extends TestCase
             'track_stock' => true,
         ])->assertSessionHasNoErrors();
 
-        $this->assertSame(0, Product::where('name', 'Brouette')->firstOrFail()->stock_quantity);
+        $this->assertSame(0.0, Product::where('name', 'Brouette')->firstOrFail()->stock_quantity);
     }
 
     public function test_an_empty_stock_on_edit_keeps_the_current_stock(): void
@@ -57,6 +57,6 @@ class EmptyStockInputTest extends TestCase
             'track_stock' => true,
         ])->assertSessionHasNoErrors();
 
-        $this->assertSame(12, $product->fresh()->stock_quantity);
+        $this->assertSame(12.0, $product->fresh()->stock_quantity);
     }
 }

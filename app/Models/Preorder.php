@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,7 +26,7 @@ class Preorder extends Model
     ];
 
     protected $casts = [
-        'quantity_ordered' => 'integer',
+        'quantity_ordered' => Quantity::class,
         'unit_price' => 'decimal:2',
         'deposit_amount' => 'decimal:2',
         'expected_delivery_date' => 'date',

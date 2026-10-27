@@ -282,12 +282,12 @@ export default function StocksCreate({ shops, products, reasons }: Props) {
                                 {data.type === 'out' ? t.stocks.form.quantityOut : t.stocks.form.quantityIn}
                             </label>
                             <input
-                                type="number"
+                                type="number" step="0.001"
                                 id="quantity"
                                 value={data.quantity}
                                 onChange={(e) => setData('quantity', Number(e.target.value))}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                min="1"
+                                min="0.001"
                             />
                             <InputError message={errors.quantity} />
                         </div>

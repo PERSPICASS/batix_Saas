@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 
 use App\Exports\ProductsExport;
 use App\Exports\ProductsTemplateExport;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Support\Unit;
 
 class ProductController extends Controller
 {
@@ -172,8 +174,8 @@ class ProductController extends Controller
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'min_stock_alert' => 'nullable|integer|min:0',
+            'stock_quantity' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($request->input('unit'))],
+            'min_stock_alert' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($request->input('unit'))],
             'unit' => 'nullable|string|max:50',
             'image' => 'nullable|image|max:2048',
             'track_stock' => 'boolean',
@@ -228,7 +230,7 @@ class ProductController extends Controller
                     ? ($product->sku ? Product::where('shop_id', $shop->id)->where('sku', $product->sku)->first() : null)
                     : $copier->existingProductIn($shop, $product, null);
 
-                return $match ? ['shop' => $shop->name, 'stock' => (int) $match->stock_quantity, 'min' => $match->min_stock_alert] : null;
+                return $match ? ['shop' => $shop->name, 'stock' => (float) $match->stock_quantity, 'min' => $match->min_stock_alert] : null;
             })->filter()->values();
 
         // Les 30 derniers jours, avec les définitions de « Mes boutiques » (ShopReport).
@@ -248,9 +250,9 @@ class ProductController extends Controller
                 'margin_rate' => (float) $product->selling_price > 0 ? round(((float) $product->selling_price - $unitCost) / (float) $product->selling_price * 100, 1) : null,
             ],
             'stock' => [
-                'counter' => (int) $product->stock_quantity,
+                'counter' => (float) $product->stock_quantity,
                 'depots' => $product->depotProducts->filter(fn ($row) => $row->quantity > 0)
-                    ->map(fn ($row) => ['depot' => $row->depot?->name, 'quantity' => (int) $row->quantity])->values(),
+                    ->map(fn ($row) => ['depot' => $row->depot?->name, 'quantity' => (float) $row->quantity])->values(),
                 'total' => $product->totalStock(),
                 'value' => $product->stockValue(),
                 'low' => $product->isLowStock(),
@@ -321,8 +323,8 @@ class ProductController extends Controller
             'purchase_price' => 'required|numeric|min:0',
             'selling_price' => 'required|numeric|min:0',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
-            'stock_quantity' => 'nullable|integer|min:0',
-            'min_stock_alert' => 'nullable|integer|min:0',
+            'stock_quantity' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($request->input('unit', $product->unit))],
+            'min_stock_alert' => ['nullable', 'numeric', 'min:0', QuantityForProduct::forUnit($request->input('unit', $product->unit))],
             'unit' => 'nullable|string|max:50',
             'image' => 'nullable|image|max:2048',
             'track_stock' => 'boolean',
@@ -339,7 +341,7 @@ class ProductController extends Controller
         }
 
         $oldStock = $product->stock_quantity;
-        $newStock = (int) ($validated['stock_quantity'] ?? $oldStock);
+        $newStock = Unit::round($validated['stock_quantity'] ?? $oldStock);
 
         // Séparer stock_quantity de la mise à jour normale
         $updateData = collect($validated)
@@ -350,10 +352,10 @@ class ProductController extends Controller
             $product->update($updateData);
 
             // Enregistrer l'ajustement de stock s'il y a un changement
-            if ($newStock !== $oldStock) {
+            if ($newStock != $oldStock) {
                 StockMovementService::recordManualAdjustment(
                     $product,
-                    $newStock - $oldStock,
+                    Unit::round($newStock - $oldStock),
                     'adjustment',
                     $product->shop_id,
                     "Correction manuelle via formulaire produit (ancienne valeur: {$oldStock}, nouvelle: {$newStock})"

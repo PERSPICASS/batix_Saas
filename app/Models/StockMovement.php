@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Quantity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\BelongsToShop;
@@ -38,7 +39,7 @@ class StockMovement extends Model
 
     protected $casts = [
         'movement_date' => 'date',
-        'quantity' => 'integer',
+        'quantity' => Quantity::class,
         'unit_cost' => 'decimal:2',
     ];
 

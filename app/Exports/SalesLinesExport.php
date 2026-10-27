@@ -78,7 +78,7 @@ class SalesLinesExport implements FromQuery, WithHeadings, WithMapping, WithColu
             $sale->customer?->name,
             $item->product_name,
             $item->sku,
-            (int) $item->quantity,
+            (float) $item->quantity,
             (float) $item->unit_price,
             // Remise de ligne et part de la remise globale, TTC.
             round($item->unit_price * $item->quantity * (1 + $item->tax_rate / 100) - $paid, 2),

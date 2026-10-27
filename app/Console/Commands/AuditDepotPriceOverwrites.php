@@ -56,7 +56,7 @@ class AuditDepotPriceOverwrites extends Command
         // base — c'est-à-dire tant qu'aucune moyenne pondérée n'a pris le relais
         // (Product::unitCost()). Et il ne coûte quelque chose que s'il reste du stock.
         [$costly, $harmless] = $suspects->partition(
-            fn ($row) => $row->average_cost === null && (int) $row->stock_quantity > 0
+            fn ($row) => $row->average_cost === null && (float) $row->stock_quantity > 0
         );
 
         if ($costly->isNotEmpty()) {
@@ -70,7 +70,7 @@ class AuditDepotPriceOverwrites extends Command
                     $row->sku ?? '—',
                     $row->purchase_price,
                     $row->stock_quantity,
-                    number_format((float) $row->purchase_price * (int) $row->stock_quantity, 2, ',', ' '),
+                    number_format((float) $row->purchase_price * (float) $row->stock_quantity, 2, ',', ' '),
                 ])
             );
         }

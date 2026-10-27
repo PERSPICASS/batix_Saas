@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Unit;
+use App\Rules\QuantityForProduct;
 use App\Models\ReturnedInventory;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -24,7 +26,7 @@ class ReturnsController extends Controller
 
         $validated = $request->validate([
             'sale_item_id' => 'required|exists:sale_items,id',
-            'quantity_returned' => 'required|integer|min:1',
+            'quantity_returned' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'refund_method' => 'required|in:cash,card,store_credit,exchange',
             'reason' => 'required|in:defective,wrong_item,not_satisfied,other',
             'notes' => 'nullable|string',
@@ -33,11 +35,11 @@ class ReturnsController extends Controller
         $saleItem = $sale->items()->findOrFail($validated['sale_item_id']);
 
         // Vérifier que la quantité retournée ne dépasse pas la quantité vendue
-        $alreadyReturned = $saleItem->returns->sum('quantity_returned');
-        if ($alreadyReturned + $validated['quantity_returned'] > $saleItem->quantity) {
+        $alreadyReturned = Unit::round($saleItem->returns->sum('quantity_returned'));
+        if (Unit::round($alreadyReturned + $validated['quantity_returned']) > $saleItem->quantity) {
             return back()->withErrors([
                 'quantity_returned' => "La quantité retournée ne peut pas dépasser la quantité vendue. "
-                    . "Déjà retourné: {$alreadyReturned}, disponible: " . ($saleItem->quantity - $alreadyReturned)
+                    . "Déjà retourné: {$alreadyReturned}, disponible: " . Unit::round($saleItem->quantity - $alreadyReturned)
             ])->withInput();
         }
 
@@ -216,7 +218,7 @@ class ReturnsController extends Controller
         $totalRefunded = 0;
 
         foreach ($sale->items as $item) {
-            $qtyNotReturned = $item->quantity - $item->returns->sum('quantity_returned');
+            $qtyNotReturned = Unit::round($item->quantity - $item->returns->sum('quantity_returned'));
             $subtotal += $item->unit_price * $qtyNotReturned;
             $totalRefunded += $item->returns->sum('refund_amount');
         }
@@ -243,7 +245,7 @@ class ReturnsController extends Controller
 
         // Déterminer le nouveau statut
         $allItemsReturned = $sale->items->every(function ($item) {
-            return $item->returns->sum('quantity_returned') >= $item->quantity;
+            return Unit::round($item->returns->sum('quantity_returned')) >= $item->quantity;
         });
 
         $newStatus = match (true) {
@@ -265,7 +267,7 @@ class ReturnsController extends Controller
 
         // Marquer les articles retournés (bypass model events pour éviter de réappeler calculateTotals)
         foreach ($sale->items as $item) {
-            $totalReturned = $item->returns->sum('quantity_returned');
+            $totalReturned = Unit::round($item->returns->sum('quantity_returned'));
             DB::table('sale_items')
                 ->where('id', $item->id)
                 ->update(['is_returned' => $totalReturned >= $item->quantity]);

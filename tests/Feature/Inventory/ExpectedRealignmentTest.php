@@ -96,8 +96,8 @@ class ExpectedRealignmentTest extends TestCase
         $item = $inventory->fresh()->items->first();
 
         // Auparavant : 189, donc un écart de -89 affiché pour un mouvement de -50.
-        $this->assertSame(150, $item->expected_quantity);
-        $this->assertSame(-50, $item->difference);
+        $this->assertSame(150.0, $item->expected_quantity);
+        $this->assertSame(-50.0, $item->difference);
     }
 
     public function test_the_displayed_difference_equals_the_movement_written(): void
@@ -115,7 +115,7 @@ class ExpectedRealignmentTest extends TestCase
 
         // C'est tout l'objet du réalignement : un seul nombre, pas deux.
         $this->assertSame($item->difference, $movement->quantity);
-        $this->assertSame(100, $product->fresh()->stock_quantity);
+        $this->assertSame(100.0, $product->fresh()->stock_quantity);
     }
 
     public function test_the_defective_side_is_realigned_too(): void
@@ -129,8 +129,8 @@ class ExpectedRealignmentTest extends TestCase
         $this->complete($inventory);
 
         $item = $inventory->fresh()->items->first();
-        $this->assertSame(4, $item->expected_defective_quantity);
-        $this->assertSame(2, $item->defective_difference);
+        $this->assertSame(4.0, $item->expected_defective_quantity);
+        $this->assertSame(2.0, $item->defective_difference);
     }
 
     public function test_a_stable_counter_changes_nothing(): void
@@ -141,8 +141,8 @@ class ExpectedRealignmentTest extends TestCase
         $this->complete($inventory);
 
         $item = $inventory->fresh()->items->first();
-        $this->assertSame(189, $item->expected_quantity);
-        $this->assertSame(-89, $item->difference);
+        $this->assertSame(189.0, $item->expected_quantity);
+        $this->assertSame(-89.0, $item->difference);
     }
 
     /** Le compte d'écarts de la fiche est refait après réalignement, sinon il mentirait aussi. */
@@ -179,8 +179,8 @@ class ExpectedRealignmentTest extends TestCase
         $this->complete($inventory);
 
         $item = $inventory->fresh()->items->firstWhere('product_id', $skipped->id);
-        $this->assertSame(30, $item->expected_quantity);
+        $this->assertSame(30.0, $item->expected_quantity);
         $this->assertNull($item->counted_quantity);
-        $this->assertSame(12, $skipped->fresh()->stock_quantity);
+        $this->assertSame(12.0, $skipped->fresh()->stock_quantity);
     }
 }

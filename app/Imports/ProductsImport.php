@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Support\Unit;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Subcategory;
@@ -116,7 +117,7 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         $brand = $this->cleanValue($this->getValue($data, ['marque', 'brand', 'fabricant']));
 
         // Récupérer le stock
-        $stockQty = (int) $this->getValue($data, ['stock', 'quantite', 'quantity', 'qte', 'qty'], 0);
+        $stockQty = Unit::round($this->parseNumber($this->getValue($data, ['stock', 'quantite', 'quantity', 'qte', 'qty'], 0)));
         $minStock = $this->getValue($data, ['stock_minimum', 'stock_min', 'min_stock', 'seuil']);
 
         // Préparer les données du produit
@@ -133,7 +134,7 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             'purchase_price' => $purchasePrice,
             'selling_price' => $sellingPrice,
             'stock_quantity' => $stockQty,
-            'min_stock_alert' => $minStock ? (int) $minStock : null,
+            'min_stock_alert' => $minStock ? Unit::round($this->parseNumber($minStock)) : null,
             'track_stock' => $this->parseBoolean($this->getValue($data, ['suivi_stock', 'track_stock', 'suivistock'], true)),
             'is_active' => $this->parseBoolean($this->getValue($data, ['actif', 'is_active', 'active'], true)),
         ];

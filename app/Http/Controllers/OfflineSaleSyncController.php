@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\Sale;
 use App\Services\ActivityLogger;
 use App\Services\SaleCreationService;
@@ -44,7 +45,7 @@ class OfflineSaleSyncController extends Controller
             'sales.*.notes'             => 'nullable|string',
             'sales.*.items'             => 'required|array|min:1',
             'sales.*.items.*.product_id' => 'required|exists:products,id',
-            'sales.*.items.*.quantity'  => 'required|integer|min:1',
+            'sales.*.items.*.quantity'  => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'sales.*.items.*.unit_price' => 'required|numeric|min:0',
         ]);
 

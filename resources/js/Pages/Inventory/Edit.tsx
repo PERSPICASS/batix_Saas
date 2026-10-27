@@ -397,13 +397,13 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                 </td>
                                                 <td className="py-3 pr-4 text-right">
                                                     <input
-                                                        type="number"
+                                                        type="number" step="0.001"
                                                         min="0"
                                                         value={item.counted_quantity ?? ''}
                                                         onChange={(e) =>
                                                             updateCountedQuantity(
                                                                 item.product_id,
-                                                                e.target.value ? parseInt(e.target.value) : null
+                                                                e.target.value ? parseFloat(e.target.value) : null
                                                             )
                                                         }
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
@@ -413,13 +413,13 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                 </td>
                                                 <td className="py-3 pr-4 text-right">
                                                     <input
-                                                        type="number"
+                                                        type="number" step="0.001"
                                                         min="0"
                                                         value={item.defective_quantity ?? ''}
                                                         onChange={(e) =>
                                                             updateDefectiveQuantity(
                                                                 item.product_id,
-                                                                e.target.value ? parseInt(e.target.value) : null
+                                                                e.target.value ? parseFloat(e.target.value) : null
                                                             )
                                                         }
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"

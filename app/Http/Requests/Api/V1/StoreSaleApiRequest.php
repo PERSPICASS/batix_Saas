@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Rules\QuantityForProduct;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -40,7 +41,7 @@ class StoreSaleApiRequest extends FormRequest
                 'required',
                 Rule::exists('products', 'id')->where('shop_id', $shopId),
             ],
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
         ];
     }

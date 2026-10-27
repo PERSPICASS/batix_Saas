@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\QuantityForProduct;
 use App\Models\RecurringInvoice;
 use App\Models\Customer;
 use App\Models\Product;
@@ -102,7 +103,7 @@ class RecurringInvoiceController extends Controller
                 'required',
                 \Illuminate\Validation\Rule::exists('products', 'id')->where('shop_id', $shop->id),
             ],
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
@@ -207,7 +208,7 @@ class RecurringInvoiceController extends Controller
                 'required',
                 \Illuminate\Validation\Rule::exists('products', 'id')->where('shop_id', $recurringInvoice->shop_id),
             ],
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
