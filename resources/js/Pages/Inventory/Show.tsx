@@ -93,7 +93,12 @@ export default function InventoryShow({ inventory }: Props) {
                 setCompleteModal(false);
                 setProcessing(false);
             },
-            onError: () => setProcessing(false),
+            // Un refus (rien de compté, inventaire annulé…) s'affiche en notification :
+            // la fenêtre se ferme pour qu'on le voie.
+            onError: () => {
+                setCompleteModal(false);
+                setProcessing(false);
+            },
         });
     };
 

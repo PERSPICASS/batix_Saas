@@ -10,7 +10,7 @@ interface ToastMessage {
 }
 
 export default function ToastContainer() {
-    const { flash } = usePage().props as any;
+    const { flash, errors } = usePage().props as any;
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
     // Un compteur en ref, pas en état : l'abonnement aux toasts client ne s'enregistre
@@ -33,6 +33,18 @@ export default function ToastContainer() {
             addToast('info', flash.info);
         }
     }, [flash]);
+
+    // Les refus renvoyés par `back()->withErrors(['error' => …])` : aucune page ne lisait ce
+    // champ, si bien que « Terminer l'inventaire » sans ligne comptée ne faisait rien du
+    // tout — le serveur refusait en silence. Les erreurs de champ, elles, restent sous
+    // leur champ.
+    // Dépendance sur l'objet, pas sur le texte : le même refus deux fois de suite doit
+    // s'afficher deux fois, et chaque réponse du serveur apporte un nouvel objet.
+    useEffect(() => {
+        if (errors?.error) {
+            addToast('error', errors.error);
+        }
+    }, [errors]);
 
     // Les toasts émis par le code client, en plus des messages flash du serveur.
     useEffect(() => onToast(({ type, message }) => addToast(type, message)), []);

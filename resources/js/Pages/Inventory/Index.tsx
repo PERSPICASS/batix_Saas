@@ -116,7 +116,12 @@ export default function InventoryIndex({ inventories, filters }: Props) {
                 setCompleteModal({ show: false, inventory: null });
                 setProcessing(false);
             },
-            onError: () => setProcessing(false),
+            // Un refus (rien de compté, inventaire annulé…) s'affiche en notification :
+            // la fenêtre se ferme pour qu'on le voie.
+            onError: () => {
+                setCompleteModal({ show: false, inventory: null });
+                setProcessing(false);
+            },
         });
     };
 
