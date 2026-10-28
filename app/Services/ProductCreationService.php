@@ -22,6 +22,8 @@ class ProductCreationService
 
         $product = $shop->products()->create($validated);
 
+        StockMovementService::recordStockSetDirectly($product, (float) $product->stock_quantity, 'Stock initial à la création du produit');
+
         // Générer le code-barres avec catégorie, ID et prix si pas fourni ou invalide
         if (empty($validated['barcode']) || !preg_match('/^\d{13}$/', $validated['barcode'])) {
             $product->barcode = $this->generateBarcodeWithPrice(

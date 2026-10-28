@@ -66,6 +66,8 @@ class ProductVariationController extends Controller
         $variation->barcode = $this->generateBarcode($variation);
         $variation->save();
 
+        StockMovementService::recordStockSetDirectly($variation, (float) $variation->stock_quantity, 'Stock initial à la création de la déclinaison');
+
         // Marquer le produit parent comme ayant des déclinaisons
         if (!$product->has_variations) {
             $product->update(['has_variations' => true]);

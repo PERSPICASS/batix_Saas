@@ -6,6 +6,7 @@ use App\Support\Unit;
 use App\Models\Depot;
 use App\Models\DepotProduct;
 use App\Models\Product;
+use App\Services\StockMovementService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -145,6 +146,7 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
         if ($depotProduct) {
             if ($quantity > 0) {
                 $depotProduct->increment('quantity', $quantity);
+                StockMovementService::recordDepotMovement($product, $this->depot, $quantity, 'in', null, 'Import de stock en dépôt');
             }
             $updates = [];
             if ($minAlert !== null) {
@@ -165,6 +167,9 @@ class DepotStockImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 'min_stock_alert' => $minAlert !== null ? $this->quantity($minAlert) : 0,
                 'purchase_price'  => $purchasePrice !== null ? (float) $purchasePrice : 0,
             ]);
+            if ($quantity > 0) {
+                StockMovementService::recordDepotMovement($product, $this->depot, $quantity, 'in', null, 'Import de stock en dépôt');
+            }
             $this->importedCount['created']++;
         }
     }

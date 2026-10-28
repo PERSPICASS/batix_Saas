@@ -462,6 +462,39 @@ class StockMovementService
     }
 
     /**
+     * Le stock qu'un produit reçoit en naissant (formulaire, API, déclinaison, import), ou
+     * qu'un import réécrit. N'écrit QUE la trace : le compteur a déjà été posé par la
+     * création ou la mise à jour du produit.
+     *
+     * Ces chemins ne laissaient aucun mouvement : `stock:audit` voyait alors chaque stock
+     * initial comme un écart (4 089 en prod le 2026-10-28), et une vraie dérive s'y noyait.
+     */
+    public static function recordStockSetDirectly(Product $product, float $delta, string $notes): ?StockMovement
+    {
+        $delta = Unit::round($delta);
+
+        if (!$product->track_stock || $delta == 0) {
+            return null;
+        }
+
+        return self::writeMovement([
+            'shop_id'        => $product->shop_id,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => $delta > 0 ? 'in' : 'adjustment',
+            'reason'         => $delta > 0 ? 'opening_stock' : null,
+            'quantity'       => $delta,
+            'unit_cost'      => $product->purchase_price,
+            // Rattaché au produit : ce n'est pas une saisie manuelle qu'on pourrait annuler
+            // depuis l'écran des mouvements (cf. StockMovement::is_manual).
+            'reference_id'   => $product->id,
+            'reference_type' => 'Product',
+            'notes'          => $notes,
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
+    /**
      * Manual adjustment (from StockMovementController form submission).
      *
      * @param Product      $product

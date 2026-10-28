@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Support\Unit;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\StockMovementService;
 use App\Models\Subcategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -180,7 +181,13 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             if (empty($productData['sku'])) {
                 unset($productData['sku']);
             }
+            $previousStock = (float) $existingProduct->stock_quantity;
             $existingProduct->update($productData);
+            StockMovementService::recordStockSetDirectly(
+                $existingProduct,
+                (float) $existingProduct->stock_quantity - $previousStock,
+                "Stock réécrit par l'import de produits ({$previousStock} → {$existingProduct->stock_quantity})"
+            );
             $this->importedCount['updated']++;
         } else {
             // Générer le SKU automatiquement si non fourni
@@ -190,6 +197,7 @@ class ProductsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             
             // Création du produit
             $product = Product::create($productData);
+            StockMovementService::recordStockSetDirectly($product, (float) $product->stock_quantity, 'Stock initial importé');
             
             // Générer le code-barres automatiquement si non fourni ou invalide
             if (empty($barcode) || !preg_match('/^\d{13}$/', $barcode)) {
