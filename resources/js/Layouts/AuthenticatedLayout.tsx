@@ -849,7 +849,9 @@ export default function Authenticated({
                     )}
                 </header>
 
-                <main className="min-w-0 px-4 py-6 print:p-0 sm:px-6 lg:px-8">
+                {/* pb-24 : la place des boutons flottants (Avis, IA) — sans elle, ils couvraient
+                    la dernière ligne des tableaux et le « Suivant » de la pagination. */}
+                <main className="min-w-0 px-4 pt-6 pb-24 print:p-0 sm:px-6 lg:px-8">
                     <ReadOnlyAccountGuard />
                     {children}
                 </main>
@@ -870,18 +872,18 @@ export default function Authenticated({
                           * Bouton Avis : à GAUCHE du bouton IA, pas au-dessus. Empilé en
                           * bottom-24, il retombait dans le panneau de chat ouvert
                           * (bottom-20, h-96) juste à hauteur du champ de saisie, qu'il
-                          * rendait inatteignable. right-24 dégage les 48px du bouton IA
-                          * (right-6) et sa marge.
+                          * rendait inatteignable. right-20 dégage les 48px du bouton IA
+                          * (right-6) et 8px d'écart. Icône seule, comme le bouton IA :
+                          * avec son libellé, il recouvrait le contenu.
                           */}
                         <button
                             type="button"
                             onClick={() => setReviewOpen(true)}
                             title={t.nav.reviews}
                             aria-label={t.nav.reviews}
-                            className="fixed bottom-6 right-24 z-40 inline-flex items-center gap-2 rounded-full bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-amber-200"
+                            className="fixed bottom-6 right-20 z-40 rounded-full bg-amber-300 p-3 text-slate-950 shadow-lg transition hover:bg-amber-200"
                         >
-                            <Star className="size-5" />
-                            <span className="hidden sm:inline">{t.nav.reviews}</span>
+                            <Star size={24} />
                         </button>
                         <ReviewModal show={reviewOpen} onClose={() => setReviewOpen(false)} review={myReview} />
                     </>
