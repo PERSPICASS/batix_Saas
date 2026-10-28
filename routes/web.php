@@ -256,8 +256,8 @@ Route::get('/paddle/success', [PaddleController::class, 'success'])->name('paddl
 Route::get('/paddle/cancel', [PaddleController::class, 'cancel'])->name('paddle.cancel');
 
 // Routes publiques pour les invitations (avant auth)
-Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
-Route::post('/invitation/{token}/accept', [InvitationController::class, 'accept'])->name('invitation.accept');
+Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show')->middleware('throttle:30,1');
+Route::post('/invitation/{token}', [InvitationController::class, 'accept'])->name('invitation.accept')->middleware('throttle:10,1');
 
 // Routes admin plateforme (accès réservé aux admin_platforme)
 Route::middleware(['auth', 'platform.admin', \App\Http\Middleware\CheckTwoFactorAuthentication::class])->prefix('platform-admin')->group(function () {
@@ -556,6 +556,10 @@ Route::prefix('{code_user}')
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('permission:users,edit');
     Route::patch('users/{user}', [UserController::class, 'update'])->middleware('permission:users,edit');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy')->middleware('permission:users,delete');
+    // Le lien par lequel l'employé choisit son mot de passe : envoyé par email, ou rendu
+    // au propriétaire pour qu'il le transmette (WhatsApp). Chaque appel annule le précédent.
+    Route::post('users/{user}/invitation', [UserController::class, 'sendInvitation'])->name('users.invitation.send')->middleware(['permission:users,edit', 'throttle:10,1']);
+    Route::post('users/{user}/invitation-link', [UserController::class, 'invitationLink'])->name('users.invitation.link')->middleware(['permission:users,edit', 'throttle:10,1']);
 
     // Gestion granulaire des permissions par utilisateur (accès restreint à super_admin/manager,
     // vérifié dans PermissionController — pas de middleware permission: dédié pour cet écran).

@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import { Shield, Check } from 'lucide-react';
+import { Shield, Check, Mail } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
@@ -37,8 +37,6 @@ export default function UsersCreate({ shops, currentUserRole, assignableRoles, m
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         email: '',
-        password: '',
-        password_confirmation: '',
         shop_id: '',
         role: 'staff',
         is_active: true,
@@ -118,38 +116,10 @@ export default function UsersCreate({ shops, currentUserRole, assignableRoles, m
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                    {t.common.form.password}
-                                </label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    value={data.password}
-                                    onChange={(e) => setData('password', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                    placeholder={t.common.form.passwordMin}
-                                />
-                                <InputError message={errors.password} />
-                            </div>
-
-                            <div>
-                                <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                    {t.common.form.passwordConfirm}
-                                </label>
-                                <input
-                                    type="password"
-                                    id="password_confirmation"
-                                    value={data.password_confirmation}
-                                    onChange={(e) => setData('password_confirmation', e.target.value)}
-                                    className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                />
-                                {errors.password_confirmation && (
-                                    <p className="mt-1 text-sm text-red-400">{errors.password_confirmation}</p>
-                                )}
-                            </div>
-                        </div>
+                        <p className="flex items-start gap-2 rounded-lg border border-amber-300/40 bg-amber-50 p-3 text-sm text-slate-700 dark:bg-amber-300/10 dark:text-slate-200">
+                            <Mail className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                            {t.users.form.inviteHint}
+                        </p>
                     </div>
 
                     <div className="space-y-6 border-t border-gray-200 dark:border-white/10 pt-6">

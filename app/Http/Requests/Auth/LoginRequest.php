@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -44,8 +45,12 @@ class LoginRequest extends FormRequest
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
+            // Un employé invité qui n'a pas encore choisi son mot de passe : « identifiants
+            // incorrects » le laisserait chercher une erreur de frappe qui n'existe pas.
+            $pending = User::where('email', $this->string('email'))->first()?->isInvitationPending();
+
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => $pending ? trans('auth.invitation.pending_login') : trans('auth.failed'),
             ]);
         }
 

@@ -177,4 +177,22 @@ return [
         'unsubscribed_title' => 'Summary turned off',
         'unsubscribed_body' => 'You will no longer receive the daily alerts summary. Your shops stay available at any time.',
     ],
+
+    // Employee invitation / new password (UserInvitationMail)
+    'user_invitation' => [
+        'subject' => 'Your access to :shop on :appName',
+        'reset_subject' => 'Choose a new password for :appName',
+        'title' => 'Welcome to the :shop team',
+        'greeting' => 'Hello :name,',
+        'body' => ':sender added you to the :shop shop. Choose your password to access your workspace.',
+        'cta' => 'Create my password',
+        'login_hint' => 'You will then log in with your address :email and this password.',
+        'expiry' => 'This link is valid for :days days and works only once.',
+        'footer' => 'If you were not expecting this message, ignore it: no account will be activated without you.',
+        'reset' => [
+            'title' => 'New password',
+            'body' => ':sender sent you a link to choose a new password for the :shop shop.',
+            'cta' => 'Choose my password',
+        ],
+    ],
 ];

@@ -47,9 +47,13 @@ class NewPasswordController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user) use ($request) {
+                // Passer par « mot de passe oublié » prouve aussi la boîte mail : une
+                // invitation en attente est alors acceptée, son lien devient inutile.
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'invitation_token' => null,
+                    'invitation_accepted_at' => $user->invitation_accepted_at ?? now(),
                 ])->save();
 
                 // Un mot de passe réinitialisé signifie potentiellement un compte compromis :

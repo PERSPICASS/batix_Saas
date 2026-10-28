@@ -7,6 +7,8 @@ import { useState } from 'react';
 import { useRoute } from '@/utils/route';
 import SubscriptionBanner, { useSubscriptionLimits } from '@/Components/SubscriptionBanner';
 import { useLocale } from '@/contexts/LocaleContext';
+import InvitationActions from '@/Components/InvitationActions';
+import InvitationLinkModal from '@/Components/InvitationLinkModal';
 
 interface Shop {
     id: number;
@@ -22,6 +24,7 @@ interface User {
     is_active: boolean;
     shop: Shop | null;
     created_at: string;
+    invitation_pending: boolean;
 }
 
 interface PaginatedUsers {
@@ -130,9 +133,13 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
             label: t.users.columns.status,
             align: 'center' as const,
             render: (user: User) => (
-                <TableBadge variant={user.is_active ? 'success' : 'danger'}>
-                    {user.is_active ? t.common.status.active : t.common.status.inactive}
-                </TableBadge>
+                user.invitation_pending ? (
+                    <TableBadge variant="warning">{t.users.invitation.pending}</TableBadge>
+                ) : (
+                    <TableBadge variant={user.is_active ? 'success' : 'danger'}>
+                        {user.is_active ? t.common.status.active : t.common.status.inactive}
+                    </TableBadge>
+                )
             ),
         },
         {
@@ -141,6 +148,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
             align: 'right' as const,
             render: (user: User) => (
                 <TableActions>
+                    {user.invitation_pending && <InvitationActions userId={user.id} pending compact />}
                     <Link
                         href={route('users.edit', { user: user.id })}
                         className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-gray-100 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/10"
@@ -158,6 +166,7 @@ export default function UsersIndex({ users, canCreateUser, remainingUsers }: Pro
     return (
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.users.title}</h1>}>
             <Head title={t.users.title} />
+            <InvitationLinkModal />
 
             <section className="space-y-6">
                 {subscription && <SubscriptionBanner type="users" />}

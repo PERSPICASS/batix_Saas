@@ -33,9 +33,6 @@ class User extends Authenticatable
         'shop_id',
         'role',
         'is_active',
-        'invitation_token',
-        'invitation_sent_at',
-        'invitation_accepted_at',
         'email_verification_code',
         'email_verification_code_expires_at',
         'two_factor_enabled',
@@ -53,6 +50,7 @@ class User extends Authenticatable
         'remember_token',
         'google2fa_secret',
         'recovery_codes',
+        'invitation_token',
     ];
 
     /**
@@ -357,89 +355,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Generate a unique invitation token for the user
+     * Compte créé, mot de passe pas encore choisi par l'intéressé (cf. UserInvitation).
+     * Personne ne peut s'y connecter : le mot de passe en base est un aléa que nul ne connaît.
      */
-    public function generateInvitationToken(): string
+    public function isInvitationPending(): bool
     {
-        $this->invitation_token = bin2hex(random_bytes(32));
-        $this->invitation_sent_at = now();
-        $this->save();
-
-        return $this->invitation_token;
-    }
-
-    /**
-     * Get the invitation URL for this user
-     */
-    public function getInvitationUrl(): string
-    {
-        if (!$this->invitation_token) {
-            $this->generateInvitationToken();
-        }
-
-        return url("/invitation/{$this->invitation_token}");
-    }
-
-    /**
-     * Check if the invitation is still valid
-     */
-    public function isInvitationValid(): bool
-    {
-        if (!$this->invitation_token) {
-            return false;
-        }
-
-        // Si déjà acceptée, invalide
-        if ($this->invitation_accepted_at) {
-            return false;
-        }
-
-        // Vérifier si l'invitation n'est pas expirée (30 jours par défaut)
-        $expirationDays = config('auth.invitation_expiration_days', 30);
-        
-        if ($this->invitation_sent_at && $this->invitation_sent_at->addDays($expirationDays)->isPast()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Accept the invitation
-     */
-    public function acceptInvitation(): void
-    {
-        $this->invitation_accepted_at = now();
-        $this->save();
-    }
-
-    /**
-     * Regenerate invitation token (useful if expired)
-     */
-    public function regenerateInvitationToken(): string
-    {
-        $this->invitation_accepted_at = null;
-        return $this->generateInvitationToken();
-    }
-
-    /**
-     * Get invitation status
-     */
-    public function getInvitationStatus(): string
-    {
-        if (!$this->invitation_token) {
-            return 'not_sent';
-        }
-
-        if ($this->invitation_accepted_at) {
-            return 'accepted';
-        }
-
-        if (!$this->isInvitationValid()) {
-            return 'expired';
-        }
-
-        return 'pending';
+        // Un jeton sans acceptation. Un propriétaire inscrit seul n'a jamais eu de jeton ;
+        // un employé actif qui reçoit un lien « nouveau mot de passe » a déjà sa date
+        // d'acceptation (posée pour tous les comptes existants par la migration du 2026-10-28).
+        return $this->invitation_token !== null && $this->invitation_accepted_at === null;
     }
 
     /**
