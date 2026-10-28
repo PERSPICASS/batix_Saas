@@ -36,6 +36,7 @@ class SaleReturnService
         }
 
         $totalBefore = (float) $sale->total;
+        $netBefore = (float) $sale->subtotal - (float) $sale->discount_amount;
         $changeBefore = (float) $sale->change_amount;
 
         $return = SaleReturn::create([
@@ -64,7 +65,11 @@ class SaleReturnService
         // C'était prix unitaire × quantité : sur une vente à 18 % de TVA le client
         // récupérait moins qu'il n'avait payé, avec une remise la boutique rendait trop.
         $refundAmount = round($totalBefore - (float) $sale->total, 2);
-        $return->update(['refund_amount' => $refundAmount]);
+        // Et sa part hors taxes, pour la marge du jour du retour (CounterSales).
+        $return->update([
+            'refund_amount' => $refundAmount,
+            'net_amount' => round($netBefore - ((float) $sale->subtotal - (float) $sale->discount_amount), 2),
+        ]);
 
         return [$return, $refundAmount, round((float) $sale->change_amount - $changeBefore, 2)];
     }

@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Sale;
 use App\Models\Shop;
+use App\Support\CounterSales;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
@@ -18,9 +19,10 @@ use Illuminate\Support\Facades\DB;
  * Les définitions, arrêtées avec Fred le 2026-10-25 :
  *
  * - CA = ce qui a été VENDU sur la période, crédit compris : les ventes au comptoir hors
- *   annulées (les retours ont déjà réduit leur total, voir ReturnsController), plus les
- *   factures émises (envoyées ou payées, pas les brouillons ni les annulées), moins les
- *   avoirs émis sur la période. TTC, comme les tickets et les factures.
+ *   annulées, à leur montant d'origine, moins les retours faits sur la période (CounterSales,
+ *   2026-10-29 : un retour ne réécrit plus le CA du mois de la vente), plus les factures
+ *   émises (envoyées ou payées, pas les brouillons ni les annulées), moins les avoirs émis
+ *   sur la période. TTC, comme les tickets et les factures.
  * - Marge brute = CA hors taxes (remises et retours déduits) moins le coût d'achat de ce
  *   qui est parti, au coût du produit (moyenne pondérée, à défaut le dernier prix d'achat,
  *   voir Product::unitCost). Les lignes de vente ne gardent pas le coût du jour de la
@@ -62,30 +64,23 @@ class ShopsOverview
             }
         };
 
-        // Ventes au comptoir. Une vente entièrement retournée (statut « returned ») a un
-        // total nul : elle ne compte pas non plus comme une vente.
-        $add(Sale::query()
-            ->whereIn('shop_id', $ids)
-            ->whereNotIn('status', ['cancelled', 'returned'])
-            ->whereBetween('sale_date', [$start, $end])
-            ->groupBy('shop_id')
-            ->selectRaw('shop_id, COUNT(*) AS n, SUM(total) AS revenue, SUM(subtotal - discount_amount) AS net')
+        // Ventes au comptoir à leur montant d'origine, et ce qu'elles ont coûté.
+        $add(CounterSales::sales($ids, $start, $end)
+            ->groupBy('sales.shop_id')
+            ->selectRaw('sales.shop_id, COUNT(*) AS n, SUM(sales.original_total) AS revenue, SUM(sales.original_net) AS net')
             ->get(), ['revenue' => ['revenue', 1], 'count' => ['n', 1], 'net_excl_tax' => ['net', 1]]);
 
-        // Ce qu'ont coûté les articles vendus, quantités retournées déduites.
-        $add(DB::table('sale_items')
-            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->leftJoin('products', 'products.id', '=', 'sale_items.product_id')
-            ->leftJoinSub(
-                DB::table('returns')->groupBy('sale_item_id')->selectRaw('sale_item_id, SUM(quantity_returned) AS qty'),
-                'returned', 'returned.sale_item_id', '=', 'sale_items.id'
-            )
-            ->whereIn('sales.shop_id', $ids)
-            ->whereNotIn('sales.status', ['cancelled', 'returned'])
-            ->whereBetween('sales.sale_date', [$start, $end])
+        $add(CounterSales::saleItems($ids, $start, $end)
             ->groupBy('sales.shop_id')
-            ->selectRaw('sales.shop_id, SUM((sale_items.quantity - COALESCE(returned.qty, 0)) * '.self::SALE_COST.') AS cost')
+            ->selectRaw('sales.shop_id, SUM(sale_items.quantity * '.CounterSales::COST.') AS cost')
             ->get(), ['cost' => ['cost', 1]]);
+
+        // Les retours de la période, au jour du retour : ils retirent du CA ce dont la vente a
+        // baissé, et le coût des articles rendus ne pèse plus sur la marge.
+        $add(CounterSales::returns($ids, $start, $end)
+            ->groupBy('sales.shop_id')
+            ->selectRaw('sales.shop_id, SUM(returns.refund_amount) AS revenue, SUM(returns.net_amount) AS net, SUM(returns.quantity_returned * '.CounterSales::COST.') AS cost')
+            ->get(), ['revenue' => ['revenue', -1], 'net_excl_tax' => ['net', -1], 'cost' => ['cost', -1]]);
 
         // Factures émises (le scope SoftDeletes écarte les factures supprimées).
         $add(Invoice::query()
@@ -185,24 +180,20 @@ class ShopsOverview
         };
         $dates = [$start->toDateString(), $end->toDateString()];
 
-        $add(Sale::query()->whereIn('shop_id', $ids)->whereNotIn('status', ['cancelled', 'returned'])
-            ->whereBetween('sale_date', [$start, $end])
-            ->groupByRaw('DATE(sale_date)')
-            ->selectRaw('DATE(sale_date) AS day, COUNT(*) AS n, SUM(total) AS revenue, SUM(subtotal - discount_amount) AS net')
+        $add(CounterSales::sales($ids, $start, $end)
+            ->groupByRaw('DATE(sales.sale_date)')
+            ->selectRaw('DATE(sales.sale_date) AS day, COUNT(*) AS n, SUM(sales.original_total) AS revenue, SUM(sales.original_net) AS net')
             ->get(), ['revenue' => ['revenue', 1], 'count' => ['n', 1], 'net_excl_tax' => ['net', 1]]);
 
-        $add(DB::table('sale_items')
-            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->leftJoin('products', 'products.id', '=', 'sale_items.product_id')
-            ->leftJoinSub(
-                DB::table('returns')->groupBy('sale_item_id')->selectRaw('sale_item_id, SUM(quantity_returned) AS qty'),
-                'returned', 'returned.sale_item_id', '=', 'sale_items.id'
-            )
-            ->whereIn('sales.shop_id', $ids)->whereNotIn('sales.status', ['cancelled', 'returned'])
-            ->whereBetween('sales.sale_date', [$start, $end])
+        $add(CounterSales::saleItems($ids, $start, $end)
             ->groupByRaw('DATE(sales.sale_date)')
-            ->selectRaw('DATE(sales.sale_date) AS day, SUM((sale_items.quantity - COALESCE(returned.qty, 0)) * '.self::SALE_COST.') AS cost')
+            ->selectRaw('DATE(sales.sale_date) AS day, SUM(sale_items.quantity * '.CounterSales::COST.') AS cost')
             ->get(), ['cost' => ['cost', 1]]);
+
+        $add(CounterSales::returns($ids, $start, $end)
+            ->groupByRaw('DATE(returns.return_date)')
+            ->selectRaw('DATE(returns.return_date) AS day, SUM(returns.refund_amount) AS revenue, SUM(returns.net_amount) AS net, SUM(returns.quantity_returned * '.CounterSales::COST.') AS cost')
+            ->get(), ['revenue' => ['revenue', -1], 'net_excl_tax' => ['net', -1], 'cost' => ['cost', -1]]);
 
         $add(Invoice::query()->whereIn('shop_id', $ids)->whereIn('status', ['sent', 'paid'])
             ->whereDate('invoice_date', '>=', $dates[0])->whereDate('invoice_date', '<=', $dates[1])
@@ -258,8 +249,8 @@ class ShopsOverview
         };
         $dates = [$start->toDateString(), $end->toDateString()];
 
-        $add(Sale::query()->whereIn('shop_id', $ids)->whereNotIn('status', ['cancelled', 'returned'])
-            ->whereBetween('sale_date', [$start, $end])->get(['sale_date', 'total']), 'sale_date', 1);
+        $add(CounterSales::sales($ids, $start, $end)->get(['sales.sale_date', 'sales.original_total AS total']), 'sale_date', 1);
+        $add(CounterSales::returns($ids, $start, $end)->get(['returns.return_date', 'returns.refund_amount AS total']), 'return_date', -1);
         $add(Invoice::query()->whereIn('shop_id', $ids)->whereIn('status', ['sent', 'paid'])
             ->whereDate('invoice_date', '>=', $dates[0])->whereDate('invoice_date', '<=', $dates[1])->whereBetween('created_at', [$start, $end])->get(['created_at', 'total']), 'created_at', 1);
         $add(CreditNote::query()->whereIn('shop_id', $ids)
@@ -272,7 +263,6 @@ class ShopsOverview
      * Le coût d'une unité vendue : celui figé sur la ligne au moment de la vente ou de la
      * facture, à défaut le coût actuel du produit (Product::unitCost).
      */
-    private const SALE_COST = 'COALESCE(sale_items.unit_cost, products.average_cost, products.purchase_price, 0)';
     private const INVOICE_COST = 'COALESCE(invoice_items.unit_cost, products.average_cost, products.purchase_price, 0)';
 
     /**

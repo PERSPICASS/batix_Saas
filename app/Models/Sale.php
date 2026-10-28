@@ -31,6 +31,8 @@ class Sale extends Model
         'discount_amount',
         'original_discount_amount',
         'total',
+        'original_total',
+        'original_net',
         'amount_paid',
         'exchange_credit',
         'store_credit_used',
@@ -49,6 +51,8 @@ class Sale extends Model
         'discount_amount' => 'decimal:2',
         'original_discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'original_total' => 'decimal:2',
+        'original_net' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'exchange_credit' => 'decimal:2',
         'store_credit_used' => 'decimal:2',
@@ -68,6 +72,10 @@ class Sale extends Model
             if (!$sale->sale_date) {
                 $sale->sale_date = now();
             }
+            // Le montant d'origine (CounterSales) : jamais absent, même pour une vente
+            // créée sans passer par SaleCreationService.
+            $sale->original_total ??= $sale->total ?? 0;
+            $sale->original_net ??= round((float) $sale->subtotal - (float) $sale->discount_amount, 2);
         });
     }
 
@@ -144,6 +152,12 @@ class Sale extends Model
         $this->total = round($this->subtotal - $discount + $this->tax_amount, 2);
         // La part gardée en avoir lors d'un échange n'est pas rendue en espèces.
         $this->change_amount = max(0, $this->amount_paid - $this->total - (float) $this->store_credit_kept);
+        // Tant qu'aucun retour n'a touché la vente, son montant d'origine est son montant.
+        // Après un retour, il reste figé : c'est lui que compte le jour de la vente.
+        if (!$this->returns()->exists()) {
+            $this->original_total = $this->total;
+            $this->original_net = round((float) $this->subtotal - (float) $discount, 2);
+        }
         $this->save();
     }
 

@@ -269,10 +269,12 @@ class SaleExchangeTest extends TestCase
         $methods = collect(app(\App\Services\ShopReport::class)->paymentMethods([$this->shop->id], now()->subDay(), now()->addDay()))
             ->keyBy('method');
 
-        // La vente d'origine est entièrement retournée (0) ; la meuleuse : 2 000 espèces + 10 000 avoir.
-        $this->assertSame(2000.0, $methods['cash']['revenue']);
-        $this->assertSame(10000.0, $methods['store_credit']['revenue']);
-        $this->assertSame(12000.0, $methods->sum('revenue'), 'La somme reste le CA');
+        // Espèces : les 10 000 de la perceuse, puis les 2 000 de la différence — l'argent
+        // réellement entré. L'avoir s'annule : rendu (-10 000) puis dépensé (+10 000), il n'a
+        // jamais quitté la caisse. Avant, la meuleuse passait pour 12 000 encaissés en espèces.
+        $this->assertSame(12000.0, $methods['cash']['revenue']);
+        $this->assertSame(0.0, $methods['store_credit']['revenue']);
+        $this->assertSame(12000.0, $methods->sum('revenue'), 'La somme reste le CA : 10 000 vendus, rendus, puis 12 000 vendus');
     }
 
     public function test_the_revenue_nets_out_and_the_kept_credit_is_a_debt(): void
