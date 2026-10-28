@@ -39,6 +39,7 @@ class SaleReturn extends Model
         'user_id',
         'quantity_returned',
         'refund_amount',
+        'net_amount',
         'refund_method',
         'reason',
         'notes',
@@ -48,6 +49,7 @@ class SaleReturn extends Model
     protected $casts = [
         'quantity_returned' => Quantity::class,
         'refund_amount' => 'decimal:2',
+        'net_amount' => 'decimal:2',
         'return_date' => 'datetime',
     ];
 

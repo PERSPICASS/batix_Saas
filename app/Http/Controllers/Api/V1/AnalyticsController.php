@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\V1\Concerns\ScopesToAccessibleShops;
 use App\Http\Controllers\Controller;
-use App\Models\Sale;
+use App\Services\ShopReport;
+use App\Services\ShopsOverview;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -19,19 +20,19 @@ class AnalyticsController extends Controller
 
     /**
      * KPIs de ventes sur une période glissante : CA, nombre de ventes, panier moyen.
+     *
+     * Même définition que les écrans (ShopsOverview) : ventes au comptoir crédit compris,
+     * retours au jour du retour, factures moins avoirs. Cet endpoint ne comptait que les
+     * ventes « terminées » : l'assistant annonçait un CA sans les ventes à crédit, différent
+     * de celui affiché à l'écran.
      */
-    public function salesSummary(Request $request): JsonResponse
+    public function salesSummary(Request $request, ShopsOverview $overview): JsonResponse
     {
         $days = min(max((int) $request->query('days', 30), 1), 365);
-        $startDate = now()->subDays($days)->startOfDay();
+        $byDay = collect($overview->daily($this->resolveShopIds($request), now()->subDays($days)->startOfDay(), now()->endOfDay()));
 
-        $sales = Sale::whereIn('shop_id', $this->resolveShopIds($request))
-            ->where('status', 'completed')
-            ->where('sale_date', '>=', $startDate)
-            ->get(['total']);
-
-        $saleCount = $sales->count();
-        $totalRevenue = (float) $sales->sum('total');
+        $saleCount = (int) $byDay->sum('count');
+        $totalRevenue = (float) $byDay->sum('revenue');
 
         return response()->json([
             'data' => [
@@ -45,26 +46,20 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Meilleurs produits par chiffre d'affaires généré sur la période.
+     * Meilleurs produits par chiffre d'affaires généré sur la période (TTC, retours et avoirs
+     * déduits), comme le top produits de l'analytique (ShopReport::products).
      */
-    public function topProducts(Request $request): JsonResponse
+    public function topProducts(Request $request, ShopReport $report): JsonResponse
     {
         $limit = min(max((int) $request->query('limit', 10), 1), 50);
         $days = min(max((int) $request->query('days', 30), 1), 365);
-        $startDate = now()->subDays($days)->startOfDay();
 
-        // Colonnes qualifiées : `sales` et `products` portent tous deux `shop_id`.
-        $topProducts = Sale::whereIn('sales.shop_id', $this->resolveShopIds($request))
-            ->where('sales.status', 'completed')
-            ->where('sales.sale_date', '>=', $startDate)
-            ->join('sale_items', 'sales.id', '=', 'sale_items.sale_id')
-            ->join('products', 'sale_items.product_id', '=', 'products.id')
-            ->select('products.id', 'products.name')
-            ->selectRaw('SUM(sale_items.quantity * sale_items.unit_price) as revenue')
-            ->groupBy('products.id', 'products.name')
-            ->orderByDesc('revenue')
-            ->limit($limit)
-            ->get();
+        $topProducts = $report->products($this->resolveShopIds($request), now()->subDays($days)->startOfDay(), now()->endOfDay())
+            ->filter(fn ($line) => $line['product_id'] !== null)
+            ->sortByDesc('revenue')
+            ->take($limit)
+            ->map(fn ($line) => ['id' => $line['product_id'], 'name' => $line['name'], 'revenue' => $line['revenue']])
+            ->values();
 
         return response()->json(['data' => $topProducts]);
     }

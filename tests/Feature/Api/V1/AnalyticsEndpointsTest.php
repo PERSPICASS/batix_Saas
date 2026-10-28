@@ -45,18 +45,23 @@ class AnalyticsEndpointsTest extends TestCase
         [$user, $shop] = $this->ownerWithShop();
         $this->completedSale($shop, $user, 1000, 'T-1');
         $this->completedSale($shop, $user, 3000, 'T-2');
-        // Exclue : hors statut completed.
+        // Une vente à crédit est vendue : elle compte, comme à l'écran (ShopsOverview).
         Sale::create([
             'shop_id' => $shop->id, 'user_id' => $user->id, 'ticket_number' => 'T-3',
-            'sale_date' => now(), 'status' => 'pending', 'total' => 9999,
+            'sale_date' => now(), 'status' => 'pending', 'total' => 2000,
+        ]);
+        // Une vente annulée n'a jamais eu lieu.
+        Sale::create([
+            'shop_id' => $shop->id, 'user_id' => $user->id, 'ticket_number' => 'T-4',
+            'sale_date' => now(), 'status' => 'cancelled', 'total' => 9999,
         ]);
 
         Sanctum::actingAs($user, ['sales:read']);
 
         $this->getJson('/api/v1/analytics/sales-summary?days=30')
             ->assertOk()
-            ->assertJsonPath('data.total_revenue', 4000)
-            ->assertJsonPath('data.sale_count', 2)
+            ->assertJsonPath('data.total_revenue', 6000)
+            ->assertJsonPath('data.sale_count', 3)
             ->assertJsonPath('data.average_basket', 2000);
     }
 
