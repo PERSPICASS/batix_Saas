@@ -1,5 +1,8 @@
-@extends('errors::minimal')
+@extends('errors::layout')
 
-@section('title', __('Page Expired'))
+@section('title', __('errors.419.title'))
 @section('code', '419')
-@section('message', __('Page Expired'))
+@section('message', __('errors.419.message'))
+@section('actions')
+    <button type="button" class="btn primary" onclick="location.reload()">{{ __('errors.reload') }}</button>
+@endsection
