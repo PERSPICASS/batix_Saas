@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Support\Unit;
+use App\Models\Customer;
+use App\Models\CustomerCredit;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Support\GlobalDiscount;
@@ -91,9 +93,41 @@ class SaleCreationService
             $discount = GlobalDiscount::effective($subtotal, $data['discount_amount'] ?? 0);
             $taxAmount = round($taxAmount * GlobalDiscount::ratio($subtotal, $discount), 2);
             $total = round($subtotal - $discount + $taxAmount, 2);
-            $amountPaid = (float) $data['amount_paid'];
+
+            // Ce qui paie la vente sans être de l'argent remis aujourd'hui : l'avoir d'un
+            // échange et l'avoir du client. Ils comptent dans `amount_paid` (la vente est
+            // réglée), et sont gardés à part pour le ticket et la caisse.
+            $exchangeCredit = round((float) ($data['exchange_credit'] ?? 0), 2);
+            $storeCreditUsed = round((float) ($data['store_credit_used'] ?? 0), 2);
+            $customer = self::creditCustomer($data, $shop, $storeCreditUsed, (float) ($data['store_credit_kept'] ?? 0));
+
+            if ($storeCreditUsed > 0) {
+                $available = $customer->creditBalance();
+                if ($storeCreditUsed > $available) {
+                    throw ValidationException::withMessages(['store_credit_used' => "L'avoir de ce client n'est que de " . number_format($available, 0, ',', ' ') . '.']);
+                }
+                if ($storeCreditUsed > $total) {
+                    throw ValidationException::withMessages(['store_credit_used' => "L'avoir utilisé dépasse le total de la vente."]);
+                }
+            }
+
+            $amountPaid = round((float) $data['amount_paid'] + $exchangeCredit + $storeCreditUsed, 2);
             $remaining = max(0, $total - $amountPaid);
             $change = max(0, $amountPaid - $total);
+
+            // Le surplus d'un échange peut être gardé en avoir plutôt que rendu : jamais plus
+            // que ce surplus, et seulement au client nommé (un client de passage n'a pas de
+            // compte où le retrouver).
+            $kept = round((float) ($data['store_credit_kept'] ?? 0), 2);
+            if ($kept > 0 && $kept > round($change, 2)) {
+                throw ValidationException::withMessages(['store_credit_kept' => "On ne peut garder en avoir que ce qui reste à rendre (" . number_format($change, 0, ',', ' ') . ').']);
+            }
+            $change = round($change - $kept, 2);
+
+            $data['amount_paid'] = $amountPaid;
+            $data['exchange_credit'] = $exchangeCredit;
+            $data['store_credit_used'] = $storeCreditUsed;
+            $data['store_credit_kept'] = $kept;
 
             $data['status'] = $remaining > 0 ? 'pending' : 'completed';
             $data['subtotal'] = $subtotal;
@@ -129,7 +163,46 @@ class SaleCreationService
                 ]);
             }
 
+            if ($storeCreditUsed > 0) {
+                CustomerCredit::create([
+                    'shop_id' => $shop->id, 'customer_id' => $customer->id, 'user_id' => $data['user_id'] ?? null,
+                    'sale_id' => $sale->id, 'amount' => -$storeCreditUsed, 'type' => 'used',
+                    'notes' => "Utilisé sur la vente {$sale->ticket_number}",
+                ]);
+            }
+
+            if ($kept > 0) {
+                CustomerCredit::create([
+                    'shop_id' => $shop->id, 'customer_id' => $customer->id, 'user_id' => $data['user_id'] ?? null,
+                    'sale_id' => $sale->id, 'amount' => $kept, 'type' => 'exchange_kept',
+                    'notes' => "Reste de l'échange, vente {$sale->ticket_number}",
+                ]);
+            }
+
             return $sale;
         }));
+    }
+
+    /**
+     * Le client dont l'avoir est utilisé ou alimenté, verrouillé : deux ventes simultanées
+     * ne doivent pas dépenser deux fois le même avoir.
+     */
+    private static function creditCustomer(array $data, Shop $shop, float $used, float $kept): ?Customer
+    {
+        if ($used <= 0 && $kept <= 0) {
+            return null;
+        }
+
+        $customer = empty($data['customer_id'])
+            ? null
+            : $shop->customers()->whereKey($data['customer_id'])->lockForUpdate()->first();
+
+        if (!$customer) {
+            throw ValidationException::withMessages([
+                ($used > 0 ? 'store_credit_used' : 'store_credit_kept') => "Choisissez un client enregistré : un avoir s'attache à un client.",
+            ]);
+        }
+
+        return $customer;
     }
 }

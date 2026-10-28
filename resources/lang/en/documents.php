@@ -41,6 +41,10 @@ return [
 
     'amount_paid' => 'Paid',
     'change' => 'Change',
+    'exchange_of' => 'Exchange of sale :number',
+    'exchange_credit' => 'Exchange credit',
+    'store_credit_used' => 'Credit used',
+    'store_credit_kept' => 'Kept as credit',
     'returns' => 'Returns',
     'balance_due' => 'Balance due',
 

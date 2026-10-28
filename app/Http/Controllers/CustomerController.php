@@ -44,7 +44,7 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->paginate(20);
+        $customers = $query->withSum('credits as credit_balance', 'amount')->paginate(20);
 
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
@@ -128,6 +128,16 @@ class CustomerController extends Controller
 
         return Inertia::render('Customers/Edit', [
             'customer' => $customer,
+            // L'avoir : son solde et les mouvements qui l'expliquent.
+            'credit' => [
+                'balance' => $customer->creditBalance(),
+                'movements' => $customer->credits()->with('sale:id,ticket_number')->latest()->limit(50)->get()
+                    ->map(fn ($m) => [
+                        'id' => $m->id, 'amount' => (float) $m->amount, 'type' => $m->type, 'notes' => $m->notes,
+                        'date' => $m->created_at->toIso8601String(),
+                        'sale' => $m->sale ? ['id' => $m->sale->id, 'ticket_number' => $m->sale->ticket_number] : null,
+                    ]),
+            ],
             'shops' => $shops,
         ]);
     }
@@ -178,6 +188,11 @@ class CustomerController extends Controller
         // Vérifier que la boutique du client appartient à l'utilisateur
         if (!Auth::user()->accessibleShopsQuery()->where('id', $customer->shop_id)->exists()) {
             abort(403);
+        }
+
+        // Son avoir disparaîtrait avec lui (cascade) : c'est de l'argent dû au client.
+        if (($balance = $customer->creditBalance()) > 0) {
+            return back()->with('error', "Ce client a encore un avoir de " . number_format($balance, 0, ',', ' ') . " : il ne peut pas être supprimé tant qu'il ne l'a pas utilisé.");
         }
 
         // Sauvegarder le nom avant suppression

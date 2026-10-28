@@ -9,7 +9,9 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Services\ActivityLogger;
+use App\Services\SaleReturnService;
 use App\Services\StockMovementService;
+use App\Models\CustomerCredit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,47 +36,36 @@ class ReturnsController extends Controller
 
         $saleItem = $sale->items()->findOrFail($validated['sale_item_id']);
 
-        // Vérifier que la quantité retournée ne dépasse pas la quantité vendue
-        $alreadyReturned = Unit::round($saleItem->returns->sum('quantity_returned'));
-        if (Unit::round($alreadyReturned + $validated['quantity_returned']) > $saleItem->quantity) {
-            return back()->withErrors([
-                'quantity_returned' => "La quantité retournée ne peut pas dépasser la quantité vendue. "
-                    . "Déjà retourné: {$alreadyReturned}, disponible: " . Unit::round($saleItem->quantity - $alreadyReturned)
-            ])->withInput();
+        // « Échange » se fait désormais par le bouton Échanger, qui enregistre la nouvelle
+        // vente dans le même geste ; ici ce ne serait qu'une étiquette sans effet.
+        if ($validated['refund_method'] === 'exchange') {
+            return back()->withErrors(['refund_method' => "Pour un échange, utilisez le bouton « Échanger » de la vente."]);
+        }
+
+        // Un avoir s'attache à un client : sur une vente sans client, il serait perdu.
+        if ($validated['refund_method'] === 'store_credit' && !$sale->customer_id) {
+            return back()->withErrors(['refund_method' => "Cette vente n'a pas de client : l'avoir ne pourrait être retrouvé. Remboursez en espèces, ou faites un échange."]);
         }
 
         [$return, $refundAmount] = DB::transaction(function () use ($sale, $saleItem, $user, $validated) {
-            $totalBefore = (float) $sale->total;
+            [$return, $refundAmount, $owedBack] = SaleReturnService::record(
+                $sale, $saleItem, (float) $validated['quantity_returned'], $validated['refund_method'],
+                $validated['reason'], $validated['notes'] ?? null, $user
+            );
 
-            $return = SaleReturn::create([
-                'sale_id' => $sale->id,
-                'sale_item_id' => $saleItem->id,
-                'user_id' => $user->id,
-                'quantity_returned' => $validated['quantity_returned'],
-                'refund_amount' => 0,
-                'refund_method' => $validated['refund_method'],
-                'reason' => $validated['reason'],
-                'notes' => $validated['notes'] ?? null,
-            ]);
-
-            // Recharger la vente avec les relations mises à jour
-            $sale->refresh();
-            $sale->load('items.returns');
-
-            // Le recalcul réduit la remise au prorata : on garde celle accordée au comptoir,
-            // tant qu'elle est encore intacte, c'est-à-dire au tout premier retour.
-            if ($sale->original_discount_amount === null && $sale->returns()->count() === 1) {
-                $sale->update(['original_discount_amount' => $sale->discount_amount]);
+            // Remboursé en avoir : ce que la boutique doit rendre reste chez elle, au crédit
+            // du client. La monnaie « à rendre » de la vente n'est alors plus due en espèces.
+            if ($validated['refund_method'] === 'store_credit' && $owedBack > 0) {
+                CustomerCredit::create([
+                    'shop_id' => $sale->shop_id, 'customer_id' => $sale->customer_id, 'user_id' => $user->id,
+                    'sale_id' => $sale->id, 'sale_return_id' => $return->id, 'amount' => $owedBack, 'type' => 'return',
+                    'notes' => "Retour sur la vente {$sale->ticket_number}",
+                ]);
+                $sale->update([
+                    'store_credit_kept' => round((float) $sale->store_credit_kept + $owedBack, 2),
+                    'change_amount' => max(0, round((float) $sale->change_amount - $owedBack, 2)),
+                ]);
             }
-
-            // Recalculer les montants de la vente après retour
-            $this->recalculateSaleAmounts($sale);
-
-            // On rembourse exactement ce dont le total a baissé, TVA et remise comprises.
-            // C'était prix unitaire × quantité : sur une vente à 18 % de TVA le client
-            // récupérait moins qu'il n'avait payé, avec une remise la boutique rendait trop.
-            $refundAmount = round($totalBefore - (float) $sale->total, 2);
-            $return->update(['refund_amount' => $refundAmount]);
 
             return [$return, $refundAmount];
         });
@@ -143,7 +134,19 @@ class ReturnsController extends Controller
         $saleItem = $return->saleItem;
         $refundAmount = $return->refund_amount;
 
-        $wasApproved = DB::transaction(function () use ($return, $sale, $saleItem) {
+        // Le retour d'un échange a payé la vente de remplacement : l'annuler seul laisserait
+        // cette vente réglée par un avoir qui n'existe plus.
+        if ($return->replacement_sale_id) {
+            return back()->with('error', "Ce retour fait partie d'un échange : il ne peut pas être annulé seul. Faites un retour sur la vente de remplacement si besoin.");
+        }
+
+        // Remboursé en avoir : on le reprend, à condition que le client ne l'ait pas dépensé.
+        $credit = CustomerCredit::where('sale_return_id', $return->id)->where('type', 'return')->first();
+        if ($credit && $credit->customer->creditBalance() < (float) $credit->amount) {
+            return back()->with('error', "Le client a déjà dépensé l'avoir de ce retour : il ne peut plus être annulé.");
+        }
+
+        $wasApproved = DB::transaction(function () use ($return, $sale, $saleItem, $credit) {
             // Un retour client ne touche le stock qu'à l'approbation (voir
             // ReturnedInventoryController::approve) : tant qu'il est encore "pending"
             // (ou a été rejeté), aucune unité n'a été recréditée au stock. Ne re-déduire
@@ -163,6 +166,15 @@ class ReturnsController extends Controller
                 );
             }
 
+            if ($credit) {
+                CustomerCredit::create([
+                    'shop_id' => $credit->shop_id, 'customer_id' => $credit->customer_id, 'user_id' => Auth::id(),
+                    'sale_id' => $sale->id, 'amount' => -(float) $credit->amount, 'type' => 'return_cancelled',
+                    'notes' => "Annulation du retour sur la vente {$sale->ticket_number}",
+                ]);
+                $sale->update(['store_credit_kept' => max(0, round((float) $sale->store_credit_kept - (float) $credit->amount, 2))]);
+            }
+
             // Supprimer le retour (cascade sur l'entrée returned_inventories associée)
             $return->delete();
 
@@ -171,7 +183,7 @@ class ReturnsController extends Controller
             $sale->load('items.returns');
 
             // Recalculer les montants de la vente après annulation du retour
-            $this->recalculateSaleAmounts($sale);
+            SaleReturnService::recalculate($sale);
 
             return $wasApproved;
         });
@@ -205,72 +217,5 @@ class ReturnsController extends Controller
         });
 
         return response()->json($returns);
-    }
-
-    /**
-     * Recalcule tous les montants d'une vente après des retours.
-     * Impacte: subtotal, tax_amount, discount_amount, total, remaining_amount, change_amount, status
-     */
-    private function recalculateSaleAmounts(Sale $sale): void
-    {
-        // Recalculer le subtotal à partir des items non retournés
-        $subtotal = 0;
-        $totalRefunded = 0;
-
-        foreach ($sale->items as $item) {
-            $qtyNotReturned = Unit::round($item->quantity - $item->returns->sum('quantity_returned'));
-            $subtotal += $item->unit_price * $qtyNotReturned;
-            $totalRefunded += $item->returns->sum('refund_amount');
-        }
-
-        // Recalculer la taxe proportionnellement
-        $originalSubtotal = $sale->subtotal ?? 0;
-        $taxRate = $originalSubtotal > 0 ? ($sale->tax_amount ?? 0) / $originalSubtotal : 0;
-        $newTaxAmount = $subtotal * $taxRate;
-
-        // Recalculer la réduction proportionnellement
-        $discountRate = $originalSubtotal > 0 ? ($sale->discount_amount ?? 0) / $originalSubtotal : 0;
-        $newDiscountAmount = $subtotal * $discountRate;
-
-        // Nouveau total = subtotal + taxes - réductions
-        $newTotal = max(0, $subtotal + $newTaxAmount - $newDiscountAmount);
-
-        // Montant restant à payer = nouveau total - déjà payé
-        $amountPaid = $sale->amount_paid ?? 0;
-        $newRemaining = max(0, $newTotal - $amountPaid);
-
-        // La monnaie suit le total, comme à la vente (Sale::calculateTotals) : elle restait
-        // figée à sa valeur d'origine, sur la page de la vente comme sur le ticket.
-        $newChange = max(0, $amountPaid - $newTotal);
-
-        // Déterminer le nouveau statut
-        $allItemsReturned = $sale->items->every(function ($item) {
-            return Unit::round($item->returns->sum('quantity_returned')) >= $item->quantity;
-        });
-
-        $newStatus = match (true) {
-            $allItemsReturned => 'returned',
-            $newRemaining <= 0 => 'completed',
-            default => 'pending',
-        };
-
-        // Mettre à jour la vente
-        $sale->update([
-            'subtotal' => $subtotal,
-            'tax_amount' => $newTaxAmount,
-            'discount_amount' => $newDiscountAmount,
-            'total' => $newTotal,
-            'remaining_amount' => $newRemaining,
-            'change_amount' => $newChange,
-            'status' => $newStatus,
-        ]);
-
-        // Marquer les articles retournés (bypass model events pour éviter de réappeler calculateTotals)
-        foreach ($sale->items as $item) {
-            $totalReturned = Unit::round($item->returns->sum('quantity_returned'));
-            DB::table('sale_items')
-                ->where('id', $item->id)
-                ->update(['is_returned' => $totalReturned >= $item->quantity]);
-        }
     }
 }

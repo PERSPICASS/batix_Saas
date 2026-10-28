@@ -30,6 +30,17 @@ class Customer extends Model
         'total_purchases' => 'decimal:2',
     ];
 
+    public function credits(): HasMany
+    {
+        return $this->hasMany(CustomerCredit::class);
+    }
+
+    /** L'avoir disponible : la somme de ses mouvements. */
+    public function creditBalance(): float
+    {
+        return round((float) $this->credits()->sum('amount'), 2);
+    }
+
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);

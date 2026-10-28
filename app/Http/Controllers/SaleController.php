@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Rules\QuantityForProduct;
+use App\Support\Unit;
 use App\Exports\SalesLinesExport;
 use App\Models\Customer;
 use App\Models\Preorder;
@@ -12,6 +13,9 @@ use App\Models\SaleItem;
 use App\Models\SaleReturn;
 use App\Services\ActivityLogger;
 use App\Services\SaleCreationService;
+use App\Services\SaleExchangeService;
+use App\Services\SaleReturnService;
+use App\Models\CustomerCredit;
 use App\Services\DocumentLink;
 use App\Services\DocumentPdf;
 use App\Services\StockMovementService;
@@ -176,7 +180,12 @@ class SaleController extends Controller
         // The POS ships its whole catalogue (local search + offline cache), so only
         // the columns Sales/Create.tsx reads: full models made it ~1 KB per product
         // (3 MB of HTML for 3 000 products), a heavy load on a mobile connection.
-        $customers = Customer::where('shop_id', $activeShopId)->get(['id', 'name']);
+        // Le solde d'avoir de chaque client : la caisse propose de l'utiliser dès qu'on
+        // choisit un client qui en a.
+        $customers = Customer::where('shop_id', $activeShopId)
+            ->withSum('credits as credit_balance', 'amount')
+            ->get(['id', 'name'])
+            ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'credit_balance' => round((float) $c->credit_balance, 2)]);
 
         $posColumns = ['id', 'parent_id', 'name', 'sku', 'image', 'selling_price', 'tax_rate', 'stock_quantity', 'unit', 'has_variations'];
 
@@ -208,6 +217,7 @@ class SaleController extends Controller
             'customers' => $customers,
             'products' => $products,
             'preorder' => $preorder,
+            'exchange' => $request->filled('exchange') ? $this->exchangePreview($request, (int) $activeShopId) : null,
         ]);
     }
 
@@ -226,6 +236,7 @@ class SaleController extends Controller
             'items.*.quantity'   => ['required', 'numeric', 'gt:0', new QuantityForProduct],
             'items.*.unit_price' => 'required|numeric|min:0',
             'preorder_id'        => 'nullable|exists:preorders,id',
+            'store_credit_used'  => 'nullable|numeric|min:0',
         ]);
 
         $shop = Auth::user()->accessibleShopsQuery()->findOrFail($validated['shop_id']);
@@ -261,6 +272,102 @@ class SaleController extends Controller
             'sale' => $sale->id,
             'print' => '1'
         ])->with('success', $msg);
+    }
+
+    /**
+     * Valide un échange : les retours sur la vente d'origine et la vente de remplacement,
+     * ensemble (cf. SaleExchangeService).
+     */
+    public function exchange(Request $request, string $code_user, Sale $sale)
+    {
+        $user = Auth::user();
+        if (!$user->hasPermission('returns', 'create')) {
+            abort(403, __('errors.permission', ['action' => __('errors.actions.create'), 'module' => 'Retours']));
+        }
+
+        $validated = $request->validate([
+            'shop_id'               => 'required|exists:shops,id',
+            'customer_id'           => 'nullable|exists:customers,id',
+            'payment_method'        => 'required|in:cash,card,transfer,check,mobile,multiple,credit',
+            'amount_paid'           => 'required|numeric|min:0',
+            'discount_amount'       => 'nullable|numeric|min:0',
+            'credit_due_date'       => 'nullable|date|after_or_equal:today',
+            'notes'                 => 'nullable|string',
+            'items'                 => 'required|array|min:1',
+            'items.*.product_id'    => 'required|exists:products,id',
+            'items.*.quantity'      => ['required', 'numeric', 'gt:0', new QuantityForProduct],
+            'items.*.unit_price'    => 'required|numeric|min:0',
+            'store_credit_used'     => 'nullable|numeric|min:0',
+            'store_credit_kept'     => 'nullable|numeric|min:0',
+            'lines'                 => 'required|array|min:1',
+            'lines.*.sale_item_id'  => 'required|integer',
+            'lines.*.quantity'      => 'required|numeric|gt:0',
+            'lines.*.reason'        => 'required|in:defective,wrong_item,not_satisfied,other',
+        ]);
+
+        $shop = $user->accessibleShopsQuery()->findOrFail($validated['shop_id']);
+        $lines = $validated['lines'];
+        unset($validated['lines']);
+        $validated['user_id'] = $user->id;
+
+        $newSale = SaleExchangeService::exchange($sale, $lines, $validated, $shop, $user);
+
+        ActivityLogger::created($newSale, $newSale->ticket_number);
+
+        return redirect()->route('sales.show', [
+            'code_user' => $code_user,
+            'sale' => $newSale->id,
+            'print' => '1',
+        ])->with('success', "Échange enregistré : la vente {$sale->ticket_number} a été reprise.");
+    }
+
+    /**
+     * Ce que la caisse doit afficher pour un échange : les articles rendus et l'avoir qu'ils
+     * valent, calculés par le serveur avec la même règle que le retour (rien n'est écrit).
+     */
+    private function exchangePreview(Request $request, int $activeShopId): ?array
+    {
+        $sale = Sale::with('items.returns', 'customer')->where('shop_id', $activeShopId)->find($request->integer('exchange'));
+        if (!$sale || in_array($sale->status, ['cancelled', 'returned'], true)) {
+            return null;
+        }
+
+        $lines = [];
+        $extra = [];
+        foreach ((array) $request->input('lines', []) as $line) {
+            $item = $sale->items->firstWhere('id', (int) ($line['sale_item_id'] ?? 0));
+            if (!$item) {
+                continue;
+            }
+            $available = Unit::round($item->quantity - $item->returns->sum('quantity_returned'));
+            $quantity = min(Unit::round((float) ($line['quantity'] ?? 0)), $available);
+            if ($quantity <= 0) {
+                continue;
+            }
+            $extra[$item->id] = $quantity;
+            $lines[] = [
+                'sale_item_id' => $item->id,
+                'product_name' => $item->product_name,
+                'quantity' => $quantity,
+                'reason' => in_array($line['reason'] ?? null, ['defective', 'wrong_item', 'not_satisfied', 'other'], true) ? $line['reason'] : 'other',
+            ];
+        }
+
+        if ($lines === []) {
+            return null;
+        }
+
+        $after = SaleReturnService::amountsAfter($sale, $extra);
+
+        return [
+            'sale_id' => $sale->id,
+            'ticket_number' => $sale->ticket_number,
+            'customer_id' => $sale->customer_id,
+            'customer_name' => $sale->customer?->name,
+            'lines' => $lines,
+            // Ce que la boutique devra rendre : la hausse de la « monnaie » de la vente.
+            'credit' => round($after['change_amount'] - (float) $sale->change_amount, 2),
+        ];
     }
 
     /**
@@ -328,7 +435,10 @@ class SaleController extends Controller
             abort(403);
         }
 
-        $sale->load(['shop', 'user', 'customer', 'items.product.parent', 'items.returns', 'returns']);
+        $sale->load([
+            'shop', 'user', 'customer', 'items.product.parent', 'items.returns', 'returns',
+            'exchangedSale:id,ticket_number', 'replacementSales:id,exchanged_sale_id,ticket_number',
+        ]);
 
         // Enrichir le product_name des anciens items de déclinaisons qui ne l'ont pas encore
         $sale->items->each(function ($item) {
@@ -396,6 +506,21 @@ class SaleController extends Controller
             // annule donc les retours d'abord, la vente ensuite.
             if ($sale->returns()->exists()) {
                 return "Cette vente a des retours : annulez-les d'abord, puis annulez la vente.";
+            }
+
+            // Une vente de remplacement a été payée par les articles rendus : l'annuler seule
+            // laisserait la vente d'origine reprise sans contrepartie.
+            if ($sale->exchanged_sale_id) {
+                return "Cette vente vient d'un échange : elle ne peut pas être annulée. Faites un retour sur cette vente si besoin.";
+            }
+
+            // L'avoir dépensé sur cette vente revient au client.
+            if ((float) $sale->store_credit_used > 0 && $sale->customer_id) {
+                CustomerCredit::create([
+                    'shop_id' => $sale->shop_id, 'customer_id' => $sale->customer_id, 'user_id' => Auth::id(),
+                    'sale_id' => $sale->id, 'amount' => (float) $sale->store_credit_used, 'type' => 'used_reversed',
+                    'notes' => "Annulation de la vente {$sale->ticket_number}",
+                ]);
             }
 
             foreach ($sale->items as $item) {
@@ -470,8 +595,25 @@ class SaleController extends Controller
                 $lockedProducts[$item->id] = $product;
             }
 
+            // L'avoir rendu au client à l'annulation est dépensé à nouveau.
+            $creditUsed = (float) $sale->store_credit_used;
+            if ($creditUsed > 0 && $sale->customer_id) {
+                $customer = Customer::whereKey($sale->customer_id)->lockForUpdate()->first();
+                if ($customer && $customer->creditBalance() < $creditUsed) {
+                    $errors[] = "l'avoir du client a été dépensé depuis l'annulation.";
+                }
+            }
+
             if (!empty($errors)) {
                 return implode(' ', $errors);
+            }
+
+            if ($creditUsed > 0 && $sale->customer_id) {
+                CustomerCredit::create([
+                    'shop_id' => $sale->shop_id, 'customer_id' => $sale->customer_id, 'user_id' => Auth::id(),
+                    'sale_id' => $sale->id, 'amount' => -$creditUsed, 'type' => 'used',
+                    'notes' => "Réactivation de la vente {$sale->ticket_number}",
+                ]);
             }
 
             foreach ($sale->items as $item) {

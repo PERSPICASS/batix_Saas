@@ -145,10 +145,34 @@
 <div class="rule"></div>
 
 <table>
+    @if ($sale->exchangedSale)
+        <tr>
+            <td colspan="2">{{ __('documents.exchange_of', ['number' => $sale->exchangedSale->ticket_number]) }}</td>
+        </tr>
+    @endif
     <tr>
         <td>{{ __('documents.amount_paid') }}</td>
         <td class="right">{{ number_format($sale->amount_paid, 2, ',', ' ') }} {{ $currencySymbol }}</td>
     </tr>
+    {{-- Ce qui a payé la vente sans être de l'argent remis : l'avoir d'un échange, l'avoir du client. --}}
+    @if ($sale->exchange_credit > 0)
+        <tr>
+            <td>{{ __('documents.exchange_credit') }}</td>
+            <td class="right">-{{ number_format($sale->exchange_credit, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+        </tr>
+    @endif
+    @if ($sale->store_credit_used > 0)
+        <tr>
+            <td>{{ __('documents.store_credit_used') }}</td>
+            <td class="right">-{{ number_format($sale->store_credit_used, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+        </tr>
+    @endif
+    @if ($sale->store_credit_kept > 0)
+        <tr>
+            <td class="bold">{{ __('documents.store_credit_kept') }}</td>
+            <td class="right bold">{{ number_format($sale->store_credit_kept, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+        </tr>
+    @endif
     @if ($sale->change_amount > 0)
         <tr>
             <td>{{ __('documents.change') }}</td>

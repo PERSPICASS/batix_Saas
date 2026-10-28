@@ -507,6 +507,8 @@ Route::prefix('{code_user}')
 
     // Routes pour les retours
     Route::post('ventes/{sale}/retours', [ReturnsController::class, 'store'])->name('returns.store')->middleware('permission:returns,create');
+    // L'échange : retours et vente de remplacement en une fois (SaleExchangeService).
+    Route::post('ventes/{sale}/echange', [SaleController::class, 'exchange'])->name('sales.exchange')->middleware('permission:sales,create');
     Route::delete('retours/{return}', [ReturnsController::class, 'destroy'])->name('returns.destroy')->middleware('permission:returns,delete');
 
     // Routes pour l'inventaire de retour

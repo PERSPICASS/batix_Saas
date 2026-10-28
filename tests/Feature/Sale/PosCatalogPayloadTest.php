@@ -38,7 +38,7 @@ class PosCatalogPayloadTest extends TestCase
                 ->where('products.0', fn ($p) => collect($p)->keys()->diff([...$expected, 'variations'])->isEmpty())
                 ->has('products.0.variations', 1)
                 ->where('products.0.variations.0', fn ($v) => collect($v)->keys()->diff($expected)->isEmpty())
-                ->where('customers.0', fn ($c) => collect($c)->keys()->sort()->values()->all() === ['id', 'name'])
+                ->where('customers.0', fn ($c) => collect($c)->keys()->sort()->values()->all() === ['credit_balance', 'id', 'name'])
             );
     }
 }

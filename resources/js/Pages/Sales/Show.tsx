@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import axios from 'axios';
-import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Printer, CreditCard, CheckCircle, Trash2, Download, RotateCcw, Repeat } from 'lucide-react';
 import WhatsAppShareButton from '@/Components/WhatsAppShareButton';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import { useRoute } from '@/utils/route';
@@ -70,6 +70,12 @@ interface Sale {
     remaining_amount: string;
     credit_due_date: string | null;
     notes: string | null;
+    // Échange : ce qui a payé la vente sans être de l'argent remis ce jour-là.
+    exchange_credit?: string;
+    store_credit_used?: string;
+    store_credit_kept?: string;
+    exchanged_sale?: { id: number; ticket_number: string } | null;
+    replacement_sales?: { id: number; ticket_number: string }[];
     shop: Shop;
     user: User;
     customer: Customer | null;
@@ -136,6 +142,17 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
     });
 
     const [showReturnModal, setShowReturnModal] = useState(false);
+    // Le même choix d'articles sert au retour et à l'échange ; seul l'aboutissement change.
+    const [modalMode, setModalMode] = useState<'return' | 'exchange'>('return');
+    const canExchange = !['cancelled', 'returned'].includes(displayedSale.status);
+    const openModal = (mode: 'return' | 'exchange') => {
+        if (!canCreateReturn) {
+            setShowReturnPermissionDenied(true);
+            return;
+        }
+        setModalMode(mode);
+        setShowReturnModal(true);
+    };
     const [selectedItemIds, setSelectedItemIds] = useState<Set<number>>(new Set());
     const [itemQuantities, setItemQuantities] = useState<{[key: number]: number}>({});
     const [showItemsDropdown, setShowItemsDropdown] = useState(false);
@@ -183,20 +200,35 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
 
     const handleCreateReturn = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('handleCreateReturn appelé', { selectedItemIds: Array.from(selectedItemIds) });
 
         if (selectedItemIds.size === 0) {
             setReturnMessage({ type: 'error', text: 'Sélectionnez au moins un article' });
             return;
         }
 
+        // L'échange n'écrit rien ici : la caisse s'ouvre avec les articles rendus, et tout
+        // est enregistré d'un coup quand le caissier valide la nouvelle vente.
+        if (modalMode === 'exchange') {
+            router.get(route('sales.create'), {
+                exchange: sale.id,
+                lines: Array.from(selectedItemIds).map((id) => ({
+                    sale_item_id: id,
+                    quantity: itemQuantities[id] || 1,
+                    reason: returnForm.data.reason,
+                })),
+            // Par défaut Inertia écrit `lines[][sale_item_id]=…&lines[][quantity]=…`, que PHP
+            // range dans trois lignes distinctes : la caisse ne recevait aucun article rendu.
+            }, { queryStringArrayFormat: 'indices' });
+            return;
+        }
+
         setReturnMessage(null);
         setIsSubmittingReturn(true);
-        console.log('Envoi des retours...');
         const itemsArray = Array.from(selectedItemIds);
         let index = 0;
         let successCount = 0;
         let refunded = 0;
+        let lastError = '';
 
         const submitNextItem = () => {
             if (index >= itemsArray.length) {
@@ -216,7 +248,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                 } else if (successCount === 0) {
                     setReturnMessage({
                         type: 'error',
-                        text: 'Erreur lors de la création des retours'
+                        text: lastError || 'Erreur lors de la création des retours'
                     });
                 } else {
                     setReturnMessage({
@@ -251,7 +283,10 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                 }
             })
             .catch(error => {
-                console.error('Erreur lors de l\'enregistrement du retour', error);
+                // Le motif du refus (avoir sans client, quantité dépassée…) était avalé :
+                // le caissier ne voyait qu'« Erreur ».
+                const errors = error?.response?.data?.errors;
+                lastError = (errors && (Object.values(errors)[0] as string[])?.[0]) || error?.response?.data?.message || lastError;
                 submitNextItem();
             });
         };
@@ -334,8 +369,16 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                         >
                             <Download className="size-4" /> {t.common.actions.download || "Télécharger"}
                         </a>
+                        {canExchange && (
+                            <button
+                                onClick={() => openModal('exchange')}
+                                className="inline-flex items-center gap-2 rounded-lg border border-emerald-400/40 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-600 hover:bg-emerald-400/20 dark:text-emerald-300"
+                            >
+                                <Repeat className="size-4" /> {t.sales.exchange.button}
+                            </button>
+                        )}
                         <button
-                            onClick={() => canCreateReturn ? setShowReturnModal(true) : setShowReturnPermissionDenied(true)}
+                            onClick={() => openModal('return')}
                             className="inline-flex items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300 hover:bg-amber-400/20"
                         >
                             <RotateCcw className="size-4" /> Retourner
@@ -396,6 +439,22 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                 {statusLabels[displayedSale.status] || displayedSale.status}
                             </span>
                         </div>
+                        {displayedSale.exchanged_sale && (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.exchange.originOf}:</span>
+                                <Link href={route('sales.show', { sale: displayedSale.exchanged_sale.id })} className="font-mono text-amber-600 underline dark:text-amber-300">
+                                    {displayedSale.exchanged_sale.ticket_number}
+                                </Link>
+                            </div>
+                        )}
+                        {(displayedSale.replacement_sales ?? []).map((replacement) => (
+                            <div key={replacement.id} className="flex justify-between text-sm">
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.exchange.replacedBy}:</span>
+                                <Link href={route('sales.show', { sale: replacement.id })} className="font-mono text-amber-600 underline dark:text-amber-300">
+                                    {replacement.ticket_number}
+                                </Link>
+                            </div>
+                        ))}
                     </div>
 
                     {/* Articles */}
@@ -505,6 +564,24 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                 <Currency amount={parseFloat(displayedSale.amount_paid)} />
                             </span>
                         </div>
+                        {parseFloat(displayedSale.exchange_credit ?? '0') > 0 && (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.exchange.credit}:</span>
+                                <span className="text-slate-900 dark:text-white">-<Currency amount={parseFloat(displayedSale.exchange_credit ?? '0')} /></span>
+                            </div>
+                        )}
+                        {parseFloat(displayedSale.store_credit_used ?? '0') > 0 && (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.storeCredit.used}:</span>
+                                <span className="text-slate-900 dark:text-white">-<Currency amount={parseFloat(displayedSale.store_credit_used ?? '0')} /></span>
+                            </div>
+                        )}
+                        {parseFloat(displayedSale.store_credit_kept ?? '0') > 0 && (
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.storeCredit.kept}:</span>
+                                <span className="font-semibold text-emerald-600 dark:text-emerald-400"><Currency amount={parseFloat(displayedSale.store_credit_kept ?? '0')} /></span>
+                            </div>
+                        )}
                         {parseFloat(displayedSale.change_amount) > 0 && (
                             <div className="monnaie-line flex justify-between text-sm">
                                 <span className="text-slate-500 dark:text-slate-400">Monnaie rendue:</span>
@@ -696,7 +773,12 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
             {showReturnModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="rounded-xl border border-white/10 bg-slate-900 p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Créer un retour</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                            {modalMode === 'exchange' ? t.sales.exchange.modalTitle : 'Créer un retour'}
+                        </h3>
+                        {modalMode === 'exchange' && (
+                            <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">{t.sales.exchange.modalHint}</p>
+                        )}
 
                         {/* Message de feedback */}
                         {returnMessage && (
@@ -820,7 +902,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                 return (
                                     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                                         <div className="flex items-center justify-between gap-3">
-                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Montant à rembourser</span>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{modalMode === 'exchange' ? t.sales.exchange.creditValue : 'Montant à rembourser'}</span>
                                             <span className="text-lg font-bold text-amber-600 dark:text-amber-300">
                                                 <Currency amount={refundPreview(displayedSale, lines)} />
                                             </span>
@@ -854,7 +936,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                             </div>
 
                             {/* Condition */}
-                            <div>
+                            <div className={modalMode === 'exchange' ? 'hidden' : ''}>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     État de l'article *
                                 </label>
@@ -869,7 +951,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                             </div>
 
                             {/* Méthode de remboursement */}
-                            <div>
+                            <div className={modalMode === 'exchange' ? 'hidden' : ''}>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Mode de remboursement *
                                 </label>
@@ -880,8 +962,10 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                 >
                                     <option value="cash">Espèces</option>
                                     <option value="card">Carte</option>
-                                    <option value="store_credit">Crédit magasin</option>
-                                    <option value="exchange">Échange</option>
+                                    {/* Un avoir s'attache à un client ; l'échange a son propre bouton. */}
+                                    <option value="store_credit" disabled={!displayedSale.customer}>
+                                        Avoir client{!displayedSale.customer ? ' (vente sans client)' : ''}
+                                    </option>
                                 </select>
                             </div>
 
@@ -912,7 +996,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                     disabled={isSubmittingReturn || selectedItemIds.size === 0}
                                     className="flex-1 rounded-xl bg-amber-500 py-2.5 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-50"
                                 >
-                                    {isSubmittingReturn ? 'Traitement...' : 'Créer le retour'}
+                                    {isSubmittingReturn ? 'Traitement...' : modalMode === 'exchange' ? t.sales.exchange.continue : 'Créer le retour'}
                                 </button>
                             </div>
                         </form>

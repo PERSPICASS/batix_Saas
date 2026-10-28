@@ -42,6 +42,10 @@ return [
 
     'amount_paid' => 'Payé',
     'change' => 'Rendu',
+    'exchange_of' => 'Échange de la vente :number',
+    'exchange_credit' => "Avoir de l'échange",
+    'store_credit_used' => 'Avoir utilisé',
+    'store_credit_kept' => 'Gardé en avoir',
     'returns' => 'Retours',
     'balance_due' => 'Reste dû',
 

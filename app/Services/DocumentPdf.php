@@ -63,7 +63,7 @@ class DocumentPdf
 
     public function forSale(Sale $sale): PdfWrapper
     {
-        $sale->loadMissing(['items.returns', 'items.product:id,unit', 'shop', 'customer', 'user']);
+        $sale->loadMissing(['items.returns', 'items.product:id,unit', 'shop', 'customer', 'user', 'exchangedSale:id,ticket_number']);
 
         return $this->inShopLocale($sale->shop, fn () => Pdf::loadView('pdf.ticket', [
             'sale' => $sale,
@@ -118,6 +118,9 @@ class DocumentPdf
         if ($sale->remaining_amount > 0) {
             $height += 30;
         }
+
+        // Échange et avoir : une ligne chacun.
+        $height += 12 * collect([$sale->exchanged_sale_id, $sale->exchange_credit > 0, $sale->store_credit_used > 0, $sale->store_credit_kept > 0])->filter()->count();
 
         if ($sale->status === 'cancelled') {
             $height += 25;
