@@ -617,16 +617,21 @@ class User extends Authenticatable
             return true;
         }
 
-        // Count all users belonging to the account owner's shops
-        $ownerId = $this->ownerId();
-        $currentUserCount = User::whereHas('shop', function ($query) use ($ownerId) {
-            $query->where('user_id', $ownerId);
-        })->count();
+        return $this->accountUserCount() < $plan->max_users;
+    }
 
-        // Also count the super_admin themselves
-        $currentUserCount += 1;
-        
-        return $currentUserCount < $plan->max_users;
+    /**
+     * Les utilisateurs du compte, propriétaire compris — une seule fois. Le propriétaire a
+     * lui aussi un `shop_id` : l'ancien « employés des boutiques + 1 » le comptait deux
+     * fois, si bien qu'un plan à 2 utilisateurs n'admettait aucun employé.
+     */
+    private function accountUserCount(): int
+    {
+        $ownerId = $this->ownerId();
+
+        return User::whereHas('shop', fn ($query) => $query->where('user_id', $ownerId))
+            ->where('id', '!=', $ownerId)
+            ->count() + 1;
     }
 
     /** Les collaborateurs rattachés à une boutique du compte, propriétaire non compris. */
@@ -679,12 +684,7 @@ class User extends Authenticatable
             return -1; // Unlimited
         }
 
-        $ownerId = $this->ownerId();
-        $currentUserCount = User::whereHas('shop', function ($query) use ($ownerId) {
-            $query->where('user_id', $ownerId);
-        })->count() + 1; // +1 for super_admin
-        
-        return max(0, $plan->max_users - $currentUserCount);
+        return max(0, $plan->max_users - $this->accountUserCount());
     }
 
     /**
@@ -840,9 +840,7 @@ class User extends Authenticatable
         $plan = $subscription->plan;
         $ownerId = $this->ownerId();
         $currentShops = Shop::where('user_id', $ownerId)->count();
-        $currentUsers = User::whereHas('shop', function ($query) use ($ownerId) {
-            $query->where('user_id', $ownerId);
-        })->count() + 1;
+        $currentUsers = $this->accountUserCount();
         $currentProducts = $shopId
             ? Product::where('shop_id', $shopId)->where('is_active', true)->count()
             : Product::whereIn('shop_id', $this->accessibleShopsQuery()->pluck('id'))->where('is_active', true)->count();
