@@ -970,7 +970,7 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                             </div>
 
                             {/* Notes */}
-                            <div>
+                            <div className={modalMode === 'exchange' ? 'hidden' : ''}>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Notes
                                 </label>
