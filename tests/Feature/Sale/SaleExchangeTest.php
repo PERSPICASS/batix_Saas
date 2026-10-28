@@ -259,4 +259,49 @@ class SaleExchangeTest extends TestCase
         $this->assertStringNotContainsString('-10 000,00', $html);
         $this->assertMatchesRegularExpression('/' . preg_quote(__('documents.amount_paid'), '/') . '<\/td>\s*<td class="right">0,00/', $html);
     }
+
+    public function test_revenue_by_payment_method_separates_what_credit_paid(): void
+    {
+        $original = $this->sell($this->drill, ['customer_id' => $this->customer->id]);
+        // Meuleuse 12 000 : 10 000 par l'avoir de l'échange, 2 000 en espèces.
+        $this->exchange($original, $this->grinder, ['amount_paid' => 2000]);
+
+        $methods = collect(app(\App\Services\ShopReport::class)->paymentMethods([$this->shop->id], now()->subDay(), now()->addDay()))
+            ->keyBy('method');
+
+        // La vente d'origine est entièrement retournée (0) ; la meuleuse : 2 000 espèces + 10 000 avoir.
+        $this->assertSame(2000.0, $methods['cash']['revenue']);
+        $this->assertSame(10000.0, $methods['store_credit']['revenue']);
+        $this->assertSame(12000.0, $methods->sum('revenue'), 'La somme reste le CA');
+    }
+
+    public function test_the_revenue_nets_out_and_the_kept_credit_is_a_debt(): void
+    {
+        $original = $this->sell($this->drill, ['customer_id' => $this->customer->id]);
+        // 10 000 encaissés ; marteau 6 000 ; 2 500 rendus, 1 500 gardés en avoir.
+        $this->exchange($original, $this->hammer, ['store_credit_kept' => 1500]);
+
+        $figures = app(\App\Services\ShopsOverview::class)->figures(collect([$this->shop]), now()->subDay(), now()->addDay())[$this->shop->id];
+
+        // CA 6 000 + dette envers le client 1 500 = 7 500 réellement gardés (10 000 - 2 500).
+        $this->assertSame(6000.0, (float) $figures['revenue']);
+        $this->assertSame(1500.0, $figures['customer_credit']);
+        // Le coût de la perceuse rendue ne pèse plus sur la marge : seul le marteau est vendu.
+        $this->assertEqualsWithDelta(6000 - (float) $this->hammer->purchase_price, $figures['gross_margin'], 0.01);
+    }
+
+    public function test_the_sales_export_shows_the_exchange(): void
+    {
+        $original = $this->sell($this->drill, ['customer_id' => $this->customer->id]);
+        $this->exchange($original, $this->hammer, ['store_credit_kept' => 1500]);
+        $new = $this->newSale();
+
+        $export = new \App\Exports\SalesLinesExport(Sale::whereKey($new->id)->select('id'));
+        $row = $export->map($export->query()->first());
+        $headings = $export->headings();
+
+        $this->assertSame($original->ticket_number, $row[array_search('Échange de (ticket)', $headings)]);
+        $this->assertSame(6000.0, $row[array_search('Réglé par avoir (vente)', $headings)]);
+        $this->assertSame(1500.0, $row[array_search('Gardé en avoir (vente)', $headings)]);
+    }
 }

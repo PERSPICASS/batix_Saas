@@ -262,14 +262,29 @@ class ShopReport
     }
 
     /** Les ventes au comptoir par mode de paiement (une facture n'en porte pas). */
+    /**
+     * Le CA par moyen de paiement. La part réglée par un avoir (échange ou avoir client) est
+     * comptée à part, sous « store_credit » : rangée sous le mode de la vente, une meuleuse
+     * payée par l'avoir d'un échange passait pour 12 000 encaissés en espèces.
+     */
     public function paymentMethods(array $ids, CarbonInterface $start, CarbonInterface $end): array
     {
-        return $this->sales($ids, $start, $end)
+        $byCredit = '(CASE WHEN exchange_credit + store_credit_used > total THEN total ELSE exchange_credit + store_credit_used END)';
+
+        $rows = $this->sales($ids, $start, $end)
             ->groupBy('payment_method')
-            ->selectRaw('payment_method, COUNT(*) AS n, SUM(total) AS revenue')
-            ->orderByDesc('revenue')
+            ->selectRaw("payment_method, SUM(CASE WHEN total > {$byCredit} THEN 1 ELSE 0 END) AS n, SUM(total - {$byCredit}) AS revenue")
             ->get()
-            ->map(fn ($row) => ['method' => $row->payment_method, 'count' => (int) $row->n, 'revenue' => round((float) $row->revenue, 2)])
+            ->map(fn ($row) => ['method' => $row->payment_method, 'count' => (int) $row->n, 'revenue' => round((float) $row->revenue, 2)]);
+
+        $credit = $this->sales($ids, $start, $end)
+            ->selectRaw("SUM(CASE WHEN {$byCredit} > 0 THEN 1 ELSE 0 END) AS n, SUM({$byCredit}) AS revenue")
+            ->first();
+
+        return $rows->push(['method' => 'store_credit', 'count' => (int) $credit?->n, 'revenue' => round((float) $credit?->revenue, 2)])
+            ->filter(fn ($row) => $row['revenue'] != 0 || $row['count'] > 0)
+            ->sortByDesc('revenue')
+            ->values()
             ->all();
     }
 

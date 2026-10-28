@@ -145,9 +145,13 @@ class ShopsOverview
 
         if ($withSnapshot) {
             $receivables = $this->receivables($ids);
+            // L'inverse des créances : ce que la boutique doit encore à ses clients en avoir.
+            $customerCredit = DB::table('customer_credits')->whereIn('shop_id', $ids)
+                ->groupBy('shop_id')->selectRaw('shop_id, SUM(amount) AS balance')->pluck('balance', 'shop_id');
 
             foreach ($shops as $shop) {
                 $figures[$shop->id]['receivables'] = $receivables[$shop->id] ?? 0.0;
+                $figures[$shop->id]['customer_credit'] = round((float) ($customerCredit[$shop->id] ?? 0), 2);
                 $figures[$shop->id] += array_intersect_key($shop->stockStats(), array_flip(['stock_value', 'low_stock']));
             }
         }

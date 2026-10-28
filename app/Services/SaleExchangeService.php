@@ -59,7 +59,17 @@ class SaleExchangeService
 
             foreach ($returns as $return) {
                 $return->update(['replacement_sale_id' => $sale->id]);
+                ActivityLogger::message('create', 'return_created', [
+                    'product' => $return->saleItem->product_name,
+                    'qty' => $return->quantity_returned,
+                ], $return);
             }
+
+            ActivityLogger::message('update', 'sale_exchanged', [
+                'original' => $original->ticket_number,
+                'replacement' => $sale->ticket_number,
+                'credit' => number_format($credit, 0, ',', ' '),
+            ], $original);
 
             return $sale;
         });

@@ -65,6 +65,7 @@ return [
         'preorder_to_sale' => 'Converted to sale: :product',
         'preorder_completed_by_sale' => 'Converted to sale: :ticket',
         'return_created' => 'Return recorded for :product (Qty: :qty)',
+        'sale_exchanged' => 'Exchange: sale :original taken back for :replacement (credit :credit)',
         'return_cancelled' => 'Return cancelled for :product',
         'shop_first_created' => 'First shop created: :name',
         'product_removed_from_shop' => 'Product removed from shop: :name',

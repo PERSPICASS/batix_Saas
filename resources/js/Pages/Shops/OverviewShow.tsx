@@ -135,6 +135,7 @@ export default function OverviewShow({ shop, report, period, filters }: Props) {
                     <Kpi label={o.columns.expenses} value={fmt(f.expenses)} />
                     <Kpi label={d.result} value={fmt(result)} trend={<Trend current={result} previous={previousResult} />} tone={result < 0 ? 'negative' : undefined} />
                     <Kpi label={o.columns.receivables} value={fmt(f.receivables ?? 0)} tone={(f.receivables ?? 0) > 0 ? 'warning' : undefined} />
+                    {(f.customer_credit ?? 0) > 0 && <Kpi label={o.columns.customerCredit} value={fmt(f.customer_credit ?? 0)} />}
                     <Kpi label={o.columns.stockValue} value={fmt(f.stock_value ?? 0)} />
                     <Kpi label={o.columns.lowStock} value={count(f.low_stock ?? 0)} tone={(f.low_stock ?? 0) > 0 ? 'warning' : undefined} />
                 </div>
