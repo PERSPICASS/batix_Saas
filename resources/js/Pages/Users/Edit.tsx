@@ -5,16 +5,18 @@ import { Shield, Check } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import InvitationActions from '@/Components/InvitationActions';
+import InvitationLinkModal from '@/Components/InvitationLinkModal';
 
 interface Shop { id: number; name: string }
 interface UserPermission { id: number; module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
-interface User { id: number; name: string; email: string; shop_id: number | null; role: string; is_active: boolean; permissions: UserPermission[] }
+interface User { id: number; name: string; email: string; shop_id: number | null; role: string; is_active: boolean; invitation_pending: boolean; permissions: UserPermission[] }
 interface ModulePermission { module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
-interface Props { user: User; shops: Shop[]; currentUserRole: string; assignableRoles: string[]; modules: Record<string, string> }
+interface Props { user: User; shops: Shop[]; currentUserRole: string; assignableRoles: string[]; modules: Record<string, string>; canSendLink: boolean }
 
 const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
-export default function UsersEdit({ user, shops, currentUserRole, assignableRoles, modules }: Props) {
+export default function UsersEdit({ user, shops, currentUserRole, assignableRoles, modules, canSendLink }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     const isSuperAdmin = currentUserRole === 'super_admin';
@@ -22,8 +24,6 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
-        password: '',
-        password_confirmation: '',
         shop_id: user.shop_id?.toString() || '',
         role: user.role,
         is_active: user.is_active,
@@ -61,6 +61,7 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
     return (
         <AuthenticatedLayout header={<h1 className="text-xl font-semibold text-slate-900 dark:text-white">{t.users.form.editTitle}</h1>}>
             <Head title={t.users.form.editTitle} />
+            <InvitationLinkModal />
 
             <div className="mx-auto max-w-4xl">
                 <form onSubmit={submit} className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
@@ -84,29 +85,15 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
                             </div>
                         </div>
 
-                        <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
-                            <p className="mb-3 text-sm font-medium text-blue-300">{t.users.form.passwordEditTitle}</p>
-                            <p className="mb-4 text-xs text-slate-400">{t.users.form.passwordEditHint}</p>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor="password" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.users.form.newPassword}</label>
-                                    <input type="password" id="password" value={data.password}
-                                        onChange={(e) => setData('password', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                        placeholder={t.common.form.passwordMin} />
-                                    <InputError message={errors.password} />
-                                </div>
-                                <div>
-                                    <label htmlFor="password_confirmation" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                                        {t.users.form.confirmNewPassword}
-                                    </label>
-                                    <input type="password" id="password_confirmation" value={data.password_confirmation}
-                                        onChange={(e) => setData('password_confirmation', e.target.value)}
-                                        className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
-                                    <InputError message={errors.password_confirmation} />
-                                </div>
+                        {canSendLink && (
+                            <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+                                <p className="mb-1 text-sm font-medium text-blue-700 dark:text-blue-300">{t.users.form.passwordTitle}</p>
+                                <p className="mb-3 text-xs text-slate-600 dark:text-slate-400">
+                                    {user.invitation_pending ? t.users.form.passwordPendingHint : t.users.form.passwordHint}
+                                </p>
+                                <InvitationActions userId={user.id} pending={user.invitation_pending} />
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     <div className="space-y-6 border-t border-gray-200 dark:border-white/10 pt-6">

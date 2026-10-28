@@ -177,4 +177,22 @@ return [
         'unsubscribed_title' => 'Résumé désactivé',
         'unsubscribed_body' => 'Vous ne recevrez plus le résumé quotidien des alertes. Vos boutiques restent consultables à tout moment.',
     ],
+
+    // Invitation d'un employé / nouveau mot de passe (UserInvitationMail)
+    'user_invitation' => [
+        'subject' => 'Votre accès à :shop sur :appName',
+        'reset_subject' => 'Choisissez un nouveau mot de passe pour :appName',
+        'title' => 'Bienvenue dans l\'équipe de :shop',
+        'greeting' => 'Bonjour :name,',
+        'body' => ':sender vous a ajouté à la boutique :shop. Choisissez votre mot de passe pour accéder à votre espace.',
+        'cta' => 'Créer mon mot de passe',
+        'login_hint' => 'Vous vous connecterez ensuite avec votre adresse :email et ce mot de passe.',
+        'expiry' => 'Ce lien est valable :days jours et ne fonctionne qu\'une fois.',
+        'footer' => 'Si vous ne vous attendiez pas à ce message, ignorez-le : aucun compte ne sera activé sans vous.',
+        'reset' => [
+            'title' => 'Nouveau mot de passe',
+            'body' => ':sender vous envoie un lien pour choisir un nouveau mot de passe pour la boutique :shop.',
+            'cta' => 'Choisir mon mot de passe',
+        ],
+    ],
 ];

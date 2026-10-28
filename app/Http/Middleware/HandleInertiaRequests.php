@@ -178,6 +178,9 @@ class HandleInertiaRequests extends Middleware
                 // Uniquement présent juste après la création d'un token API — affiché une seule fois,
                 // jamais persisté en clair (Sanctum ne stocke qu'un hash).
                 'plainTextToken' => fn () => $request->session()->get('plainTextToken'),
+                // Juste après l'émission d'un lien d'invitation : affiché une fois pour être
+                // copié ou envoyé par WhatsApp, jamais réaffichable (seule l'empreinte est gardée).
+                'invitationLink' => fn () => $request->session()->get('invitationLink'),
             ],
             // Détail ligne par ligne d'un import partiellement en échec (stock dépôt,
             // produits). Flashé par le contrôleur à côté du message d'avertissement,

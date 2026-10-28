@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Shop;
 use App\Models\User;
 use App\Models\UserPermission;
+use App\Services\UserInvitation;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -39,7 +41,8 @@ class UserController extends Controller
                 }
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(15)
+            ->through(fn (User $user) => $user->setAttribute('invitation_pending', $user->isInvitationPending()));
 
         return Inertia::render('Users/Index', [
             'users' => $users,
@@ -77,7 +80,6 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
             'shop_id' => self::shopIdRules($currentUser, $request->input('role')),
             'role' => ['required', Rule::in(self::assignableRoles($currentUser))],
             'is_active' => 'boolean',
@@ -97,11 +99,15 @@ class UserController extends Controller
             return back()->with('error', self::shopFullMessage($currentUser));
         }
 
-        $validated['password'] = Hash::make($validated['password']);
         $permissions = $validated['permissions'] ?? [];
         unset($validated['permissions']);
 
-        $user = User::create($validated);
+        // Le propriétaire ne choisit pas le mot de passe : l'employé le fait lui-même depuis
+        // son invitation. D'ici là, un aléa que personne ne connaît ferme le compte.
+        $user = User::create($validated + [
+            'password' => Hash::make(Str::random(64)),
+            'locale' => $currentUser->getLocale(),
+        ]);
 
         // Si l'admin n'a coché aucune permission dans le formulaire, on applique les
         // valeurs par défaut du rôle plutôt que de laisser l'utilisateur sans aucun
@@ -126,7 +132,7 @@ class UserController extends Controller
         // Log activity
         ActivityLogger::created($user, "{$user->name} ({$user->email})");
 
-        return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur créé avec succès.');
+        return $this->afterInvitation($user, $currentUser, "Utilisateur créé. Une invitation a été envoyée à {$user->email}.");
     }
 
     public function edit(string $code_user, User $user): Response
@@ -140,8 +146,12 @@ class UserController extends Controller
         $shops = $currentUser->accessibleShopsQuery()->select('id', 'name')->orderBy('name')->get();
         $user->load('permissions');
 
+        $user->setAttribute('invitation_pending', $user->isInvitationPending());
+
         return Inertia::render('Users/Edit', [
             'user' => $user,
+            // Pas pour soi-même ni pour un propriétaire : eux passent par « mot de passe oublié ».
+            'canSendLink' => $user->id !== $currentUser->id && $user->role !== 'super_admin',
             'shops' => $shops,
             'currentUserRole' => $currentUser->role,
             'assignableRoles' => self::assignableRoles($currentUser),
@@ -160,7 +170,6 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed',
             'shop_id' => self::shopIdRules($currentUser, $request->input('role')),
             'role' => ['required', Rule::in(self::assignableRoles($currentUser))],
             'is_active' => 'boolean',
@@ -186,12 +195,6 @@ class UserController extends Controller
             return back()->with('error', self::shopFullMessage($currentUser));
         }
 
-        if (!empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
-
         $permissions = $validated['permissions'] ?? [];
         unset($validated['permissions']);
 
@@ -214,6 +217,62 @@ class UserController extends Controller
         ActivityLogger::updated($user, [], "{$user->name} ({$user->email})");
 
         return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('success', 'Utilisateur mis à jour avec succès.');
+    }
+
+    /** Renvoie le lien par email (invitation, ou nouveau mot de passe). */
+    public function sendInvitation(string $code_user, User $user): RedirectResponse
+    {
+        $currentUser = auth()->user();
+        $this->authorizeLink($currentUser, $user);
+
+        $message = $user->isInvitationPending()
+            ? "Invitation renvoyée à {$user->email}."
+            : "Un lien pour choisir un nouveau mot de passe a été envoyé à {$user->email}.";
+
+        return $this->afterInvitation($user, $currentUser, $message);
+    }
+
+    /**
+     * Un nouveau lien, rendu au propriétaire pour qu'il le transmette lui-même (WhatsApp)
+     * — sans email. Le lien précédent cesse de fonctionner.
+     */
+    public function invitationLink(string $code_user, User $user): RedirectResponse
+    {
+        $this->authorizeLink(auth()->user(), $user);
+
+        return back()->with('invitationLink', [
+            'url' => UserInvitation::issue($user),
+            'name' => $user->name,
+            'pending' => $user->isInvitationPending(),
+        ]);
+    }
+
+    /**
+     * Envoie le lien par email et le rend aussi à la page : si l'email n'arrive pas, le
+     * propriétaire peut le transmettre autrement sans en émettre un autre.
+     */
+    private function afterInvitation(User $user, User $sentBy, string $success): RedirectResponse
+    {
+        try {
+            $url = UserInvitation::send($user, $sentBy);
+        } catch (\Throwable $e) {
+            report($e);
+            $url = UserInvitation::issue($user);
+            $success = "L'email n'a pas pu être envoyé à {$user->email}. Transmettez-lui le lien ci-dessous.";
+        }
+
+        return redirect()->route('users.index', ['code_user' => request()->route('code_user')])
+            ->with('success', $success)
+            ->with('invitationLink', ['url' => $url, 'name' => $user->name, 'pending' => $user->isInvitationPending()]);
+    }
+
+    /** Un employé du compte, jamais soi-même ni le propriétaire : eux ont « mot de passe oublié ». */
+    private function authorizeLink(User $currentUser, User $user): void
+    {
+        if ($user->id === $currentUser->id || $user->role === 'super_admin'
+            || !$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
+            abort(403);
+        }
     }
 
     public function destroy(string $code_user, User $user): RedirectResponse
