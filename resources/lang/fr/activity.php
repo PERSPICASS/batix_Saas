@@ -67,6 +67,7 @@ return [
         'preorder_to_sale' => 'Convertie en vente : :product',
         'preorder_completed_by_sale' => 'Convertie en vente : :ticket',
         'return_created' => 'Retour enregistré pour :product (Qté : :qty)',
+        'sale_exchanged' => 'Échange : vente :original reprise contre :replacement (avoir :credit)',
         'return_cancelled' => 'Retour annulé pour :product',
         'shop_first_created' => 'Première boutique créée : :name',
         'product_removed_from_shop' => 'Produit retiré de la boutique : :name',

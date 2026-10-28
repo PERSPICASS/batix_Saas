@@ -35,6 +35,7 @@ class SaleReturn extends Model
     protected $fillable = [
         'sale_id',
         'sale_item_id',
+        'replacement_sale_id',
         'user_id',
         'quantity_returned',
         'refund_amount',

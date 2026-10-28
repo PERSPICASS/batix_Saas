@@ -42,6 +42,10 @@ return [
 
     'amount_paid' => 'Payé',
     'change' => 'Rendu',
+    'exchange_of' => 'Échange de la vente :number',
+    'exchange_credit' => "Réglé par l'avoir de l'échange",
+    'store_credit_used' => 'Réglé par avoir client',
+    'store_credit_kept' => 'Gardé en avoir',
     'returns' => 'Retours',
     'balance_due' => 'Reste dû',
 
@@ -72,7 +76,7 @@ return [
         'generated' => 'Édité le :date',
         'indicator' => 'Indicateur',
         'indicators' => 'Indicateurs',
-        'methods' => ['cash' => 'Espèces', 'card' => 'Carte', 'transfer' => 'Virement', 'check' => 'Chèque', 'mobile' => 'Mobile money', 'multiple' => 'Multiple', 'credit' => 'Crédit'],
+        'methods' => ['cash' => 'Espèces', 'card' => 'Carte', 'transfer' => 'Virement', 'check' => 'Chèque', 'mobile' => 'Mobile money', 'multiple' => 'Multiple', 'credit' => 'Crédit', 'store_credit' => 'Avoir / échange'],
         'current' => 'Période',
         'previous' => 'Période précédente',
         'change' => 'Évolution',
@@ -84,6 +88,7 @@ return [
         'result' => 'Résultat (marge − dépenses)',
         'today' => 'À ce jour',
         'receivables' => 'Créances',
+        'customer_credit' => 'Avoirs clients à honorer',
         'stock_value' => 'Valeur du stock',
         'low_stock' => 'Produits en alerte de stock',
         'split' => 'Comptoir : :counter · Factures (avoirs déduits) : :invoices',

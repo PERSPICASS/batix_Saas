@@ -19,6 +19,7 @@ interface Customer {
     email: string | null;
     phone: string | null;
     total_purchases: string;
+    credit_balance: string | null;
     is_active: boolean;
     shop: Shop;
 }
@@ -76,6 +77,14 @@ export default function CustomersIndex({ customers }: Props) {
                             label: t.customers.columns.totalPurchases,
                             align: 'right',
                             render: (customer) => <Currency amount={parseFloat(customer.total_purchases)} />,
+                        },
+                        {
+                            key: 'credit_balance',
+                            label: t.customers.columns.credit,
+                            align: 'right',
+                            render: (customer) => parseFloat(customer.credit_balance ?? '0') > 0
+                                ? <span className="font-semibold text-emerald-600 dark:text-emerald-400"><Currency amount={parseFloat(customer.credit_balance ?? '0')} /></span>
+                                : <span className="text-slate-400">-</span>,
                         },
                         {
                             key: 'is_active',

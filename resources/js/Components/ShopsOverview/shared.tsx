@@ -29,6 +29,8 @@ export interface Figures {
     expenses: number;
     // Situation à ce jour : absents de la période de comparaison.
     receivables?: number;
+    /** Les avoirs que la boutique doit encore à ses clients. */
+    customer_credit?: number;
     stock_value?: number;
     low_stock?: number;
 }

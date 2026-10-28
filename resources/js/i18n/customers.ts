@@ -7,9 +7,16 @@ export const customers = {
             email: 'Email',
             phone: 'Téléphone',
             totalPurchases: 'Total achats',
+            credit: 'Avoir',
             status: 'Statut',
             shop: 'Boutique',
             actions: 'Actions',
+        },
+        credit: {
+            title: 'Avoir client',
+            balance: 'Solde disponible',
+            empty: "Aucun mouvement d'avoir.",
+            hint: "S'alimente quand un échange laisse un reste gardé en avoir, ou quand un retour est remboursé en avoir. Se dépense à la caisse.",
         },
         actions: {
             new: 'Nouveau client',
@@ -45,9 +52,16 @@ export const customers = {
             email: 'Email',
             phone: 'Phone',
             totalPurchases: 'Total purchases',
+            credit: 'Credit',
             status: 'Status',
             shop: 'Shop',
             actions: 'Actions',
+        },
+        credit: {
+            title: 'Customer credit',
+            balance: 'Available balance',
+            empty: 'No credit movement.',
+            hint: 'Grows when an exchange leaves a remainder kept as credit, or when a return is refunded as credit. Spent at the checkout.',
         },
         actions: {
             new: 'New customer',

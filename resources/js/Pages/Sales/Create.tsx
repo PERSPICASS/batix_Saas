@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { showToast } from '@/utils/toast';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useState } from 'react';
-import { Plus, Minus, Trash2, CreditCard, CloudOff, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, Minus, Trash2, CreditCard, CloudOff, RefreshCw, AlertTriangle, Repeat } from 'lucide-react';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import ProductImage from '@/Components/ProductImage';
 import QuantityInput from '@/Components/QuantityInput';
@@ -37,6 +37,7 @@ interface Shop {
 interface Customer {
     id: number;
     name: string;
+    credit_balance: number;
 }
 
 interface Product {
@@ -73,11 +74,22 @@ interface PreorderPrefill {
     remaining_balance: number;
 }
 
+/** Un échange en cours, calculé par le serveur (SaleController::exchangePreview). */
+interface ExchangePreview {
+    sale_id: number;
+    ticket_number: string;
+    customer_id: number | null;
+    customer_name: string | null;
+    lines: { sale_item_id: number; product_name: string; quantity: number; reason: string }[];
+    credit: number;
+}
+
 interface Props {
     shops: Shop[];
     customers: Customer[];
     products: Product[];
     preorder?: PreorderPrefill | null;
+    exchange?: ExchangePreview | null;
 }
 
 interface CartItem {
@@ -90,7 +102,7 @@ interface CartItem {
     subtotal: number;
 }
 
-export default function SalesCreate({ shops, customers, products, preorder }: Props) {
+export default function SalesCreate({ shops, customers, products, preorder, exchange }: Props) {
     const { t, locale } = useLocale();
     const route = useRoute();
     const { formatCurrency, currencySymbol } = useShopSettings();
@@ -109,12 +121,14 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
         refresh: refreshQueue,
     } = useOfflineSales(route('sales.sync-offline'));
     const [searchProduct, setSearchProduct] = useState('');
-    const [searchCustomer, setSearchCustomer] = useState('');
+    const [searchCustomer, setSearchCustomer] = useState(exchange?.customer_name ?? '');
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
     const { data, setData, post, processing, errors } = useForm({
         shop_id: activeShop?.id.toString() || shops[0]?.id.toString() || '',
-        customer_id: preorder?.customer_id ? preorder.customer_id.toString() : '',
+        customer_id: exchange?.customer_id
+            ? exchange.customer_id.toString()
+            : preorder?.customer_id ? preorder.customer_id.toString() : '',
         payment_method: 'cash' as string,
         amount_paid: preorder && preorder.deposit_amount > 0 ? preorder.deposit_amount.toString() : '',
         discount_amount: '0',
@@ -124,7 +138,14 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
             : '',
         items: [] as any[],
         preorder_id: preorder?.id.toString() || '',
+        store_credit_used: '0',
+        store_credit_kept: '0',
+        lines: [] as { sale_item_id: number; quantity: number; reason: string }[],
     });
+
+    // Avoir : celui de l'échange en cours, et celui que le client a déjà sur son compte.
+    const [creditInput, setCreditInput] = useState('');
+    const [keepInput, setKeepInput] = useState('');
 
     // Pré-remplir le panier et le client avec les infos de la pré-commande, une seule fois au montage
     useEffect(() => {
@@ -248,18 +269,38 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
 
     const isCredit = () => data.payment_method === 'credit';
 
-    const calculateRemaining = () => {
-        const total = calculateTotal();
-        const amountPaid = parseFloat(data.amount_paid || '0');
-        return Math.max(0, total - amountPaid);
+    const selectedCustomer = customers.find((c) => c.id.toString() === data.customer_id) ?? null;
+    const exchangeCredit = exchange?.credit ?? 0;
+
+    // Même règle que SaleCreationService : jamais plus que le solde, ni que ce que la
+    // vente coûte encore après l'avoir de l'échange.
+    const storeCreditUsed = () => {
+        if (!selectedCustomer || selectedCustomer.credit_balance <= 0) return 0;
+        const wanted = parseFloat(creditInput || '0') || 0;
+        return Math.max(0, Math.min(wanted, selectedCustomer.credit_balance, Math.max(0, calculateTotal() - exchangeCredit)));
     };
 
-    const calculateChange = () => {
-        if (isCredit()) return 0;
+    // Ce qui reste à régler une fois les avoirs déduits ; négatif quand la boutique doit rendre.
+    const amountDue = () => Math.round((calculateTotal() - exchangeCredit - storeCreditUsed()) * 100) / 100;
+
+    const calculateRemaining = () => {
         const amountPaid = parseFloat(data.amount_paid || '0');
-        const total = calculateTotal();
-        return Math.max(0, amountPaid - total);
+        return Math.max(0, amountDue() - amountPaid);
     };
+
+    // Ce que la boutique doit au client : ce qu'il a donné en trop, plus le surplus d'avoir.
+    const owedToCustomer = () => {
+        if (isCredit()) return Math.max(0, -amountDue());
+        const amountPaid = parseFloat(data.amount_paid || '0');
+        return Math.max(0, amountPaid - Math.max(0, amountDue())) + Math.max(0, -amountDue());
+    };
+
+    const keptAsCredit = () => {
+        if (!exchange || !selectedCustomer) return 0;
+        return Math.max(0, Math.min(parseFloat(keepInput || '0') || 0, owedToCustomer()));
+    };
+
+    const calculateChange = () => Math.max(0, owedToCustomer() - keptAsCredit());
 
     const onSubmit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -280,20 +321,36 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
             unit_price: item.unit_price, // Envoyer le prix négocié
         }));
 
+        const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+        // Un échange ou un avoir s'appuient sur l'état du serveur (retours, solde) : hors
+        // ligne, on refuse franchement plutôt que de mettre en file une vente incohérente.
+        if (offline && (exchange || storeCreditUsed() > 0)) {
+            showToast('error', exchange ? t.sales.exchange.offline : t.sales.storeCredit.offline);
+            return;
+        }
+
         // Hors ligne : la vente part dans la file locale plutôt que dans le vide. Elle
         // sera rejouée au retour du réseau, avec son heure réelle et un identifiant
         // stable qui empêche tout double enregistrement.
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        if (offline) {
             queueOffline(items);
             return;
         }
 
         // Utiliser transform pour ajouter les items au moment de l'envoi
-        post(route('sales.store'), {
+        post(exchange ? route('sales.exchange', { sale: exchange.sale_id }) : route('sales.store'), {
             preserveScroll: true,
             onBefore: () => {
                 data.items = items;
                 data.discount_amount = computeTotals().discount.toString();
+                data.store_credit_used = storeCreditUsed().toString();
+                data.store_credit_kept = keptAsCredit().toString();
+                // Réglée entièrement par les avoirs, la vente n'attend aucun montant saisi.
+                if (data.amount_paid === '' && amountDue() <= 0) data.amount_paid = '0';
+                if (exchange) {
+                    data.lines = exchange.lines.map((l) => ({ sale_item_id: l.sale_item_id, quantity: l.quantity, reason: l.reason }));
+                }
                 return true;
             },
         });
@@ -403,6 +460,28 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                             </li>
                         ))}
                     </ul>
+                </div>
+            )}
+
+            {exchange && (
+                <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-400/30 dark:bg-amber-500/10">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                            <Repeat className="size-4" />
+                            {t.sales.exchange.banner(exchange.ticket_number)}
+                        </p>
+                        <Link href={route('sales.show', { sale: exchange.sale_id })} className="text-xs text-amber-800 underline dark:text-amber-300">
+                            {t.sales.exchange.changeItems}
+                        </Link>
+                    </div>
+                    <ul className="mt-2 space-y-0.5 text-sm text-slate-700 dark:text-slate-200">
+                        {exchange.lines.map((line) => (
+                            <li key={line.sale_item_id}>{line.product_name} × {line.quantity}</li>
+                        ))}
+                    </ul>
+                    <p className="mt-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
+                        {t.sales.exchange.credit} : <Currency amount={exchangeCredit} />
+                    </p>
                 </div>
             )}
 
@@ -642,6 +721,24 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                     <span>{t.common.form.total}</span>
                                     <span><Currency amount={calculateTotal()} /></span>
                                 </div>
+                                {exchangeCredit > 0 && (
+                                    <div className="flex justify-between text-sm text-emerald-600 dark:text-emerald-400">
+                                        <span>{t.sales.exchange.credit}</span>
+                                        <span>-<Currency amount={exchangeCredit} /></span>
+                                    </div>
+                                )}
+                                {storeCreditUsed() > 0 && (
+                                    <div className="flex justify-between text-sm text-emerald-600 dark:text-emerald-400">
+                                        <span>{t.sales.storeCredit.used}</span>
+                                        <span>-<Currency amount={storeCreditUsed()} /></span>
+                                    </div>
+                                )}
+                                {(exchangeCredit > 0 || storeCreditUsed() > 0) && (
+                                    <div className="flex justify-between text-base font-bold text-slate-900 dark:text-white">
+                                        <span>{amountDue() >= 0 ? t.sales.exchange.toPay : t.sales.exchange.owed}</span>
+                                        <span><Currency amount={Math.abs(amountDue())} /></span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -720,6 +817,35 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                 </div>
                             </label>
 
+                            {/* L'avoir du client choisi : proposé dès qu'il en a un. */}
+                            {selectedCustomer && selectedCustomer.credit_balance > 0 && (
+                                <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm dark:border-emerald-400/30 dark:bg-emerald-500/10">
+                                    <p className="font-medium text-emerald-800 dark:text-emerald-300">
+                                        {t.sales.storeCredit.available(formatCurrency(selectedCustomer.credit_balance))}
+                                    </p>
+                                    <div className="mt-2 flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="any"
+                                            inputMode="decimal"
+                                            value={creditInput}
+                                            placeholder="0"
+                                            onChange={(e) => setCreditInput(e.target.value)}
+                                            className="w-32 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setCreditInput(String(Math.min(selectedCustomer.credit_balance, Math.max(0, calculateTotal() - exchangeCredit))))}
+                                            className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-500"
+                                        >
+                                            {t.sales.storeCredit.use}
+                                        </button>
+                                    </div>
+                                    {errors.store_credit_used && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.store_credit_used}</p>}
+                                </div>
+                            )}
+
                             <label className="block space-y-1 text-sm text-slate-700 dark:text-slate-200">
                                 <span>{t.sales.form.paymentMethod} *</span>
                                 <select
@@ -743,7 +869,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                     type="number"
                                     step="0.01"
                                     min="0"
-                                    max={isCredit() ? calculateTotal() : undefined}
+                                    max={isCredit() ? Math.max(0, amountDue()) : undefined}
                                     value={data.amount_paid}
                                     onChange={(e) => setData('amount_paid', e.target.value)}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
@@ -791,13 +917,48 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                 </label>
                             )}
 
+                            {/* Échange moins cher : le surplus se rend en espèces, se garde en avoir,
+                                ou se partage entre les deux. */}
+                            {exchange && owedToCustomer() > 0 && (
+                                <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 space-y-2 text-sm dark:border-emerald-400/30 dark:bg-emerald-500/10">
+                                    <div className="flex justify-between font-medium text-slate-700 dark:text-slate-200">
+                                        <span>{t.sales.exchange.owed}</span>
+                                        <span><Currency amount={owedToCustomer()} /></span>
+                                    </div>
+                                    <label className="flex items-center justify-between gap-3">
+                                        <span className="text-slate-600 dark:text-slate-300">{t.sales.exchange.keepAsCredit}</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max={owedToCustomer()}
+                                            step="any"
+                                            inputMode="decimal"
+                                            value={keepInput}
+                                            placeholder="0"
+                                            disabled={!selectedCustomer}
+                                            onChange={(e) => setKeepInput(e.target.value)}
+                                            className="w-32 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm text-slate-900 disabled:opacity-50 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
+                                        />
+                                    </label>
+                                    {!selectedCustomer && <p className="text-xs text-slate-500 dark:text-slate-400">{t.sales.exchange.keepNeedsCustomer}</p>}
+                                    {errors.store_credit_kept && <p className="text-xs text-red-600 dark:text-red-400">{errors.store_credit_kept}</p>}
+                                </div>
+                            )}
+
                             {/* Monnaie rendue — vente comptant */}
-                            {!isCredit() && data.amount_paid && (
+                            {!isCredit() && (data.amount_paid || calculateChange() > 0) && (
                                 <div className="rounded-lg bg-emerald-50 dark:bg-emerald-500/20 p-3 text-center">
-                                    <p className="text-sm text-slate-600 dark:text-slate-300">{t.sales.form.changeDisplay}</p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300">{exchange ? t.sales.exchange.cashBack : t.sales.form.changeDisplay}</p>
                                     <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-300">
                                         <Currency amount={calculateChange()} />
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Refus de l'échange : vente déjà retournée, quantité dépassée… */}
+                            {(errors.lines || (errors as Record<string, string>).quantity_returned) && (
+                                <div className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-600 dark:border-rose-400/30 dark:bg-rose-500/15 dark:text-rose-300">
+                                    {errors.lines || (errors as Record<string, string>).quantity_returned}
                                 </div>
                             )}
 
@@ -819,7 +980,7 @@ export default function SalesCreate({ shops, customers, products, preorder }: Pr
                                     disabled={processing || cart.length === 0}
                                     className="flex-1 rounded-lg bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-amber-200 disabled:opacity-50"
                                 >
-                                    {processing ? t.common.actions.processing : t.sales.form.validateSale}
+                                    {processing ? t.common.actions.processing : exchange ? t.sales.exchange.validate : t.sales.form.validateSale}
                                 </button>
                             </div>
                         </div>

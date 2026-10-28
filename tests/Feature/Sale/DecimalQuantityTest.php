@@ -137,7 +137,7 @@ class DecimalQuantityTest extends TestCase
         $this->assertTrue((bool) $item->fresh()->is_returned);
         $this->assertSame('returned', $sale->fresh()->status);
 
-        $return(0.001)->assertSessionHasErrors('quantity_returned');
+        $return(0.001)->assertJsonValidationErrors('quantity_returned');
     }
 
     public function test_a_fractional_entry_is_weighted_into_the_average_cost(): void

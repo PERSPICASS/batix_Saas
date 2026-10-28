@@ -49,7 +49,7 @@ class SalesLinesExport implements FromQuery, WithHeadings, WithMapping, WithColu
             ->select('sale_items.*')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->whereIn('sale_items.sale_id', $this->saleIds)
-            ->with(['sale' => fn ($q) => $q->withSum('items as items_total', 'total')->with(['shop', 'customer'])])
+            ->with(['sale' => fn ($q) => $q->withSum('items as items_total', 'total')->with(['shop', 'customer', 'exchangedSale:id,ticket_number'])])
             ->orderBy('sales.sale_date')
             ->orderBy('sale_items.sale_id')
             ->orderBy('sale_items.id');
@@ -60,6 +60,9 @@ class SalesLinesExport implements FromQuery, WithHeadings, WithMapping, WithColu
         return [
             'Date', 'N° ticket', 'Boutique', 'Client', 'Article', 'SKU', 'Quantité', 'Prix unitaire',
             'Remise', 'Montant payé', 'Devise', 'Mode de paiement', 'Reste dû (vente)', 'Retourné',
+            // L'échange et l'avoir, au niveau de la vente comme « Reste dû » : la part d'une
+            // vente réglée par avoir n'est pas de l'argent encaissé ce jour-là.
+            'Échange de (ticket)', 'Réglé par avoir (vente)', 'Gardé en avoir (vente)',
         ];
     }
 
@@ -87,6 +90,9 @@ class SalesLinesExport implements FromQuery, WithHeadings, WithMapping, WithColu
             self::PAYMENT_METHODS[$sale->payment_method] ?? $sale->payment_method,
             (float) $sale->remaining_amount,
             $item->is_returned ? 'Oui' : 'Non',
+            $sale->exchangedSale?->ticket_number,
+            round(min((float) $sale->total, (float) $sale->exchange_credit + (float) $sale->store_credit_used), 2),
+            (float) $sale->store_credit_kept,
         ];
     }
 
@@ -98,6 +104,8 @@ class SalesLinesExport implements FromQuery, WithHeadings, WithMapping, WithColu
             'I' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'J' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'P' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'Q' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 

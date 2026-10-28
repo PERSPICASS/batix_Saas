@@ -41,6 +41,10 @@ return [
 
     'amount_paid' => 'Paid',
     'change' => 'Change',
+    'exchange_of' => 'Exchange of sale :number',
+    'exchange_credit' => "Paid by exchange credit",
+    'store_credit_used' => 'Paid by customer credit',
+    'store_credit_kept' => 'Kept as credit',
     'returns' => 'Returns',
     'balance_due' => 'Balance due',
 
@@ -71,7 +75,7 @@ return [
         'generated' => 'Issued on :date',
         'indicator' => 'Indicator',
         'indicators' => 'Indicators',
-        'methods' => ['cash' => 'Cash', 'card' => 'Card', 'transfer' => 'Transfer', 'check' => 'Cheque', 'mobile' => 'Mobile money', 'multiple' => 'Multiple', 'credit' => 'Credit'],
+        'methods' => ['cash' => 'Cash', 'card' => 'Card', 'transfer' => 'Transfer', 'check' => 'Cheque', 'mobile' => 'Mobile money', 'multiple' => 'Multiple', 'credit' => 'Credit', 'store_credit' => 'Credit / exchange'],
         'current' => 'Period',
         'previous' => 'Previous period',
         'change' => 'Change',
@@ -83,6 +87,7 @@ return [
         'result' => 'Result (margin − expenses)',
         'today' => 'As of today',
         'receivables' => 'Receivables',
+        'customer_credit' => 'Customer credit owed',
         'stock_value' => 'Stock value',
         'low_stock' => 'Products on stock alert',
         'split' => 'Counter: :counter · Invoices (credit notes deducted): :invoices',

@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
+import Currency from '@/Components/Currency';
 import { FormEventHandler } from 'react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
@@ -12,9 +13,10 @@ interface Customer {
     phone: string; address: string; notes: string; is_active: boolean;
     ncc?: string | null; fne_template?: FneTemplate | null;
 }
-interface Props { customer: Customer; shops: Shop[] }
+interface CreditMovement { id: number; amount: number; type: string; notes: string | null; date: string; sale: { id: number; ticket_number: string } | null }
+interface Props { customer: Customer; shops: Shop[]; credit: { balance: number; movements: CreditMovement[] } }
 
-export default function CustomersEdit({ customer, shops }: Props) {
+export default function CustomersEdit({ customer, shops, credit }: Props) {
     const { t } = useLocale();
     const route = useRoute();
 
@@ -121,6 +123,38 @@ export default function CustomersEdit({ customer, shops }: Props) {
                     </button>
                 </div>
             </form>
+
+            <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.customers.credit.title}</h2>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                        {t.customers.credit.balance} :{' '}
+                        <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400"><Currency amount={credit.balance} /></span>
+                    </p>
+                </div>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.customers.credit.hint}</p>
+                {credit.movements.length === 0 ? (
+                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">{t.customers.credit.empty}</p>
+                ) : (
+                    <ul className="mt-4 divide-y divide-gray-100 text-sm dark:divide-white/5">
+                        {credit.movements.map((m) => (
+                            <li key={m.id} className="flex items-center justify-between gap-3 py-2">
+                                <div className="min-w-0">
+                                    <p className="truncate text-slate-700 dark:text-slate-200">
+                                        {m.sale ? (
+                                            <Link href={route('sales.show', { sale: m.sale.id })} className="underline">{m.notes ?? m.sale.ticket_number}</Link>
+                                        ) : m.notes}
+                                    </p>
+                                    <p className="text-xs text-slate-500">{new Date(m.date).toLocaleString()}</p>
+                                </div>
+                                <span className={`shrink-0 font-semibold ${m.amount >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                    {m.amount >= 0 ? '+' : '-'}<Currency amount={Math.abs(m.amount)} />
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
         </AuthenticatedLayout>
     );
 }

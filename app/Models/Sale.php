@@ -18,6 +18,7 @@ class Sale extends Model
         'shop_id',
         'user_id',
         'customer_id',
+        'exchanged_sale_id',
         'ticket_number',
         // Généré par le client hors ligne : rend le rejeu d'une vente en file d'attente
         // idempotent. Voir la migration add_client_uuid_to_sales_table.
@@ -31,6 +32,9 @@ class Sale extends Model
         'original_discount_amount',
         'total',
         'amount_paid',
+        'exchange_credit',
+        'store_credit_used',
+        'store_credit_kept',
         'change_amount',
         'remaining_amount',
         'credit_due_date',
@@ -46,6 +50,9 @@ class Sale extends Model
         'original_discount_amount' => 'decimal:2',
         'total' => 'decimal:2',
         'amount_paid' => 'decimal:2',
+        'exchange_credit' => 'decimal:2',
+        'store_credit_used' => 'decimal:2',
+        'store_credit_kept' => 'decimal:2',
         'change_amount' => 'decimal:2',
         'remaining_amount' => 'decimal:2',
     ];
@@ -97,6 +104,18 @@ class Sale extends Model
         return $this->hasMany(SaleItem::class);
     }
 
+    /** La vente d'origine, quand celle-ci est le remplacement d'un échange. */
+    public function exchangedSale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class, 'exchanged_sale_id');
+    }
+
+    /** Les ventes de remplacement nées d'un échange sur celle-ci. */
+    public function replacementSales(): HasMany
+    {
+        return $this->hasMany(Sale::class, 'exchanged_sale_id');
+    }
+
     public function returns(): HasMany
     {
         return $this->hasMany(SaleReturn::class);
@@ -123,7 +142,8 @@ class Sale extends Model
         $discount = GlobalDiscount::effective((float) $this->subtotal, (float) $this->discount_amount);
         $this->tax_amount = round($this->items->sum('tax_amount') * GlobalDiscount::ratio((float) $this->subtotal, $discount), 2);
         $this->total = round($this->subtotal - $discount + $this->tax_amount, 2);
-        $this->change_amount = max(0, $this->amount_paid - $this->total);
+        // La part gardée en avoir lors d'un échange n'est pas rendue en espèces.
+        $this->change_amount = max(0, $this->amount_paid - $this->total - (float) $this->store_credit_kept);
         $this->save();
     }
 

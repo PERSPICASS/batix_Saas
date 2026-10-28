@@ -376,6 +376,7 @@ class AnalyticsController extends Controller
             'check' => 'Chèque',
             'multiple' => 'Multiple',
             'credit' => 'Crédit',
+            'store_credit' => 'Avoir / échange',
         ];
 
         return $methods->map(fn ($method) => [

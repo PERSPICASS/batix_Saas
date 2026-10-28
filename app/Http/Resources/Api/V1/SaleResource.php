@@ -24,7 +24,12 @@ class SaleResource extends JsonResource
             'tax_amount' => (float) $this->tax_amount,
             'discount_amount' => (float) $this->discount_amount,
             'total' => (float) $this->total,
+            // Avoirs compris : ce qui a réglé la vente, pas l'argent encaissé ce jour-là.
             'amount_paid' => (float) $this->amount_paid,
+            'exchange_credit' => (float) $this->exchange_credit,
+            'store_credit_used' => (float) $this->store_credit_used,
+            'store_credit_kept' => (float) $this->store_credit_kept,
+            'exchanged_sale_id' => $this->exchanged_sale_id,
             'remaining_amount' => (float) $this->remaining_amount,
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [
                 'product_id' => $item->product_id,

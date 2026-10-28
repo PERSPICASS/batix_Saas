@@ -97,6 +97,7 @@
 <table class="grid" style="margin-top: 8pt;">
     <tr><th colspan="2">{{ __('documents.shop_report.today') }}</th></tr>
     <tr><td>{{ __('documents.shop_report.receivables') }}</td><td class="right">{{ $money($f['receivables'] ?? 0) }}</td></tr>
+    <tr><td>{{ __('documents.shop_report.customer_credit') }}</td><td class="right">{{ $money($f['customer_credit'] ?? 0) }}</td></tr>
     <tr><td>{{ __('documents.shop_report.stock_value') }}</td><td class="right">{{ $money($f['stock_value'] ?? 0) }}</td></tr>
     <tr><td>{{ __('documents.shop_report.low_stock') }}</td><td class="right">{{ $count($f['low_stock'] ?? 0) }}</td></tr>
 </table>
