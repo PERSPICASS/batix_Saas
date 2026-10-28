@@ -17,9 +17,9 @@ class AnalyticsController extends Controller
 {
     public function index(Request $request)
     {
-        // Rediriger les caissiers vers la page de ventes (pas accès aux analytics)
+        // Rediriger les caissiers vers la liste des ventes (pas accès aux analytics)
         if ($this->isCashier($request)) {
-            return redirect()->route('sales.create', ['code_user' => $request->route('code_user')]);
+            return redirect()->route('sales.index', ['code_user' => $request->route('code_user')]);
         }
 
         $data = $this->analyticsData($request);

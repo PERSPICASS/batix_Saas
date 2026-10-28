@@ -17,9 +17,9 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // Rediriger les caissiers vers la page de ventes
+        // Les caissiers arrivent sur la liste des ventes ; la caisse est à un clic.
         if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
-            return redirect()->route('sales.create', ['code_user' => $request->route('code_user')]);
+            return redirect()->route('sales.index', ['code_user' => $request->route('code_user')]);
         }
         
         $shops = Shop::where('user_id', $user->id)->get();
