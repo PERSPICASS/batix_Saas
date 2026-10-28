@@ -253,7 +253,10 @@ class SaleExchangeTest extends TestCase
         ])->render();
 
         $this->assertStringContainsString($original->ticket_number, $html);
-        $this->assertStringContainsString(__('documents.exchange_credit'), $html);
-        $this->assertStringContainsString(__('documents.store_credit_kept'), $html);
+        $this->assertStringContainsString(e(__('documents.exchange_credit')), $html);
+        $this->assertStringContainsString(e(__('documents.store_credit_kept')), $html);
+        // L'avoir a payé la vente : il s'affiche en positif, et l'argent remis à part (rien ici).
+        $this->assertStringNotContainsString('-10 000,00', $html);
+        $this->assertMatchesRegularExpression('/' . preg_quote(__('documents.amount_paid'), '/') . '<\/td>\s*<td class="right">0,00/', $html);
     }
 }

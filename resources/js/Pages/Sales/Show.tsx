@@ -558,24 +558,27 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                 {paymentMethodLabels[displayedSale.payment_method] || displayedSale.payment_method}
                             </span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-500 dark:text-slate-400">Montant payé:</span>
-                            <span className="text-slate-900 dark:text-white">
-                                <Currency amount={parseFloat(displayedSale.amount_paid)} />
-                            </span>
-                        </div>
+                        {/* Comment la vente a été réglée : les avoirs d'abord, puis l'argent réellement
+                            remis. `amount_paid` additionne les deux ; affiché tel quel suivi de
+                            l'avoir en négatif, il laissait croire à une soustraction. */}
                         {parseFloat(displayedSale.exchange_credit ?? '0') > 0 && (
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-500 dark:text-slate-400">{t.sales.exchange.credit}:</span>
-                                <span className="text-slate-900 dark:text-white">-<Currency amount={parseFloat(displayedSale.exchange_credit ?? '0')} /></span>
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.exchange.paidByCredit}:</span>
+                                <span className="text-slate-900 dark:text-white"><Currency amount={parseFloat(displayedSale.exchange_credit ?? '0')} /></span>
                             </div>
                         )}
                         {parseFloat(displayedSale.store_credit_used ?? '0') > 0 && (
                             <div className="flex justify-between text-sm">
-                                <span className="text-slate-500 dark:text-slate-400">{t.sales.storeCredit.used}:</span>
-                                <span className="text-slate-900 dark:text-white">-<Currency amount={parseFloat(displayedSale.store_credit_used ?? '0')} /></span>
+                                <span className="text-slate-500 dark:text-slate-400">{t.sales.storeCredit.paidBy}:</span>
+                                <span className="text-slate-900 dark:text-white"><Currency amount={parseFloat(displayedSale.store_credit_used ?? '0')} /></span>
                             </div>
                         )}
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-500 dark:text-slate-400">Montant payé:</span>
+                            <span className="text-slate-900 dark:text-white">
+                                <Currency amount={Math.max(0, parseFloat(displayedSale.amount_paid) - parseFloat(displayedSale.exchange_credit ?? '0') - parseFloat(displayedSale.store_credit_used ?? '0'))} />
+                            </span>
+                        </div>
                         {parseFloat(displayedSale.store_credit_kept ?? '0') > 0 && (
                             <div className="flex justify-between text-sm">
                                 <span className="text-slate-500 dark:text-slate-400">{t.sales.storeCredit.kept}:</span>

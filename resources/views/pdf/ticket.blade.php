@@ -150,23 +150,26 @@
             <td colspan="2">{{ __('documents.exchange_of', ['number' => $sale->exchangedSale->ticket_number]) }}</td>
         </tr>
     @endif
-    <tr>
-        <td>{{ __('documents.amount_paid') }}</td>
-        <td class="right">{{ number_format($sale->amount_paid, 2, ',', ' ') }} {{ $currencySymbol }}</td>
-    </tr>
-    {{-- Ce qui a payé la vente sans être de l'argent remis : l'avoir d'un échange, l'avoir du client. --}}
+    {{-- Comment la vente a été réglée. `amount_paid` additionne l'argent remis et les avoirs :
+         l'afficher tel quel, puis l'avoir en négatif, laissait croire qu'on retirait l'avoir
+         de ce que le client avait payé. --}}
+    @php($cashPaid = max(0, (float) $sale->amount_paid - (float) $sale->exchange_credit - (float) $sale->store_credit_used))
     @if ($sale->exchange_credit > 0)
         <tr>
             <td>{{ __('documents.exchange_credit') }}</td>
-            <td class="right">-{{ number_format($sale->exchange_credit, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+            <td class="right">{{ number_format($sale->exchange_credit, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
     @endif
     @if ($sale->store_credit_used > 0)
         <tr>
             <td>{{ __('documents.store_credit_used') }}</td>
-            <td class="right">-{{ number_format($sale->store_credit_used, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+            <td class="right">{{ number_format($sale->store_credit_used, 2, ',', ' ') }} {{ $currencySymbol }}</td>
         </tr>
     @endif
+    <tr>
+        <td>{{ __('documents.amount_paid') }}</td>
+        <td class="right">{{ number_format($cashPaid, 2, ',', ' ') }} {{ $currencySymbol }}</td>
+    </tr>
     @if ($sale->store_credit_kept > 0)
         <tr>
             <td class="bold">{{ __('documents.store_credit_kept') }}</td>
