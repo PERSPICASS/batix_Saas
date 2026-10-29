@@ -213,7 +213,7 @@ class DocumentPdf
 
     public function forQuote(Quote $quote): PdfWrapper
     {
-        $quote->loadMissing(['items.product:id,unit', 'shop', 'customer', 'user']);
+        $quote->loadMissing(['items.product:id,name,unit', 'shop', 'customer', 'user']);
 
         return $this->inShopLocale($quote->shop, fn () => Pdf::loadView('pdf.quote', [
             'quote' => $quote,

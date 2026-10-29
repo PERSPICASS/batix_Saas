@@ -61,6 +61,19 @@ class QuotePriceVisibilityTest extends TestCase
         ])->render();
     }
 
+    public function test_the_pdf_service_loads_the_product_name_for_the_designation(): void
+    {
+        // Les lignes ne copient pas le nom du produit : la désignation vient de la relation.
+        // Charger le produit en colonnes réduites (id, unit) laissait la colonne vide.
+        $quote = $this->quote();
+        $name = $quote->items->first()->product->name;
+
+        app(\App\Services\DocumentPdf::class)->forQuote($quote = Quote::find($quote->id));
+
+        $this->assertSame($name, $quote->items->first()->product->name);
+        $this->assertStringContainsString(e($name), $this->pdfHtml($quote));
+    }
+
     public function test_a_new_quote_shows_everything_by_default(): void
     {
         $quote = $this->quote();
