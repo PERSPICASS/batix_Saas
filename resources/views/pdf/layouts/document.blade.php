@@ -63,7 +63,7 @@
         .amount { white-space: nowrap; }
 
         .breakdown { margin-top: 10pt; width: 45%; }
-        .totals-wrap .breakdown { margin-top: 0; width: 100%; }
+        .totals-wrap .breakdown { margin: 0 0 8pt; width: 100%; }
         .breakdown th, .breakdown td {
             font-size: 8pt;
             padding: 2pt 3pt;

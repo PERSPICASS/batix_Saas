@@ -71,30 +71,29 @@
          général la traversait, et courait donc sur toute la largeur de la page. --}}
     <table class="totals-wrap">
         <tr>
-            {{-- La ventilation par taux occupe la colonne de gauche, à hauteur des totaux. --}}
-            <td style="width: 55%; padding-right: 18pt;">
-            @if (count($taxBreakdown) > 0)
-                <table class="breakdown">
-                    <thead>
-                        <tr>
-                            <th style="width: 25%;">{{ __('documents.rate') }}</th>
-                            <th class="right" style="width: 40%;">{{ __('documents.base_excl') }}</th>
-                            <th class="right" style="width: 35%;">{{ __('documents.tax') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($taxBreakdown as $band)
-                            <tr>
-                                <td>{{ rtrim(rtrim(number_format($band['rate'], 2, ',', ' '), '0'), ',') }} %</td>
-                                <td class="right">{{ number_format($band['base'], 2, ',', ' ') }}</td>
-                                <td class="right">{{ number_format($band['tax'], 2, ',', ' ') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
-            </td>
+            <td style="width: 55%;"></td>
             <td style="width: 45%;">
+                {{-- La ventilation par taux, au-dessus des totaux qu'elle explique. --}}
+                @if (count($taxBreakdown) > 0)
+                    <table class="breakdown">
+                        <thead>
+                            <tr>
+                                <th style="width: 25%;">{{ __('documents.rate') }}</th>
+                                <th class="right" style="width: 40%;">{{ __('documents.base_excl') }}</th>
+                                <th class="right" style="width: 35%;">{{ __('documents.tax') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($taxBreakdown as $band)
+                                <tr>
+                                    <td>{{ rtrim(rtrim(number_format($band['rate'], 2, ',', ' '), '0'), ',') }} %</td>
+                                    <td class="right">{{ number_format($band['base'], 2, ',', ' ') }}</td>
+                                    <td class="right">{{ number_format($band['tax'], 2, ',', ' ') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
                 <table class="totals">
                     <tr>
                         <td>{{ __('documents.subtotal_excl') }}</td>
