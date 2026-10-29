@@ -76,33 +76,34 @@
 
 @section('totals')
     @if ($quote->show_amounts ?? true)
-    @if (count($taxBreakdown) > 0)
-        <table class="breakdown">
-            <thead>
-                <tr>
-                    <th style="width: 25%;">{{ __('documents.rate') }}</th>
-                    <th class="right" style="width: 40%;">{{ __('documents.base_excl') }}</th>
-                    <th class="right" style="width: 35%;">{{ __('documents.tax') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($taxBreakdown as $band)
-                    <tr>
-                        <td>{{ rtrim(rtrim(number_format($band['rate'], 2, ',', ' '), '0'), ',') }} %</td>
-                        <td class="right">{{ number_format($band['base'], 2, ',', ' ') }}</td>
-                        <td class="right">{{ number_format($band['tax'], 2, ',', ' ') }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
-
     {{-- Le bloc de totaux est isolé dans la colonne de droite d'un tableau porteur.
          Auparavant chaque ligne portait une cellule vide de 65 % : le trait du total
          général la traversait, et courait donc sur toute la largeur de la page. --}}
     <table class="totals-wrap">
         <tr>
-            <td style="width: 55%;"></td>
+            {{-- La ventilation par taux occupe la colonne de gauche, à hauteur des totaux. --}}
+            <td style="width: 55%; padding-right: 18pt;">
+            @if (count($taxBreakdown) > 0)
+                <table class="breakdown">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">{{ __('documents.rate') }}</th>
+                            <th class="right" style="width: 40%;">{{ __('documents.base_excl') }}</th>
+                            <th class="right" style="width: 35%;">{{ __('documents.tax') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($taxBreakdown as $band)
+                            <tr>
+                                <td>{{ rtrim(rtrim(number_format($band['rate'], 2, ',', ' '), '0'), ',') }} %</td>
+                                <td class="right">{{ number_format($band['base'], 2, ',', ' ') }}</td>
+                                <td class="right">{{ number_format($band['tax'], 2, ',', ' ') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+            </td>
             <td style="width: 45%;">
                 <table class="totals">
                     <tr>

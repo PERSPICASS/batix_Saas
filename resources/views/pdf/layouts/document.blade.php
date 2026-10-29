@@ -49,7 +49,8 @@
         }
 
         .totals-wrap { margin-top: 12pt; }
-        .totals-wrap > tr > td { padding: 0; vertical-align: top; }
+        .totals-wrap td { vertical-align: top; }
+        .totals-wrap > tr > td { padding: 0; }
         .totals td { padding: 2pt 3pt; }
         .totals .grand td {
             font-size: 11pt;
@@ -62,6 +63,7 @@
         .amount { white-space: nowrap; }
 
         .breakdown { margin-top: 10pt; width: 45%; }
+        .totals-wrap .breakdown { margin-top: 0; width: 100%; }
         .breakdown th, .breakdown td {
             font-size: 8pt;
             padding: 2pt 3pt;
