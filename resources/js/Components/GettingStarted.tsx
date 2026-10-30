@@ -17,7 +17,9 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
 
     if (onboarding.is_complete || dismissed) return null;
 
-    const codeUser = auth?.user?.code_user ?? routeParams?.code_user ?? '';
+    // Le code du compte (celui du propriétaire), pas celui de l'utilisateur : pour un
+    // employé, son propre code mène à un 404.
+    const codeUser = routeParams?.code_user ?? auth?.user?.code_user ?? '';
 
     const steps = [
         {

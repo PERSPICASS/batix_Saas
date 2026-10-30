@@ -326,7 +326,7 @@ class ShopController extends Controller
 
         // Vérifier que l'utilisateur n'a pas déjà de boutique
         if ($user->shops()->exists()) {
-            return redirect()->route('dashboard', ['code_user' => $user->code_user]);
+            return redirect()->route('dashboard', ['code_user' => $user->accountCode()]);
         }
 
         // Vérifier que l'email est vérifié
@@ -346,7 +346,7 @@ class ShopController extends Controller
 
         // Vérifier que l'utilisateur n'a pas déjà de boutique
         if ($user->shops()->exists()) {
-            $redirectUrl = route('dashboard', ['code_user' => $user->code_user]);
+            $redirectUrl = route('dashboard', ['code_user' => $user->accountCode()]);
             return $request->wantsJson()
                 ? response()->json(['redirect' => $redirectUrl])
                 : redirect($redirectUrl);
@@ -428,7 +428,7 @@ class ShopController extends Controller
         // Log activity
         ActivityLogger::message('create', 'shop_first_created', ['name' => $shop->name], $shop);
 
-        $redirectUrl = route('dashboard', ['code_user' => $user->code_user]);
+        $redirectUrl = route('dashboard', ['code_user' => $user->accountCode()]);
 
         // Retourner JSON si axios, redirect sinon
         if ($request->wantsJson()) {

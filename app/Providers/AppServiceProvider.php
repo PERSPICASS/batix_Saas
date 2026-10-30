@@ -91,7 +91,8 @@ class AppServiceProvider extends ServiceProvider
                 return route('register'); // → Register étape 2 (OTP)
             }
             if ($user->code_user) {
-                return route('dashboard', ['code_user' => $user->code_user]);
+                // Le code du compte : celui d'un employé n'ouvre aucune page (404).
+                return route('dashboard', ['code_user' => $user->accountCode()]);
             }
             return route('register'); // → Register étape 3 (boutique inline)
         });

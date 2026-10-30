@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Check, ArrowRight, ArrowLeft } from 'lucide-react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
@@ -30,6 +30,8 @@ interface PlansProps extends PageProps {
 }
 
 export default function Index({ plans, auth }: PlansProps) {
+    // Code du compte : pour un employé, son propre code mène à un 404.
+    const accountCode = (usePage().props as { routeParams?: { code_user?: string } }).routeParams?.code_user ?? auth?.user?.code_user;
     const { t } = useLocale();
     const currentPlanSlug = auth.user && 'subscription' in auth ? (auth as any).subscription?.plan_slug : null;
 
@@ -104,9 +106,9 @@ export default function Index({ plans, auth }: PlansProps) {
             <section className="space-y-8">
                 {/* Header avec retour */}
                 <div className="flex items-center justify-between">
-                    {auth?.user?.code_user && (
+                    {auth?.user && accountCode && (
                         <Link
-                            href={`/${auth.user.code_user}/dashboard`}
+                            href={`/${accountCode}/dashboard`}
                             className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-white transition"
                         >
                             <ArrowLeft className="size-4" />

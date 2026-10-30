@@ -129,14 +129,14 @@ class User extends Authenticatable
         
         if ($shop) {
             return route('dashboard.user', [
-                'code_user' => $this->code_user,
+                'code_user' => $this->accountCode(),
                 'shop_slug' => $shop->slug
             ]);
         }
         
         // Si pas de shop et pas admin plateforme, rediriger vers le dashboard avec code_user
         if ($this->code_user) {
-            return route('dashboard', ['code_user' => $this->code_user]);
+            return route('dashboard', ['code_user' => $this->accountCode()]);
         }
         
         // Fallback vers login si rien ne fonctionne
