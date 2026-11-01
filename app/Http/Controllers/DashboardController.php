@@ -22,9 +22,10 @@ class DashboardController extends Controller
             return redirect()->route('sales.index', ['code_user' => $request->route('code_user')]);
         }
 
-        // Le tableau de bord parle ventes ; le gestionnaire de stock arrive sur le catalogue.
-        if ($user->role === 'stock_manager') {
-            return redirect()->route('products.index', ['code_user' => $request->route('code_user')]);
+        // Le tableau de bord parle ventes : les rôles spécialisés arrivent sur leur outil.
+        $landing = ['stock_manager' => 'products.index', 'billing_clerk' => 'invoices.index'][$user->role] ?? null;
+        if ($landing) {
+            return redirect()->route($landing, ['code_user' => $request->route('code_user')]);
         }
         
         // Les boutiques du COMPTE, pas celles dont l'utilisateur est propriétaire : pour un

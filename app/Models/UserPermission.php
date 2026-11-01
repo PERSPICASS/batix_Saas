@@ -102,6 +102,17 @@ class UserPermission extends Model
                 'purchases' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
                 'returned_inventory' => ['can_view' => true, 'can_create' => false, 'can_edit' => true, 'can_delete' => false],
             ],
+            // Devis, factures (avoirs compris) et ce qu'il faut pour les établir : clients,
+            // catalogue en lecture, suivi des créances — ni caisse, ni stock, ni dépenses.
+            'billing_clerk' => [
+                'quotes' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'invoices' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'recurring_invoices' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'preorders' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'customers' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'credits' => ['can_view' => true, 'can_create' => false, 'can_edit' => false, 'can_delete' => false],
+                'products' => ['can_view' => true, 'can_create' => false, 'can_edit' => false, 'can_delete' => false],
+            ],
             'cashier', 'caisse' => [
                 'sales' => ['can_view' => true, 'can_create' => true, 'can_edit' => false, 'can_delete' => false],
                 'quotes' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],

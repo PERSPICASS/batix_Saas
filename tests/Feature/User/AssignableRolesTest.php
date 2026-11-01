@@ -35,7 +35,7 @@ class AssignableRolesTest extends TestCase
         $this->actingAs($this->owner)
             ->get("/{$this->owner->code_user}/users/create")
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('assignableRoles', ['admin', 'manager', 'stock_manager', 'cashier', 'staff']));
+                ->where('assignableRoles', ['admin', 'manager', 'stock_manager', 'billing_clerk', 'cashier', 'staff']));
     }
 
     /** Le formulaire coche d'office les modules du rôle choisi : les mêmes que defaultsForRole(). */
@@ -62,7 +62,7 @@ class AssignableRolesTest extends TestCase
         $this->actingAs($manager)
             ->get("/{$this->owner->code_user}/users/create")
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('assignableRoles', ['manager', 'stock_manager', 'cashier', 'staff']));
+                ->where('assignableRoles', ['manager', 'stock_manager', 'billing_clerk', 'cashier', 'staff']));
     }
 
     public function test_platform_admin_is_still_refused_on_save(): void

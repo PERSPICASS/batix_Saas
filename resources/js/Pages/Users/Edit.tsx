@@ -14,7 +14,7 @@ interface User { id: number; name: string; email: string; shop_id: number | null
 interface ModulePermission { module: string; can_view: boolean; can_create: boolean; can_edit: boolean; can_delete: boolean }
 interface Props { user: User; shops: Shop[]; currentUserRole: string; assignableRoles: string[]; roleDefaults: Record<string, ModulePermission[]>; modules: Record<string, string>; canSendLink: boolean }
 
-const ROLE_KEYS = ['staff', 'cashier', 'stock_manager', 'manager', 'admin', 'super_admin', 'admin_platforme'];
+const ROLE_KEYS = ['staff', 'cashier', 'stock_manager', 'billing_clerk', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
 export default function UsersEdit({ user, shops, currentUserRole, assignableRoles, roleDefaults, modules, canSendLink }: Props) {
     const { t } = useLocale();
