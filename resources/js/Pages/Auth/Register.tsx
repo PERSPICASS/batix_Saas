@@ -193,12 +193,12 @@ export default function Register({ initialStep = 1, initialEmail = '' }: Props) 
                     <form onSubmit={handleStep1} className="space-y-3">
                         <div>
                             <InputLabel htmlFor="name" value={t.auth.form.fullName} className="text-slate-700" />
-                            <TextInput id="name" value={name} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="name" isFocused onChange={(e) => setName(e.target.value)} required placeholder={t.auth.form.fullNamePlaceholder} />
+                            <TextInput theme="light" id="name" value={name} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="name" isFocused onChange={(e) => setName(e.target.value)} required placeholder={t.auth.form.fullNamePlaceholder} />
                             <InputError message={step1Errors.name} className="mt-2" />
                         </div>
                         <div>
                             <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
-                            <TextInput id="email" type="email" value={email} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="username" onChange={(e) => setEmail(e.target.value)} required placeholder={t.auth.form.emailPlaceholder} />
+                            <TextInput theme="light" id="email" type="email" value={email} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="username" onChange={(e) => setEmail(e.target.value)} required placeholder={t.auth.form.emailPlaceholder} />
                             <InputError message={step1Errors.email} className="mt-2" />
                         </div>
                         <div>
@@ -219,7 +219,7 @@ export default function Register({ initialStep = 1, initialEmail = '' }: Props) 
                         <div>
                             <InputLabel htmlFor="password" value={t.auth.form.password} className="text-slate-700" />
                             <div className="relative mt-1">
-                                <TextInput id="password" type={showPassword ? 'text' : 'password'} value={password} className="block w-full rounded-xl border border-gray-200 bg-gray-50 pr-10 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} required placeholder={t.auth.form.passwordPlaceholder} />
+                                <TextInput theme="light" id="password" type={showPassword ? 'text' : 'password'} value={password} className="block w-full rounded-xl border border-gray-200 bg-gray-50 pr-10 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="new-password" onChange={(e) => setPassword(e.target.value)} required placeholder={t.auth.form.passwordPlaceholder} />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
                                     {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                                 </button>
@@ -229,7 +229,7 @@ export default function Register({ initialStep = 1, initialEmail = '' }: Props) 
                         <div>
                             <InputLabel htmlFor="password_confirmation" value={t.auth.form.passwordConfirm} className="text-slate-700" />
                             <div className="relative mt-1">
-                                <TextInput id="password_confirmation" type={showPasswordConfirmation ? 'text' : 'password'} value={passwordConfirmation} className="block w-full rounded-xl border border-gray-200 bg-gray-50 pr-10 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="new-password" onChange={(e) => setPasswordConfirmation(e.target.value)} required placeholder={t.auth.form.passwordPlaceholder} />
+                                <TextInput theme="light" id="password_confirmation" type={showPasswordConfirmation ? 'text' : 'password'} value={passwordConfirmation} className="block w-full rounded-xl border border-gray-200 bg-gray-50 pr-10 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" autoComplete="new-password" onChange={(e) => setPasswordConfirmation(e.target.value)} required placeholder={t.auth.form.passwordPlaceholder} />
                                 <button type="button" onClick={() => setShowPasswordConfirmation(!showPasswordConfirmation)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
                                     {showPasswordConfirmation ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                                 </button>
@@ -326,24 +326,24 @@ export default function Register({ initialStep = 1, initialEmail = '' }: Props) 
                 <form onSubmit={handleStep3} className="space-y-3">
                     <div>
                         <InputLabel htmlFor="shop_name" value={t.auth.shop.nameLabel} className="text-slate-700" />
-                        <TextInput id="shop_name" value={shopName} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" isFocused onChange={(e) => setShopName(e.target.value)} required placeholder={t.auth.shop.namePlaceholder} />
+                        <TextInput theme="light" id="shop_name" value={shopName} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" isFocused onChange={(e) => setShopName(e.target.value)} required placeholder={t.auth.shop.namePlaceholder} />
                         <InputError message={step3Errors.name} className="mt-2" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <InputLabel htmlFor="shop_city" value={t.auth.shop.cityLabel} className="text-slate-700" />
-                            <TextInput id="shop_city" value={shopCity} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" onChange={(e) => setShopCity(e.target.value)} placeholder={t.auth.shop.registerCityPlaceholder} />
+                            <TextInput theme="light" id="shop_city" value={shopCity} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" onChange={(e) => setShopCity(e.target.value)} placeholder={t.auth.shop.registerCityPlaceholder} />
                             <InputError message={step3Errors.city} className="mt-2" />
                         </div>
                         <div>
                             <InputLabel htmlFor="shop_phone" value={t.auth.shop.phoneLabel} className="text-slate-700" />
-                            <TextInput id="shop_phone" value={shopPhone} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" onChange={(e) => setShopPhone(e.target.value)} placeholder={t.auth.shop.registerPhonePlaceholder} />
+                            <TextInput theme="light" id="shop_phone" value={shopPhone} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" onChange={(e) => setShopPhone(e.target.value)} placeholder={t.auth.shop.registerPhonePlaceholder} />
                             <InputError message={step3Errors.phone} className="mt-2" />
                         </div>
                     </div>
                     <div>
                         <InputLabel htmlFor="shop_address" value={t.auth.shop.addressLabel} className="text-slate-700" />
-                        <TextInput id="shop_address" value={shopAddress} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" onChange={(e) => setShopAddress(e.target.value)} placeholder={t.auth.shop.registerAddressPlaceholder} />
+                        <TextInput theme="light" id="shop_address" value={shopAddress} className="mt-1 block w-full rounded-xl border border-gray-200 bg-gray-50 text-slate-900 placeholder-slate-400 focus:border-terre-400 focus:ring-terre-400/20" onChange={(e) => setShopAddress(e.target.value)} placeholder={t.auth.shop.registerAddressPlaceholder} />
                         <InputError message={step3Errors.address} className="mt-2" />
                     </div>
                     <div className="pt-1">

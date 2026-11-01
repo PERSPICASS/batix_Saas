@@ -37,7 +37,7 @@ export default function ConfirmPassword() {
                 <form onSubmit={submit} className="space-y-3">
                     <div>
                         <InputLabel htmlFor="password" value={t.auth.form.password} className="text-slate-700" />
-                        <TextInput
+                        <TextInput theme="light"
                             id="password"
                             type="password"
                             name="password"

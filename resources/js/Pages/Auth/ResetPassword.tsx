@@ -49,7 +49,7 @@ export default function ResetPassword({
                 <form onSubmit={submit} className="space-y-3">
                     <div>
                         <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
-                        <TextInput
+                        <TextInput theme="light"
                             id="email"
                             type="email"
                             name="email"
@@ -64,7 +64,7 @@ export default function ResetPassword({
                     <div>
                         <InputLabel htmlFor="password" value={t.auth.form.passwordNew} className="text-slate-700" />
                         <div className="relative mt-1">
-                            <TextInput
+                            <TextInput theme="light"
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
@@ -88,7 +88,7 @@ export default function ResetPassword({
                     <div>
                         <InputLabel htmlFor="password_confirmation" value={t.auth.form.passwordConfirm} className="text-slate-700" />
                         <div className="relative mt-1">
-                            <TextInput
+                            <TextInput theme="light"
                                 id="password_confirmation"
                                 type={showPasswordConfirmation ? 'text' : 'password'}
                                 name="password_confirmation"

@@ -41,7 +41,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 <form onSubmit={submit} className="space-y-3">
                     <div>
                         <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
-                        <TextInput
+                        <TextInput theme="light"
                             id="email"
                             type="email"
                             name="email"

@@ -54,7 +54,7 @@ export default function CreateShop() {
                         <InputLabel htmlFor="name" value={t.auth.shop.nameRequired} className="text-slate-700" />
                         <div className="relative mt-1">
                             <Store className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
-                            <TextInput
+                            <TextInput theme="light"
                                 id="name"
                                 type="text"
                                 name="name"
@@ -74,7 +74,7 @@ export default function CreateShop() {
                         <InputLabel htmlFor="address" value={t.auth.shop.addressLabel} className="text-slate-700" />
                         <div className="relative mt-1">
                             <MapPin className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
-                            <TextInput
+                            <TextInput theme="light"
                                 id="address"
                                 type="text"
                                 name="address"
@@ -91,7 +91,7 @@ export default function CreateShop() {
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div>
                             <InputLabel htmlFor="city" value={t.auth.shop.cityLabel} className="text-slate-700" />
-                            <TextInput
+                            <TextInput theme="light"
                                 id="city"
                                 type="text"
                                 name="city"
@@ -106,7 +106,7 @@ export default function CreateShop() {
 
                         <div>
                             <InputLabel htmlFor="postal_code" value={t.auth.shop.postalCodeLabel} className="text-slate-700" />
-                            <TextInput
+                            <TextInput theme="light"
                                 id="postal_code"
                                 type="text"
                                 name="postal_code"
@@ -124,7 +124,7 @@ export default function CreateShop() {
                         <InputLabel htmlFor="phone" value={t.auth.shop.phoneLabel} className="text-slate-700" />
                         <div className="relative mt-1">
                             <Phone className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
-                            <TextInput
+                            <TextInput theme="light"
                                 id="phone"
                                 type="tel"
                                 name="phone"

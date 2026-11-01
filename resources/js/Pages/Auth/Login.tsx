@@ -55,7 +55,7 @@ export default function Login({
                     <div>
                         <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
 
-                        <TextInput
+                        <TextInput theme="light"
                             id="email"
                             type="email"
                             name="email"
@@ -73,7 +73,7 @@ export default function Login({
                         <InputLabel htmlFor="password" value={t.auth.form.password} className="text-slate-700" />
 
                         <div className="relative mt-1">
-                            <TextInput
+                            <TextInput theme="light"
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"

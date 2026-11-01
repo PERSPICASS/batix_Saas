@@ -52,13 +52,13 @@ export default function AcceptInvitation({ token, valid, user }: Props) {
                             <InputLabel htmlFor="email" value={t.auth.form.email} className="text-slate-700" />
                             {/* Lecture seule : l'adresse est celle du compte, on la montre parce
                                 que c'est elle qui servira à se connecter. */}
-                            <TextInput id="email" type="email" value={user.email} readOnly autoComplete="username" className={`${inputClass} opacity-70`} />
+                            <TextInput theme="light" id="email" type="email" value={user.email} readOnly autoComplete="username" className={`${inputClass} opacity-70`} />
                         </div>
 
                         <div>
                             <InputLabel htmlFor="password" value={t.auth.form.passwordNew} className="text-slate-700" />
                             <div className="relative mt-1">
-                                <TextInput
+                                <TextInput theme="light"
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     name="password"
@@ -81,7 +81,7 @@ export default function AcceptInvitation({ token, valid, user }: Props) {
 
                         <div>
                             <InputLabel htmlFor="password_confirmation" value={t.auth.form.passwordConfirm} className="text-slate-700" />
-                            <TextInput
+                            <TextInput theme="light"
                                 id="password_confirmation"
                                 type={showPassword ? 'text' : 'password'}
                                 name="password_confirmation"
