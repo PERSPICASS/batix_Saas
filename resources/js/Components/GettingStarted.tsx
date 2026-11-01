@@ -10,12 +10,13 @@ interface Onboarding {
     is_complete: boolean;
 }
 
-export default function GettingStarted({ onboarding }: { onboarding: Onboarding }) {
+export default function GettingStarted({ onboarding }: { onboarding: Onboarding | null }) {
     const { auth, routeParams } = usePage<any>().props;
     const [dismissed, setDismissed] = useState(false);
     const { t } = useLocale();
 
-    if (onboarding.is_complete || dismissed) return null;
+    // null : pas le propriétaire du compte (DashboardController).
+    if (!onboarding || onboarding.is_complete || dismissed) return null;
 
     // Le code du compte (celui du propriétaire), pas celui de l'utilisateur : pour un
     // employé, son propre code mène à un 404.
@@ -92,7 +93,7 @@ export default function GettingStarted({ onboarding }: { onboarding: Onboarding 
                                     ? 'border-emerald-300 bg-emerald-50 opacity-70 dark:border-emerald-500/20 dark:bg-emerald-500/5'
                                     : isNext
                                     ? 'border-amber-300 bg-amber-50 dark:border-amber-300/30 dark:bg-amber-300/10'
-                                    : 'border-gray-200 bg-gray-50 dark:border-white/5 dark:bg-white/3'
+                                    : 'border-gray-200 bg-gray-50 dark:border-white/5 dark:bg-white/[0.03]'
                             }`}
                         >
                             <div className={`flex size-8 shrink-0 items-center justify-center rounded-full ${

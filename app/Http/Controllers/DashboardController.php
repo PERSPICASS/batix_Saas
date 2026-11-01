@@ -22,7 +22,11 @@ class DashboardController extends Controller
             return redirect()->route('sales.index', ['code_user' => $request->route('code_user')]);
         }
         
-        $shops = Shop::where('user_id', $user->id)->get();
+        // Les boutiques du COMPTE, pas celles dont l'utilisateur est propriétaire : pour un
+        // co-gérant ou un manager, `user_id = lui` ne donnait rien (« Créez votre boutique »).
+        $shops = $user->isAccountAdmin()
+            ? Shop::where('user_id', $user->ownerId())->get()
+            : Shop::whereKey($user->shop_id)->get();
         $shopIds = $shops->pluck('id');
         $activeShopId = session('active_shop_id');
         
@@ -112,7 +116,8 @@ class DashboardController extends Controller
             'currentPeriod' => $period,
             'recentActivities' => $recentActivities,
             'currencySymbol' => $currencySymbol,
-            'onboarding' => $onboarding,
+            // Le démarrage rapide guide le propriétaire qui lance son compte, pas son équipe.
+            'onboarding' => $user->role === 'super_admin' ? $onboarding : null,
         ]);
     }
     

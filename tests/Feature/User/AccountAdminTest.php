@@ -141,6 +141,18 @@ class AccountAdminTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $this->owner->id]);
     }
 
+    /** Le co-gérant n'est pas propriétaire de boutiques : le tableau de bord lui disait « Créez votre boutique ». */
+    public function test_the_dashboard_counts_the_account_shops_and_keeps_the_quick_start_for_the_owner(): void
+    {
+        $code = $this->owner->code_user;
+
+        $this->actingAs($this->admin())->get("/{$code}/dashboard")
+            ->assertInertia(fn ($page) => $page->where('onboarding', null)->where('stats.totalShops', 2));
+
+        $this->actingAs($this->owner)->get("/{$code}/dashboard")
+            ->assertInertia(fn ($page) => $page->where('onboarding.has_shop', true));
+    }
+
     public function test_the_repair_command_turns_an_invited_owner_into_an_admin(): void
     {
         $ghost = User::factory()->create(['role' => 'super_admin', 'shop_id' => null]);

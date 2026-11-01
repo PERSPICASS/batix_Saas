@@ -37,12 +37,13 @@ interface DashboardProps {
         time: string;
     }>;
     currencySymbol: string;
+    // null pour l'équipe : le démarrage rapide ne s'adresse qu'au propriétaire.
     onboarding: {
         has_shop: boolean;
         has_product: boolean;
         has_sale: boolean;
         is_complete: boolean;
-    };
+    } | null;
 }
 
 function formatNumber(value: number): string {
