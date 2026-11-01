@@ -24,12 +24,14 @@ interface Props {
     currentUserRole: string;
     // Les rôles que le serveur acceptera (UserController::assignableRoles).
     assignableRoles: string[];
+    // Modules cochés d'office pour chaque rôle (UserPermission::defaultsForRole).
+    roleDefaults: Record<string, ModulePermission[]>;
     modules: Record<string, string>;
 }
 
 const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
-export default function UsersCreate({ shops, currentUserRole, assignableRoles, modules }: Props) {
+export default function UsersCreate({ shops, currentUserRole, assignableRoles, roleDefaults, modules }: Props) {
     const { t } = useLocale();
     const route = useRoute();
     // Propriétaire et co-gérant choisissent la boutique ; un manager rattache à la sienne.
@@ -41,10 +43,17 @@ export default function UsersCreate({ shops, currentUserRole, assignableRoles, m
         shop_id: '',
         role: 'staff',
         is_active: true,
-        permissions: [] as ModulePermission[],
+        permissions: (roleDefaults.staff ?? []) as ModulePermission[],
     });
 
-    const [selectedModules, setSelectedModules] = useState<string[]>([]);
+    const [selectedModules, setSelectedModules] = useState<string[]>((roleDefaults.staff ?? []).map((p) => p.module));
+
+    // Choisir un rôle coche ses modules par défaut ; le propriétaire ajuste ensuite.
+    const changeRole = (role: string) => {
+        const defaults = roleDefaults[role] ?? [];
+        setData((current) => ({ ...current, role, permissions: defaults }));
+        setSelectedModules(defaults.map((p) => p.module));
+    };
 
     const toggleModule = (moduleKey: string) => {
         const isSelected = selectedModules.includes(moduleKey);
@@ -160,7 +169,7 @@ export default function UsersCreate({ shops, currentUserRole, assignableRoles, m
                                 <select
                                     id="role"
                                     value={data.role}
-                                    onChange={(e) => setData('role', e.target.value)}
+                                    onChange={(e) => changeRole(e.target.value)}
                                     className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 >
                                     {ROLE_KEYS.filter((key) => assignableRoles.includes(key)).map((key) => (

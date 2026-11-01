@@ -60,6 +60,7 @@ class UserController extends Controller
             // La liste qui valide le rôle à l'enregistrement : le menu affichait les six
             // rôles en dur, « Admin plateforme » compris, que le serveur refuse de toute façon.
             'assignableRoles' => self::assignableRoles($user),
+            'roleDefaults' => self::roleDefaults($user),
             'modules' => UserPermission::MODULES,
         ]);
     }
@@ -154,6 +155,7 @@ class UserController extends Controller
             'shops' => $shops,
             'currentUserRole' => $currentUser->role,
             'assignableRoles' => self::assignableRoles($currentUser),
+            'roleDefaults' => self::roleDefaults($currentUser),
             'modules' => UserPermission::MODULES,
         ]);
     }
@@ -380,6 +382,23 @@ class UserController extends Controller
         }
 
         return array_values(array_diff($all, ['admin']));
+    }
+
+    /**
+     * Modules cochés d'office quand on choisit un rôle dans le formulaire : les mêmes
+     * valeurs que celles appliquées quand rien n'est coché (UserPermission::defaultsForRole).
+     */
+    private static function roleDefaults(User $currentUser): array
+    {
+        $defaults = [];
+        foreach (self::assignableRoles($currentUser) as $role) {
+            $defaults[$role] = collect(UserPermission::defaultsForRole($role))
+                ->map(fn (array $actions, string $module) => ['module' => $module] + $actions)
+                ->values()
+                ->all();
+        }
+
+        return $defaults;
     }
 
     /**

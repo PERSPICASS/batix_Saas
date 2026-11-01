@@ -38,6 +38,18 @@ class AssignableRolesTest extends TestCase
                 ->where('assignableRoles', ['admin', 'manager', 'cashier', 'staff']));
     }
 
+    /** Le formulaire coche d'office les modules du rôle choisi : les mêmes que defaultsForRole(). */
+    public function test_the_form_receives_each_roles_default_modules(): void
+    {
+        $this->actingAs($this->owner)
+            ->get("/{$this->owner->code_user}/users/create")
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('roleDefaults.cashier', count(UserPermission::defaultsForRole('cashier')))
+                ->where('roleDefaults.cashier.0', ['module' => 'sales'] + UserPermission::defaultsForRole('cashier')['sales'])
+                ->has('roleDefaults.manager', count(UserPermission::defaultsForRole('manager')))
+                ->missing('roleDefaults.super_admin'));
+    }
+
     public function test_a_manager_is_not_offered_the_admin_roles(): void
     {
         $manager = User::factory()->create(['role' => 'manager', 'shop_id' => $this->shop->id]);
