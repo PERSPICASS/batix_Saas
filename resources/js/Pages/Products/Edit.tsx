@@ -8,6 +8,7 @@ import { UNIT_CODES } from '@/utils/quantity';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
 import StockMovementTypeBadge from '@/Components/StockMovementTypeBadge';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Shop {
     id: number;
@@ -373,15 +374,12 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                             <label htmlFor="stock_quantity" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Quantité en stock *
                             </label>
-                            <input
-                                type="number" step="0.001"
+                            <QuantityInput
                                 id="stock_quantity"
                                 value={data.stock_quantity}
-                                // La saisie brute : Number('') vaut 0, et effacer le champ y
-                                // remettait aussitôt un 0 impossible à supprimer. Vide, le
-                                // serveur garde le stock actuel.
-                                onChange={(e) => setData('stock_quantity', e.target.value)}
-                                onFocus={(e) => e.target.select()}
+                                unit={data.unit}
+                                // Vide, le serveur garde le stock actuel.
+                                onChange={(quantity) => setData('stock_quantity', quantity ?? '')}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="0"
                             />
@@ -392,12 +390,11 @@ export default function ProductsEdit({ product, shops, categories, subcategories
                             <label htmlFor="min_stock_alert" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 Seuil d'alerte stock
                             </label>
-                            <input
-                                type="number" step="0.001"
+                            <QuantityInput
                                 id="min_stock_alert"
                                 value={data.min_stock_alert}
-                                onChange={(e) => setData('min_stock_alert', e.target.value ? Number(e.target.value) : '')}
-                                onFocus={(e) => e.target.select()}
+                                unit={data.unit}
+                                onChange={(quantity) => setData('min_stock_alert', quantity ?? '')}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                 placeholder="10"
                             />

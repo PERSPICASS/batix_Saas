@@ -7,6 +7,7 @@ import Currency from '@/Components/Currency';
 import BarcodeScanner from '@/Components/BarcodeScanner';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Shop {
     id: number;
@@ -396,14 +397,12 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                     {item.expected_quantity}
                                                 </td>
                                                 <td className="py-3 pr-4 text-right">
-                                                    <input
-                                                        type="number" step="0.001"
-                                                        min="0"
+                                                    <QuantityInput
                                                         value={item.counted_quantity ?? ''}
-                                                        onChange={(e) =>
+                                                        onChange={(quantity) =>
                                                             updateCountedQuantity(
                                                                 item.product_id,
-                                                                e.target.value ? parseFloat(e.target.value) : null
+                                                                quantity
                                                             )
                                                         }
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
@@ -412,14 +411,12 @@ export default function InventoryEdit({ inventory, shops, products }: Props) {
                                                     />
                                                 </td>
                                                 <td className="py-3 pr-4 text-right">
-                                                    <input
-                                                        type="number" step="0.001"
-                                                        min="0"
+                                                    <QuantityInput
                                                         value={item.defective_quantity ?? ''}
-                                                        onChange={(e) =>
+                                                        onChange={(quantity) =>
                                                             updateDefectiveQuantity(
                                                                 item.product_id,
-                                                                e.target.value ? parseFloat(e.target.value) : null
+                                                                quantity
                                                             )
                                                         }
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-1 text-right text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"

@@ -10,6 +10,7 @@ import Modal from '@/Components/Modal';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { matchesSearch } from '@/utils/search';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Customer {
     id: number;
@@ -506,13 +507,10 @@ export default function InvoicesCreate({ customers, shops, products }: Props) {
 
                                         <div className="md:col-span-1 space-y-1">
                                             <label className="text-xs text-slate-600 dark:text-slate-300">Qté</label>
-                                            <input
-                                                type="number"
-                                                min="0.001"
-                                                step="0.001"
+                                            <QuantityInput
                                                 value={item.quantity}
-                                                onChange={(e) => updateItem(index, 'quantity', e.target.value)}
-                                                className="h-10 w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200"
+                                                onChange={(quantity) => updateItem(index, 'quantity', quantity === null ? '' : String(quantity))}
+                                                className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-slate-950/70 dark:text-slate-200"
                                             />
                                         </div>
 

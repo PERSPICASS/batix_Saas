@@ -6,6 +6,7 @@ import { Plus, Trash2, Search, X, ChevronDown, Info, AlertTriangle } from 'lucid
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Shop {
     id: number;
@@ -351,11 +352,9 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                 </label>
                                                 {/* Tiret, pas « 0 » : un champ vide veut dire « pas compté » et la
                                                     ligne ne sera pas appliquée ; un 0 grisé laissait croire le contraire. */}
-                                                <input
-                                                    type="number" step="0.001"
-                                                    min="0"
+                                                <QuantityInput
                                                     value={item.counted_quantity}
-                                                    onChange={(e) => updateItem(index, 'counted_quantity', e.target.value)}
+                                                    onChange={(quantity) => updateItem(index, 'counted_quantity', (quantity === null ? '' : String(quantity)))}
                                                     className="block w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                                     placeholder="-"
                                                 />
@@ -365,11 +364,9 @@ export default function InventoryCreate({ shops, products }: Props) {
                                                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
                                                     {t.inventory.show.defective}
                                                 </label>
-                                                <input
-                                                    type="number" step="0.001"
-                                                    min="0"
+                                                <QuantityInput
                                                     value={item.defective_quantity}
-                                                    onChange={(e) => updateItem(index, 'defective_quantity', e.target.value)}
+                                                    onChange={(quantity) => updateItem(index, 'defective_quantity', (quantity === null ? '' : String(quantity)))}
                                                     className="block w-full rounded-lg border border-white/15 bg-slate-950/70 px-3 py-2 text-sm text-slate-200 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300"
                                                     placeholder="0"
                                                 />

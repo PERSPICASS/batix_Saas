@@ -6,6 +6,7 @@ import { useState } from 'react';
 import ProductImage from '@/Components/ProductImage';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Transfer {
     id: number;
@@ -285,15 +286,11 @@ export default function Transfers({ depot, transfers, shops, depotProducts }: Pr
                                                     ))}
                                                 </select>
                                                 <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        min="0.001"
-                                                        step="0.001"
-                                                        max={depotProd?.quantity ?? undefined}
+                                                    <QuantityInput
                                                         value={item.quantity}
-                                                        onChange={e => {
+                                                        onChange={(quantity) => {
                                                             const newItems = [...(form.data.items ?? [])];
-                                                            newItems[index] = { ...newItems[index], quantity: e.target.value };
+                                                            newItems[index] = { ...newItems[index], quantity: (quantity === null ? '' : String(quantity)) };
                                                             form.setData('items', newItems);
                                                         }}
                                                         className="w-24 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"

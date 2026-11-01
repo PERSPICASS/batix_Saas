@@ -22,6 +22,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import { useLocale } from '@/contexts/LocaleContext';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Supplier {
     id: number;
@@ -644,18 +645,16 @@ export default function PurchasesShow({ code_user, purchase }: Props) {
 
                                         <div className="w-32">
                                             <InputLabel value="Quantité" className="text-sm font-semibold text-slate-900 dark:text-white" />
-                                            <TextInput
-                                                type="number" step="0.001"
-                                                min="0"
-                                                max={remaining}
+                                            <QuantityInput
                                                 value={receivingQuantities[item.id]}
-                                                onChange={(e) =>
+                                                onChange={(quantity) =>
                                                     setReceivingQuantities({
                                                         ...receivingQuantities,
-                                                        [item.id]: parseFloat(e.target.value) || 0,
+                                                        // Jamais plus que le restant à recevoir.
+                                                        [item.id]: Math.min(quantity ?? 0, remaining),
                                                     })
                                                 }
-                                                className="mt-1 block w-full text-center text-base font-semibold text-slate-900 dark:text-white"
+                                                className="rounded-md border-gray-300 bg-white text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder:text-slate-500 mt-1 block w-full text-center text-base font-semibold"
                                                 disabled={remaining === 0}
                                             />
                                             {remaining === 0 && (

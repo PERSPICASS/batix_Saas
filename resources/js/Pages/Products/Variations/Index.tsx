@@ -8,6 +8,7 @@ import { useRoute } from '@/utils/route';
 import { FormEventHandler, useState } from 'react';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useLocale } from '@/contexts/LocaleContext';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Variation {
     id: number;
@@ -378,10 +379,9 @@ export default function VariationsIndex({ product, variations }: Props) {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Stock initial
                                 </label>
-                                <input
-                                    type="number" step="0.001"
+                                <QuantityInput
                                     value={addForm.data.stock_quantity}
-                                    onChange={(e) => addForm.setData('stock_quantity', e.target.value)}
+                                    onChange={(quantity) => addForm.setData('stock_quantity', quantity === null ? '' : String(quantity))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                 />
                             </div>
@@ -466,10 +466,9 @@ export default function VariationsIndex({ product, variations }: Props) {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Stock
                                 </label>
-                                <input
-                                    type="number" step="0.001"
+                                <QuantityInput
                                     value={editForm.data.stock_quantity}
-                                    onChange={(e) => editForm.setData('stock_quantity', e.target.value)}
+                                    onChange={(quantity) => editForm.setData('stock_quantity', quantity === null ? '' : String(quantity))}
                                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-slate-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                                 />
                             </div>

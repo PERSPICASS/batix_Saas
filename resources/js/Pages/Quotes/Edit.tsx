@@ -8,6 +8,7 @@ import { useLocale } from '@/contexts/LocaleContext';
 import Modal from '@/Components/Modal';
 import Currency, { useShopSettings } from '@/Components/Currency';
 import { matchesSearch } from '@/utils/search';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Customer {
     id: number;
@@ -236,12 +237,9 @@ export default function EditQuote({ quote, customers, products }: { quote: any; 
                                         {item.product_name || t.quotes.form.selectProduct}
                                     </button>
 
-                                    <input
-                                        type="number"
-                                        min="0.001"
-                                        step="0.001"
+                                    <QuantityInput
                                         value={item.quantity}
-                                        onChange={(e) => handleItemChange(index, 'quantity', parseFloat(e.target.value))}
+                                        onChange={(quantity) => handleItemChange(index, 'quantity', (quantity ?? 0))}
                                         className="w-20 rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 text-sm focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                     />
 

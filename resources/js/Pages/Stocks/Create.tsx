@@ -6,6 +6,7 @@ import { Search, X, ChevronDown } from 'lucide-react';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Shop {
     id: number;
@@ -281,13 +282,11 @@ export default function StocksCreate({ shops, products, reasons }: Props) {
                             <label htmlFor="quantity" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                                 {data.type === 'out' ? t.stocks.form.quantityOut : t.stocks.form.quantityIn}
                             </label>
-                            <input
-                                type="number" step="0.001"
+                            <QuantityInput
                                 id="quantity"
                                 value={data.quantity}
-                                onChange={(e) => setData('quantity', Number(e.target.value))}
+                                onChange={(quantity) => setData('quantity', (quantity ?? 0))}
                                 className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
-                                min="0.001"
                             />
                             <InputError message={errors.quantity} />
                         </div>

@@ -12,6 +12,7 @@ import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface DepotProductItem {
     id: number;
@@ -650,12 +651,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Quantité *</label>
-                                    <input
-                                        type="number"
-                                        min="0.001"
-                                        step="0.001"
+                                    <QuantityInput
                                         value={addStockForm.data.quantity}
-                                        onChange={e => addStockForm.setData('quantity', e.target.value)}
+                                        onChange={(quantity) => addStockForm.setData('quantity', (quantity === null ? '' : String(quantity)))}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                         required
                                     />
@@ -663,11 +661,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Alerte stock min</label>
-                                    <input
-                                        type="number" step="0.001"
-                                        min="0"
+                                    <QuantityInput
                                         value={addStockForm.data.min_stock_alert}
-                                        onChange={e => addStockForm.setData('min_stock_alert', e.target.value)}
+                                        onChange={(quantity) => addStockForm.setData('min_stock_alert', (quantity === null ? '' : String(quantity)))}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
                                 </div>
@@ -844,15 +840,11 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                     )}
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        min="0.001"
-                                                        step="0.001"
-                                                        max={depotProd?.quantity ?? undefined}
+                                                    <QuantityInput
                                                         value={item.quantity}
-                                                        onChange={e => {
+                                                        onChange={(quantity) => {
                                                             const newItems = [...(transferForm.data.items ?? [])];
-                                                            newItems[index] = { ...newItems[index], quantity: e.target.value };
+                                                            newItems[index] = { ...newItems[index], quantity: (quantity === null ? '' : String(quantity)) };
                                                             transferForm.setData('items', newItems);
                                                         }}
                                                         className="w-24 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
@@ -988,24 +980,18 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Quantité</label>
-                                    <input
-                                        type="number" step="0.001"
-                                        min="0"
+                                    <QuantityInput
                                         value={editForm.data.quantity}
-                                        onChange={e => editForm.setData('quantity', e.target.value)}
-                                        onFocus={e => e.target.select()}
+                                        onChange={(quantity) => editForm.setData('quantity', (quantity === null ? '' : String(quantity)))}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
                                     <InputError message={editForm.errors.quantity} />
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Alerte min</label>
-                                    <input
-                                        type="number" step="0.001"
-                                        min="0"
+                                    <QuantityInput
                                         value={editForm.data.min_stock_alert}
-                                        onChange={e => editForm.setData('min_stock_alert', e.target.value)}
-                                        onFocus={e => e.target.select()}
+                                        onChange={(quantity) => editForm.setData('min_stock_alert', (quantity === null ? '' : String(quantity)))}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"
                                     />
                                 </div>
@@ -1214,15 +1200,11 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                                     ))}
                                                 </select>
                                                 <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        min="0.001"
-                                                        step="0.001"
-                                                        max={depotProd?.quantity ?? undefined}
+                                                    <QuantityInput
                                                         value={item.quantity}
-                                                        onChange={e => {
+                                                        onChange={(quantity) => {
                                                             const newItems = [...transferDepotForm.data.items];
-                                                            newItems[index] = { ...newItems[index], quantity: e.target.value };
+                                                            newItems[index] = { ...newItems[index], quantity: (quantity === null ? '' : String(quantity)) };
                                                             transferDepotForm.setData('items', newItems);
                                                         }}
                                                         className="w-24 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-white/15 dark:bg-slate-800 dark:text-white focus:border-amber-300 focus:outline-none"

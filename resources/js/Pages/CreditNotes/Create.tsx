@@ -6,6 +6,7 @@ import Currency from '@/Components/Currency';
 import InputError from '@/Components/InputError';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useMemo, useState } from 'react';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Item {
     id: number;
@@ -179,12 +180,9 @@ export default function CreateCreditNote({ invoice }: Props) {
                                                 <td className="py-3 text-right text-slate-600 dark:text-slate-400">{item.quantity_credited}</td>
                                                 <td className="py-3 text-right text-slate-600 dark:text-slate-400">{item.quantity_creditable}</td>
                                                 <td className="py-3 text-right">
-                                                    <input
-                                                        type="number" step="0.001"
-                                                        min={0}
-                                                        max={item.quantity_creditable}
+                                                    <QuantityInput
                                                         value={quantities[item.id] ?? 0}
-                                                        onChange={(e) => setQuantity(item, e.target.value)}
+                                                        onChange={(quantity) => setQuantity(item, (quantity === null ? '' : String(quantity)))}
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200"
                                                     />
                                                 </td>

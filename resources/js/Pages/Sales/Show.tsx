@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { PageProps } from '@/types';
 import { useLocale } from '@/contexts/LocaleContext';
 import { discountPercent, refundPreview } from '@/utils/saleReturn';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Shop {
     id: number;
@@ -872,16 +873,11 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
                                                 <div key={item.id} className="space-y-1">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-xs text-slate-500 dark:text-slate-400">{item.product_name}</span>
-                                                        <input
-                                                            type="number"
-                                                            min="0.001"
-                                                            step="0.001"
-                                                            max={available}
-                                                            value={Math.min(itemQuantities[item.id] || 1, available)}
-                                                            onChange={(e) => {
-                                                                const val = Math.min(parseFloat(e.target.value) || 1, available);
-                                                                setItemQuantities({...itemQuantities, [item.id]: val});
-                                                            }}
+                                                        <QuantityInput
+                                                            value={Math.min(itemQuantities[item.id] ?? 1, available)}
+                                                            onChange={(quantity) =>
+                                                                setItemQuantities({...itemQuantities, [item.id]: Math.min(quantity ?? 0, available)})
+                                                            }
                                                             className="w-12 text-xs rounded border border-white/10 bg-slate-800 px-2 py-1 text-white focus:border-amber-500 focus:outline-none"
                                                         />
                                                     </div>

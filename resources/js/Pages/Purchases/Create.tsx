@@ -10,6 +10,7 @@ import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { useLocale } from '@/contexts/LocaleContext';
 import { matchesSearch } from '@/utils/search';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Supplier {
     id: number;
@@ -458,15 +459,10 @@ export default function PurchasesCreate({ code_user, suppliers, products, curren
 
                                         <div>
                                             <InputLabel value={`${t.purchases.form.quantity} *`} />
-                                            <TextInput
-                                                type="number"
-                                                min="0.001"
-                                                step="0.001"
+                                            <QuantityInput
                                                 value={item.quantity}
-                                                onChange={(e) =>
-                                                    updateItem(index, 'quantity', e.target.value)
-                                                }
-                                                className="mt-1 block w-full"
+                                                onChange={(quantity) => updateItem(index, 'quantity', quantity ?? '')}
+                                                className="rounded-md border-gray-300 bg-white text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-white dark:placeholder:text-slate-500 mt-1 block w-full"
                                                 required
                                             />
                                             <InputError

@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Plus, Search, Trash2, Truck } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import { showToast } from '@/utils/toast';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Props {
     shopChoices: { id: number; name: string }[];
@@ -126,8 +127,8 @@ export default function CreateStockTransfer({ shopChoices: shops, products, filt
                                                     <span className="text-xs text-slate-500 dark:text-slate-400">{product.sku ? `${product.sku} · ` : ''}{m.inStock(product.stock_quantity)}</span>
                                                 </span>
                                                 <span className="flex items-center gap-2">
-                                                    <input type="number" min={0.001} step={0.001} max={product.stock_quantity} value={quantities[product.id] ?? line?.quantity ?? 1}
-                                                        onChange={(e) => setQuantities((c) => ({ ...c, [product.id]: Number(e.target.value) || 1 }))}
+                                                    <QuantityInput value={quantities[product.id] ?? line?.quantity ?? 1}
+                                                        onChange={(quantity) => setQuantities((c) => ({ ...c, [product.id]: (quantity ?? 0) || 1 }))}
                                                         aria-label={m.quantity}
                                                         className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
                                                     {line && (quantities[product.id] ?? line.quantity) === line.quantity ? (
@@ -165,8 +166,8 @@ export default function CreateStockTransfer({ shopChoices: shops, products, filt
                                         <li key={line.product_id} className="flex items-center justify-between gap-2 py-2 text-sm">
                                             <span className="min-w-0 truncate text-slate-800 dark:text-slate-200">{line.name}</span>
                                             <span className="flex shrink-0 items-center gap-2">
-                                                <input type="number" min={0.001} step={0.001} max={line.max} value={line.quantity}
-                                                    onChange={(e) => setLineQuantity(line.product_id, Number(e.target.value))}
+                                                <QuantityInput value={line.quantity}
+                                                    onChange={(quantity) => setLineQuantity(line.product_id, (quantity ?? 0))}
                                                     aria-label={m.quantity}
                                                     className="w-16 rounded-lg border border-gray-300 bg-white px-2 py-1 text-right text-sm text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-slate-200" />
                                                 <button type="button" onClick={() => setLines((c) => c.filter((l) => l.product_id !== line.product_id))}

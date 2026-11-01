@@ -8,6 +8,7 @@ import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
 import { matchesSearch } from '@/utils/search';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Shop {
     id: number;
@@ -277,13 +278,9 @@ export default function Create({ shops, customers, products }: Props) {
                                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                                             <div>
                                                 <label className="text-xs text-slate-500 dark:text-slate-400">{t.preorders.form.quantity}</label>
-                                                <input
-                                                    type="number"
-                                                    min="0.001"
-                                                    step="0.001"
+                                                <QuantityInput
                                                     value={item.quantity_ordered}
-                                                    onChange={(e) => updateItem(index, 'quantity_ordered', e.target.value)}
-                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(quantity) => updateItem(index, 'quantity_ordered', (quantity === null ? '' : String(quantity)))}
                                                     className="mt-1 h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-slate-900 focus:border-amber-300 focus:outline-none focus:ring-1 focus:ring-amber-300 dark:border-white/10 dark:bg-slate-800/50 dark:text-white"
                                                     required
                                                 />

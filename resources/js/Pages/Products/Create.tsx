@@ -7,6 +7,7 @@ import { useLocale } from '@/contexts/LocaleContext';
 import { UNIT_CODES } from '@/utils/quantity';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
+import QuantityInput from '@/Components/QuantityInput';
 
 interface Shop {
     id: number;
@@ -339,11 +340,10 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
 
                     <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.stock}</span>
-                        <input
-                            type="number" step="0.001"
+                        <QuantityInput
                             value={data.stock_quantity}
-                            onChange={(e) => setData('stock_quantity', e.target.value)}
-                            onFocus={(e) => e.target.select()}
+                            unit={data.unit}
+                            onChange={(quantity) => setData('stock_quantity', quantity === null ? '' : String(quantity))}
                             placeholder="0"
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
@@ -352,11 +352,10 @@ export default function ProductsCreate({ shops, categories, subcategories }: Pro
 
                     <label className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
                         <span>{t.products.form.minStockAlert}</span>
-                        <input
-                            type="number" step="0.001"
+                        <QuantityInput
                             value={data.min_stock_alert}
-                            onChange={(e) => setData('min_stock_alert', e.target.value)}
-                            onFocus={(e) => e.target.select()}
+                            unit={data.unit}
+                            onChange={(quantity) => setData('min_stock_alert', quantity === null ? '' : String(quantity))}
                             className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-slate-900 dark:border-white/15 dark:bg-slate-900/70 dark:text-white"
                         />
                         <InputError message={errors.min_stock_alert} />
