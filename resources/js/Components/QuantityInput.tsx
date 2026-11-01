@@ -19,9 +19,15 @@ export default function QuantityInput({ value, onChange, unit, ...props }: Props
     const [text, setText] = useState(() => toText(value));
 
     // Une valeur changée de l'extérieur (bouton +, autre ligne) remplace la saisie ; celle
-    // qu'on est en train de taper, qui vaut déjà ce nombre, reste intacte.
+    // qu'on est en train de taper, qui vaut déjà ce nombre, reste intacte. Un champ vidé
+    // reste vide : le parent en fait 0, et réafficher « 0 » empêchait d'effacer la quantité.
     useEffect(() => {
-        if (parseQuantity(text) !== parseQuantity(value ?? null)) {
+        const typed = parseQuantity(text);
+        const incoming = parseQuantity(value ?? null);
+        if (typed === null && (incoming === null || incoming === 0)) {
+            return;
+        }
+        if (typed !== incoming) {
             setText(toText(value));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -35,6 +41,11 @@ export default function QuantityInput({ value, onChange, unit, ...props }: Props
             type="text"
             inputMode={decimal ? 'decimal' : 'numeric'}
             value={text}
+            // Au clic, la quantité est sélectionnée : taper la remplace sans l'effacer d'abord.
+            onFocus={(e) => {
+                e.target.select();
+                props.onFocus?.(e);
+            }}
             onChange={(e) => {
                 const next = decimal ? e.target.value : e.target.value.replace(/[.,]/g, '');
                 setText(next);
