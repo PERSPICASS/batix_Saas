@@ -60,7 +60,8 @@ export default function Settings({ shop, currencies, error, fne }: Props) {
     const route = useRoute();
     const { t } = useLocale();
     const { auth } = usePage<PageProps>().props;
-    const isSuperAdmin = auth.user?.role === 'super_admin';
+    // Propriétaire ou co-gérant : les paramètres s'appliquent à toutes les boutiques du compte.
+    const isSuperAdmin = auth.user?.is_account_admin === true;
     const [logoPreview, setLogoPreview] = useState<string | null>(
         shop?.logo ? `/storage/${shop.logo}` : null
     );
@@ -129,7 +130,7 @@ export default function Settings({ shop, currencies, error, fne }: Props) {
             <Head title={t.settings.title} />
 
             <div className="mx-auto max-w-4xl">
-                {/* Bannière d'information pour super_admin */}
+                {/* Bannière d'information pour propriétaire et co-gérant */}
                 {isSuperAdmin && (
                     <div className="mb-6 rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
                         <div className="flex items-start gap-3">

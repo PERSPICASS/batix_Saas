@@ -156,10 +156,10 @@ class StockTransferController extends Controller
         return Auth::user()->accessibleShopsQuery()->orderBy('name')->get(['shops.id', 'shops.name']);
     }
 
-    /** Rééquilibrer suppose de voir toutes les boutiques : le propriétaire seulement. */
+    /** Rééquilibrer suppose de voir toutes les boutiques : propriétaire ou co-gérant. */
     private function canRebalance($shops): bool
     {
-        return Auth::user()->role === 'super_admin' && $shops->count() >= 2;
+        return Auth::user()->isAccountAdmin() && $shops->count() >= 2;
     }
 
     /**

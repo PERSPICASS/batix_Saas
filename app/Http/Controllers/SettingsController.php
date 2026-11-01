@@ -96,9 +96,9 @@ class SettingsController extends Controller
             }
         }
 
-        // Si super_admin : mettre à jour TOUTES ses boutiques
-        if ($user->role === 'super_admin') {
-            $shopsUpdated = $user->shops()->update($validated);
+        // Propriétaire ou co-gérant : mettre à jour TOUTES les boutiques du compte
+        if ($user->isAccountAdmin()) {
+            $shopsUpdated = Shop::where('user_id', $user->ownerId())->update($validated);
             
             $message = $shopsUpdated > 0 
                 ? "Paramètres mis à jour avec succès pour {$shopsUpdated} boutique(s)."

@@ -12,11 +12,11 @@ use Inertia\Inertia;
 class PermissionController extends Controller
 {
     /**
-     * Les seuls utilisateurs dont les permissions sont gérables ici : `super_admin` et
+     * Les seuls utilisateurs dont les permissions sont gérables ici : `super_admin`, `admin` (co-gérant) et
      * `admin_platforme` court-circuitent `hasPermission()` (ils ont tout par défaut),
      * leurs lignes de permission n'auraient donc aucun effet.
      */
-    private const MANAGEABLE_ROLES_EXCLUDED = ['admin_platforme', 'super_admin'];
+    private const MANAGEABLE_ROLES_EXCLUDED = ['admin_platforme', 'super_admin', 'admin'];
 
     /**
      * Le rôle ne borne PAS le compte : `super_admin` est le rôle de TOUT propriétaire de
@@ -31,7 +31,7 @@ class PermissionController extends Controller
     {
         $authUser = Auth::user();
 
-        if (!in_array($authUser->role, ['super_admin', 'manager'])) {
+        if (!in_array($authUser->role, ['super_admin', 'admin', 'manager'])) {
             abort(403, 'Seul un administrateur peut gérer les permissions.');
         }
 
@@ -52,7 +52,7 @@ class PermissionController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['super_admin', 'manager'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
             abort(403, 'Seul un administrateur peut gérer les permissions.');
         }
 

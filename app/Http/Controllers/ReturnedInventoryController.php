@@ -68,7 +68,7 @@ class ReturnedInventoryController extends Controller
     public function approve(string $code_user, ReturnedInventory $item)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'manager'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
             abort(403);
         }
 
@@ -102,7 +102,7 @@ class ReturnedInventoryController extends Controller
     public function reject(string $code_user, ReturnedInventory $item)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'manager'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
             abort(403);
         }
 

@@ -30,12 +30,12 @@ class AssignableRolesTest extends TestCase
         $this->subscribeOwnerOf($this->shop);
     }
 
-    public function test_the_owner_is_offered_every_shop_role_but_never_platform_admin(): void
+    public function test_the_owner_is_offered_every_member_role_but_never_owner_or_platform_admin(): void
     {
         $this->actingAs($this->owner)
             ->get("/{$this->owner->code_user}/users/create")
             ->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('assignableRoles', ['super_admin', 'admin', 'manager', 'cashier', 'staff']));
+                ->where('assignableRoles', ['admin', 'manager', 'cashier', 'staff']));
     }
 
     public function test_a_manager_is_not_offered_the_admin_roles(): void

@@ -24,11 +24,9 @@ class UserController extends Controller
 
         $users = User::with('shop')
             ->where(function ($query) use ($currentUser) {
-                // Si l'utilisateur est super_admin, afficher tous les utilisateurs de ses boutiques
-                if ($currentUser->role === 'super_admin') {
-                    // Récupérer les IDs de toutes les boutiques du super admin
-                    $shopIds = $currentUser->shops()->pluck('id');
-                    $query->whereIn('shop_id', $shopIds);
+                // Propriétaire ou co-gérant : les utilisateurs de toutes les boutiques du compte
+                if ($currentUser->isAccountAdmin()) {
+                    $query->whereIn('shop_id', $currentUser->accessibleShopsQuery()->pluck('id'));
                 } else {
                     // Pour les autres rôles, afficher uniquement les utilisateurs de la boutique active
                     $activeShopId = get_active_shop_id();
@@ -139,7 +137,8 @@ class UserController extends Controller
     {
         $currentUser = auth()->user();
 
-        if (!$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
+        if (!$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()
+            || !self::canManage($currentUser, $user)) {
             abort(403);
         }
 
@@ -163,7 +162,8 @@ class UserController extends Controller
     {
         $currentUser = auth()->user();
 
-        if (!$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
+        if (!$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()
+            || !self::canManage($currentUser, $user)) {
             abort(403);
         }
 
@@ -198,10 +198,20 @@ class UserController extends Controller
         $permissions = $validated['permissions'] ?? [];
         unset($validated['permissions']);
 
+        $previousRole = $user->role;
         $user->update($validated);
 
         // Delete existing permissions and recreate
         $user->permissions()->delete();
+
+        // Un changement de rôle sans case cochée (le formulaire n'en montre aucune pour un
+        // administrateur) prend les valeurs par défaut du nouveau rôle, comme à la création.
+        if (empty($permissions) && $previousRole !== $user->role) {
+            foreach (UserPermission::defaultsForRole($user->role) as $module => $actions) {
+                UserPermission::create(['user_id' => $user->id, 'module' => $module] + $actions);
+            }
+        }
+
         foreach ($permissions as $permission) {
             UserPermission::create([
                 'user_id' => $user->id,
@@ -270,6 +280,7 @@ class UserController extends Controller
     private function authorizeLink(User $currentUser, User $user): void
     {
         if ($user->id === $currentUser->id || $user->role === 'super_admin'
+            || !self::canManage($currentUser, $user)
             || !$currentUser->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
             abort(403);
         }
@@ -281,7 +292,8 @@ class UserController extends Controller
             return redirect()->route('users.index', ['code_user' => request()->route('code_user')])->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
 
-        if (!auth()->user()->accessibleShopsQuery()->where('id', $user->shop_id)->exists()) {
+        if (!auth()->user()->accessibleShopsQuery()->where('id', $user->shop_id)->exists()
+            || !self::canManage(auth()->user(), $user)) {
             abort(403);
         }
 
@@ -298,10 +310,6 @@ class UserController extends Controller
     }
 
     /**
-     * Roles that $currentUser is allowed to assign to another account.
-     * Only account owners (or platform admins) can grant super_admin/admin.
-     */
-    /**
      * Règles de validation de `shop_id` à la création/modification d'un utilisateur.
      *
      * La boutique est le SEUL lien entre un employé et son compte (`shop.user_id` →
@@ -311,34 +319,32 @@ class UserController extends Controller
      * que sa boutique fasse partie de celles de l'appelant. Un tel compte est un
      * fantôme irrécupérable, d'où l'obligation.
      *
-     * Seul `super_admin` fait exception : il POSSÈDE ses boutiques (`shops()`) au lieu
-     * d'y appartenir, et se résout lui-même via `ownerId()`.
+     * Aucun rôle n'y échappe : `super_admin` ne s'attribue plus ici (un tel invité devenait
+     * un nouveau propriétaire sans boutique). Le co-gérant du compte, c'est `admin`.
      */
     private static function shopIdRules(User $currentUser, ?string $role): array
     {
-        // Un appelant non-propriétaire ne choisit pas la boutique — l'UI désactive le
-        // champ ("Seul un super admin peut assigner une boutique") et resolveShopId()
-        // rattache l'utilisateur à la sienne. La valeur reçue est donc ignorée.
-        if ($currentUser->role !== 'super_admin') {
+        // Un manager ne choisit pas la boutique — l'UI désactive le champ et
+        // resolveShopId() rattache l'utilisateur à la sienne. La valeur reçue est ignorée.
+        if (!$currentUser->isAccountAdmin()) {
             return ['nullable'];
         }
 
         return [
-            Rule::requiredIf(fn () => $role !== null && $role !== 'super_admin'),
-            'nullable',
+            'required',
             Rule::exists('shops', 'id')->whereIn('id', $currentUser->accessibleShopsQuery()->pluck('id')),
         ];
     }
 
     /**
-     * Boutique effective d'un utilisateur créé/modifié. Le propriétaire choisit
-     * explicitement ; pour tout autre appelant (un manager, dont le champ est désactivé
+     * Boutique effective d'un utilisateur créé/modifié. Le propriétaire et le co-gérant
+     * choisissent explicitement ; pour tout autre appelant (un manager, dont le champ est désactivé
      * côté UI) l'utilisateur rejoint la boutique de l'appelant — sans quoi il serait
      * créé sans boutique, donc orphelin (cf. shopIdRules).
      */
     private static function resolveShopId(User $currentUser, array $validated): ?int
     {
-        if ($currentUser->role !== 'super_admin') {
+        if (!$currentUser->isAccountAdmin()) {
             return $currentUser->shop_id;
         }
 
@@ -353,22 +359,41 @@ class UserController extends Controller
      */
     private static function assertNotOrphan(string $role, ?int $shopId): void
     {
-        if ($role !== 'super_admin' && $shopId === null) {
+        if ($shopId === null) {
             throw ValidationException::withMessages([
                 'shop_id' => "Un utilisateur de ce rôle doit être rattaché à une boutique.",
             ]);
         }
     }
 
+    /**
+     * Rôles que $currentUser peut attribuer. Jamais `super_admin` : ce rôle EST le
+     * propriétaire du compte (abonnement, boutiques possédées), il naît à l'inscription.
+     * Seul le propriétaire nomme un co-gérant (`admin`).
+     */
     private static function assignableRoles(User $currentUser): array
     {
-        $all = ['super_admin', 'admin', 'manager', 'cashier', 'staff'];
+        $all = ['admin', 'manager', 'cashier', 'staff'];
 
         if (in_array($currentUser->role, ['super_admin', 'admin_platforme'])) {
             return $all;
         }
 
-        return array_values(array_diff($all, ['super_admin', 'admin']));
+        return array_values(array_diff($all, ['admin']));
+    }
+
+    /**
+     * Un co-gérant gère le personnel, ni le propriétaire ni un autre co-gérant : ça reste
+     * au propriétaire. Le propriétaire peut avoir un `shop_id` (comptes anciens) et donc
+     * passer la garde des boutiques accessibles — d'où ce test sur le rôle de la cible.
+     */
+    private static function canManage(User $currentUser, User $target): bool
+    {
+        if ($currentUser->role !== 'admin' || $target->id === $currentUser->id) {
+            return true;
+        }
+
+        return !in_array($target->role, ['super_admin', 'admin'], true);
     }
 
     private static function shopFullMessage(User $currentUser): string

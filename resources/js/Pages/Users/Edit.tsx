@@ -19,7 +19,8 @@ const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin
 export default function UsersEdit({ user, shops, currentUserRole, assignableRoles, modules, canSendLink }: Props) {
     const { t } = useLocale();
     const route = useRoute();
-    const isSuperAdmin = currentUserRole === 'super_admin';
+    // Propriétaire et co-gérant choisissent la boutique ; un manager rattache à la sienne.
+    const canPickShop = currentUserRole === 'super_admin' || currentUserRole === 'admin';
 
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
@@ -101,22 +102,20 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="shop_id" className={`block text-sm font-medium ${isSuperAdmin ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
+                                <label htmlFor="shop_id" className={`block text-sm font-medium ${canPickShop ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
                                     {t.common.misc.shop}
                                 </label>
                                 <select id="shop_id" value={data.shop_id} onChange={(e) => setData('shop_id', e.target.value)}
-                                    disabled={!isSuperAdmin}
+                                    disabled={!canPickShop}
                                     className={`mt-1 block w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 ${
-                                        isSuperAdmin ? 'border-white/15 bg-slate-900/70 text-slate-200 focus:border-amber-300 focus:ring-amber-300' : 'border-slate-600 bg-slate-800/50 text-slate-500 cursor-not-allowed'
+                                        canPickShop ? 'border-white/15 bg-slate-900/70 text-slate-200 focus:border-amber-300 focus:ring-amber-300' : 'border-slate-600 bg-slate-800/50 text-slate-500 cursor-not-allowed'
                                     }`}>
-                                    {/* Une boutique est obligatoire sauf pour un super admin, qui
-                                        possède ses boutiques au lieu d'y appartenir. */}
                                     <option value="">
-                                        {data.role === 'super_admin' ? t.common.form.noShop : t.common.form.selectShop}
+                                        {t.common.form.selectShop}
                                     </option>
                                     {shops.map((shop) => <option key={shop.id} value={shop.id}>{shop.name}</option>)}
                                 </select>
-                                {!isSuperAdmin && <p className="mt-1 text-xs text-slate-500">{t.common.form.shopAssignHint}</p>}
+                                {!canPickShop && <p className="mt-1 text-xs text-slate-500">{t.common.form.shopAssignHint}</p>}
                                 <InputError message={errors.shop_id} />
                             </div>
                             <div>
@@ -127,6 +126,7 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
                                     {ROLE_KEYS.filter((key) => assignableRoles.includes(key) || key === user.role).map((key) => <option key={key} value={key}>{roleLabels[key] || key}</option>)}
                                 </select>
                                 <InputError message={errors.role} />
+                                {data.role === 'admin' && <p className="mt-1 text-xs text-slate-500">{t.users.form.adminRoleHint}</p>}
                             </div>
                         </div>
 
@@ -144,6 +144,9 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.modulePermissions}</h2>
                         </div>
 
+                        {data.role === 'admin' ? (
+                            <p className="text-sm text-slate-600 dark:text-slate-300">{t.users.form.adminPermissionsHint}</p>
+                        ) : (
                         <div className="space-y-3">
                             {Object.keys(modules).map((key) => {
                                 const isSelected = selectedModules.includes(key);
@@ -174,6 +177,7 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
                                 );
                             })}
                         </div>
+                        )}
                     </div>
 
                     <div className="flex items-center justify-end gap-3 border-t border-gray-200 dark:border-white/10 pt-4">

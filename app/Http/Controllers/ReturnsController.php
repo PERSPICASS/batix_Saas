@@ -127,7 +127,7 @@ class ReturnsController extends Controller
             abort(403);
         }
 
-        if (!in_array($user->role, ['super_admin', 'manager'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
             return back()->with('error', 'Seul un administrateur peut annuler un retour.');
         }
 

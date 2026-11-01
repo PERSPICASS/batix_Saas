@@ -63,7 +63,7 @@ class UserPermission extends Model
     public static function defaultsForRole(string $role): array
     {
         return match ($role) {
-            'super_admin', 'admin_platforme' => self::allModulesGranted(),
+            'super_admin', 'admin', 'admin_platforme' => self::allModulesGranted(),
             'manager' => [
                 'products' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => true],
                 'categories' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => true],

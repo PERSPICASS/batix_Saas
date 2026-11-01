@@ -14,6 +14,8 @@ export interface User {
     email: string;
     code_user: string;
     role: 'super_admin' | 'admin_platforme' | 'admin' | 'manager' | 'cashier' | 'staff' | 'caisse' | 'employee';
+    /** Propriétaire (super_admin) ou co-gérant (admin) : accès à toutes les boutiques du compte. */
+    is_account_admin?: boolean;
     email_verified_at?: string;
     permissions?: Permission[];
     shop?: {

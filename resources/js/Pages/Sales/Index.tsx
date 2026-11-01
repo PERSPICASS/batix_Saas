@@ -68,11 +68,11 @@ export default function SalesIndex({ sales, stats, shops, filters, auth }: Props
     const [dateTo, setDateTo]               = useState(filters.date_to ?? '');
     const [creditOnly, setCreditOnly]       = useState(filters.credit_only === '1' || filters.credit_only === 'true');
 
-    const canCancelSale = auth.user?.role === 'super_admin'
+    const canCancelSale = auth.user?.is_account_admin === true
         || auth.user?.permissions?.find(p => p.module === 'sales_delete')?.can_delete === true;
-    const canRestoreSale = auth.user?.role === 'super_admin'
+    const canRestoreSale = auth.user?.is_account_admin === true
         || auth.user?.permissions?.find(p => p.module === 'sales_restore')?.can_view === true;
-    const isAdmin = auth.user?.role === 'super_admin' || auth.user?.role === 'manager';
+    const isAdmin = auth.user?.is_account_admin === true || auth.user?.role === 'manager';
     const canExport = auth.user?.role === 'super_admin' || auth.user?.role === 'admin';
     const [showExport, setShowExport] = useState(false);
 

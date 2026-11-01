@@ -68,6 +68,8 @@ class HandleInertiaRequests extends Middleware
             'name'       => $user->name,
             'email'      => $user->email,
             'role'       => $user->role,
+            // Propriétaire ou co-gérant : voit tout le compte (le front n'a pas à recopier la liste des rôles).
+            'is_account_admin' => $user->isAccountAdmin(),
             'code_user'  => $user->code_user,
             'shop_id'    => $user->shop_id,
             'avatar'     => $user->avatar ?? null,

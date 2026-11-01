@@ -153,7 +153,7 @@ class PreorderController extends Controller
     public function updateStatus(Request $request, string $code_user, Preorder $preorder)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'manager'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
             abort(403);
         }
 
@@ -186,7 +186,7 @@ class PreorderController extends Controller
     public function convertToSale(string $code_user, Preorder $preorder)
     {
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'manager', 'cashier', 'caisse'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'manager', 'cashier', 'caisse'])) {
             abort(403);
         }
 

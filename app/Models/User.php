@@ -162,6 +162,17 @@ class User extends Authenticatable
     }
 
     /**
+     * Gère le compte entier : le propriétaire (`super_admin`) et ses co-gérants (`admin`).
+     * Un `admin` voit et administre toutes les boutiques du propriétaire, mais ce n'est
+     * PAS le propriétaire : abonnement, paiement, tokens API et création/suppression de
+     * boutique restent des tests `role === 'super_admin'`.
+     */
+    public function isAccountAdmin(): bool
+    {
+        return in_array($this->role, ['super_admin', 'admin'], true);
+    }
+
+    /**
      * Code du COMPTE (le {code_user} des URLs et le sélecteur des ressources partagées
      * comme les dépôts ou les logs d'activité) — à ne pas confondre avec `code_user`, qui
      * est un identifiant unique généré pour CHAQUE utilisateur (propriétaire ou employé).
@@ -218,8 +229,8 @@ class User extends Authenticatable
      */
     public function hasPermission(string $module, string $action): bool
     {
-        // Super admin and platform admin have all permissions
-        if ($this->role === 'super_admin' || $this->role === 'admin_platforme') {
+        // Super admin, co-gérant and platform admin have all permissions
+        if ($this->isAccountAdmin() || $this->role === 'admin_platforme') {
             return true;
         }
 
@@ -286,6 +297,10 @@ class User extends Authenticatable
         if ($this->role === 'super_admin') {
             return $this->shops->where('is_active', true)->values();
         }
+
+        if ($this->role === 'admin') {
+            return $this->accessibleShopsQuery()->get();
+        }
         
         return $this->shop?->is_active ? collect([$this->shop]) : collect([]);
     }
@@ -329,6 +344,7 @@ class User extends Authenticatable
      * Used for finding/validating shop ownership.
      * 
      * - Super_admin: toutes les boutiques qu'il possède
+     * - Admin (co-gérant): toutes les boutiques du propriétaire de sa boutique
      * - Admin_platforme: toutes les boutiques de tous les comptes
      * - Manager/Employee: uniquement sa boutique assignée
      */
@@ -343,6 +359,15 @@ class User extends Authenticatable
         if ($this->role === 'super_admin') {
             // Super admin voit toutes ses boutiques
             return $this->shops()->where('is_active', true);
+        }
+
+        // Co-gérant : toutes les boutiques du propriétaire, résolu via sa boutique principale.
+        if ($this->role === 'admin') {
+            $ownerId = $this->ownerId();
+
+            return $ownerId
+                ? Shop::where('user_id', $ownerId)->where('is_active', true)
+                : Shop::where('id', 0);
         }
         
         // Pour manager/employee: uniquement sa boutique assignée
@@ -484,8 +509,9 @@ class User extends Authenticatable
      */
     public function canCreateShop(): bool
     {
-        // Admin platforme can't create shops
-        if ($this->role === 'admin_platforme') {
+        // Une boutique appartient à celui qui la crée (`shops.user_id`) : créée par un
+        // co-gérant ou un employé, elle sortirait du compte. Le propriétaire seulement.
+        if ($this->role !== 'super_admin') {
             return false;
         }
 

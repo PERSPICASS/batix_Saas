@@ -116,13 +116,13 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelling, setCancelling] = useState(false);
 
-    const isAdmin = auth.user?.role === 'super_admin' || auth.user?.role === 'manager';
+    const isAdmin = auth.user?.is_account_admin === true || auth.user?.role === 'manager';
     const canCancel = sale.status !== 'cancelled'
         && auth.user?.role !== 'cashier'
         && auth.user?.role !== 'caisse'
         && (isAdmin || sale.status === 'completed');
 
-    const canCreateReturn = auth.user?.role === 'super_admin'
+    const canCreateReturn = auth.user?.is_account_admin === true
         || auth.user?.role === 'admin_platforme'
         || auth.user?.permissions?.find(p => p.module === 'returns')?.can_create === true;
     const [showReturnPermissionDenied, setShowReturnPermissionDenied] = useState(false);

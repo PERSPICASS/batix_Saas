@@ -89,11 +89,14 @@ export default function Authenticated({
     const [shopMenuOpen, setShopMenuOpen] = useState(false);
     const isPlatformAdmin = user?.role === 'admin_platforme';
     const isSuperAdmin = user?.role === 'super_admin';
+    // Propriétaire ou co-gérant : toutes les boutiques du compte. Abonnement, tokens API et
+    // gestion des boutiques restent au seul propriétaire (isSuperAdmin).
+    const isAccountAdmin = user?.is_account_admin === true;
     const userMenuRef = useRef<HTMLDivElement>(null);
     const shopMenuRef = useRef<HTMLDivElement>(null);
 
     const canViewModule = (module: string): boolean => {
-        if (user?.role === 'super_admin') return true;
+        if (isAccountAdmin) return true;
         const permission = user?.permissions?.find((p: any) => p.module === module);
         return permission ? permission.can_view : false;
     };
@@ -103,7 +106,7 @@ export default function Authenticated({
     };
 
     const isAdmin = (): boolean => {
-        return user?.role === 'super_admin' || user?.role === 'manager';
+        return isAccountAdmin || user?.role === 'manager';
     };
 
     const getAccountCode = (): string | null => {
@@ -254,9 +257,9 @@ export default function Authenticated({
                 icon: LayoutDashboard,
                 module: null,
             },
-            // Comparer n'a de sens qu'à partir de deux boutiques, et seul le propriétaire
-            // du compte les voit toutes (comme le sélecteur de boutique de l'en-tête).
-            ...(isSuperAdmin && shops.length >= 2 ? [{
+            // Comparer n'a de sens qu'à partir de deux boutiques, et seuls le propriétaire
+            // et ses co-gérants les voient toutes (comme le sélecteur de boutique de l'en-tête).
+            ...(isAccountAdmin && shops.length >= 2 ? [{
                 label: t.nav.shopsOverview,
                 href: buildRoute('shops.overview'),
                 active: route().current('shops.overview*'),
@@ -644,7 +647,7 @@ export default function Authenticated({
                                 </Link>
                             )}
 
-                            {user?.role !== 'admin_platforme' && isSuperAdmin && (
+                            {user?.role !== 'admin_platforme' && isAccountAdmin && (
                                 <Link
                                     href={buildRoute('depots.index')}
                                     className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-2 py-2 sm:px-3 text-xs text-slate-800 transition hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
@@ -658,13 +661,13 @@ export default function Authenticated({
                             <div className="relative" ref={shopMenuRef}>
                                 <button
                                     type="button"
-                                    onClick={() => isSuperAdmin && setShopMenuOpen((prev) => !prev)}
+                                    onClick={() => isAccountAdmin && setShopMenuOpen((prev) => !prev)}
                                     className={`relative inline-flex items-center gap-2 rounded-lg border px-2 py-2 sm:px-3 text-left text-xs transition ${
-                                        isSuperAdmin && shops.length > 0
+                                        isAccountAdmin && shops.length > 0
                                             ? 'border-slate-300 bg-white text-slate-800 hover:bg-slate-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10 cursor-pointer'
                                             : 'border-slate-400 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500 cursor-not-allowed'
                                     }`}
-                                    disabled={shops.length === 0 || !isSuperAdmin}
+                                    disabled={shops.length === 0 || !isAccountAdmin}
                                 >
                                     <Building2 className="size-4 text-amber-200" />
                                     <span className="hidden sm:block">
@@ -680,7 +683,7 @@ export default function Authenticated({
                                     )}
                                 </button>
 
-                                {shopMenuOpen && shops.length > 0 && isSuperAdmin && (
+                                {shopMenuOpen && shops.length > 0 && isAccountAdmin && (
                                     <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95">
                                         {shops.map((shop) => (
                                             <button

@@ -54,6 +54,8 @@ class ShopController extends Controller
     {
         $user = Auth::user();
 
+        abort_unless($user->role === 'super_admin', 403, 'Seul le propriétaire du compte peut créer une boutique.');
+
         // Vérifier la limite de boutiques
         if (!$user->canCreateShop()) {
             $limits = $user->getSubscriptionLimits();
@@ -324,8 +326,9 @@ class ShopController extends Controller
     {
         $user = Auth::user();
 
-        // Vérifier que l'utilisateur n'a pas déjà de boutique
-        if ($user->shops()->exists()) {
+        // Déjà une boutique, ou membre d'un compte (co-gérant, employé) : rien à créer ici —
+        // la boutique serait la sienne et non celle du propriétaire.
+        if ($user->shops()->exists() || $user->role !== 'super_admin') {
             return redirect()->route('dashboard', ['code_user' => $user->accountCode()]);
         }
 
@@ -344,8 +347,9 @@ class ShopController extends Controller
     {
         $user = Auth::user();
 
-        // Vérifier que l'utilisateur n'a pas déjà de boutique
-        if ($user->shops()->exists()) {
+        // Déjà une boutique, ou membre d'un compte (co-gérant, employé) : rien à créer ici —
+        // la boutique serait la sienne et non celle du propriétaire.
+        if ($user->shops()->exists() || $user->role !== 'super_admin') {
             $redirectUrl = route('dashboard', ['code_user' => $user->accountCode()]);
             return $request->wantsJson()
                 ? response()->json(['redirect' => $redirectUrl])

@@ -473,7 +473,7 @@ class SaleController extends Controller
     public function destroy(string $code_user, Sale $sale)
     {
         $user = Auth::user();
-        $isAdmin = in_array($user->role, ['super_admin', 'manager']);
+        $isAdmin = in_array($user->role, ['super_admin', 'admin', 'manager']);
 
         // Vérifier que la boutique de la vente est accessible par cet utilisateur
         $accessibleShopIds = $user->accessibleShopsQuery()->pluck('id');
@@ -552,7 +552,7 @@ class SaleController extends Controller
         $user = Auth::user();
 
         // Seuls les admins peuvent réactiver une vente
-        if (!in_array($user->role, ['super_admin', 'manager'])) {
+        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
             return back()->with('error', 'Seul un administrateur peut réactiver une vente.');
         }
 

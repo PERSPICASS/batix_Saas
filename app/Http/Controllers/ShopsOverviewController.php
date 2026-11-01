@@ -51,7 +51,7 @@ class ShopsOverviewController extends Controller
     public function show(Request $request, string $codeUser, Shop $shop, ShopReport $report): Response
     {
         $user = Auth::user();
-        abort_unless($user->role === 'super_admin', 403);
+        abort_unless($user->isAccountAdmin(), 403);
         // Une boutique d'un autre compte n'existe pas, vue d'ici.
         abort_unless($user->accessibleShopsQuery()->whereKey($shop->id)->exists(), 404);
 
@@ -75,7 +75,7 @@ class ShopsOverviewController extends Controller
     public function pdf(Request $request, string $codeUser, Shop $shop, ShopReport $report, DocumentPdf $pdf)
     {
         $user = Auth::user();
-        abort_unless($user->role === 'super_admin', 403);
+        abort_unless($user->isAccountAdmin(), 403);
         abort_unless($user->accessibleShopsQuery()->whereKey($shop->id)->exists(), 404);
 
         $period = $this->period($request);
@@ -116,7 +116,7 @@ class ShopsOverviewController extends Controller
     private function data(Request $request, ShopsOverview $overview): array
     {
         $user = Auth::user();
-        abort_unless($user->role === 'super_admin', 403);
+        abort_unless($user->isAccountAdmin(), 403);
 
         $period = $this->period($request);
         ['start' => $start, 'end' => $end, 'previous_start' => $previousStart, 'previous_end' => $previousEnd] = $period;
