@@ -26,6 +26,13 @@ Schedule::command('trials:send-followups')
     ->withoutOverlapping()
     ->onFailure(fn () => Log::error('Scheduled trials:send-followups failed.'));
 
+// Inscrits qui n'ont pas créé leur boutique : J+1 et J+3 (l'essai, et donc ses
+// relances, ne démarre qu'avec la boutique).
+Schedule::command('signups:send-shop-reminders')
+    ->dailyAt('10:00')
+    ->withoutOverlapping()
+    ->onFailure(fn () => Log::error('Scheduled signups:send-shop-reminders failed.'));
+
 // Purge des conversations de l'assistant IA inactives depuis 90 jours — 3h30, après la
 // sauvegarde de 3h00 pour qu'un fil supprimé reste récupérable dans le dernier dump.
 Schedule::command('ai:purge-conversations')->dailyAt('03:30');

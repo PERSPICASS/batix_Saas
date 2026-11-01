@@ -158,7 +158,25 @@ return [
             ],
         ],
         'unsubscribed_title' => 'Unsubscribed',
-        'unsubscribed_body' => 'You will no longer receive reminders about your trial. Your account stays available at any time.',
+        'unsubscribed_body' => 'You will no longer receive reminders about your account (shop creation, free trial). Your account stays available at any time.',
+    ],
+    // Reminders for signups without a shop (signups:send-shop-reminders)
+    'shop_reminder' => [
+        'greeting' => 'Hello :name,',
+        'cta' => 'Create my shop',
+        'help_cta' => 'Need help? Message us on WhatsApp',
+        'steps' => [
+            1 => [
+                'subject' => 'Just one step left on :appName',
+                'title' => 'Your account is ready',
+                'body' => 'Thanks for signing up! All that is missing is your shop: its name, city and currency, that\'s it. In two minutes you can add your products and record your first sale. Your 14-day free trial starts when you create the shop.',
+            ],
+            3 => [
+                'subject' => 'Your :appName free trial has not started yet',
+                'title' => 'Can we help you get started?',
+                'body' => 'Your account is waiting, but your shop is not created yet, so your 14-day free trial has not started. If something is holding you back, message us on WhatsApp and we will guide you step by step.',
+            ],
+        ],
     ],
     'daily_alerts' => [
         'subject' => ':appName — to watch today',

@@ -158,7 +158,25 @@ return [
             ],
         ],
         'unsubscribed_title' => 'Désinscription confirmée',
-        'unsubscribed_body' => 'Vous ne recevrez plus de rappels concernant votre essai. Votre compte reste disponible à tout moment.',
+        'unsubscribed_body' => 'Vous ne recevrez plus de rappels concernant votre compte (création de la boutique, essai gratuit). Votre compte reste disponible à tout moment.',
+    ],
+    // Relance des inscrits sans boutique (signups:send-shop-reminders)
+    'shop_reminder' => [
+        'greeting' => 'Bonjour :name,',
+        'cta' => 'Créer ma boutique',
+        'help_cta' => 'Besoin d\'aide ? Écrivez-nous sur WhatsApp',
+        'steps' => [
+            1 => [
+                'subject' => 'Il ne vous reste qu\'une étape sur :appName',
+                'title' => 'Votre compte est prêt',
+                'body' => 'Merci pour votre inscription ! Il ne manque plus que votre boutique : son nom, sa ville et sa devise, et c\'est tout. En deux minutes, vous pouvez ajouter vos produits et encaisser votre première vente. Votre essai gratuit de 14 jours démarre à la création de la boutique.',
+            ],
+            3 => [
+                'subject' => 'Votre essai gratuit :appName n\'a pas encore commencé',
+                'title' => 'On vous aide à démarrer ?',
+                'body' => 'Votre compte vous attend, mais votre boutique n\'est pas encore créée : votre essai gratuit de 14 jours n\'a donc pas commencé. Si quelque chose vous bloque, écrivez-nous sur WhatsApp, on vous accompagne pas à pas.',
+            ],
+        ],
     ],
     'daily_alerts' => [
         'subject' => ':appName — à surveiller aujourd\'hui',
