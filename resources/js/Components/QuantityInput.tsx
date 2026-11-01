@@ -47,12 +47,29 @@ export default function QuantityInput({ value, onChange, unit, ...props }: Props
                 props.onFocus?.(e);
             }}
             onChange={(e) => {
-                const next = decimal ? e.target.value : e.target.value.replace(/[.,]/g, '');
+                const next = sanitize(e.target.value, decimal);
                 setText(next);
                 onChange(parseQuantity(next));
             }}
         />
     );
+}
+
+/**
+ * Chiffres seulement, plus un séparateur (« , » ou « . ») quand l'unité se divise : une
+ * lettre tapée ou collée est ignorée au lieu de rendre la quantité illisible.
+ */
+function sanitize(raw: string, decimal: boolean): string {
+    const kept = raw.replace(decimal ? /[^0-9.,]/g : /[^0-9]/g, '');
+    if (!decimal) {
+        return kept;
+    }
+
+    const separator = kept.search(/[.,]/);
+
+    return separator === -1
+        ? kept
+        : kept.slice(0, separator + 1) + kept.slice(separator + 1).replace(/[.,]/g, '');
 }
 
 function toText(value: number | string | null | undefined): string {

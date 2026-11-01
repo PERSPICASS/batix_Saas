@@ -4,12 +4,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import QuantityInput from '@/Components/QuantityInput';
 
 /** Comme l'écran de vente : un champ illisible devient 0 dans le panier. */
-function SaleLine({ initial = 1 }: { initial?: number }) {
+function SaleLine({ initial = 1, unit = 'piece' }: { initial?: number; unit?: string }) {
     const [quantity, setQuantity] = useState(initial);
 
     return (
         <>
-            <QuantityInput value={quantity} unit="piece" onChange={(q) => setQuantity(q ?? 0)} />
+            <QuantityInput value={quantity} unit={unit} onChange={(q) => setQuantity(q ?? 0)} />
             <output data-testid="cart">{quantity}</output>
             <button type="button" onClick={() => setQuantity(quantity + 1)}>+</button>
         </>
@@ -56,5 +56,28 @@ describe('QuantityInput', () => {
 
         expect(input.selectionStart).toBe(0);
         expect(input.selectionEnd).toBe(1);
+    });
+
+    it('ignores letters, typed or pasted', () => {
+        render(<SaleLine />);
+        const input = screen.getByRole('textbox') as HTMLInputElement;
+
+        fireEvent.change(input, { target: { value: '1a2b' } });
+
+        expect(input.value).toBe('12');
+        expect(screen.getByTestId('cart').textContent).toBe('12');
+    });
+
+    it('keeps a single decimal separator for a divisible unit, none for pieces', () => {
+        const { unmount } = render(<SaleLine unit="kg" />);
+        const kg = screen.getByRole('textbox') as HTMLInputElement;
+        fireEvent.change(kg, { target: { value: '1,5,2kg' } });
+        expect(kg.value).toBe('1,52');
+        unmount();
+
+        render(<SaleLine />);
+        const piece = screen.getByRole('textbox') as HTMLInputElement;
+        fireEvent.change(piece, { target: { value: '1,5' } });
+        expect(piece.value).toBe('15');
     });
 });
