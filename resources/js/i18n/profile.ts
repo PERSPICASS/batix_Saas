@@ -15,7 +15,7 @@ export const profile = {
             permissionsDescription: 'Modules et actions auxquels vous avez accès',
             roles: {
                 super_admin: 'Super Administrateur',
-                admin: 'Administrateur',
+                admin: 'Co-gérant',
                 manager: 'Gérant',
                 cashier: 'Caissier',
                 staff: 'Personnel',
@@ -93,7 +93,7 @@ export const profile = {
             permissionsDescription: 'Modules and actions you have access to',
             roles: {
                 super_admin: 'Super Administrator',
-                admin: 'Administrator',
+                admin: 'Co-manager',
                 manager: 'Manager',
                 cashier: 'Cashier',
                 staff: 'Staff',

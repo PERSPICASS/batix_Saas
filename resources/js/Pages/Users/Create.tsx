@@ -1,7 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
-import { Shield, Check, Mail } from 'lucide-react';
+import { Shield, Check, Mail, Info } from 'lucide-react';
 import { useRoute } from '@/utils/route';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
@@ -168,7 +168,12 @@ export default function UsersCreate({ shops, currentUserRole, assignableRoles, m
                                     ))}
                                 </select>
                                 <InputError message={errors.role} />
-                                {data.role === 'admin' && <p className="mt-1 text-xs text-slate-500">{t.users.form.adminRoleHint}</p>}
+                                {data.role === 'admin' && (
+                                    <p className="mt-2 flex items-start gap-2 rounded-lg border border-amber-300/40 bg-amber-50 p-2.5 text-xs text-slate-700 dark:bg-amber-300/10 dark:text-slate-200">
+                                        <Info className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
+                                        {t.users.form.adminRoleHint}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -186,15 +191,14 @@ export default function UsersCreate({ shops, currentUserRole, assignableRoles, m
                         </div>
                     </div>
 
+                    {/* Un co-gérant a tous les modules : rien à cocher. */}
+                    {data.role !== 'admin' && (
                     <div className="space-y-4 border-t border-white/10 pt-6">
                         <div className="flex items-center gap-2">
                             <Shield className="size-5 text-amber-300" />
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.modulePermissions}</h2>
                         </div>
 
-                        {data.role === 'admin' ? (
-                            <p className="text-sm text-slate-600 dark:text-slate-300">{t.users.form.adminPermissionsHint}</p>
-                        ) : (
                         <div className="space-y-3">
                             {Object.keys(modules).map((key) => {
                                 const isSelected = selectedModules.includes(key);
@@ -236,8 +240,8 @@ export default function UsersCreate({ shops, currentUserRole, assignableRoles, m
                                 );
                             })}
                         </div>
-                        )}
                     </div>
+                    )}
 
                     <div className="flex items-center justify-end gap-3 border-t border-gray-200 dark:border-white/10 pt-4">
                         <Link
