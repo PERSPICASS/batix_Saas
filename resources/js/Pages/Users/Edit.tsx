@@ -109,6 +109,8 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{t.common.form.assignment}</h2>
 
                         <div className="grid grid-cols-2 gap-4">
+                            {/* Un co-gérant voit toutes les boutiques : pas de boutique à choisir. */}
+                            {data.role !== 'admin' && (
                             <div>
                                 <label htmlFor="shop_id" className={`block text-sm font-medium ${canPickShop ? 'text-slate-700 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>
                                     {t.common.misc.shop}
@@ -126,6 +128,7 @@ export default function UsersEdit({ user, shops, currentUserRole, assignableRole
                                 {!canPickShop && <p className="mt-1 text-xs text-slate-500">{t.common.form.shopAssignHint}</p>}
                                 <InputError message={errors.shop_id} />
                             </div>
+                            )}
                             <div>
                                 <label htmlFor="role" className="block text-sm font-medium text-slate-700 dark:text-slate-200">{t.common.form.role}</label>
                                 <select id="role" value={data.role} onChange={(e) => changeRole(e.target.value)}

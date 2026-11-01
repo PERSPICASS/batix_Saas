@@ -69,16 +69,31 @@ class AccountAdminTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'invite@example.com']);
     }
 
-    public function test_an_admin_needs_a_shop_and_gets_every_module(): void
+    public function test_an_admin_gets_a_main_shop_without_choosing_one_and_every_module(): void
     {
-        $this->invite($this->owner, ['role' => 'admin'])->assertSessionHasErrors('shop_id');
-
-        $this->invite($this->owner, ['role' => 'admin', 'shop_id' => $this->second->id])->assertSessionHasNoErrors();
+        // Le formulaire ne demande pas de boutique au co-gérant : il reçoit la première du compte.
+        $this->invite($this->owner, ['role' => 'admin'])->assertSessionHasNoErrors();
 
         $admin = User::where('email', 'invite@example.com')->firstOrFail();
-        $this->assertSame($this->second->id, $admin->shop_id);
+        $this->assertSame($this->main->id, $admin->shop_id);
         $this->assertSame($this->owner->id, $admin->ownerId());
         $this->assertTrue($admin->hasPermission('expenses', 'delete'));
+    }
+
+    public function test_other_roles_still_need_a_shop(): void
+    {
+        $this->invite($this->owner, ['role' => 'cashier'])->assertSessionHasErrors('shop_id');
+    }
+
+    public function test_editing_an_admin_keeps_their_main_shop(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'shop_id' => $this->second->id]);
+
+        $this->actingAs($this->owner)->put("/{$this->owner->code_user}/users/{$admin->id}", [
+            'name' => 'Renommé', 'email' => $admin->email, 'role' => 'admin', 'is_active' => true,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame($this->second->id, $admin->fresh()->shop_id);
     }
 
     public function test_an_admin_reaches_every_shop_of_the_account_and_no_other(): void

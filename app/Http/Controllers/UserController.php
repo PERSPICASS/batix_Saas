@@ -188,7 +188,7 @@ class UserController extends Controller
             $validated['role'] = $user->role;
         }
 
-        $validated['shop_id'] = self::resolveShopId($currentUser, $validated);
+        $validated['shop_id'] = self::resolveShopId($currentUser, $validated, $user);
         self::assertNotOrphan($validated['role'], $validated['shop_id']);
 
         // Déplacer quelqu'un vers une boutique déjà pleine contournerait la limite par boutique.
@@ -333,7 +333,9 @@ class UserController extends Controller
         }
 
         return [
-            'required',
+            // Un co-gérant voit toutes les boutiques : le formulaire ne lui en demande pas,
+            // resolveShopId() lui donne une boutique principale.
+            $role === 'admin' ? 'nullable' : 'required',
             Rule::exists('shops', 'id')->whereIn('id', $currentUser->accessibleShopsQuery()->pluck('id')),
         ];
     }
@@ -344,13 +346,23 @@ class UserController extends Controller
      * côté UI) l'utilisateur rejoint la boutique de l'appelant — sans quoi il serait
      * créé sans boutique, donc orphelin (cf. shopIdRules).
      */
-    private static function resolveShopId(User $currentUser, array $validated): ?int
+    private static function resolveShopId(User $currentUser, array $validated, ?User $target = null): ?int
     {
         if (!$currentUser->isAccountAdmin()) {
             return $currentUser->shop_id;
         }
 
-        return $validated['shop_id'] ?? null;
+        if (!empty($validated['shop_id'])) {
+            return (int) $validated['shop_id'];
+        }
+
+        // Co-gérant sans boutique choisie : il garde la sienne, sinon la première du compte.
+        // Elle ne borne pas son accès, elle le rattache au compte (shop_id = seul lien).
+        if ($validated['role'] === 'admin') {
+            return $target?->shop_id ?? $currentUser->accessibleShopsQuery()->orderBy('shops.id')->value('shops.id');
+        }
+
+        return null;
     }
 
     /**
