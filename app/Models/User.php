@@ -21,7 +21,7 @@ class User extends Authenticatable
     * The attributes that are mass assignable.
     *
     * @var list<string>
-    * Possible roles: super_admin, admin_platforme, admin, manager, cashier, staff, caisse, employee
+    * Possible roles: super_admin, admin_platforme, admin, manager, stock_manager, cashier, staff, caisse, employee
      */
     protected $fillable = [
         'name',

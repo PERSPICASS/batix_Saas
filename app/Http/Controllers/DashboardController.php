@@ -21,6 +21,11 @@ class DashboardController extends Controller
         if (in_array($user->role, ['cashier', 'caisse', 'employee'])) {
             return redirect()->route('sales.index', ['code_user' => $request->route('code_user')]);
         }
+
+        // Le tableau de bord parle ventes ; le gestionnaire de stock arrive sur le catalogue.
+        if ($user->role === 'stock_manager') {
+            return redirect()->route('products.index', ['code_user' => $request->route('code_user')]);
+        }
         
         // Les boutiques du COMPTE, pas celles dont l'utilisateur est propriétaire : pour un
         // co-gérant ou un manager, `user_id = lui` ne donnait rien (« Créez votre boutique »).

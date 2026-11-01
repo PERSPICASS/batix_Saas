@@ -74,6 +74,7 @@ export const users = {
         roles: {
             super_admin: 'Super Admin',
             manager: 'Manager',
+            stock_manager: 'Gestionnaire de stock',
             cashier: 'Caissier',
             employee: 'Employé',
             admin_platforme: 'Admin Plateforme',
@@ -164,6 +165,7 @@ export const users = {
         roles: {
             super_admin: 'Super Admin',
             manager: 'Manager',
+            stock_manager: 'Stock manager',
             cashier: 'Cashier',
             employee: 'Employee',
             admin_platforme: 'Platform Admin',

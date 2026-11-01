@@ -387,7 +387,7 @@ class UserController extends Controller
      */
     private static function assignableRoles(User $currentUser): array
     {
-        $all = ['admin', 'manager', 'cashier', 'staff'];
+        $all = ['admin', 'manager', 'stock_manager', 'cashier', 'staff'];
 
         if (in_array($currentUser->role, ['super_admin', 'admin_platforme'])) {
             return $all;

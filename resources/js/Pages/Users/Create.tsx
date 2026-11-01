@@ -29,7 +29,7 @@ interface Props {
     modules: Record<string, string>;
 }
 
-const ROLE_KEYS = ['staff', 'cashier', 'manager', 'admin', 'super_admin', 'admin_platforme'];
+const ROLE_KEYS = ['staff', 'cashier', 'stock_manager', 'manager', 'admin', 'super_admin', 'admin_platforme'];
 
 export default function UsersCreate({ shops, currentUserRole, assignableRoles, roleDefaults, modules }: Props) {
     const { t } = useLocale();

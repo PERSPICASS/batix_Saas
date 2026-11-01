@@ -90,6 +90,18 @@ class UserPermission extends Model
                 'activity_logs' => ['can_view' => true, 'can_create' => false, 'can_edit' => false, 'can_delete' => false],
                 'settings' => ['can_view' => true, 'can_create' => false, 'can_edit' => true, 'can_delete' => false],
             ],
+            // Le catalogue, le stock et ce qui l'alimente (achats, fournisseurs, dépôts,
+            // retours à remettre en rayon) — ni ventes, ni clients, ni argent.
+            'stock_manager' => [
+                'products' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'categories' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'stocks' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'inventory' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'depots' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'suppliers' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'purchases' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+                'returned_inventory' => ['can_view' => true, 'can_create' => false, 'can_edit' => true, 'can_delete' => false],
+            ],
             'cashier', 'caisse' => [
                 'sales' => ['can_view' => true, 'can_create' => true, 'can_edit' => false, 'can_delete' => false],
                 'quotes' => ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],

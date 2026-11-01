@@ -47,6 +47,7 @@ const roleColors: Record<string, 'default' | 'success' | 'info' | 'warning' | 'd
     admin_platforme: 'danger',
     admin: 'info',
     manager: 'info',
+    stock_manager: 'info',
     cashier: 'warning',
     staff: 'success',
 };

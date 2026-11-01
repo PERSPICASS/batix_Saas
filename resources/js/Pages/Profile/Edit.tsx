@@ -48,6 +48,7 @@ export default function Edit({
             super_admin: 'bg-purple-100 text-purple-800',
             admin: 'bg-blue-100 text-blue-800',
             manager: 'bg-green-100 text-green-800',
+            stock_manager: 'bg-teal-100 text-teal-800',
             cashier: 'bg-yellow-100 text-yellow-800',
             staff: 'bg-gray-100 text-gray-800',
         };
@@ -59,6 +60,7 @@ export default function Edit({
             super_admin: t.profile.overview.roles.super_admin,
             admin: t.profile.overview.roles.admin,
             manager: t.profile.overview.roles.manager,
+            stock_manager: t.profile.overview.roles.stock_manager,
             cashier: t.profile.overview.roles.cashier,
             staff: t.profile.overview.roles.staff,
         };
