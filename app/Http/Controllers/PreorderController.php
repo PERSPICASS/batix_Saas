@@ -152,10 +152,8 @@ class PreorderController extends Controller
 
     public function updateStatus(Request $request, string $code_user, Preorder $preorder)
     {
+        // Le droit vient de la permission `preorders.edit` (route), pas du rôle.
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
-            abort(403);
-        }
 
         if (!$user->accessibleShopsQuery()->where('id', $preorder->shop_id)->exists()) {
             abort(403);
@@ -185,10 +183,8 @@ class PreorderController extends Controller
 
     public function convertToSale(string $code_user, Preorder $preorder)
     {
+        // Le droit vient de la permission `preorders.edit` (route), pas du rôle.
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'admin', 'manager', 'cashier', 'caisse'])) {
-            abort(403);
-        }
 
         if (!$user->accessibleShopsQuery()->where('id', $preorder->shop_id)->exists()) {
             abort(403);

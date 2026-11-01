@@ -118,9 +118,10 @@ export default function SalesShow({ sale, auth, shareUrl }: Props) {
     const [cancelling, setCancelling] = useState(false);
 
     const isAdmin = auth.user?.is_account_admin === true || auth.user?.role === 'manager';
+    // Comme le serveur : la permission « Annuler une vente », quel que soit le rôle.
     const canCancel = sale.status !== 'cancelled'
-        && auth.user?.role !== 'cashier'
-        && auth.user?.role !== 'caisse'
+        && (auth.user?.is_account_admin === true
+            || auth.user?.permissions?.find((p) => p.module === 'sales_delete')?.can_delete === true)
         && (isAdmin || sale.status === 'completed');
 
     const canCreateReturn = auth.user?.is_account_admin === true

@@ -88,7 +88,7 @@ class SaleController extends Controller
      */
     public function export(Request $request): BinaryFileResponse
     {
-        abort_unless(in_array(Auth::user()->role, ['super_admin', 'admin'], true), 403);
+        abort_unless(Auth::user()->isAccountAdmin(), 403);
 
         $validated = $request->validate([
             'date_from' => ['required', 'date'],
@@ -473,17 +473,14 @@ class SaleController extends Controller
     public function destroy(string $code_user, Sale $sale)
     {
         $user = Auth::user();
-        $isAdmin = in_array($user->role, ['super_admin', 'admin', 'manager']);
+        // Le droit d'annuler vient de la permission `sales_delete` (route). Le rôle ne
+        // décide que de la portée : hors propriétaire, co-gérant et manager, le jour même.
+        $isAdmin = $user->isAccountAdmin() || $user->role === 'manager';
 
         // Vérifier que la boutique de la vente est accessible par cet utilisateur
         $accessibleShopIds = $user->accessibleShopsQuery()->pluck('id');
         if (!$accessibleShopIds->contains($sale->shop_id)) {
             abort(403);
-        }
-
-        // Les caissiers ne peuvent pas annuler de ventes
-        if (in_array($user->role, ['cashier', 'caisse'])) {
-            return back()->with('error', 'Vous n\'avez pas l\'autorisation d\'annuler des ventes.');
         }
 
         // Les non-admins ne peuvent annuler que les ventes du jour
@@ -551,11 +548,7 @@ class SaleController extends Controller
     {
         $user = Auth::user();
 
-        // Seuls les admins peuvent réactiver une vente
-        if (!in_array($user->role, ['super_admin', 'admin', 'manager'])) {
-            return back()->with('error', 'Seul un administrateur peut réactiver une vente.');
-        }
-
+        // Le droit de réactiver vient de la permission `sales_restore` (route).
         // Vérifier que la boutique est accessible
         $accessibleShopIds = $user->accessibleShopsQuery()->pluck('id');
         if (!$accessibleShopIds->contains($sale->shop_id)) {

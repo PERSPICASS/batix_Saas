@@ -67,10 +67,8 @@ class ReturnedInventoryController extends Controller
 
     public function approve(string $code_user, ReturnedInventory $item)
     {
+        // Le droit vient de la permission `returned_inventory.edit` (route), pas du rôle.
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'admin', 'manager', 'stock_manager'])) {
-            abort(403);
-        }
 
         if (!$user->accessibleShopsQuery()->where('id', $item->shop_id)->exists()) {
             abort(403);
@@ -101,10 +99,8 @@ class ReturnedInventoryController extends Controller
 
     public function reject(string $code_user, ReturnedInventory $item)
     {
+        // Le droit vient de la permission `returned_inventory.edit` (route), pas du rôle.
         $user = Auth::user();
-        if (!in_array($user->role, ['super_admin', 'admin', 'manager', 'stock_manager'])) {
-            abort(403);
-        }
 
         if (!$user->accessibleShopsQuery()->where('id', $item->shop_id)->exists()) {
             abort(403);
