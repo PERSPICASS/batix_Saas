@@ -380,24 +380,22 @@ export default function PlatformAdminDashboard({ stats, charts, recent_accounts,
                             {recent_shops.map((shop) => (
                                 <div
                                     key={shop.id}
-                                    className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-3 dark:border-white/5 dark:bg-white/5"
+                                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-white/5 dark:bg-white/5"
                                 >
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-medium text-slate-900 dark:text-white">{shop.name}</p>
-                                            {shop.is_active ? (
-                                                <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-300">
-                                                    {common.activeFem}
-                                                </span>
-                                            ) : (
-                                                <span className="rounded bg-slate-500/20 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                                                    {t.platformAdmin.shops.suspended}
-                                                </span>
-                                            )}
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-start gap-2">
+                                            {/* Pastille de statut à la place du badge texte, qui débordait sur les noms longs. */}
+                                            <span
+                                                role="img"
+                                                aria-label={shop.is_active ? common.activeFem : t.platformAdmin.shops.suspended}
+                                                title={shop.is_active ? common.activeFem : t.platformAdmin.shops.suspended}
+                                                className={`mt-1.5 size-2.5 shrink-0 rounded-full ${shop.is_active ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-slate-500'}`}
+                                            />
+                                            <p className="min-w-0 break-words font-medium text-slate-900 dark:text-white">{shop.name}</p>
                                         </div>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400">{shop.owner.name ?? common.unknown}</p>
+                                        <p className="pl-[18px] text-xs text-slate-500 dark:text-slate-400">{shop.owner.name ?? common.unknown}</p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="shrink-0 text-right">
                                         <p className="text-xs text-slate-500">{fmtDate(shop.created_at, locale)}</p>
                                     </div>
                                 </div>
