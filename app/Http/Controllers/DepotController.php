@@ -184,19 +184,7 @@ class DepotController extends Controller
 
         // Stock des comptoirs, pour le transfert boutique → dépôt : uniquement ce qui peut
         // sortir (suivi en stock, quantité positive). Filtré par boutique côté client.
-        $shopProductsForDepot = Product::whereIn('shop_id', $shops->pluck('id'))
-            ->whereNull('parent_id')
-            ->where('track_stock', true)
-            ->where('stock_quantity', '>', 0)
-            ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'shop_id', 'stock_quantity'])
-            ->map(fn($p) => [
-                'id'             => $p->id,
-                'name'           => $p->name,
-                'sku'            => $p->sku,
-                'shop_id'        => $p->shop_id,
-                'stock_quantity' => (float) $p->stock_quantity,
-            ]);
+        $shopProductsForDepot = Product::stockForDepotTransfer($shops->pluck('id'));
 
         // Autres dépôts du même compte (pour transfert dépôt → dépôt)
         $otherDepots = Depot::where('code_user', $codeUser)

@@ -8,6 +8,7 @@ use App\Exports\ProductsExport;
 use App\Exports\ProductsTemplateExport;
 use App\Imports\ProductsImport;
 use App\Models\Category;
+use App\Models\Depot;
 use App\Rules\AccessibleCategory;
 use App\Models\Product;
 use App\Models\StockMovement;
@@ -128,6 +129,19 @@ class ProductController extends Controller
             // (object) : vide, un tableau PHP part en `[]` côté JS, où `filters.sort` est
             // la méthode Array.prototype.sort (page blanche).
             'filters' => (object) $request->only(['shop_id', 'category_id', 'search', 'status', 'sort']),
+            // Dépôts du compte vers lesquels un produit peut être envoyé depuis la liste
+            // (même droit que le bouton de la page dépôt : depots.edit).
+            'depots' => Auth::user()->hasPermission('depots', 'edit')
+                ? Depot::where('code_user', Auth::user()->accountCode())
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get(['id', 'name'])
+                : [],
+            // Chargé à la demande, à l'ouverture de la fenêtre de transfert : tout le stock
+            // des comptoirs n'a rien à faire dans chaque affichage de la liste.
+            'shopProductsForDepot' => Inertia::optional(
+                fn () => Product::stockForDepotTransfer(Auth::user()->accessibleShopsQuery()->pluck('id'))
+            ),
             'canCreateProduct' => Auth::user()->canCreateProduct($activeShopId),
             'remainingProducts' => Auth::user()->remainingProductSlots($activeShopId),
         ]);

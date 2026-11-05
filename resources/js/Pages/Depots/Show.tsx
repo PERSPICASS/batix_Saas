@@ -13,7 +13,7 @@ import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
 import QuantityInput from '@/Components/QuantityInput';
-import ReceiveFromShopModal, { ShopProductForDepot } from './Partials/ReceiveFromShopModal';
+import ShopToDepotTransferModal, { ShopProductForDepot } from '@/Components/ShopToDepotTransferModal';
 
 interface DepotProductItem {
     id: number;
@@ -957,7 +957,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
             )}
 
             {showReceiveFromShop && (
-                <ReceiveFromShopModal
+                <ShopToDepotTransferModal
                     depot={depot}
                     shops={shops}
                     shopProducts={shopProductsForDepot ?? []}

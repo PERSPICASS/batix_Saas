@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Trash2, AlertTriangle, Search, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw } from 'lucide-react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Pencil, Plus, Trash2, AlertTriangle, Search, Upload, Download, FileSpreadsheet, X, Layers, LogOut, RotateCcw, Warehouse } from 'lucide-react';
 import { PageProps } from '@/types';
 import Table, { TableActions, TableActionButton, TableBadge } from '@/Components/Table';
 import Currency from '@/Components/Currency';
@@ -12,6 +12,7 @@ import ProductImage from '@/Components/ProductImage';
 import BarcodeScanner from '@/Components/BarcodeScanner';
 import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
+import ShopToDepotTransferModal, { ShopProductForDepot } from '@/Components/ShopToDepotTransferModal';
 
 interface Category {
     id: number;
@@ -73,9 +74,13 @@ interface Props extends PageProps {
     filters: Filters;
     canCreateProduct: boolean;
     remainingProducts: number;
+    /** Dépôts actifs du compte ; vide sans le droit depots.edit. */
+    depots: Array<{ id: number; name: string }>;
+    /** Prop optionnelle : chargée seulement à l'ouverture de la fenêtre de transfert. */
+    shopProductsForDepot?: ShopProductForDepot[];
 }
 
-export default function ProductsIndex({ products, categories = [], shops = [], filters = {}, canCreateProduct = true, remainingProducts = -1 }: Props) {
+export default function ProductsIndex({ products, categories = [], shops = [], filters = {}, canCreateProduct = true, remainingProducts = -1, depots = [], shopProductsForDepot }: Props) {
     const route = useRoute();
     const { t } = useLocale();
     const [showImportModal, setShowImportModal] = useState(false);
@@ -91,6 +96,13 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
     const [removeModal, setRemoveModal] = useState<{ show: boolean; product: Product | null }>({ show: false, product: null });
     const [deleting, setDeleting] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
+    const [showToDepot, setShowToDepot] = useState(false);
+    const activeShopId = (usePage().props as { activeShop?: { id: number } | null }).activeShop?.id;
+
+    const openToDepot = () => {
+        setShowToDepot(true);
+        router.reload({ only: ['shopProductsForDepot'] });
+    };
 
     const { data, setData, post, processing, reset, errors } = useForm({
         file: null as File | null,
@@ -353,6 +365,16 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                             </a>
                         </div>
 
+                        {!readOnly && depots.length > 0 && (
+                            <button
+                                onClick={openToDepot}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:hover:bg-emerald-400/20"
+                            >
+                                <Warehouse className="size-4" />
+                                {t.products.actions.toDepot}
+                            </button>
+                        )}
+
                         {canCreateProduct ? (
                             <Link
                                 href={route('products.create')}
@@ -558,6 +580,16 @@ export default function ProductsIndex({ products, categories = [], shops = [], f
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showToDepot && (
+                <ShopToDepotTransferModal
+                    depots={depots}
+                    shops={shops}
+                    shopProducts={shopProductsForDepot}
+                    defaultShopId={activeShopId ?? filters.shop_id}
+                    onClose={() => setShowToDepot(false)}
+                />
             )}
 
             <ConfirmDeleteModal

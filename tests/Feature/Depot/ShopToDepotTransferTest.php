@@ -164,6 +164,38 @@ class ShopToDepotTransferTest extends TestCase
                 ->where('recentTransfers.0.direction', DepotTransfer::TO_DEPOT));
     }
 
+    /** Le bouton « Vers un dépôt » de la liste produits : seuls les dépôts actifs DU compte. */
+    public function test_the_product_list_offers_only_this_accounts_active_depots(): void
+    {
+        $this->product();
+        Depot::factory()->create(['user_id' => $this->user->id, 'code_user' => $this->user->code_user, 'is_active' => false]);
+        $stranger = User::factory()->create(['role' => 'super_admin']);
+        Depot::factory()->create(['user_id' => $stranger->id, 'code_user' => $stranger->code_user]);
+
+        $this->get("/{$this->user->code_user}/produits")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('depots', 1)
+                ->where('depots.0.id', $this->depot->id)
+                // Le stock des comptoirs n'est pas envoyé à chaque affichage de la liste.
+                ->missing('shopProductsForDepot'));
+    }
+
+    /** Ouverture de la fenêtre : rechargement partiel qui apporte le stock des comptoirs. */
+    public function test_the_product_list_loads_counter_stock_on_demand(): void
+    {
+        $product = $this->product();
+        $this->product(['stock_quantity' => 0]);
+        $foreign = Product::factory()->create(['track_stock' => true, 'stock_quantity' => 40]);
+
+        $this->get("/{$this->user->code_user}/produits")
+            ->assertInertia(fn ($page) => $page->reloadOnly('shopProductsForDepot', fn ($reload) => $reload
+                ->has('shopProductsForDepot', 1)
+                ->where('shopProductsForDepot.0.id', $product->id)));
+
+        $this->assertNotNull($foreign->id);
+    }
+
     /** `transfers()` lisait un `$user` jamais défini : la page d'historique était en 500. */
     public function test_the_transfer_history_page_renders(): void
     {

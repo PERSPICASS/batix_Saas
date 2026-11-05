@@ -179,6 +179,31 @@ class Product extends Model
     }
 
     /**
+     * Le stock des comptoirs qui peut partir vers un dépôt (transfert boutique → dépôt) :
+     * produits parents, suivis en stock, quantité positive. Filtré par boutique côté client.
+     *
+     * @param  iterable<int>  $shopIds  Boutiques ACCESSIBLES de l'utilisateur, jamais une saisie.
+     * @return \Illuminate\Support\Collection<int, array{id:int,name:string,sku:?string,shop_id:int,stock_quantity:float}>
+     */
+    public static function stockForDepotTransfer(iterable $shopIds): \Illuminate\Support\Collection
+    {
+        return static::query()
+            ->whereIn('shop_id', collect($shopIds))
+            ->whereNull('parent_id')
+            ->where('track_stock', true)
+            ->where('stock_quantity', '>', 0)
+            ->orderBy('name')
+            ->get(['id', 'name', 'sku', 'shop_id', 'stock_quantity'])
+            ->map(fn (self $p) => [
+                'id'             => $p->id,
+                'name'           => $p->name,
+                'sku'            => $p->sku,
+                'shop_id'        => $p->shop_id,
+                'stock_quantity' => (float) $p->stock_quantity,
+            ]);
+    }
+
+    /**
      * Le coût unitaire retenu pour valoriser une unité.
      *
      * La moyenne pondérée si elle existe, sinon le dernier prix d'achat — mieux vaut une
