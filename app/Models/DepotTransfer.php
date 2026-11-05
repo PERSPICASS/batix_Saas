@@ -17,6 +17,7 @@ class DepotTransfer extends Model
         'reference',
         'depot_id',
         'shop_id',
+        'direction',
         'user_id',
         'product_id',
         'quantity',
@@ -46,6 +47,9 @@ class DepotTransfer extends Model
     {
         return DocumentNumber::next(self::where('shop_id', $shopId), 'reference', 'TRF-' . date('Y') . '-');
     }
+
+    public const TO_SHOP = 'to_shop';
+    public const TO_DEPOT = 'to_depot';
 
     public function depot(): BelongsTo
     {

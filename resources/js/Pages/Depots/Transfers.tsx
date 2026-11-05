@@ -11,6 +11,7 @@ import QuantityInput from '@/Components/QuantityInput';
 interface Transfer {
     id: number;
     reference: string;
+    direction: 'to_shop' | 'to_depot';
     shop_name: string;
     product_name: string;
     product_image: string | null;
@@ -175,7 +176,12 @@ export default function Transfers({ depot, transfers, shops, depotProducts }: Pr
                                                         <span className="font-medium text-slate-900 dark:text-white">{t.product_name}</span>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{t.shop_name}</td>
+                                                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                                                    <span className={`mr-1.5 inline-block rounded px-1.5 py-0.5 text-[11px] font-medium ${t.direction === 'to_depot' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
+                                                        {t.direction === 'to_depot' ? '← depuis' : '→ vers'}
+                                                    </span>
+                                                    {t.shop_name}
+                                                </td>
                                                 <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">{t.quantity}</td>
                                                 <td className="px-4 py-3">
                                                     <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClass[t.status] ?? ''}`}>

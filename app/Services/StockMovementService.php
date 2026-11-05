@@ -300,6 +300,38 @@ class StockMovementService
         ]);
     }
 
+    /**
+     * Sortie du comptoir d'une boutique vers un dépôt : le symétrique de
+     * recordDepotTransfer. L'entrée côté dépôt est écrite par l'appelant via
+     * recordDepotMovement, qui ne touche aucun compteur.
+     *
+     * @param Model $reference  Le DepotTransfer (direction `to_depot`)
+     */
+    public static function recordShopToDepotTransfer(
+        Product $product,
+        float $quantity,
+        Model $reference,
+        ?string $notes = null
+    ): ?StockMovement {
+        if (!$product->track_stock) {
+            return null;
+        }
+
+        $product->decrement('stock_quantity', $quantity);
+
+        return self::writeMovement([
+            'shop_id'        => $product->shop_id,
+            'product_id'     => $product->id,
+            'user_id'        => Auth::id(),
+            'type'           => 'transfer',
+            'quantity'       => -$quantity,
+            'reference_id'   => $reference->getKey(),
+            'reference_type' => class_basename($reference),
+            'notes'          => $notes ?? 'Transfert vers dépôt',
+            'movement_date'  => now()->toDateString(),
+        ]);
+    }
+
 
 
     /**

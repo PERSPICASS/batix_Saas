@@ -604,6 +604,7 @@ Route::prefix('{code_user}')
     Route::delete('depots/{depot}/stock/{depotProduct}', [DepotController::class, 'removeStock'])->whereNumber('depotProduct')->name('depots.stock.remove')->middleware('permission:depots,delete');
     Route::post('depots/{depot}/transfer', [DepotController::class, 'transferStock'])->name('depots.transfer')->middleware('permission:depots,edit');
     Route::post('depots/{depot}/transfer-depot', [DepotController::class, 'transferToDepot'])->name('depots.transfer-depot')->middleware('permission:depots,edit');
+    Route::post('depots/{depot}/receive-from-shop', [DepotController::class, 'receiveFromShop'])->name('depots.receive-from-shop')->middleware('permission:depots,edit');
     Route::get('depots/{depot}/transfers', [DepotController::class, 'transfers'])->name('depots.transfers')->middleware('permission:depots,view');
 
     Route::get('/abonnements', function () {

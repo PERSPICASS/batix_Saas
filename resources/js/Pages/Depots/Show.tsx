@@ -5,7 +5,7 @@ import React from 'react';
 import { useRoute } from '@/utils/route';
 import { useReadOnlyAccount } from '@/Components/ReadOnlyAccountGuard';
 import { usePage } from '@inertiajs/react';
-import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
+import { Warehouse, Package, AlertTriangle, Plus, ArrowRight, Pencil, Trash2, ArrowUpRight, ArrowDownLeft, Upload, Download, X, CheckCircle, AlertCircle, TrendingUp, Search } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import ProductImage from '@/Components/ProductImage';
 import ConfirmDeleteModal from '@/Components/ConfirmDeleteModal';
@@ -13,6 +13,7 @@ import { useLocale } from '@/contexts/LocaleContext';
 import InputError from '@/Components/InputError';
 import { useShopSettings } from '@/Components/Currency';
 import QuantityInput from '@/Components/QuantityInput';
+import ReceiveFromShopModal, { ShopProductForDepot } from './Partials/ReceiveFromShopModal';
 
 interface DepotProductItem {
     id: number;
@@ -56,6 +57,7 @@ interface DepotProductForTransfer {
 interface RecentTransfer {
     id: number;
     reference: string;
+    direction: 'to_shop' | 'to_depot';
     shop_name: string;
     product_name: string;
     product_image: string | null;
@@ -89,6 +91,7 @@ interface Props {
     otherDepots: Array<{ id: number; name: string }>;
     filters: { search?: string };
     depotProductsForTransfer: DepotProductForTransfer[];
+    shopProductsForDepot: ShopProductForDepot[];
 }
 
 interface AddStockForm {
@@ -112,7 +115,7 @@ interface TransferForm {
     items: TransferItem[];
 }
 
-export default function Show({ depot, products, recentTransfers, stats, otherDepots, filters, depotProductsForTransfer }: Props) {
+export default function Show({ depot, products, recentTransfers, stats, otherDepots, filters, depotProductsForTransfer, shopProductsForDepot }: Props) {
     const { t } = useLocale();
     const { formatCurrency, currencySymbol } = useShopSettings();
     const buildRoute = useRoute();
@@ -123,6 +126,7 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
     const [showAddStock, setShowAddStock] = useState(false);
     const [showTransfer, setShowTransfer] = useState(false);
     const [showTransferDepot, setShowTransferDepot] = useState(false);
+    const [showReceiveFromShop, setShowReceiveFromShop] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const readOnly = useReadOnlyAccount();
     const [editingProduct, setEditingProduct] = useState<DepotProductItem | null>(null);
@@ -403,6 +407,13 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                         <ArrowUpRight className="size-4" />
                         Transférer vers une boutique
                     </button>
+                    <button
+                        onClick={() => setShowReceiveFromShop(true)}
+                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:hover:bg-emerald-400/20"
+                    >
+                        <ArrowDownLeft className="size-4" />
+                        Recevoir depuis une boutique
+                    </button>
                     {otherDepots.length > 0 && (
                         <button
                             onClick={() => setShowTransferDepot(true)}
@@ -602,7 +613,9 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                                         />
                                         <div>
                                             <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                                {t.product_name} → {t.shop_name}
+                                                {t.direction === 'to_depot'
+                                                    ? <>{t.product_name} ← {t.shop_name}</>
+                                                    : <>{t.product_name} → {t.shop_name}</>}
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                                 {t.reference} • {t.user_name} • {t.transferred_at}
@@ -941,6 +954,15 @@ export default function Show({ depot, products, recentTransfers, stats, otherDep
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showReceiveFromShop && (
+                <ReceiveFromShopModal
+                    depot={depot}
+                    shops={shops}
+                    shopProducts={shopProductsForDepot ?? []}
+                    onClose={() => setShowReceiveFromShop(false)}
+                />
             )}
 
             {/* Modal: Modifier stock */}

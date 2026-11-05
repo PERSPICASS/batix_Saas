@@ -160,6 +160,7 @@ class DepotController extends Controller
             ->map(fn($t) => [
                 'id' => $t->id,
                 'reference' => $t->reference,
+                'direction' => $t->direction ?? DepotTransfer::TO_SHOP,
                 'shop_name' => $t->shop->name,
                 'product_name' => $t->product->name,
                 'product_image' => $t->product->image,
@@ -169,7 +170,9 @@ class DepotController extends Controller
             ]);
 
         // Données pour les modals
-        $shops = Shop::where('user_id', $user->id)
+        // Boutiques ACCESSIBLES, pas seulement possédées : un co-gérant admin n'en
+        // possède aucune et voyait une liste vide.
+        $shops = $user->accessibleShopsQuery()
             ->where('is_active', true)
             ->get(['id', 'name']);
 
@@ -178,6 +181,22 @@ class DepotController extends Controller
             ->select('id', 'name', 'sku')
             ->orderBy('name')
             ->get();
+
+        // Stock des comptoirs, pour le transfert boutique → dépôt : uniquement ce qui peut
+        // sortir (suivi en stock, quantité positive). Filtré par boutique côté client.
+        $shopProductsForDepot = Product::whereIn('shop_id', $shops->pluck('id'))
+            ->whereNull('parent_id')
+            ->where('track_stock', true)
+            ->where('stock_quantity', '>', 0)
+            ->orderBy('name')
+            ->get(['id', 'name', 'sku', 'shop_id', 'stock_quantity'])
+            ->map(fn($p) => [
+                'id'             => $p->id,
+                'name'           => $p->name,
+                'sku'            => $p->sku,
+                'shop_id'        => $p->shop_id,
+                'stock_quantity' => (float) $p->stock_quantity,
+            ]);
 
         // Autres dépôts du même compte (pour transfert dépôt → dépôt)
         $otherDepots = Depot::where('code_user', $codeUser)
@@ -207,6 +226,7 @@ class DepotController extends Controller
             'allProducts' => $allProducts,
             'otherDepots' => $otherDepots,
             'depotProductsForTransfer' => $depotProductsForTransfer,
+            'shopProductsForDepot' => $shopProductsForDepot,
             'filters' => $request->only(['search']),
         ]);
     }
@@ -559,6 +579,106 @@ class DepotController extends Controller
         return back()->with('success', $count === 1 ? 'Transfert effectué avec succès.' : "{$count} produits transférés avec succès.");
     }
 
+    // --- Transfert boutique → dépôt ---
+
+    /**
+     * Le comptoir d'une boutique renvoie du stock au dépôt (surplus, mise en réserve).
+     * Miroir de transferStock : la sortie boutique et l'entrée dépôt sont journalisées
+     * toutes les deux, sous la même référence TRF.
+     */
+    public function receiveFromShop(Request $request, string $codeUser, Depot $depot)
+    {
+        $user = Auth::user();
+
+        if ($depot->code_user !== $codeUser) {
+            abort(403);
+        }
+
+        $shopIds = $user->accessibleShopsQuery()->pluck('id');
+
+        $validated = $request->validate([
+            'shop_id'            => ['required', Rule::exists('shops', 'id')->whereIn('id', $shopIds)],
+            'notes'              => 'nullable|string',
+            'items'              => 'required|array|min:1',
+            // Le produit doit appartenir à la boutique choisie — sinon n'importe quel id
+            // de produit, d'un autre compte compris, se vidait dans ce dépôt.
+            'items.*.product_id' => [
+                'required',
+                'distinct',
+                Rule::exists('products', 'id')->where('shop_id', (int) $request->input('shop_id')),
+            ],
+            'items.*.quantity'   => ['required', 'numeric', 'gt:0', new QuantityForProduct],
+        ]);
+
+        $shop = Shop::findOrFail($validated['shop_id']);
+
+        DB::transaction(function () use ($depot, $shop, $validated, $user) {
+            $errors = [];
+            $products = [];
+
+            // Verrou sur la ligne produit : deux transferts (ou une vente) concurrents ne
+            // peuvent pas sortir le même stock deux fois.
+            foreach ($validated['items'] as $index => $item) {
+                $product = Product::whereKey($item['product_id'])->lockForUpdate()->first();
+
+                if (!$product->track_stock) {
+                    $errors["items.{$index}.product_id"] = "« {$product->name} » n'est pas suivi en stock.";
+                } elseif ((float) $product->stock_quantity < (float) $item['quantity']) {
+                    $errors["items.{$index}.quantity"] = "Stock insuffisant pour « {$product->name} » (disponible : " . (float) $product->stock_quantity . ").";
+                } else {
+                    $products[$index] = $product;
+                }
+            }
+
+            if (!empty($errors)) {
+                throw ValidationException::withMessages($errors);
+            }
+
+            foreach ($validated['items'] as $index => $item) {
+                $product = $products[$index];
+                $quantity = (float) $item['quantity'];
+
+                $depotTransfer = DepotTransfer::create([
+                    'depot_id'   => $depot->id,
+                    'shop_id'    => $shop->id,
+                    'direction'  => DepotTransfer::TO_DEPOT,
+                    'user_id'    => $user->id,
+                    'product_id' => $product->id,
+                    'quantity'   => $quantity,
+                    'notes'      => $validated['notes'] ?? null,
+                    'status'     => 'completed',
+                ]);
+
+                StockMovementService::recordShopToDepotTransfer(
+                    $product,
+                    $quantity,
+                    $depotTransfer,
+                    "Transfert vers le dépôt « {$depot->name} »"
+                );
+
+                $depotProduct = DepotProduct::firstOrCreate(
+                    ['depot_id' => $depot->id, 'product_id' => $product->id],
+                    ['quantity' => 0, 'min_stock_alert' => 0, 'purchase_price' => (float) $product->purchase_price]
+                );
+                $depotProduct->increment('quantity', $quantity);
+
+                StockMovementService::recordDepotMovement(
+                    $product,
+                    $depot,
+                    $quantity,
+                    'transfer',
+                    $depotTransfer,
+                    "Transfert depuis la boutique « {$shop->name} »"
+                );
+            }
+        });
+
+        $count = count($validated['items']);
+        return back()->with('success', $count === 1
+            ? "Produit transféré vers « {$depot->name} »."
+            : "{$count} produits transférés vers « {$depot->name} ».");
+    }
+
     // --- Transfert dépôt → dépôt ---
 
     public function transferToDepot(Request $request, string $codeUser, Depot $depot)
@@ -657,6 +777,8 @@ class DepotController extends Controller
 
     public function transfers(Request $request, string $codeUser, Depot $depot): Response
     {
+        $user = Auth::user();
+
         if ($depot->code_user !== $codeUser) {
             abort(403);
         }
@@ -668,6 +790,7 @@ class DepotController extends Controller
             ->through(fn($t) => [
                 'id' => $t->id,
                 'reference' => $t->reference,
+                'direction' => $t->direction ?? DepotTransfer::TO_SHOP,
                 'shop_name' => $t->shop->name,
                 'product_name' => $t->product->name,
                 'product_image' => $t->product->image,
@@ -680,7 +803,9 @@ class DepotController extends Controller
             ]);
 
         // Données pour le formulaire de transfert
-        $shops = Shop::where('user_id', $user->id)
+        // Boutiques ACCESSIBLES, pas seulement possédées : un co-gérant admin n'en
+        // possède aucune et voyait une liste vide.
+        $shops = $user->accessibleShopsQuery()
             ->where('is_active', true)
             ->get(['id', 'name']);
 
